@@ -1,10 +1,9 @@
 Package: DAGassist
-Title: Using DAGs to Automatically Fit Adjustment Sets
+Title: DAG-driven robustness checks for R
 Version: 0.1.0
 Authors@R: 
     person("Graham", "Goff", , "goffgrahamc@gmail.com", role = c("aut", "cre"))
-Description: Matches ggdag objects and regression calls to compare models with
-             their adjustment sets. Makes using DAGs for robustness easy.
+Description: classify roles, flag bad controls, and compare original vs minimal adjustment sets
 License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

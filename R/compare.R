@@ -1,6 +1,34 @@
-# identify bad controls
-#' List "bad controls" among a candidate set
-#' NOTE: will flag mediator / collider / descendant
+#' flag bad controls (mediator/collider/desc of Y) among a candidate set
+#' 
+#' @param dag A `dagitty` DAG object.
+#' @param controls Character vector of variable names.
+#' @param exposure Character; exposure node name (X).
+#' @param outcome  Character; outcome node name (Y).
+#'
+#' @return A character vector (possibly empty) containing the elements of
+#'   `controls` that are identified as "bad controls".
+#'   
+#' @details
+#' This is essentially the inverse of `pick_minimal_controls()`, as it returns
+#' bad controls, rather than the minimal/canonical set of good controls
+#' 
+#' @examplesIf requireNamespace("dagitty", quietly = TRUE)
+#' d <- ggdag::dagify(
+#' Y ~ X + M + Z,
+#' M ~ X + Z,
+#' C ~ X + Y,
+#' exposure = "X",
+#' outcome = "Y")
+#' # M: mediator / Z: confounder / C: collider
+#'
+#' # hypothetical candidate controls
+#' controls <- c("Z", "M", "C")
+#'
+#' # Flag controls that would bias the total effect of X on Y:
+#' bad_controls_in(d, controls, exposure = "X", outcome = "Y")
+#'
+#' # expected: c("M", "C")  # mediator & collider are "bad controls"; Z is OK
+
 #' @export
 bad_controls_in <- function(dag, controls, exposure, outcome) {
   roles <- classify_nodes(dag, exposure = exposure, outcome = outcome)
@@ -8,8 +36,31 @@ bad_controls_in <- function(dag, controls, exposure, outcome) {
   intersect(controls, bad)
 }
 
-# compute minimal adjustment set
-#' Pick one minimal adjustment set deterministically
+# compute minimal adjustment sets and pick one deterministically
+#' @param dag A `dagitty` DAG object.
+#' @param exposure Character; exposure node name (X).
+#' @param outcome  Character; outcome node name (Y).
+#' 
+#' @return sorted character vector with the minimal adjustment set
+#' @details
+#' This is preferable to `dagitty::adjustmentSets()` because it picks a single
+#' minimal adjustment set automatically and without a bunch of arguments. will 
+#' need to adapt this to deal with multiple adjustment sets and canonical 
+#' adjustment sets eventually.
+#' 
+#' @examplesIf requireNamespace("dagitty", quietly = TRUE)
+#' d <- ggdag::dagify(
+#' Y ~ X + M + Z,
+#' M ~ X + Z,
+#' C ~ X + Y,
+#' exposure = "X",
+#' outcome = "Y")
+#' # M: mediator / Z: confounder / C: collider
+#'
+#' # identify the minimal adjustment set
+#' bad_controls_in(d, exposure = "X", outcome = "Y")
+#'
+#' # expected: "Z"  
 #' @export
 pick_minimal_controls <- function(dag, exposure, outcome) {
   sets <- dagitty::adjustmentSets(dag, exposure = exposure, outcome = outcome)
@@ -52,7 +103,8 @@ update_to_controls <- function(exposure, outcome, controls = character(0)) {
 #' @param outcome Character; outcome variable name.
 #' @param engine A fitting function (default `stats::lm`).
 #' @param engine_args List of extra arguments passed to `engine`.
-#' NOTE: will want to edit so it works with fixed/random effects and other 
+#' @details
+#'  will want to edit so it works with fixed/random effects and other 
 #' common uses. eventually will want to make sure it works with everything
 #' @return An object of class `DAGassist_compare` with elements:
 #' `validation`, `original`, `minimal`, `controls`, `formulas`.
@@ -86,8 +138,25 @@ compare_specs <- function(dag, formula, data, exposure, outcome,
   out
 }
 
-#' Pretty print compare_specs()
-#' NOTE: may want to clean for kable or latex output later
+#' Prints a concise comparison report
+#' 
+#' @details
+#' Prints the output of `compare_specs()`, showing validation status, minimal
+#' controls, original/minimal formulas, and a compact coefficient formula.  may
+#' want to clean for kable or latex output later. or could maybe wrap in a 
+#' capture.output since it uses cat.
+#' @param x A `DAGassist_compare` object returned by [compare_specs()].
+#' @param ... Ignored.
+#'
+#' @return Invisibly returns `x`.
+#' @examplesIf requireNamespace("dagitty", quietly = TRUE)
+#' set.seed(1)
+#' d <- dagitty::dagitty("dag { Z -> X; Z -> Y; X -> Y }")
+#' n <- 100
+#' Z <- rnorm(n); X <- 0.8*Z + rnorm(n); Y <- 1.2*X + 0.5*Z + rnorm(n)
+#' df <- data.frame(Y, X, Z)
+#' cmp <- compare_specs(d, Y ~ X + Z, df, exposure = "X", outcome = "Y")
+#' print(cmp)
 #' @export
 print.DAGassist_compare <- function(x, ...) {
   cat("DAGassist compare\n")

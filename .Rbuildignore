@@ -1,4 +1,12 @@
-^LICENSE\.md$
-^.*\.Rproj$
-^\.Rproj\.user$
 ^data-raw$
+^\.github$
+^docs$
+^pkgdown$
+^_pkgdown\.yml$
+^README\.Rmd$
+^NEWS\.md$
+^\.Rproj\.user$
+^\.vscode$
+^\.idea$
+^\.env$
+^\.Renviron$

@@ -30,13 +30,13 @@
 #'   - `role` (a single primary label)
 #'
 #' @examples
-#'   d1 <- dagitty::dagitty("dag { Z -> X; Z -> Y; X -> Y }")   # confounder Z
+#'   d1 <- dagitty::dagitty("dag { Z -> X; Z -> Y; X -> Y }") # confounder Z
 #'   classify_nodes(d1, exposure = "X", outcome = "Y")
 #'
-#'   d2 <- dagitty::dagitty("dag { X -> M -> Y }")              # mediator M
+#'   d2 <- dagitty::dagitty("dag { X -> M -> Y }") # mediator M
 #'   classify_nodes(d2, "X", "Y")
 #'
-#'   d3 <- dagitty::dagitty("dag { X -> C <- Y }")              # collider C
+#'   d3 <- dagitty::dagitty("dag { X -> C <- Y }") # collider C
 #'   classify_nodes(d3, "X", "Y")
 #' 
 #' @export

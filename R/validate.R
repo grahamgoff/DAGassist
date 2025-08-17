@@ -11,8 +11,13 @@
 #' `ok` (logical), `issues` (data.frame), `vars` (list)
 #'
 #' @examples 
-#' v <- validate_spec(dag, Y ~ X + Z, df, exposure = "X", outcome = "Y")
+#' # Use package DAG to avoid re-simulating
+#' data(test_complex, package = "DAGassist")
+#' 
+#' v <- validate_spec(test_complex, Y ~ X + Z, fake_df, exposure = "X", outcome = "Y")
 #' print(v)
+#' # expected output: "`dag` must be a dagitty object. Create it with 
+#' dagitty::dagitty() or ggdag::dagify()."
 #' @export
 
 validate_spec <- function(dag, formula, data, exposure, outcome){

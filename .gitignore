@@ -1,8 +1,28 @@
+# R/RStudio
 .Rproj.user
 .Rhistory
 .RData
 .Ruserdata
-.Rdata
-.httr-oauth
+.Rapp.history
+.Renviron
+.Rprofile
+
+# OS/editor noise
 .DS_Store
-.quarto
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+
+# Auth / local env
+.httr-oauth
+.env
+
+# Check/build artifacts
+*.Rcheck/
+Meta/
+inst/doc/
+
+# Knitting/cache junk
+*.utf8.md
+*.knit.md

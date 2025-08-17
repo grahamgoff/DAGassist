@@ -27,9 +27,7 @@ compare_specs(
 
 \item{engine}{A fitting function (default \code{stats::lm}).}
 
-\item{engine_args}{List of extra arguments passed to \code{engine}.
-NOTE: will want to edit so it works with fixed/random effects and other
-common uses. eventually will want to make sure it works with everything}
+\item{engine_args}{List of extra arguments passed to \code{engine}.}
 }
 \value{
 An object of class \code{DAGassist_compare} with elements:
@@ -38,6 +36,10 @@ An object of class \code{DAGassist_compare} with elements:
 \description{
 Fits the user-supplied model and a minimal-adjustment model (via
 \code{dagitty::adjustmentSets()}), after validating inputs.
+}
+\details{
+will want to edit so it works with fixed/random effects and other
+common uses. eventually will want to make sure it works with everything
 }
 \examples{
 # compare_specs(test_confounder, Y ~ X + Z, test_df, "X", "Y")

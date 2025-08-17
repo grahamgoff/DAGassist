@@ -11,12 +11,14 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Imports: 
     dagitty,
-    dplyr,
-    ggdag,
     magrittr
-Suggests: 
-    modelsummary,
-    testthat (>= 3.0.0)
+Suggests:
+    ggdag,
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown,
+    covr,
+    cli
 Depends: 
     R (>= 3.5)
 LazyData: true

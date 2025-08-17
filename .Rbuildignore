@@ -10,3 +10,5 @@
 ^\.idea$
 ^\.env$
 ^\.Renviron$
+^DAGassist\.Rproj$
+^LICENSE\.md$

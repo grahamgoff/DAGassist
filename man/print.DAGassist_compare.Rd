@@ -2,12 +2,35 @@
 % Please edit documentation in R/compare.R
 \name{print.DAGassist_compare}
 \alias{print.DAGassist_compare}
-\title{Pretty print compare_specs()
-NOTE: may want to clean for kable or latex output later}
+\title{Prints a concise comparison report}
 \usage{
 \method{print}{DAGassist_compare}(x, ...)
 }
+\arguments{
+\item{x}{A \code{DAGassist_compare} object returned by \code{\link[=compare_specs]{compare_specs()}}.}
+
+\item{...}{Ignored.}
+}
+\value{
+Invisibly returns \code{x}.
+}
 \description{
-Pretty print compare_specs()
-NOTE: may want to clean for kable or latex output later
+Prints a concise comparison report
+}
+\details{
+Prints the output of \code{compare_specs()}, showing validation status, minimal
+controls, original/minimal formulas, and a compact coefficient formula.  may
+want to clean for kable or latex output later. or could maybe wrap in a
+capture.output since it uses cat.
+}
+\examples{
+\dontshow{if (requireNamespace("dagitty", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+set.seed(1)
+d <- dagitty::dagitty("dag { Z -> X; Z -> Y; X -> Y }")
+n <- 100
+Z <- rnorm(n); X <- 0.8*Z + rnorm(n); Y <- 1.2*X + 0.5*Z + rnorm(n)
+df <- data.frame(Y, X, Z)
+cmp <- compare_specs(d, Y ~ X + Z, df, exposure = "X", outcome = "Y")
+print(cmp)
+\dontshow{\}) # examplesIf}
 }

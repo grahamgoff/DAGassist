@@ -1,23 +1,41 @@
 #' Validate dag, formula, data before fitting and ensure exposure and outcome are
 #' specified
-#'
-#' @param dag 
-#' @param formula 
-#' @param data 
-#' @param exposure 
-#' @param outcome 
+#' 
+#' @param dag A `dagitty` DAG object.
+#' @param formula a regression call
+#' @param data data frame
+#' @param exposure Character; exposure node name (X).
+#' @param outcome Character; outcome node name (Y).
 #'
 #' @return A list of class `DAGassist_validation` with values:  
 #' `ok` (logical), `issues` (data.frame), `vars` (list)
 #'
-#' @examples 
-#' # Use package DAG to avoid re-simulating
+#' @examples
+#' # Load small demo DAG and data shipped with the package
 #' data(test_complex, package = "DAGassist")
+#' data(test_df,      package = "DAGassist")
+#'
+#' # example of what to do: everything present and consistent
+#' v_ok <- validate_spec(test_complex, Y ~ X + Z, test_df,
+#'                       exposure = "X", outcome = "Y")
+#' v_ok
+#'
+#' ##common mistake: a variable in the formula is missing from the data
+#' partial_df <- test_df[c("Y", "X")]
+#' v_missing <- validate_spec(test_complex, Y ~ X + Z, partial_df,
+#'                            exposure = "X", outcome = "Y")
+#' v_missing
+#'
+#' ##another common issue: exposure not on the right-hand side (warns)
+#' v_warn <- validate_spec(test_complex, Y ~ Z, test_df,
+#'                         exposure = "X", outcome = "Y")
+#' v_warn
+#'
+#' # 4) (Not run) Example that would error: DAG is not a dagitty object
+#' # \dontrun{
+#' #   validate_spec(list(), Y ~ X, test_df, exposure = "X", outcome = "Y")
+#' # }
 #' 
-#' v <- validate_spec(test_complex, Y ~ X + Z, fake_df, exposure = "X", outcome = "Y")
-#' print(v)
-#' # expected output: "`dag` must be a dagitty object. Create it with 
-#' dagitty::dagitty() or ggdag::dagify()."
 #' @export
 
 validate_spec <- function(dag, formula, data, exposure, outcome){
@@ -110,8 +128,9 @@ validate_spec <- function(dag, formula, data, exposure, outcome){
 }
 
 #' Minimal, clean printout for validation results with color coding
-#' @rdname validate_spec
+#' @param x the list (class `out`) from validate_spec
 #' @param n Max number of issues to show (default 10).
+#' @param ... Ignored.
 #' @return Invisibly returns `x`.
 #' @export
 print.DAGassist_validation <- function(x, n = 10, ...) {
@@ -153,7 +172,7 @@ print.DAGassist_validation <- function(x, n = 10, ...) {
   show_idx <- seq_len(min(n, nrow(iss)))
   for (i in show_idx) {
     sev <- if (iss$severity[i] == "error") col("[error]", "red") else col("[warn]", "yellow")
-    line <- sprintf("- %s %s — %s", sev, iss$variable[i], iss$message[i])
+    line <- sprintf("- %s %s - %s", sev, iss$variable[i], iss$message[i])
     if (nzchar(iss$type[i])) line <- paste0(line, " (", iss$type[i], ")")
     cat(line, "\n")
   }

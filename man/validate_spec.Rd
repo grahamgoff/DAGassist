@@ -2,40 +2,54 @@
 % Please edit documentation in R/validate.R
 \name{validate_spec}
 \alias{validate_spec}
-\alias{print.DAGassist_validation}
 \title{Validate dag, formula, data before fitting and ensure exposure and outcome are
 specified}
 \usage{
 validate_spec(dag, formula, data, exposure, outcome)
-
-\method{print}{DAGassist_validation}(x, n = 10, ...)
 }
 \arguments{
-\item{dag}{}
+\item{dag}{A \code{dagitty} DAG object.}
 
-\item{formula}{}
+\item{formula}{a regression call}
 
-\item{data}{}
+\item{data}{data frame}
 
-\item{exposure}{}
+\item{exposure}{Character; exposure node name (X).}
 
-\item{outcome}{}
-
-\item{n}{Max number of issues to show (default 10).}
+\item{outcome}{Character; outcome node name (Y).}
 }
 \value{
 A list of class \code{DAGassist_validation} with values:
 \code{ok} (logical), \code{issues} (data.frame), \code{vars} (list)
-
-Invisibly returns \code{x}.
 }
 \description{
 Validate dag, formula, data before fitting and ensure exposure and outcome are
 specified
-
-Minimal, clean printout for validation results with color coding
 }
 \examples{
-v <- validate_spec(dag, Y ~ X + Z, df, exposure = "X", outcome = "Y")
-print(v)
+# Load small demo DAG and data shipped with the package
+data(test_complex, package = "DAGassist")
+data(test_df,      package = "DAGassist")
+
+# example of what to do: everything present and consistent
+v_ok <- validate_spec(test_complex, Y ~ X + Z, test_df,
+                      exposure = "X", outcome = "Y")
+v_ok
+
+##common mistake: a variable in the formula is missing from the data
+partial_df <- test_df[c("Y", "X")]
+v_missing <- validate_spec(test_complex, Y ~ X + Z, partial_df,
+                           exposure = "X", outcome = "Y")
+v_missing
+
+##another common issue: exposure not on the right-hand side (warns)
+v_warn <- validate_spec(test_complex, Y ~ Z, test_df,
+                        exposure = "X", outcome = "Y")
+v_warn
+
+# 4) (Not run) Example that would error: DAG is not a dagitty object
+# \dontrun{
+#   validate_spec(list(), Y ~ X, test_df, exposure = "X", outcome = "Y")
+# }
+
 }

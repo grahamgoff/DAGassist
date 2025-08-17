@@ -2,12 +2,45 @@
 % Please edit documentation in R/compare.R
 \name{bad_controls_in}
 \alias{bad_controls_in}
-\title{List "bad controls" among a candidate set
-NOTE: will flag mediator / collider / descendant}
+\title{flag bad controls (mediator/collider/desc of Y) among a candidate set}
 \usage{
 bad_controls_in(dag, controls, exposure, outcome)
 }
+\arguments{
+\item{dag}{A \code{dagitty} DAG object.}
+
+\item{controls}{Character vector of variable names.}
+
+\item{exposure}{Character; exposure node name (X).}
+
+\item{outcome}{Character; outcome node name (Y).}
+}
+\value{
+A character vector (possibly empty) containing the elements of
+\code{controls} that are identified as "bad controls".
+
+This is essentially the inverse of \code{pick_minimal_controls()}, as it returns
+bad controls, rather than the minimal/canonical set of good controls
+}
 \description{
-List "bad controls" among a candidate set
-NOTE: will flag mediator / collider / descendant
+flag bad controls (mediator/collider/desc of Y) among a candidate set
+}
+\examples{
+\dontshow{if (requireNamespace("dagitty", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+d <- ggdag::dagify(
+Y ~ X + M + Z,
+M ~ X + Z,
+C ~ X + Y,
+exposure = "X",
+outcome = "Y")
+# M: mediator / Z: confounder / C: collider
+
+# hypothetical candidate controls
+controls <- c("Z", "M", "C")
+
+# Flag controls that would bias the total effect of X on Y:
+bad_controls_in(d, controls = c("Z","M","C"), exposure = "X", outcome = "Y")
+
+# expected: c("M", "C")  # mediator & collider are "bad controls"; Z is OK
+\dontshow{\}) # examplesIf}
 }

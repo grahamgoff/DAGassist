@@ -8,7 +8,6 @@
 #' @return A character vector (possibly empty) containing the elements of
 #'   `controls` that are identified as "bad controls".
 #'   
-#' @details
 #' This is essentially the inverse of `pick_minimal_controls()`, as it returns
 #' bad controls, rather than the minimal/canonical set of good controls
 #' 
@@ -25,7 +24,7 @@
 #' controls <- c("Z", "M", "C")
 #'
 #' # Flag controls that would bias the total effect of X on Y:
-#' bad_controls_in(d, controls, exposure = "X", outcome = "Y")
+#' bad_controls_in(d, controls = c("Z","M","C"), exposure = "X", outcome = "Y")
 #'
 #' # expected: c("M", "C")  # mediator & collider are "bad controls"; Z is OK
 
@@ -36,7 +35,7 @@ bad_controls_in <- function(dag, controls, exposure, outcome) {
   intersect(controls, bad)
 }
 
-# compute minimal adjustment sets and pick one deterministically
+#' compute minimal adjustment sets and pick one deterministically
 #' @param dag A `dagitty` DAG object.
 #' @param exposure Character; exposure node name (X).
 #' @param outcome  Character; outcome node name (Y).
@@ -58,9 +57,8 @@ bad_controls_in <- function(dag, controls, exposure, outcome) {
 #' # M: mediator / Z: confounder / C: collider
 #'
 #' # identify the minimal adjustment set
-#' bad_controls_in(d, exposure = "X", outcome = "Y")
-#'
-#' # expected: "Z"  
+#' pick_minimal_controls(d, exposure = "X", outcome = "Y")
+#' # expected: "Z"
 #' @export
 pick_minimal_controls <- function(dag, exposure, outcome) {
   sets <- dagitty::adjustmentSets(dag, exposure = exposure, outcome = outcome)
@@ -83,9 +81,14 @@ pick_minimal_controls <- function(dag, exposure, outcome) {
   sort(as.character(unname(sets[[idx]])))
 }
 
-# update formula
+#' update formula
 #' Update a formula to use chosen controls
 #' NOTE: this will be used later when we compute minimal and canonical adjustment sets
+#' 
+#' @param exposure Character; exposure variable name.
+#' @param outcome  Character; outcome variable name.
+#' @param controls Character vector of controls (default empty).
+#' 
 #' @export
 update_to_controls <- function(exposure, outcome, controls = character(0)) {
   reformulate(termlabels = c(exposure, controls), response = outcome)
@@ -161,7 +164,7 @@ compare_specs <- function(dag, formula, data, exposure, outcome,
 print.DAGassist_compare <- function(x, ...) {
   cat("DAGassist compare\n")
   if (!x$validation$ok) {
-    cat("Validation: INVALID — see issues below\n")
+    cat("Validation: INVALID - see issues below\n")
     print(x$validation); return(invisible(x))
   }
   cat("Validation: VALID\n")

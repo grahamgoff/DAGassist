@@ -2,7 +2,8 @@
 % Please edit documentation in R/assist.R
 \name{dag_assist}
 \alias{dag_assist}
-\title{need to populate this roxy with info later}
+\title{Main function
+Run the DAGassist pipeline and print a compact report, tying it all together}
 \usage{
 dag_assist(
   dag,
@@ -14,6 +15,39 @@ dag_assist(
   engine_args = list()
 )
 }
+\arguments{
+\item{dag}{a valid dagitty object}
+
+\item{formula}{a regression call}
+
+\item{data}{a valid data frame}
+
+\item{exposure}{the treatment variable name--eg X = "treatment"}
+
+\item{outcome}{the outcome variabe name--eg Y = "outcome"}
+
+\item{engine}{the regression engine-- lm as default}
+
+\item{engine_args}{a list argument with exra engine args--eg list(vcov = ~id)}
+}
+\value{
+a list of class \code{out} with the \code{DAGassist_report}, which has values
+validation: runs \code{validate_spec} from validate.R
+roles: runs \code{classify_nodes} from classify.R
+bad_in_user: does the user include mediator, collider or descendant as controls?
+controls_minimal: runs \code{pick_minimal_controls} from compare.R
+formulas: a list with the original regression formula + minimal formula
+models: a list with the full original regression call + minimal regression call
+}
 \description{
-need to populate this roxy with info later
+Main function
+Run the DAGassist pipeline and print a compact report, tying it all together
+}
+\examples{
+\dontshow{if (requireNamespace("dagitty", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+# Use package datasets to avoid re-simulating
+data(test_df, package = "DAGassist")
+data(test_complex, package = "DAGassist")
+dag_assist(test_complex, Y ~ X + Z + C + M, test_df, exposure = "X", outcome = "Y")
+\dontshow{\}) # examplesIf}
 }

@@ -2,12 +2,21 @@
 % Please edit documentation in R/compare.R
 \name{update_to_controls}
 \alias{update_to_controls}
-\title{Update a formula to use chosen controls
+\title{update formula
+Update a formula to use chosen controls
 NOTE: this will be used later when we compute minimal and canonical adjustment sets}
 \usage{
 update_to_controls(exposure, outcome, controls = character(0))
 }
+\arguments{
+\item{exposure}{Character; exposure variable name.}
+
+\item{outcome}{Character; outcome variable name.}
+
+\item{controls}{Character vector of controls (default empty).}
+}
 \description{
+update formula
 Update a formula to use chosen controls
 NOTE: this will be used later when we compute minimal and canonical adjustment sets
 }

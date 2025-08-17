@@ -85,37 +85,65 @@ classify_nodes <- function(dag, exposure, outcome) {
   
   ## this part determines colliders on an x/y path. first it has to determine 
   ## neighbors and vertex chains ...
-  # determine neighbors function
-  neighbors_of <- function(g, v) {
-    # neighbors in the skeleton = parents \union children 
-    union(dagitty::parents(g, v), dagitty::children(g, v))
+  # determine neighbors function 
+  neighbors_of <- function(g, node) {
+    union(dagitty::parents(g, node), dagitty::children(g, node))
   }
-  reachable_undirected <- function(g, start_nodes) {
-    # read the whole DAG
-    seen <- unique(start_nodes)
-    frontier <- unique(start_nodes)
-    while (length(frontier) > 0) {
-      neigh <- unique(unlist(lapply(frontier, function(u) neighbors_of(g, u)), use.names = FALSE))
-      next_frontier <- setdiff(neigh, seen)
-      seen <- c(seen, next_frontier)
-      frontier <- next_frontier
+  # All nodes you can reach from `start` without ever passing through `ban`
+  reachable_without <- function(g, start, ban) {
+    # if the start itself is banned, you can't go anywhere
+    if (identical(start, ban)) return(character(0))
+    
+    seen  <- character(0)   # nodes we've already visited
+    queue <- start          # nodes we still need to visit (BFS queue)
+    
+    while (length(queue) > 0) {
+      # take the first node from the queue
+      node  <- queue[1]
+      queue <- queue[-1]
+      # skip if we've already processed it
+      if (node %in% seen) next
+      seen <- c(seen, node)
+      # find neighbors, but never allow stepping into the banned node
+      nb <- neighbors_of(g, node)
+      nb <- setdiff(nb, ban)
+      # add unseen neighbors to the queue (avoid duplicates)
+      to_add <- setdiff(nb, c(seen, queue))
+      if (length(to_add)) queue <- c(queue, to_add)
     }
-    unique(seen)
+    seen
   }
-  ##...then it figures out which nodes have 2+ parents (structural colliders)...
-  # structural colliders (2+ parents)
-  parents_count <- vapply(nodes, function(v) length(dagitty::parents(dag, v)), integer(1))
-  collider_structural <- nodes[parents_count >= 2]
-  
-  ## ...then it figures out which variables are on an x/y path (nodes that lie on 
-  ## at least one path between exposure and outcome) ... 
-  reachable_from_X <- reachable_undirected(dag, exposure)
-  reachable_from_Y <- reachable_undirected(dag, outcome)
-  on_xy_path <- intersect(reachable_from_X, reachable_from_Y)
+  ## strict collider test
+  # A node m is a collider-on-XY-path if:
+  #  - it has >= 2 parents, and
+  #  - at least one parent is reachable from X without going through m, and
+  #  - a different parent is reachable from Y without going through m.
+  is_xy_collider <- function(m) {
+    parents_m <- dagitty::parents(dag, m)
+    if (length(parents_m) < 2) return(FALSE)
+    
+    from_X <- reachable_without(dag, start = exposure, ban = m)
+    from_Y <- reachable_without(dag, start = outcome,  ban = m)
+    
+    # parents that lie on the X side / Y side
+    px <- intersect(parents_m, from_X)
+    py <- intersect(parents_m, from_Y)
+    
+    # need at least one parent on each side, and they must be different nodes
+    if (length(px) >= 1 && length(py) >= 1 && length(unique(c(px, py))) >= 2) {
+      return(TRUE)
+    }
+    FALSE
+  }
+  #get node names
+  nodes <- names(dag) # e.g.  X Y Z C
+  #runs the is_xy_collider test for all names in nodes
+  is_collider <- vapply(nodes, is_xy_collider, logical(1)) # e.g. FALSE FALSE FALSE TRUE
   
   ### definition sets
-  ## ...and finally, colliders are nodes with 2+ parents that lie on an x/y path
-  collider_set <- intersect(collider_structural, on_xy_path) 
+  
+  #filter down to collider = TRUE
+  collider_set <- nodes[is_collider]
   # not a descendant of X -- have to use setdiff or X will show as a confounder sometimes
   conf_set <- setdiff(intersect(ancX, ancY), c(descX, exposure, outcome)) 
   med_set <- setdiff(intersect(descX, ancY), c(exposure, outcome))  # desc X/anc Y, not endpoint

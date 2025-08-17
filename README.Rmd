@@ -6,7 +6,7 @@ output: github_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
-  collapse = TRUE, comment = "#>",
+  collapse = TRUE, comment = FALSE,
   fig.path = "man/figures/README-", out.width = "100%"
 )
 
@@ -47,3 +47,19 @@ dag_assist(dag = test_complex,
            outcome = "Y")
 ```
 
+## Roadmap to v2.0:
+
+- [ ] Ensure that classify.R categories are **always** accurate
+- [ ] Add acyclicity checks to validate.R
+- [ ] Include Canonical adjustment sets
+- [ ] Handling multiple minimal adjustment sets
+- [ ] Engine compatibility with all major engines
+- [ ] Handle diff-in-diff and fixed effects formula notation
+- [ ] Add graphics and colors
+       - [ ] gray scale of the original model, with the minimal set visibly          differentiated.
+       - [ ] more colors in output
+- [ ] Clarify the validation output
+- [ ] Add neat tables to the console output
+- [ ] Add options for LaTeX and Kable output
+- [ ] Add export_report functionality, which will print a publication-grade 2-page robustness check with a single, simple call (for robustness check use)
+- [ ] Add a simple "covariate sensitivity" line to report, indicating if (i) the original model is statistically significant; (ii) the minimal or canonical set is statistically insignificant

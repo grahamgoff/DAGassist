@@ -71,6 +71,31 @@ X           1.50834433 0.08531194 17.6803421 5.167703e-52
 Z           0.49787901 0.09236472  5.3903590 1.208907e-07
 ```
 
+## How to get the most out of **DAGassist**
+
+### See each variable’s causal role:
+
+``` r
+classify_nodes(test_complex, exposure = "X", outcome = "Y")
+variable  role        X  Y  conf  med  col  desc(Y)  desc(X)
+X         exposure    x                                     
+Y         outcome        x                           x      
+Z         confounder        x                               
+M         mediator                x                  x      
+C         collider                     x    x        x      
+A         other                                             
+```
+
+### Quickly flag bad controls:
+
+``` r
+bad_controls_in(dag = test_complex, 
+                controls = c("Z", "M", "C"), 
+                exposure = "X",
+                outcome = "Y")
+[1] "M" "C"
+```
+
 ## Roadmap to v2.0:
 
 - [ ] Ensure that classify.R categories are **always** accurate

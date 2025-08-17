@@ -1,6 +1,6 @@
 Package: DAGassist
 Title: Using DAGs to Automatically Fit Adjustment Sets
-Version: 0.0.0.9000
+Version: 0.1.0
 Authors@R: 
     person("Graham", "Goff", , "goffgrahamc@gmail.com", role = c("aut", "cre"))
 Description: Matches ggdag objects and regression calls to compare models with

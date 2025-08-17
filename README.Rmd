@@ -18,14 +18,16 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of DAGassist is to ...
+**An all-in-one DAG-driven robustness check.**
+Classifies variables by causal role, computes the smallest back-door adjustment set, and compares the significance of the original and minimal models.
+
 
 ## Installation
 
 You can install the development version of DAGassist from [GitHub](https://github.com/) with:
 
-``` r
-# install.packages("pak")
+``` {r install, eval = FALSE}
+install.packages("pak")
 pak::pak("grahamgoff/DAGassist")
 ```
 
@@ -34,22 +36,13 @@ pak::pak("grahamgoff/DAGassist")
 This is a basic example which shows you how to solve a common problem:
 
 ```{r example}
-library(DAGassist)
-## basic example code
+library(DAGassist) 
+
+dag_assist(dag = test_complex, #this example DAG ships with the package
+           formula = Y ~ X + M + C + Z,
+           engine = lm,
+           data = test_df, # this example dataset ships with the package
+           exposure = "X",
+           outcome = "Y")
 ```
 
-What is special about using `README.Rmd` instead of just `README.md`? You can include R chunks like so:
-
-```{r cars}
-summary(cars)
-```
-
-You'll still need to render `README.Rmd` regularly, to keep `README.md` up-to-date. `devtools::build_readme()` is handy for this.
-
-You can also embed plots, for example:
-
-```{r pressure, echo = FALSE}
-plot(pressure)
-```
-
-In that case, don't forget to commit and push the resulting figure files, so they display on GitHub and CRAN.

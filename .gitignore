@@ -6,6 +6,7 @@
 .Rapp.history
 .Renviron
 .Rprofile
+.Rproj
 
 # OS/editor noise
 .DS_Store

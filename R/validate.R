@@ -25,7 +25,7 @@ validate_spec <- function(dag, formula, data, exposure, outcome){
   if(is.character(formula)) formula <- stats::as.formula(formula)
   # let the user know if the inputs do not work
   if(!inherits(dag, "dagitty")){
-    stop("`dag` must be a ggdag object. Create it with dagitty::dagitty() or 
+    stop("`dag` must be a dagitty object. Create it with dagitty::dagitty() or 
          ggdag::dagify().")
   }
   

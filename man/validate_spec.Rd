@@ -33,7 +33,7 @@ Invisibly returns \code{x}.
 Validate dag, formula, data before fitting and ensure exposure and outcome are
 specified
 
-Minimal, clean printout for validation results
+Minimal, clean printout for validation results with color coding
 }
 \examples{
 v <- validate_spec(dag, Y ~ X + Z, df, exposure = "X", outcome = "Y")

@@ -116,7 +116,8 @@ classify_nodes <- function(dag, exposure, outcome) {
   ### definition sets
   ## ...and finally, colliders are nodes with 2+ parents that lie on an x/y path
   collider_set <- intersect(collider_structural, on_xy_path) 
-  conf_set <- setdiff(intersect(ancX, ancY), descX) # not a descendant of X
+  # not a descendant of X -- have to use setdiff or X will show as a confounder sometimes
+  conf_set <- setdiff(intersect(ancX, ancY), c(descX, exposure, outcome)) 
   med_set <- setdiff(intersect(descX, ancY), c(exposure, outcome))  # desc X/anc Y, not endpoint
   doY_set <- descY # descendants of outcome
   doX_set <- setdiff(descX, exposure) # descendants of exposure (not X itself)

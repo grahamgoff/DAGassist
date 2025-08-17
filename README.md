@@ -77,9 +77,9 @@ Z           0.49787901 0.09236472  5.3903590 1.208907e-07
 - [ ] Handling multiple minimal adjustment sets
 - [ ] Engine compatibility with all major engines
 - [ ] Handle diff-in-diff and fixed effects formula notation
-- [ ] Add graphics and colors - \[ \] gray scale of the original model,
-  with the minimal set visibly differentiated. - \[ \] more colors in
-  output
+- [ ] Add graphics: gray scale of the original model, with the minimal
+  set visibly differentiated.
+- [ ] Add more colors in output
 - [ ] Clarify the validation output
 - [ ] Add neat tables to the console output
 - [ ] Add options for LaTeX and Kable output

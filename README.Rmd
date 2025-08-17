@@ -13,6 +13,18 @@ knitr::opts_chunk$set(
 )
 ```
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE, comment = "#>",
+  fig.path = "man/figures/README-", out.width = "100%"
+)
+# Optional: if not installed yet (during dev), load from source so the example runs
+if (!requireNamespace("DAGassist", quietly = TRUE) &&
+    requireNamespace("devtools", quietly = TRUE)) {
+  devtools::load_all(quiet = TRUE)
+}
+```
+
 # DAGassist
 
 <!-- badges: start -->
@@ -38,10 +50,14 @@ This is a basic example which shows you how to solve a common problem:
 ```{r example}
 library(DAGassist) 
 
-dag_assist(dag = test_complex, #this example DAG ships with the package
+# Load the shipped demo DAG and data
+data(test_complex, package = "DAGassist")
+data(test_df,      package = "DAGassist")
+
+dag_assist(dag = test_complex, 
            formula = Y ~ X + M + C + Z,
            engine = lm,
-           data = test_df, # this example dataset ships with the package
+           data = test_df, 
            exposure = "X",
            outcome = "Y")
 ```

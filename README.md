@@ -27,10 +27,14 @@ This is a basic example which shows you how to solve a common problem:
 ``` r
 library(DAGassist) 
 
-dag_assist(dag = test_complex, #this example DAG ships with the package
+# Load the shipped demo DAG and data
+data(test_complex, package = "DAGassist")
+data(test_df,      package = "DAGassist")
+
+dag_assist(dag = test_complex, 
            formula = Y ~ X + M + C + Z,
            engine = lm,
-           data = test_df, # this example dataset ships with the package
+           data = test_df, 
            exposure = "X",
            outcome = "Y")
 #> $validation

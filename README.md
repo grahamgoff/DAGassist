@@ -4,6 +4,8 @@
 # DAGassist
 
 <!-- badges: start -->
+
+[![R-CMD-check](https://github.com/grahamgoff/DAGassist/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/grahamgoff/DAGassist/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 **An all-in-one DAG-driven robustness check.** Classifies variables by

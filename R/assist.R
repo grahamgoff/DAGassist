@@ -211,8 +211,8 @@ dag_assist <- function(dag, formula, data, exposure, outcome,
 #' @export
 #' 
 print.DAGassist_report <- function(x, ...) {
-  cat("DAGassist report\n")
-  cat("Validation: ", if (x$validation$ok) "VALID" else "INVALID", "\n", sep = "")
+  cat("DAGassist Report:\n")
+  #cat("Validation: ", if (x$validation$ok) "VALID" else "INVALID", "\n", sep = "")
   if (!x$validation$ok) { print(x$validation); return(invisible(x)) }
   
   cat("\nRoles:\n")

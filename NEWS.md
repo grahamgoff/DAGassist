@@ -38,7 +38,7 @@
   - `validate.R` now validates only the base part of the formula (pre-`|`), so fixed effects / IV parts (e.g., id, time, region) are not required to appear in the DAG.
  
 Next steps: 
-- [ ] `Validation: VALID` is super vague and I don't think there's acyclicity-check
+- [x] `Validation: VALID` is super vague and I don't think there's acyclicity-check
     functionality in `validate.R`. Fix that output and add acyclicity function.
 - [ ] Adapt `print.DAGassist_report` to work with different models like feols, 
     specifically in the model compare. feols is snagging on "original fit 

@@ -66,6 +66,37 @@ validate_spec <- function(dag, formula, data, exposure, outcome){
          ggdag::dagify().")
   }
   
+  #create issues table which we will append to as we go
+  issues <- new_issue_table() 
+  
+  # Local helper to add a row to the issues table (mutates `issues` via <<-)
+  add_issue <- function(severity, type, variable, message) {
+    issues <<- rbind(
+      issues, 
+      data.frame(severity = severity, type = type, variable = variable, 
+                         message = message, stringsAsFactors = FALSE))
+  }
+    
+  # acyclicity check 
+  acyclic <- tryCatch(dagitty::isAcyclic(dag), error = function(e) NA)
+  if (isFALSE(acyclic)) {
+    cyc <- tryCatch(dagitty::findCycle(dag), error = function(e) NULL)
+    
+    # `findCycle()` may return a character vector or a list; normalize to a string
+    if (is.list(cyc)) cyc <- cyc[[1]]
+    cycle_str <- if (!is.null(cyc) && length(cyc) > 1) {
+      paste0(paste(cyc, collapse = " -> "), " -> ", cyc[1])
+    } else {
+      "Could not extract the cycle path."
+    }
+    
+    add_issue("error", "dag_not_acyclic", "dag", 
+              sprintf("DAG contains a directed cycle: %s", cycle_str))} 
+  else if (is.na(acyclic)) {
+    add_issue("warn", "acyclicity_check_failed", "dag",
+              "Acyclicity check failed to run (isAcyclic threw an error).")
+  }
+  
   # if data is a character, look it up for helpful error message
   if (is.character(data)) {
     # search the environment for an object with that name
@@ -93,15 +124,6 @@ validate_spec <- function(dag, formula, data, exposure, outcome){
   dag_vars <- names(dag)
   formula_vars <- all.vars(base_fml) #only look at pre- | in fixest/iv formulas
   data_vars <- names(data)
-  
-  #create issues table which we will append to as we go
-  issues <- new_issue_table() 
-  # Local helper to add a row to the issues table (mutates `issues` via <<-)
-  add_issue <- function(severity, type, variable, message) {
-    issues <<- rbind(
-      issues, data.frame(severity = severity, type = type, variable = variable, 
-                         message = message, stringsAsFactors = FALSE))
-  }
   
   #add entries to issue table if the exposure or outcome are incorrect
   if (!exposure %in% dag_vars)  add_issue("error", "missing_in_dag",  exposure, "Exposure not found in DAG.")

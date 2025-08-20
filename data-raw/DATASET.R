@@ -23,6 +23,14 @@ test_mediator <- dagify(
   outcome = "Y"
 )
 
+test_cycle <- dagify(
+  Y~X,
+  Z~Y,
+  X~Z,
+  exposure = "X",
+  outcome = "Y"
+)
+
 test_complex <- dagify(
   Y ~ X + M + Z + B,
   M ~ X + A,
@@ -80,4 +88,4 @@ test_df$Y2 <- 1.0*test_df$X + 0.6*test_df$Z + 0.6*test_df$M + eps_clustered
 
 
 usethis::use_data(test_confounder, test_collider, test_mediator, test_complex, 
-                  test_df, overwrite = TRUE)
+                  test_df, test_cycle, overwrite = TRUE)

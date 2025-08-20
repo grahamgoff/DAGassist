@@ -140,6 +140,19 @@
   attr(stats::terms(base), "term.labels")
 }
 
+# Return ALL minimal adjustment sets as a list 
+.minimal_sets_all <- function(dag, exposure, outcome) {
+  sets <- tryCatch(
+    dagitty::adjustmentSets(dag, exposure = exposure, outcome = outcome, type = "minimal"),
+    error = function(e) NULL
+  )
+  if (is.null(sets) || length(sets) == 0) return(list())
+  lapply(sets, function(s) sort(setdiff(as.character(s), c(exposure, outcome))))
+}
+
+# Pretty formatter for multiple adjustment sets: c("A","B") -> "{A, B}"
+.format_set <- function(s) paste0("{", paste(s, collapse = ", "), "}")
+
 # Are two formulas text-identical?
 .same_formula <- function(f1, f2) {
   paste(deparse(f1), collapse = " ") == paste(deparse(f2), collapse = " ")
@@ -156,6 +169,56 @@
   )
 }
 
+# Flexible comparison printer for a named list of models.
+.print_model_comparison_list <- function(mods) {
+  if (requireNamespace("modelsummary", quietly = TRUE)) {
+    tab <- modelsummary::msummary(
+      mods,
+      stars = TRUE,
+      output   = "markdown",
+      gof_omit = "IC|Log|Adj|Pseudo|AIC|BIC|F$|RMSE$|Within|Between|Std|sigma"
+    )
+    cat("\nModel comparison:\n")
+    if (is.character(tab)) cat(paste(tab, collapse = "\n")) else print(tab)
+    return(invisible(NULL))
+  }
+  if (requireNamespace("broom", quietly = TRUE)) {
+    cat("\nModel comparison (fallback; install {modelsummary} for a nicer table):\n")
+    for (nm in names(mods)) {
+      m <- mods[[nm]]
+      if (inherits(m, "DAGassist_fit_error")) {
+        cat("\n", nm, " (fit error): ", m$error, "\n", sep = ""); next
+      }
+      tt <- tryCatch(broom::tidy(m), error = function(e) NULL)
+      if (is.null(tt)) { cat("\n", nm, ": could not be tidied.\n", sep = ""); next }
+      cols <- intersect(c("term","estimate","std.error","statistic","p.value"), names(tt))
+      cat("\n", nm, ":\n", sep = ""); print(utils::head(tt[, cols, drop = FALSE], 10))
+    }
+    return(invisible(NULL))
+  }
+  cat("\nModel comparison (basic):\n")
+  for (nm in names(mods)) {
+    m <- mods[[nm]]
+    cat("\n", nm, " (coef head):\n", sep = "")
+    if (inherits(m, "DAGassist_fit_error")) { cat("fit error: ", m$error, "\n", sep = ""); next }
+    print(utils::head(tryCatch(stats::coef(m), error = function(e) NULL)))
+  }
+  invisible(NULL)
+}
+
+## helps find the exposure and outcome names for the note on DAG-derived additions
+get_by_role <- function(roles, value) {
+  if ("role" %in% names(roles)) {
+    v <- roles$variable[roles$role == value]
+    if (length(v)) return(v[1])
+  }
+  if (identical(value, "exposure") && !is.null(roles$is_exposure) && any(roles$is_exposure))
+    return(roles$variable[roles$is_exposure][1])
+  if (identical(value, "outcome")  && !is.null(roles$is_outcome)  && any(roles$is_outcome))
+    return(roles$variable[roles$is_outcome][1])
+  NA_character_
+}
+########################## LEGACY HELPER FUNCTIONS #############################
 # Pretty, engine-agnostic model comparison table.
 # Uses modelsummary if available; else falls back to broom; else coef() head.
 # added canonical models
@@ -278,37 +341,61 @@ dag_assist <- function(dag, formula, data, exposure, outcome,
   bad_in_user <- intersect(user_controls, bad)
   
   
-  # minimal set
-  minimal <- pick_minimal_controls(dag, exposure, outcome)
-  f_min   <- .build_minimal_formula(formula, exposure, outcome, minimal)
+  # all the minimal sets
+  minimal_sets_all <- .minimal_sets_all(dag, exposure, outcome)
+  # keep a single minimal for reference
+  minimal <- if (length(minimal_sets_all)) minimal_sets_all[[1]] else character(0)
   
-  # canonical set & formula (deterministic fewest-then-lexicographic picker)
+  # formulas for all minimal sets---preserve fixest tails
+  f_mins <- lapply(minimal_sets_all, function(s) .build_formula_with_controls(formula, exposure, outcome, s))
+  
+  # canonical set and formula
   canonical <- .pick_canonical_controls(dag, exposure, outcome)
   f_canon   <- .build_formula_with_controls(formula, exposure, outcome, canonical)
   
-  # fits: pass formula & data positionally (engine-agnostic: lm, feols, lmer, etc.)
-  # reuse when formulas are identical and  ALWAYS keep a Canonical column
-  m_orig  <- .safe_fit(engine, formula, data, engine_args)
-  m_min   <- if (.same_formula(f_min, formula))  m_orig  else .safe_fit(engine, f_min,   data, engine_args)
-  m_canon <- if (.same_formula(f_canon, formula)) m_orig
-  else if (.same_formula(f_canon, f_min))   m_min
-  else                                      .safe_fit(engine, f_canon, data, engine_args)
+  #fits: always show Original, every Minimal, and Canonical at the end 
+  #if there are multiple min, push canonical to the end
+  m_orig <- .safe_fit(engine, formula, data, engine_args)
   
-  # add canon tick to roles table
+  # fit each Minimal, reusing m_orig if identical
+  m_mins <- lapply(f_mins, function(fm) {
+    if (.same_formula(fm, formula)) m_orig else .safe_fit(engine, fm, data, engine_args)
+  })
+  
+  # fit Canonical, reusing an existing fit if identical to Original or a Minimal_i
+  if (.same_formula(f_canon, formula)) {
+    m_canon <- m_orig
+  } else {
+    same_idx <- which(vapply(f_mins, function(fm) .same_formula(fm, f_canon), logical(1)))
+    m_canon <- if (length(same_idx)) m_mins[[same_idx[1]]] else .safe_fit(engine, f_canon, data, engine_args)
+  }
+  
+  # mark canonical in roles table
   if (is.data.frame(roles) && "variable" %in% names(roles)) {
     roles$canon <- ifelse(roles$variable %in% canonical, "x", "")
   }
   
   out <- list(
-    validation         = v, 
-    roles              = roles,
-    bad_in_user        = bad_in_user,
-    controls_minimal   = minimal,
+    validation = v, 
+    roles = roles,
+    bad_in_user = bad_in_user,
+    controls_minimal = minimal, # keeps legacy single-min key
+    controls_minimal_all = minimal_sets_all, # all minimal sets
     controls_canonical = canonical,
-    formulas           = list(original = formula, minimal = f_min, canonical = f_canon),
-    models             = list(original = m_orig,   minimal = m_min, canonical = m_canon)
+    formulas = list(
+      original = formula,
+      # so it prints multiple formulas if there are multiple minimal sets
+      minimal = if (length(f_mins)) f_mins[[1]] else .build_minimal_formula(formula, exposure, outcome, minimal),
+      minimal_list = f_mins, #  all minimal formulas
+      canonical = f_canon
+    ),
+    models = list(
+      original= m_orig,
+      minimal = if (length(m_mins)) m_mins[[1]] else .safe_fit(engine, .build_minimal_formula(formula, exposure, outcome, minimal), data, engine_args),
+      minimal_list = m_mins, # all minimal fits
+      canonical = m_canon
+    )
   )
-  
   class(out) <- c("DAGassist_report", class(out))
   out
 }
@@ -340,29 +427,113 @@ print.DAGassist_report <- function(x, ...) {
     cat("\nNo bad controls detected in your formula.\n")
   }
   
-  #print the controls and compare the formulas
-  cat("\nMinimal controls: {",   paste(x$controls_minimal,   collapse = ", "), "}\n", sep = "")
-  cat("Canonical controls: {",   paste(x$controls_canonical, collapse = ", "), "}\n", sep = "")
+  # compare adjsutment sets
+  if (length(x$controls_minimal_all)) {
+    for (i in seq_along(x$controls_minimal_all)) {
+      cat("Minimal controls ", i, ": ", .format_set(x$controls_minimal_all[[i]]), "\n", sep = "")
+    }
+  } else {
+    cat("Minimal controls 1: {}\n")
+  }
+  cat("Canonical controls: ", .format_set(x$controls_canonical), "\n", sep = "")
   
-  cat("\nFormulas:\n",
-      "  original:  ",  deparse(x$formulas$original),  "\n",
-      "  minimal :  ",  deparse(x$formulas$minimal),   "\n",
-      "  canonical: ",  deparse(x$formulas$canonical),  "\n", sep = "")
-
-  # Note if specs are identical (check all pairs)
-  same_om <- .same_formula(x$formulas$original,  x$formulas$minimal)
-  same_oc <- .same_formula(x$formulas$original,  x$formulas$canonical)
-  same_mc <- .same_formula(x$formulas$minimal,   x$formulas$canonical)
+  # compare formulas
+  cat("\nFormulas:\n", sep = "")
+  cat("  original:  ",  deparse(x$formulas$original),  "\n", sep = "")
+  if (length(x$formulas$minimal_list)) {
+    for (i in seq_along(x$formulas$minimal_list)) {
+      cat("  minimal ", sprintf("%-2d", i), ": ", deparse(x$formulas$minimal_list[[i]]), "\n", sep = "")
+    }
+  } else {
+    cat("  minimal 1: ", deparse(x$formulas$minimal), "\n", sep = "")
+  }
+  cat("  canonical: ",  deparse(x$formulas$canonical), "\n", sep = "")
   
-  if (same_om || same_oc || same_mc) {
-    pairs <- character(0)
-    if (same_om) pairs <- c(pairs, "Original = Minimal")
-    if (same_oc) pairs <- c(pairs, "Original = Canonical")
-    if (same_mc) pairs <- c(pairs, "Minimal = Canonical")
+  ## Note if specs are identical (check all pairs and sets)
+  mins_fmls <- if (length(x$formulas$minimal_list)) x$formulas$minimal_list else list(x$formulas$minimal)
+  #initialize empty value for later
+  pairs <- character(0)
+  
+  # original vs each minimal 
+  for (i in seq_along(mins_fmls)) {
+    if (.same_formula(x$formulas$original, mins_fmls[[i]])) {
+      pairs <- c(pairs, sprintf("Original = Minimal %d", i))
+    }
+  }
+  
+  # canonical vs original
+  if (.same_formula(x$formulas$canonical, x$formulas$original)) {
+    pairs <- c(pairs, "Canonical = Original")
+  }
+  
+  # canonical vs each minimal 
+  for (i in seq_along(mins_fmls)) {
+    if (.same_formula(x$formulas$canonical, mins_fmls[[i]])) {
+      pairs <- c(pairs, sprintf("Canonical = Minimal %d", i))
+    }
+  }
+  
+  # minimal vs minimal 
+  if (length(mins_fmls) > 1) {
+    for (i in seq_len(length(mins_fmls) - 1L)) {
+      for (j in seq.int(i + 1L, length(mins_fmls))) {
+        if (.same_formula(mins_fmls[[i]], mins_fmls[[j]])) {
+          pairs <- c(pairs, sprintf("Minimal %d = Minimal %d", i, j))
+        }
+      }
+    }
+  }
+  
+  if (length(pairs)) {
     cat("\nNote: some specifications are identical (",
         paste(pairs, collapse = "; "),
         ").\nEstimates will match for those columns.\n", sep = "")
   }
   
-  .print_model_comparison(x$models$original, x$models$minimal, x$models$canonical)
+  ## Concise note about DAG-derived additions 
+  
+  # user RHS terms from the original pre-| formula
+  user_rhs <- .rhs_terms_safe(x$formulas$original)
+  
+  exp_nm <- get_by_role(x$roles, "exposure")
+  out_nm <- get_by_role(x$roles, "outcome")
+  
+  # build one short line per column that added variables
+  lines <- character(0)
+  drop_exp <- if (!is.na(exp_nm) && nzchar(exp_nm)) exp_nm else character(0)
+  
+  mins_fmls <- if (length(x$formulas$minimal_list)) x$formulas$minimal_list else list(x$formulas$minimal)
+  for (i in seq_along(mins_fmls)) {
+    rhs_i  <- setdiff(.rhs_terms_safe(mins_fmls[[i]]), drop_exp)
+    added  <- setdiff(rhs_i, user_rhs)
+    if (length(added)) lines <- c(lines, sprintf("  - Minimal %d added: %s", i, .format_set(added)))
+  }
+  
+  rhs_c    <- setdiff(.rhs_terms_safe(x$formulas$canonical), drop_exp)
+  added_c  <- setdiff(rhs_c, user_rhs)
+  if (length(added_c)) lines <- c(lines, sprintf("  - Canonical added: %s", .format_set(added_c)))
+  
+  if (length(lines)) {
+    if (!is.na(exp_nm) && nzchar(exp_nm) && !is.na(out_nm) && nzchar(out_nm)) {
+      cat("\nNote: DAGassist added variables not in your formula, based on the\nrelationships in your DAG, ",
+          "to block back-door paths\nbetween ", exp_nm, " and ", out_nm, ".\n", sep = "")
+    } else {
+      cat("\nNote: DAGassist added variables not in your formula, based on the\nrelationships in your DAG, ",
+          "to block back-door paths.\n", sep = "")
+    }
+    cat(paste(lines, collapse = "\n"), "\n", sep = "")
+  }
+  
+  ## build the model list for modelsummary/broom
+  mods <- list("Original" = x$models$original)
+  if (length(x$models$minimal_list)) {
+    for (i in seq_along(x$models$minimal_list)) {
+      mods[[sprintf("Minimal %d", i)]] <- x$models$minimal_list[[i]]
+    }
+  } else {
+    mods[["Minimal 1"]] <- x$models$minimal
+  }
+  mods[["Canonical"]] <- x$models$canonical
+  
+  .print_model_comparison_list(mods)
 }

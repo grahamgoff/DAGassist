@@ -67,16 +67,16 @@ bad_controls_in(dag = test_complex,
 
 ## Roadmap to v2.0:
 
+- [x] Add acyclicity checks to validate.R
+- [x] Clarify the validation output
+- [x] Add neat tables to the console output
+- [x] Include Canonical adjustment sets
 - [ ] Ensure that classify.R categories are **always** accurate
-- [ ] Add acyclicity checks to validate.R
-- [ ] Include Canonical adjustment sets
 - [ ] Handling multiple minimal adjustment sets
 - [ ] Engine compatibility with all major engines
 - [ ] Handle diff-in-diff and fixed effects formula notation
 - [ ] Add graphics: gray scale of the original model, with the minimal set visibly          differentiated.
 - [ ] Add more colors in output
-- [ ] Clarify the validation output
-- [ ] Add neat tables to the console output
 - [ ] Add options for LaTeX and Kable output
 - [ ] Add export_report functionality, which will print a publication-grade 2-page robustness check with a single, simple call (for robustness check use)
 - [ ] Add a simple "covariate sensitivity" line to report, indicating if (i) the original model is statistically significant; (ii) the minimal or canonical set is statistically insignificant

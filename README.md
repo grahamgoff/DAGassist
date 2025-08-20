@@ -36,8 +36,7 @@ dag_assist(dag = test_complex,
            data = test_df, 
            exposure = "X",
            outcome = "Y")
-DAGassist report
-Validation: VALID
+DAGassist Report:
 
 Roles:
 variable  role        X  Y  conf  med  col  desc(Y)  desc(X)
@@ -47,28 +46,53 @@ Z         confounder        x
 M         mediator                x                  x      
 C         collider                     x    x        x      
 A         other                                             
+B         other                                             
 
  (!) Bad controls in your formula: {M, C}
 
 Minimal controls: {Z}
+Canonical controls: {Z}
 
 Formulas:
-  original: Y ~ X + M + C + Z
-  minimal : Y ~ X + Z
+  original:  Y ~ X + M + C + Z
+  minimal :  Y ~ X + Z
+  canonical: Y ~ X + Z
 
-Original fit (coef head):
-               Estimate Std. Error    t value     Pr(>|t|)
-(Intercept)  0.01259982 0.02857765  0.4408975 6.595284e-01
-X           -0.14353786 0.07616901 -1.8844654 6.023608e-02
-M            0.34267779 0.03997889  8.5714675 2.334644e-16
-C            0.69743534 0.03235632 21.5548403 1.094768e-68
-Z            0.18215074 0.05378954  3.3863597 7.793151e-04
+Note: some specifications are identical (Minimal = Canonical).
+Estimates will match for those columns.
 
-Minimal  fit (coef head):
-              Estimate Std. Error    t value     Pr(>|t|)
-(Intercept) 0.03307336 0.05073773  0.6518494 5.148755e-01
-X           1.50834433 0.08531194 17.6803421 5.167703e-52
-Z           0.49787901 0.09236472  5.3903590 1.208907e-07
+Model comparison:
+
++-------------+----------+----------+-----------+
+|             | Original | Minimal  | Canonical |
++=============+==========+==========+===========+
+| (Intercept) | 0.011    | 0.015    | 0.015     |
++-------------+----------+----------+-----------+
+|             | (0.030)  | (0.045)  | (0.045)   |
++-------------+----------+----------+-----------+
+| X           | -0.082   | 1.388*** | 1.388***  |
++-------------+----------+----------+-----------+
+|             | (0.082)  | (0.074)  | (0.074)   |
++-------------+----------+----------+-----------+
+| M           | 0.255*** |          |           |
++-------------+----------+----------+-----------+
+|             | (0.042)  |          |           |
++-------------+----------+----------+-----------+
+| C           | 0.648*** |          |           |
++-------------+----------+----------+-----------+
+|             | (0.035)  |          |           |
++-------------+----------+----------+-----------+
+| Z           | 0.343*** | 0.645*** | 0.645***  |
++-------------+----------+----------+-----------+
+|             | (0.054)  | (0.078)  | (0.078)   |
++-------------+----------+----------+-----------+
+| Num.Obs.    | 400      | 400      | 400       |
++-------------+----------+----------+-----------+
+| R2          | 0.931    | 0.841    | 0.841     |
++=============+==========+==========+===========+
+| + p < 0.1, * p < 0.05, ** p < 0.01, *** p <   |
+| 0.001                                         |
++=============+==========+==========+===========+ 
 ```
 
 ## How to get the most out of **DAGassist**
@@ -84,6 +108,7 @@ Z         confounder        x
 M         mediator                x                  x      
 C         collider                     x    x        x      
 A         other                                             
+B         other                                             
 ```
 
 ### Quickly flag bad controls:
@@ -98,17 +123,17 @@ bad_controls_in(dag = test_complex,
 
 ## Roadmap to v2.0:
 
+- [x] Add acyclicity checks to validate.R
+- [x] Clarify the validation output
+- [x] Add neat tables to the console output
+- [x] Include Canonical adjustment sets
 - [ ] Ensure that classify.R categories are **always** accurate
-- [ ] Add acyclicity checks to validate.R
-- [ ] Include Canonical adjustment sets
 - [ ] Handling multiple minimal adjustment sets
 - [ ] Engine compatibility with all major engines
 - [ ] Handle diff-in-diff and fixed effects formula notation
 - [ ] Add graphics: gray scale of the original model, with the minimal
   set visibly differentiated.
 - [ ] Add more colors in output
-- [ ] Clarify the validation output
-- [ ] Add neat tables to the console output
 - [ ] Add options for LaTeX and Kable output
 - [ ] Add export_report functionality, which will print a
   publication-grade 2-page robustness check with a single, simple call

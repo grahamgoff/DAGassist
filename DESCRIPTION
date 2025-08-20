@@ -3,7 +3,7 @@ Title: DAG-driven robustness checks for R
 Version: 0.1.0
 Authors@R: 
     person("Graham", "Goff", , "goffgrahamc@gmail.com", role = c("aut", "cre"))
-Description: classify roles, flag bad controls, and compare original vs minimal adjustment sets
+Description: Classify roles, flag bad controls, and compare original vs minimal adjustment sets.
 License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

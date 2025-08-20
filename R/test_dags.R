@@ -51,3 +51,21 @@ NULL   # this anchors the shared help page
 #' @format A data frame with 3 variables: `X`, `Y`, `Z`.
 #' @source Simulated for examples in the package.
 "partial_test_df"
+
+#' Cyclic DAG used to trigger acyclicity errors
+#'
+#' @format A `dagitty` object with variables X,Y,Z
+#' @source Simulated for examples in the package.
+"test_cycle"
+
+#' DAG with two minimal adjustment sets
+#' 
+#' @format A `dagitty` object with variables M,W,X,Y,Z
+#' @source Simulated for examples in the package
+"test_multimin"
+
+#' DAG with four minimal adjustment sets
+#'
+#' @format A `dagitty` object with variables M,N,W,X,Y,Z
+#' @source Simulated for examples in the package.
+"test_multimin4"

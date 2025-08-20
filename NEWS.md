@@ -23,14 +23,14 @@
 
 #### Changed
 
--**Clarified validation output and added acyclicity check to `assist.R`**
--**Adapted the report printer in `assist.R` to be model-agnostic **
-  - Now accepts most common models 
--**Added table to report**
+- **Clarified validation output and added acyclicity check to `assist.R`**
+- **Adapted the report printer in `assist.R` to be model-agnostic**
+  - Now accepts most common models
+- **Added table to report**
   - `modelsummary()` preferred, `broom` secondary, coef head fall-back
--**Added canonical adjustment sets to the table and model comparison**
--**Added multiple minimal adjustment set functionality**
--**Added `verbose` parameter to `dag_assist` to suppress formula and notes**
+- **Added canonical adjustment sets to the table and model comparison**
+- **Added multiple minimal adjustment set functionality**
+- **Added `verbose` parameter to `dag_assist` to suppress formula and notes**
   - Given the report states the adjustment sets, formulas + notes about imputed controls could be a lot.
 
 ### 0.1.0 — 2025-08-19

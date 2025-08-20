@@ -11,6 +11,8 @@ knitr::opts_chunk$set(
 )
 
 devtools::load_all(quiet = TRUE)
+
+library(fixest)
 ```
 
 # DAGassist
@@ -40,12 +42,7 @@ library(DAGassist)
 This is a basic example which shows you how to solve a common problem:
 
 ```{r run}
-dag_assist(dag = test_complex, 
-           formula = Y ~ X + M + C + Z,
-           engine = lm,
-           data = test_df, 
-           exposure = "X",
-           outcome = "Y")
+dag_assist(dag=test_complex, formula = feols(Y ~ X + Z + B + A + C + M | region + time, data = test_df))
 ```
 
 ## How to get the most out of **DAGassist**

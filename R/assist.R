@@ -107,7 +107,7 @@
 # will need to add multiple-set functionality eventually
 .pick_canonical_controls <- function(dag, exposure, outcome) {
   sets <- tryCatch(
-    dagitty::adjustmentSets(dag, exposure = exposure, outcome = outcome, type = "minimal"),
+    dagitty::adjustmentSets(dag, exposure = exposure, outcome = outcome, type = "canonical"),
     error = function(e) NULL
   )
   if (is.null(sets) || length(sets) == 0) return(character(0))

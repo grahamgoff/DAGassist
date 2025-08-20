@@ -12,7 +12,8 @@ dag_assist(
   exposure,
   outcome,
   engine = stats::lm,
-  engine_args = list()
+  engine_args = list(),
+  verbose = TRUE
 )
 }
 \arguments{
@@ -30,6 +31,8 @@ dag_assist(
 \item{engine}{the regression engine; default \code{stats::lm}}
 
 \item{engine_args}{a list with exra engine args---merged with any found in call}
+
+\item{verbose}{default TRUE-- TRUE/FALSE -- suppresses formulas and notes.}
 }
 \value{
 a list of class \code{out} with the \code{DAGassist_report}, which has values

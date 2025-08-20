@@ -1,6 +1,6 @@
 Package: DAGassist
 Title: DAG-driven robustness checks for R
-Version: 0.1.0
+Version: 0.2.0.9000
 Authors@R: 
     person("Graham", "Goff", , "goffgrahamc@gmail.com", role = c("aut", "cre"))
 Description: Classify roles, flag bad controls, and compare original vs minimal adjustment sets.

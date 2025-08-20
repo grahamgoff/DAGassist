@@ -18,17 +18,18 @@ dag_assist(
 \arguments{
 \item{dag}{a valid dagitty object}
 
-\item{formula}{a regression call}
+\item{formula}{a regression formula \emph{or} a single engine call--e.g.
+\code{feols(Y~X+Z | A, data = df, cluster = ~id)}}
 
-\item{data}{a valid data frame}
+\item{data}{a valid data frame, (optional if supplied via formula call)}
 
-\item{exposure}{the treatment variable name--eg X = "treatment"}
+\item{exposure}{optional; inferred from the DAG if missing}
 
-\item{outcome}{the outcome variabe name--eg Y = "outcome"}
+\item{outcome}{optional; inferred from DAG if missing}
 
-\item{engine}{the regression engine-- lm as default}
+\item{engine}{the regression engine; default \code{stats::lm}}
 
-\item{engine_args}{a list argument with exra engine args--eg list(vcov = ~id)}
+\item{engine_args}{a list with exra engine args---merged with any found in call}
 }
 \value{
 a list of class \code{out} with the \code{DAGassist_report}, which has values

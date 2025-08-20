@@ -1,3 +1,15 @@
+######################## NON-EXPORTED HELPER FUNCTIONS #########################
+##rReturn only the base formula for validation against the DAG
+#this is because of the 8/19/25 edits to assist.R that implied formula, data, 
+#engine and engine_args from a single regression call. the issue is validate.R
+#looks at the full formula and freaks out if there are ANY variables in the formula
+#that are not in the DAG. this fixes that. 
+.fixest_base_formula <- function(fml) {
+  s <- paste(deparse(fml, width.cutoff = 500), collapse = " ")
+  base <- trimws(strsplit(s, "\\|")[[1]][1])
+  stats::as.formula(base, env = environment(fml))
+}
+################################################################################
 #' Validate dag, formula, data before fitting and ensure exposure and outcome are
 #' specified
 #' 
@@ -46,6 +58,8 @@ validate_spec <- function(dag, formula, data, exposure, outcome){
   
   # standardize inputs as formulas
   if(is.character(formula)) formula <- stats::as.formula(formula)
+  # (8/19/25) use only the pre-| part of the formula for DAG checks
+  base_fml <- .fixest_base_formula(formula)
   # let the user know if the inputs do not work
   if(!inherits(dag, "dagitty")){
     stop("`dag` must be a dagitty object. Create it with dagitty::dagitty() or 
@@ -77,7 +91,7 @@ validate_spec <- function(dag, formula, data, exposure, outcome){
 
   #collect variable names
   dag_vars <- names(dag)
-  formula_vars <- all.vars(formula)
+  formula_vars <- all.vars(base_fml) #only look at pre- | in fixest/iv formulas
   data_vars <- names(data)
   
   #create issues table which we will append to as we go
@@ -101,10 +115,11 @@ validate_spec <- function(dag, formula, data, exposure, outcome){
   
   ## check the formula structure
   
-  # is formula DV the same as the `outcome` argument?
-  formula_response <- formula_vars[1]
-  # RHS labels (the terms after the ~)
-  formula_rhs <- attr(stats::terms(formula), "term.labels")
+  # is formula DV the same as the `outcome` argument? (use base formula)
+  formula_response <- as.character(base_fml)[2]
+  
+  # RHS labels (terms after ~) from the base part only (pre-|):
+  formula_rhs <- attr(stats::terms(base_fml), "term.labels")
   
   if (!identical(formula_response, outcome)) {
     add_issue(

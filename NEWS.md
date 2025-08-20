@@ -35,8 +35,7 @@
 ```
 
 -**Validation respects fixest-style formulas.**
--`validate.R` now validates only the base part of the formula (pre-|), so fixed 
-effects / IV parts (e.g., id, time, region) are not required to appear in the DAG.
+  -`validate.R` now validates only the base part of the formula (pre-|), so fixed effects / IV parts (e.g., id, time, region) are not required to appear in the DAG.
  
 Next steps: 
 - [ ] `Validation: VALID` is super vague and I don't think there's acyclicity-check

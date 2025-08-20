@@ -17,7 +17,9 @@ Suggests:
     knitr,
     rmarkdown,
     covr,
-    cli
+    cli,
+    modelsummary,
+    broom
 Depends: 
     R (>= 3.5)
 LazyData: true

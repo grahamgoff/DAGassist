@@ -108,6 +108,52 @@
   attr(stats::terms(base), "term.labels")
 }
 
+# Pretty, engine-agnostic model comparison table.
+# Uses {modelsummary} if available; else falls back to {broom}; else coef() head.
+.print_model_comparison <- function(m_orig, m_min) {
+  # Preferred: modelsummary
+  if (requireNamespace("modelsummary", quietly = TRUE)) {
+    mods <- list("Original" = m_orig, "Minimal" = m_min)
+    tab <- modelsummary::msummary(
+      mods,
+      stars = TRUE,
+      output   = "markdown",
+      gof_omit = "IC|Log|Adj|Pseudo|AIC|BIC|F$|RMSE|Within|Between|Std|sigma"
+    )
+    cat("\nModel comparison:\n")
+    if (is.character(tab)) {
+      cat(paste(tab, collapse = "\n"))
+    } else {
+      print(tab)  #print() the table---cat() won't print table objects
+    }
+    return(invisible(NULL))
+  }
+  
+  # Fallback: broom
+  if (requireNamespace("broom", quietly = TRUE)) {
+    t1 <- tryCatch(broom::tidy(m_orig), error = function(e) NULL)
+    t2 <- tryCatch(broom::tidy(m_min),  error = function(e) NULL)
+    cat("\nModel comparison (fallback; install {modelsummary} for a nicer table):\n")
+    if (!is.null(t1)) {
+      cat("\nOriginal:\n")
+      cols <- intersect(c("term","estimate","std.error","p.value"), names(t1))
+      print(utils::head(t1[, cols, drop = FALSE], 10))
+    } else cat("\nOriginal model could not be tidied.\n")
+    if (!is.null(t2)) {
+      cat("\nMinimal:\n")
+      cols <- intersect(c("term","estimate","std.error","p.value"), names(t2))
+      print(utils::head(t2[, cols, drop = FALSE], 10))
+    } else cat("\nMinimal model could not be tidied.\n")
+    return(invisible(NULL))
+  }
+  
+  # Last resort
+  cat("\nModel comparison (basic coefficients):\n")
+  cat("\nThis is a fallback; install {modelsummary} for a nicer table):\n")
+  cat("\nOriginal (coef head):\n"); print(utils::head(stats::coef(m_orig)))
+  cat("\nMinimal  (coef head):\n"); print(utils::head(stats::coef(m_min)))
+  invisible(NULL)
+}
 
 ################################################################################
 #' Main function
@@ -224,10 +270,21 @@ print.DAGassist_report <- function(x, ...) {
     cat("\nNo bad controls detected in your formula.\n")
   }
   
+  #print the minimal controls and compare the formulas
   cat("\nMinimal controls: {", paste(x$controls_minimal, collapse = ", "), "}\n", sep = "")
   cat("\nFormulas:\n  original: ", deparse(x$formulas$original),
       "\n  minimal : ", deparse(x$formulas$minimal), "\n", sep = "")
-  cat("\nOriginal fit (coef head):\n"); print(head(coef(summary(x$models$original))))
-  cat("\nMinimal  fit (coef head):\n"); print(head(coef(summary(x$models$minimal))))
+
+  # Note if the two specs are identical
+  same_spec <- identical(
+    paste(deparse(x$formulas$original), collapse = " "),
+    paste(deparse(x$formulas$minimal),  collapse = " ")
+  )
+  if (same_spec) {
+    cat("\nNote: original and minimal specifications are identical; estimates will match.\n")
+  }
+  
+  #print the pretty table
+  .print_model_comparison(x$models$original, x$models$minimal)
   invisible(x)
 }

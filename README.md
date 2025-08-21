@@ -93,29 +93,3 @@ Model comparison:
 | 0.001                                         |
 +============+==========+===========+===========+ 
 ```
-
-## How to get the most out of **DAGassist**
-
-### See each variable’s causal role:
-
-``` r
-classify_nodes(test_complex, exposure = "X", outcome = "Y")
-variable  role        X  Y  conf  med  col  desc(Y)  desc(X)
-X         exposure    x                                     
-Y         outcome        x                           x      
-Z         confounder        x                               
-M         mediator                x                  x      
-C         collider                     x    x        x      
-A         other                                             
-B         other                                             
-```
-
-### Quickly flag bad controls:
-
-``` r
-bad_controls_in(dag = test_complex, 
-                controls = c("Z", "M", "C"), 
-                exposure = "X",
-                outcome = "Y")
-[1] "M" "C"
-```

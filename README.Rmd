@@ -45,20 +45,3 @@ This is a basic example which shows you how to solve a common problem:
 dag_assist(dag=test_complex, formula = feols(Y ~ X + Z + B + A + C + M | region + time, data = test_df))
 ```
 
-## How to get the most out of **DAGassist**
-
-### See each variable's causal role:
-
-```{r}
-classify_nodes(test_complex, exposure = "X", outcome = "Y")
-```
-
-### Quickly flag bad controls:
-
-```{r}
-bad_controls_in(dag = test_complex, 
-                controls = c("Z", "M", "C"), 
-                exposure = "X",
-                outcome = "Y")
-```
-

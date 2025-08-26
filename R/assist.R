@@ -445,7 +445,7 @@ print.DAGassist_report <- function(x, ...) {
   if (length(x$bad_in_user)) {
     cat(clr_red("\n (!) Bad controls in your formula: {", paste(x$bad_in_user, collapse = ", "), "}\n", sep = ""))
   } else {
-    cat("\nNo bad controls detected in your formula.\n")
+    cat(clr_green("\nNo bad controls detected in your formula.\n"))
   }
   
   # compare adjsutment sets
@@ -460,7 +460,7 @@ print.DAGassist_report <- function(x, ...) {
   
   if(verbose){
   # compare formulas
-    cat("\nFormulas:\n", sep = "")
+    cat(clr_bold("\nFormulas:\n", sep = ""))
     cat("  original:  ",  deparse(x$formulas$original),  "\n", sep = "")
     if (length(x$formulas$minimal_list)) {
       for (i in seq_along(x$formulas$minimal_list)) {
@@ -537,11 +537,11 @@ print.DAGassist_report <- function(x, ...) {
   
     if (length(lines)) {
       if (!is.na(exp_nm) && nzchar(exp_nm) && !is.na(out_nm) && nzchar(out_nm)) {
-        cat("\nNote: DAGassist added variables not in your formula, based on the\nrelationships in your DAG, ",
-            "to block back-door paths\nbetween ", exp_nm, " and ", out_nm, ".\n", sep = "")
+        cat(clr_bold(clr_yellow("\nNote: DAGassist added variables not in your formula, based on the\nrelationships in your DAG, ",
+            "to block back-door paths\nbetween ", exp_nm, " and ", out_nm, ".\n", sep = "")))
       } else {
-        cat(clr_bold("\nNote: DAGassist added variables not in your formula, based on the\nrelationships in your DAG, ",
-            "to block back-door paths.\n", sep = ""))
+        cat(clr_bold(clr_yellow("\nNote: DAGassist added variables not in your formula, based on the\nrelationships in your DAG, ",
+            "to block back-door paths.\n", sep = "")))
       }
       cat(paste(lines, collapse = "\n"), "\n", sep = "")
     }

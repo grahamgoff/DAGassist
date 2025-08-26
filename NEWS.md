@@ -17,6 +17,8 @@
 - [ ] Add a simple "covariate sensitivity" line to report, indicating if (i) the original model is statistically significant; (ii) the minimal or canonical set is statistically insignificant
 - [ ] Run `dag_assist` on a bunch of complex DAGS to refine the sorting algorithm in `compare.R`.
 - [ ] Change `dag_assist` to `DAGassist`.
+- [ ] Add `imply`, default TRUE, logical parameter to disable adding variables to formula/table based on DAG relationships.
+
 ## UNRELEASED
 
 ### 0.2.0.9100 - 2025-08-26

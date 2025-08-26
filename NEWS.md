@@ -7,17 +7,22 @@
 - [x] Add neat tables to the console output
 - [x] Include Canonical adjustment sets
 - [x] Handling multiple minimal adjustment sets
+- [x] Add more colors in output
 - [ ] Ensure that classify.R categories are **always** accurate
 - [ ] Verify Engine compatibility with all major engines
 - [ ] Handle diff-in-diff and fixed effects formula notation
-- [ ] Add graphics: gray scale of the original model, with the minimal set visibly          differentiated.
-- [ ] Add more colors in output
+- [ ] Add graphics: gray scale of the original model, with the minimal set visibly differentiated.
 - [ ] Add options for LaTeX and Kable output
 - [ ] Add export_report functionality, which will print a publication-grade 2-page robustness check with a single, simple call (for robustness check use)
 - [ ] Add a simple "covariate sensitivity" line to report, indicating if (i) the original model is statistically significant; (ii) the minimal or canonical set is statistically insignificant
 - [ ] Run `dag_assist` on a bunch of complex DAGS to refine the sorting algorithm in `compare.R`.
-
+- [ ] Change `dag_assist` to `DAGassist`.
 ## UNRELEASED
+
+### 0.2.0.9100 - 2025-08-26
+
+#### Changed
+- **Added some pretty colors to console report output**
 
 ### 0.2.0.9000 - 2025-08-20
 

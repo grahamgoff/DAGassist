@@ -218,6 +218,20 @@ get_by_role <- function(roles, value) {
     return(roles$variable[roles$is_outcome][1])
   NA_character_
 }
+
+# Accept ... and paste internally so you can pass multiple args. 
+# this is for the pretty colors
+.clr_wrap <- function(prefix, suffix) {
+  force(prefix); force(suffix)
+  function(...) paste0(prefix, paste0(..., collapse = ""), suffix)
+}
+
+clr_red    <- .clr_wrap("\033[31m", "\033[39m")
+clr_green  <- .clr_wrap("\033[32m", "\033[39m")
+clr_yellow <- .clr_wrap("\033[33m", "\033[39m")
+clr_blue   <- .clr_wrap("\033[34m", "\033[39m")
+clr_bold   <- .clr_wrap("\033[1m",  "\033[22m")
+
 ########################## LEGACY HELPER FUNCTIONS #############################
 # Pretty, engine-agnostic model comparison table.
 # Uses modelsummary if available; else falls back to broom; else coef() head.
@@ -417,7 +431,8 @@ dag_assist <- function(dag, formula, data, exposure, outcome,
 #' @export
 #' 
 print.DAGassist_report <- function(x, ...) {
-  cat("DAGassist Report:\n")
+  
+  cat(clr_bold(clr_blue("DAGassist Report:")), "\n")
   #cat("Validation: ", if (x$validation$ok) "VALID" else "INVALID", "\n", sep = "")
   if (!x$validation$ok) { print(x$validation); return(invisible(x)) }
   
@@ -428,7 +443,7 @@ print.DAGassist_report <- function(x, ...) {
   print(x$roles)  # your pretty roles table
   
   if (length(x$bad_in_user)) {
-    cat("\n (!) Bad controls in your formula: {", paste(x$bad_in_user, collapse = ", "), "}\n", sep = "")
+    cat(clr_red("\n (!) Bad controls in your formula: {", paste(x$bad_in_user, collapse = ", "), "}\n", sep = ""))
   } else {
     cat("\nNo bad controls detected in your formula.\n")
   }
@@ -492,9 +507,9 @@ print.DAGassist_report <- function(x, ...) {
     }
   
     if (length(pairs)) {
-      cat("\nNote: some specifications are identical (",
+      cat(clr_yellow("\nNote: some specifications are identical (",
           paste(pairs, collapse = "; "),
-          ").\nEstimates will match for those columns.\n", sep = "")
+          ").\nEstimates will match for those columns.\n", sep = ""))
     }
   
     ## Concise note about DAG-derived additions 
@@ -525,8 +540,8 @@ print.DAGassist_report <- function(x, ...) {
         cat("\nNote: DAGassist added variables not in your formula, based on the\nrelationships in your DAG, ",
             "to block back-door paths\nbetween ", exp_nm, " and ", out_nm, ".\n", sep = "")
       } else {
-        cat("\nNote: DAGassist added variables not in your formula, based on the\nrelationships in your DAG, ",
-            "to block back-door paths.\n", sep = "")
+        cat(clr_bold("\nNote: DAGassist added variables not in your formula, based on the\nrelationships in your DAG, ",
+            "to block back-door paths.\n", sep = ""))
       }
       cat(paste(lines, collapse = "\n"), "\n", sep = "")
     }

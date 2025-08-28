@@ -1,14 +1,14 @@
 % ---- DAGassist LaTeX fragment (no preamble) ----
 % Requires: \usepackage{longtable}, \usepackage{booktabs}
-\begingroup\small
-\paragraph{Validation}
-\textbf{Status:} VALID.
-\\[2pt]\textit{No issues reported.}
-
-\paragraph{Variable roles}
+\begingroup\footnotesize
+\setlength{\LTleft}{0pt}\setlength{\LTright}{0pt}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{0.95}
+\setlength{\aboverulesep}{0pt}\setlength{\belowrulesep}{0pt}
+\noindent\textbf{Variable roles}
 \begin{center}
 \setlength{\LTleft}{0pt}\setlength{\LTright}{0pt}
-\begin{longtable}{@{ }l l l l l l l l l l@{ }}
+\begin{longtable}{@{}l l l l l l l l l l@{}}
 \toprule
 Variable & Role & X & Y & Conf. & Med. & Col. & Desc(Y) & Desc(X) & Canon \\
 \midrule
@@ -22,24 +22,12 @@ Variable & Role & X & Y & Conf. & Med. & Col. & Desc(Y) & Desc(X) & Canon \\
 \bottomrule
 \end{longtable}
 \end{center}
+\noindent\textit{Controls:} Minimal {Z} \quad Canonical {A, B, Z}
 
-\paragraph{Adjustment sets}
+\noindent\textbf{Model formulas}
 \begin{center}
 \setlength{\LTleft}{0pt}\setlength{\LTright}{0pt}
-\begin{longtable}{@{ }l l@{ }}
-\toprule
-Set & Controls \\
-\midrule
-{Minimal 1} & {\{Z\}} \\
-{Canonical} & {\{A, B, Z\}} \\
-\bottomrule
-\end{longtable}
-\end{center}
-
-\paragraph{Model formulas}
-\begin{center}
-\setlength{\LTleft}{0pt}\setlength{\LTright}{0pt}
-\begin{longtable}{@{ }l p{.72\textwidth}@{ }}
+\begin{longtable}{@{}l p{.68\textwidth}@{}}
 \toprule
 Model & Formula \\
 \midrule
@@ -49,11 +37,10 @@ Model & Formula \\
 \bottomrule
 \end{longtable}
 \end{center}
-
-\paragraph{Model comparison}
+\noindent\textbf{Model comparison}
 \begin{center}
 \setlength{\LTleft}{0pt}\setlength{\LTright}{0pt}
-\begin{longtable}{@{ }l l l l@{ }}
+\begin{longtable}{@{}l l l l@{}}
 \toprule
 Term & Original & Minimal 1 & Canonical \\
 \midrule
@@ -71,5 +58,5 @@ Term & Original & Minimal 1 & Canonical \\
 \end{longtable}
 \end{center}
 {\footnotesize \emph{Notes:} + p $< 0.1$, * p $< 0.05$, ** p $< 0.01$, *** p $< 0.001$.}
-
+{\footnotesize \emph{Notes:} + p $< 0.1$, * p $< 0.05$, ** p $< 0.01$, *** p $< 0.001$.}
 \endgroup

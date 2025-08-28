@@ -66,33 +66,31 @@
   stopifnot(is.data.frame(df))
   df2 <- lapply(df, function(col) .tex_escape(ifelse(is.na(col), "", as.character(col))))
   df2 <- as.data.frame(df2, stringsAsFactors = FALSE, optional = TRUE)
-  
-  if (wrap_formula && "Formula" %in% colnames(df2) && ncol(df2) >= 2) {
-    # first col 'l', last col 'p{.72\\textwidth}', any middle cols 'l'
-    mid <- max(0, ncol(df2) - 2)
-    colspec <- paste0(
-      "@{ }l ",
-      if (mid) paste(rep("l ", mid), collapse = ""),
-      "p{.72\\textwidth}@{ }"
-    )
-  } else {
-    colspec <- paste0("@{ }", paste(rep("l", ncol(df2)), collapse = " "), "@{ }")
-  }
-  
-  # Make term plain text
+
   if ("Term" %in% colnames(df2)) {
     df2[["Term"]] <- ifelse(nzchar(df2[["Term"]]),
                             paste0("\\textnormal{", df2[["Term"]], "}"),
                             df2[["Term"]])
   }
-  # Wrap every cell in a group to avoid TeX mis-parsing leading symbols like '('
   df2[] <- lapply(df2, function(col) ifelse(nzchar(col), paste0("{", col, "}"), col))
-
+  
+  if (wrap_formula && "Formula" %in% colnames(df2) && ncol(df2) >= 2) {
+    mid <- max(0, ncol(df2) - 2)
+    colspec <- paste0(
+      "@{}l",
+      if (mid) paste(rep(" l", mid), collapse = ""),
+      " p{.68\\textwidth}@{}"   # narrower to fit page
+    )
+  } else {
+    colspec <- paste0("@{}", paste(rep("l", ncol(df2)), collapse = " "), "@{}")  # no side padding
+  }
+  
   header  <- paste(.tex_escape(colnames(df2)), collapse = " & ")
   body    <- apply(df2, 1L, function(r) paste(r, collapse = " & "))
   
   c(
     "\\begin{center}",
+    # LT margins once per table is fine (also set globally below)
     "\\setlength{\\LTleft}{0pt}\\setlength{\\LTright}{0pt}",
     paste0("\\begin{longtable}{", colspec, "}"),
     "\\toprule",
@@ -214,50 +212,43 @@
   msets  <- tryCatch(res$min_sets,  error = function(e) list())
   canon  <- tryCatch(res$canon,     error = function(e) character(0))
   
+  # Build LaTeX lines (lean layout; no validation; no adj-sets table)
   lines <- c(
     "% ---- DAGassist LaTeX fragment (no preamble) ----",
     "% Requires: \\usepackage{longtable}, \\usepackage{booktabs}",
-    "\\begingroup\\small",
+    "\\begingroup\\footnotesize",
+    # compact layout for publication
+    "\\setlength{\\LTleft}{0pt}\\setlength{\\LTright}{0pt}",
+    "\\setlength{\\tabcolsep}{4pt}",
+    "\\renewcommand{\\arraystretch}{0.95}",
+    "\\setlength{\\aboverulesep}{0pt}\\setlength{\\belowrulesep}{0pt}",
     
-    # Validation
-    "\\paragraph{Validation}",
-    sprintf("\\textbf{Status:} %s.", .tex_escape(status)),
-    if (length(issues)) {
-      c("\\\\[2pt]\\textbf{Issues:}",
-        "\\begin{itemize}",
-        paste0("  \\item ", .tex_escape(issues)),
-        "\\end{itemize}")
-    } else "\\\\[2pt]\\textit{No issues reported.}",
-    
-    "",
-    
-    # Roles
+    # --- Variable roles (keep) ---
     if (is.data.frame(roles) && nrow(roles)) {
       roles_pretty <- .roles_pretty(roles)
-      c("\\paragraph{Variable roles}",
-        .df_to_longtable_centered(roles_pretty), "")
+      c("\\noindent\\textbf{Variable roles}",
+        .df_to_longtable_centered(roles_pretty),
+        # one-line controls summary instead of a whole table
+        {
+          ctrl_min <- if (length(msets)) .set_brace(msets[[1]]) else "{}"
+          ctrl_can <- if (length(canon)) .set_brace(canon) else "{}"
+          paste0("\\noindent\\textit{Controls:} Minimal ", ctrl_min,
+                 " \\quad Canonical ", ctrl_can, "\n")
+        })
     } else character(0),
     
-    # Adjustment sets
-    {
-      adj_df <- .sets_to_df(msets, canon)
-      if (nrow(adj_df)) {
-        c("\\paragraph{Adjustment sets}",
-          .df_to_longtable_centered(adj_df), "")
-      } else character(0)
-    },
-    
-    # Model formulas (wrap the Formula column)
+    # --- Model formulas (keep, compact) ---
     if (is.data.frame(f_tbl) && nrow(f_tbl)) {
       colnames(f_tbl) <- c("Model", "Formula")
-      c("\\paragraph{Model formulas}",
-        .df_to_longtable_centered(f_tbl, wrap_formula = TRUE), "")
+      c("\\noindent\\textbf{Model formulas}",
+        .df_to_longtable_centered(f_tbl, wrap_formula = TRUE))
     } else character(0),
     
-    # Model comparison via modelsummary
+    # --- Model comparison (keep) ---
     if (!is.null(mods)) {
-      c("\\paragraph{Model comparison}",
-        .msummary_to_longtable_centered(mods), "")
+      c("\\noindent\\textbf{Model comparison}",
+        .msummary_to_longtable_centered(mods),
+        "{\\footnotesize \\emph{Notes:} + p $< 0.1$, * p $< 0.05$, ** p $< 0.01$, *** p $< 0.001$.}")
     } else character(0),
     
     "\\endgroup"

@@ -13,7 +13,9 @@ dag_assist(
   outcome,
   engine = stats::lm,
   engine_args = list(),
-  verbose = TRUE
+  verbose = TRUE,
+  type = c("console", "latex"),
+  out = NULL
 )
 }
 \arguments{
@@ -33,6 +35,10 @@ dag_assist(
 \item{engine_args}{a list with exra engine args---merged with any found in call}
 
 \item{verbose}{default TRUE-- TRUE/FALSE -- suppresses formulas and notes.}
+
+\item{type}{Output type: "console" (default) or "latex"}
+
+\item{out}{File path for latex fragment, default NULL}
 }
 \value{
 a list of class \code{out} with the \code{DAGassist_report}, which has values

@@ -297,6 +297,8 @@ clr_bold   <- .clr_wrap("\033[1m",  "\033[22m")
 #' @param engine the regression engine; default `stats::lm`
 #' @param engine_args a list with exra engine args---merged with any found in call
 #' @param verbose default TRUE-- TRUE/FALSE -- suppresses formulas and notes.
+#' @param type Output type: "console" (default) or "latex"
+#' @param out File path for latex fragment, default NULL
 #' 
 #' @return a list of class `out` with the `DAGassist_report`, which has values
 #'         validation: runs `validate_spec` from validate.R
@@ -316,9 +318,11 @@ clr_bold   <- .clr_wrap("\033[1m",  "\033[22m")
 
 dag_assist <- function(dag, formula, data, exposure, outcome,
                        engine = stats::lm, engine_args = list(),
-                       verbose = TRUE) {
+                       verbose = TRUE, type = c("console", "latex"), out = NULL) {
+  # set output type
+  type <- match.arg(type)
   
-  # 1) Allow formula to be either a formula or a single engine call
+  ## allow formula to be either a formula or a single engine call
   spec_expr <- substitute(formula)  # capture unevaluated argument
   parsed <- NULL
   
@@ -336,7 +340,7 @@ dag_assist <- function(dag, formula, data, exposure, outcome,
     # nothing to do here
   }
   
-  # 2) Infer exposure/outcome from DAG if user didn't set them
+  ## infer exposure/outcome from DAG if user didn't set them
   xy <- .infer_xy(dag, exposure, outcome)
   exposure <- xy$exposure
   outcome  <- xy$outcome
@@ -391,7 +395,9 @@ dag_assist <- function(dag, formula, data, exposure, outcome,
     roles$canon <- ifelse(roles$variable %in% canonical, "x", "")
   }
   
-  out <- list(
+  #8/28/25 renaming to "report", a more suitable name, to avoid naming conflict
+  # with out param
+  report <- list(
     validation = v, 
     roles = roles,
     bad_in_user = bad_in_user,
@@ -413,12 +419,58 @@ dag_assist <- function(dag, formula, data, exposure, outcome,
     ),
     verbose = isTRUE(verbose)
   )
-  class(out) <- c("DAGassist_report", class(out))
-  out
+  class(report) <- c("DAGassist_report", class(report))
+  
+  ##### OUT BRANCH #####
+  
+  if (type == "latex") {
+    # may want to adapt this later to give it the option to print to the console.
+    if (is.null(out)) stop("type='latex' requires `out=` file path.", call. = FALSE)
+    
+    # Minimal payload expected by .report_latex_fragment()
+    # it tolerates NULL tables, so keeping this lean 
+    res_min <- list(
+      validation = list(
+        #omitting this because it's vague and ugly. I need to make a sort of 
+        #to-trash list to keep things clean. 
+        #status = if (isTRUE(v$ok)) "VALID" else "INVALID",
+        issues = if (!is.null(v$issues)) v$issues else character(0)
+      ),
+      roles_df  = report$roles,
+      #tiny formulas table
+      models_df = data.frame(
+        Model   = c("Original",
+                    if (length(report$formulas$minimal_list)) paste0("Minimal ", seq_along(report$formulas$minimal_list)) else "Minimal 1",
+                    "Canonical"),
+        Formula = c(
+          paste(deparse(report$formulas$original),  collapse = " "),
+          if (length(report$formulas$minimal_list))
+            vapply(report$formulas$minimal_list, function(f) paste(deparse(f), collapse = " "), character(1))
+          else
+            paste(deparse(report$formulas$minimal), collapse = " "),
+          paste(deparse(report$formulas$canonical), collapse = " ")
+        ),
+        stringsAsFactors = FALSE
+      ),
+      notes    = character(0)
+    )
+    
+    .report_latex_fragment(res_min, out)
+    
+    # avoid auto-printing to console on latex mode
+    # once again, going to revisit later
+    return(invisible(structure(report, file = normalizePath(out, mustWork = FALSE))))
+  }
+  
+  report
 }
 
+## out param
+
+
+
 #' print the DAGassist_report
-#' @param x Output of dag_assist() (class "out")
+#' @param x Output of dag_assist() (class "report")
 #' @param ... (ignored)
 #' @return Invisibly returns x
 #' 

@@ -7,7 +7,7 @@
 \method{print}{DAGassist_report}(x, ...)
 }
 \arguments{
-\item{x}{Output of dag_assist() (class "out")}
+\item{x}{Output of dag_assist() (class "report")}
 
 \item{...}{(ignored)}
 }

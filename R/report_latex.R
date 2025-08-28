@@ -9,30 +9,125 @@
   x
 }
 
-.df_to_tabular <- function(df) {
+.roles_pretty <- function(roles) {
+  r <- roles
+  map <- c(
+    variable = "Variable",
+    role     = "Role",
+    is_exposure = "X",
+    is_outcome  = "Y",
+    is_confounder = "Conf.",
+    is_mediator   = "Med.",
+    is_collider   = "Col.",
+    is_descendant_of_outcome = "Desc(Y)",
+    is_descendant_of_exposure = "Desc(X)",
+    canon = "Canon"
+  )
+  prefer <- c("variable","role","is_exposure","is_outcome","is_confounder",
+              "is_mediator","is_collider","is_descendant_of_outcome",
+              "is_descendant_of_exposure","canon")
+  keep <- intersect(prefer, names(r))
+  r <- r[, c(keep, setdiff(names(r), keep)), drop = FALSE]
+  for (nm in names(r)) if (is.logical(r[[nm]])) r[[nm]] <- ifelse(r[[nm]], "x", "")
+  names(r) <- ifelse(names(r) %in% names(map), unname(map[names(r)]), names(r))
+  r
+}
+
+# Centered longtable. If wrap_formula=TRUE and a "Formula" column exists, wrap it.
+.df_to_longtable_centered <- function(df, wrap_formula = FALSE) {
   stopifnot(is.data.frame(df))
   df2 <- lapply(df, function(col) .tex_escape(ifelse(is.na(col), "", as.character(col))))
   df2 <- as.data.frame(df2, stringsAsFactors = FALSE, optional = TRUE)
   
-  colspec <- paste(rep("l", ncol(df2)), collapse = " ")
+  if (wrap_formula && "Formula" %in% colnames(df2) && ncol(df2) >= 2) {
+    # first col 'l', last col 'p{.72\\textwidth}', any middle cols 'l'
+    mid <- max(0, ncol(df2) - 2)
+    colspec <- paste0(
+      "@{ }l ",
+      if (mid) paste(rep("l ", mid), collapse = ""),
+      "p{.72\\textwidth}@{ }"
+    )
+  } else {
+    colspec <- paste0("@{ }", paste(rep("l", ncol(df2)), collapse = " "), "@{ }")
+  }
+  
   header  <- paste(.tex_escape(colnames(df2)), collapse = " & ")
   body    <- apply(df2, 1L, function(r) paste(r, collapse = " & "))
   
   c(
-    paste0("\\begin{tabular}{@{ }", colspec, "@{ }}"),
-    "\\hline",
+    "\\begin{center}",
+    "\\setlength{\\LTleft}{0pt}\\setlength{\\LTright}{0pt}",
+    paste0("\\begin{longtable}{", colspec, "}"),
+    "\\toprule",
     paste0(header, " \\\\"),
-    "\\hline",
+    "\\midrule",
     paste0(body, " \\\\"),
-    "\\hline",
-    "\\end{tabular}"
+    "\\bottomrule",
+    "\\end{longtable}",
+    "\\end{center}"
   )
 }
 
-.format_set_tex <- function(s) {
+.sets_to_df <- function(min_sets, canon) {
+  if (length(min_sets) == 0 && length(canon) == 0) {
+    return(data.frame(Set = character(0), Controls = character(0)))
+  }
+  rows <- list()
+  if (length(min_sets)) {
+    for (i in seq_along(min_sets)) {
+      rows[[length(rows)+1]] <- data.frame(
+        Set = paste0("Minimal ", i),
+        Controls = .set_brace(min_sets[[i]]),
+        stringsAsFactors = FALSE
+      )
+    }
+  } else {
+    rows[[length(rows)+1]] <- data.frame(Set = "Minimal 1", Controls = "{}", stringsAsFactors = FALSE)
+  }
+  rows[[length(rows)+1]] <- data.frame(Set = "Canonical", Controls = .set_brace(canon), stringsAsFactors = FALSE)
+  do.call(rbind, rows)
+}
+
+.set_brace <- function(s) {
   s <- as.character(s)
   if (!length(s)) return("{}")
   paste0("{", paste(.tex_escape(s), collapse = ", "), "}")
+}
+
+# Render modelsummary to plain LaTeX tabular, then convert to longtable & center.
+.msummary_to_longtable_centered <- function(mods) {
+  if (!requireNamespace("modelsummary", quietly = TRUE)) {
+    return(c("% modelsummary not installed; skipping model comparison"))
+  }
+  lat <- tryCatch(
+    modelsummary::msummary(
+      mods,
+      output   = "latex_tabular",  # <- avoids tabularray/tinytable
+      stars    = TRUE,
+      gof_omit = "IC|Log|Adj|Pseudo|AIC|BIC|F$|RMSE$|Within|Between|Std|sigma"
+    ),
+    error = function(e) NULL
+  )
+  if (is.null(lat)) return(c("% modelsummary failed; skipping"))
+  if (is.character(lat)) lat <- paste(lat, collapse = "\n")
+  
+  # If any \num{} remain, strip them (avoid siunitx dependency)
+  lat <- gsub("\\\\num\\{([^}]*)\\}", "\\1", lat, perl = TRUE)
+  
+  # Remove floating table wrappers if present
+  lat <- gsub("\\\\begin\\{table\\*?}[^\n]*\n", "", lat, perl = TRUE)
+  lat <- gsub("\\\\end\\{table\\*?}", "", lat, perl = TRUE)
+  lat <- gsub("\\\\caption\\{[^}]*\\}", "", lat, perl = TRUE)
+  lat <- gsub("\\\\label\\{[^}]*\\}",   "", lat, perl = TRUE)
+  
+  # Convert tabular -> longtable
+  lat <- gsub("\\\\begin\\{tabular\\}", "\\\\begin{longtable}", lat)
+  lat <- gsub("\\\\end\\{tabular\\}",   "\\\\end{longtable}",   lat)
+  
+  c("\\begin{center}",
+    "\\setlength{\\LTleft}{0pt}\\setlength{\\LTright}{0pt}",
+    lat,
+    "\\end{center}")
 }
 
 ################################################################################
@@ -40,98 +135,72 @@
 # R/report_latex.R
 ## Minimal LaTeX fragment writer for DAGassist. Produces a PREAMBLE-LESS snippet.
 ## Include it in your paper with: \input{path/to/fragment.tex}
+## Pretty LaTeX fragment: centered longtables, tidy headers, adj sets, modelsummary
 
 .report_latex_fragment <- function(res, out) {
   stopifnot(is.character(out), length(out) == 1L)
   dir.create(dirname(out), recursive = TRUE, showWarnings = FALSE)
   
-  # grab pieces no matter how 'res' is shaped
-  v_ok    <- tryCatch(isTRUE(res$validation$ok), error = function(e) NA)
-  v_iss   <- tryCatch(res$validation$issues,     error = function(e) character(0))
-  roles   <- tryCatch(
-    if (!is.null(res$roles_df)) res$roles_df else res$roles,
-    error = function(e) NULL
-  )
-  formulas <- tryCatch(res$formulas, error = function(e) NULL)
-  mins_all <- tryCatch(res$controls_minimal_all, error = function(e) list())
-  canon    <- tryCatch(res$controls_canonical,   error = function(e) character(0))
-  notes    <- tryCatch(res$notes,                error = function(e) character(0))
+  status <- tryCatch(res$validation$status, error = function(e) "UNKNOWN")
+  issues <- tryCatch(res$validation$issues, error = function(e) character(0))
+  if (is.list(issues)) issues <- unlist(issues, use.names = FALSE)
+  issues <- issues[nzchar(issues)]
   
-  status <- if (is.na(v_ok)) "UNKNOWN" else if (v_ok) "VALID" else "INVALID"
+  roles  <- tryCatch(res$roles_df, error = function(e) NULL)
+  f_tbl  <- tryCatch(res$models_df, error = function(e) NULL)
+  mods   <- tryCatch(res$models,    error = function(e) NULL)
+  msets  <- tryCatch(res$min_sets,  error = function(e) list())
+  canon  <- tryCatch(res$canon,     error = function(e) character(0))
   
-  # tiny formulas table
-  models_df <- NULL
-  if (!is.null(formulas)) {
-    labs <- c("Original",
-              if (length(formulas$minimal_list)) paste0("Minimal ", seq_along(formulas$minimal_list)) else "Minimal 1",
-              "Canonical")
-    fmts <- c(
-      paste(deparse(formulas$original), collapse = " "),
-      if (length(formulas$minimal_list))
-        vapply(formulas$minimal_list, function(f) paste(deparse(f), collapse = " "), character(1))
-      else
-        paste(deparse(formulas$minimal), collapse = " "),
-      paste(deparse(formulas$canonical), collapse = " ")
-    )
-    models_df <- data.frame(Model = labs, Formula = fmts, stringsAsFactors = FALSE)
-  }
-  
-  # Adjustment sets section lines
-  adj_lines <- character(0)
-  if (length(mins_all)) {
-    for (i in seq_along(mins_all)) {
-      adj_lines <- c(adj_lines, sprintf("Minimal %d: %s", i, .format_set_tex(mins_all[[i]])))
-    }
-  } else {
-    adj_lines <- c(adj_lines, "Minimal 1: {}")
-  }
-  adj_lines <- c(adj_lines, sprintf("Canonical: %s", .format_set_tex(canon)))
-  
-  # Build the fragment
-  out_lines <- c(
-    "% ---- DAGassist LaTeX fragment ----",
+  lines <- c(
+    "% ---- DAGassist LaTeX fragment (no preamble) ----",
+    "% Requires: \\usepackage{longtable}, \\usepackage{booktabs}",
     "\\begingroup\\small",
+    
+    # Validation
     "\\paragraph{Validation}",
     sprintf("\\textbf{Status:} %s.", .tex_escape(status)),
-    if (length(v_iss)) {
+    if (length(issues)) {
       c("\\\\[2pt]\\textbf{Issues:}",
         "\\begin{itemize}",
-        paste0("  \\item ", .tex_escape(v_iss)),
+        paste0("  \\item ", .tex_escape(issues)),
         "\\end{itemize}")
-    } else {
-      "\\\\[2pt]\\textit{No issues reported.}"
-    },
+    } else "\\\\[2pt]\\textit{No issues reported.}",
+    
     "",
     
-    # Roles table (if present)
+    # Roles
     if (is.data.frame(roles) && nrow(roles)) {
+      roles_pretty <- .roles_pretty(roles)
       c("\\paragraph{Variable roles}",
-        .df_to_tabular(roles), "")
+        .df_to_longtable_centered(roles_pretty), "")
     } else character(0),
     
-    # Adjustment sets 
-    "\\paragraph{Adjustment sets}",
-    "\\begin{itemize}",
-    paste0("  \\item ", .tex_escape(adj_lines)),
-    "\\end{itemize}",
-    "",
+    # Adjustment sets
+    {
+      adj_df <- .sets_to_df(msets, canon)
+      if (nrow(adj_df)) {
+        c("\\paragraph{Adjustment sets}",
+          .df_to_longtable_centered(adj_df), "")
+      } else character(0)
+    },
     
-    # tiny formulas table 
-    if (is.data.frame(models_df)) {
+    # Model formulas (wrap the Formula column)
+    if (is.data.frame(f_tbl) && nrow(f_tbl)) {
+      colnames(f_tbl) <- c("Model", "Formula")
       c("\\paragraph{Model formulas}",
-        .df_to_tabular(models_df), "")
+        .df_to_longtable_centered(f_tbl, wrap_formula = TRUE), "")
     } else character(0),
     
-    # optional notes 
-    if (length(notes)) {
-      c("\\paragraph{Notes}",
-        paste0("\\emph{", .tex_escape(notes), "}"), "")
+    # Model comparison via modelsummary
+    if (!is.null(mods)) {
+      c("\\paragraph{Model comparison}",
+        .msummary_to_longtable_centered(mods), "")
     } else character(0),
     
     "\\endgroup"
   )
   
-  writeLines(out_lines, out, useBytes = TRUE)
+  writeLines(unlist(lines), out, useBytes = TRUE)
   invisible(out)
 }
-

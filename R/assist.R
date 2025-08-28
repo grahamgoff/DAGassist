@@ -424,20 +424,25 @@ dag_assist <- function(dag, formula, data, exposure, outcome,
   ##### OUT BRANCH #####
   
   if (type == "latex") {
-    # may want to adapt this later to give it the option to print to the console.
     if (is.null(out)) stop("type='latex' requires `out=` file path.", call. = FALSE)
     
-    # Minimal payload expected by .report_latex_fragment()
-    # it tolerates NULL tables, so keeping this lean 
+    # Build the model list exactly like the console path
+    mods <- list("Original" = report$models$original)
+    if (length(report$models$minimal_list)) {
+      for (i in seq_along(report$models$minimal_list)) {
+        mods[[sprintf("Minimal %d", i)]] <- report$models$minimal_list[[i]]
+      }
+    } else {
+      mods[["Minimal 1"]] <- report$models$minimal
+    }
+    mods[["Canonical"]] <- report$models$canonical
+    
     res_min <- list(
       validation = list(
-        #omitting this because it's vague and ugly. I need to make a sort of 
-        #to-trash list to keep things clean. 
-        #status = if (isTRUE(v$ok)) "VALID" else "INVALID",
+        status = if (isTRUE(v$ok)) "VALID" else "INVALID",
         issues = if (!is.null(v$issues)) v$issues else character(0)
       ),
       roles_df  = report$roles,
-      #tiny formulas table
       models_df = data.frame(
         Model   = c("Original",
                     if (length(report$formulas$minimal_list)) paste0("Minimal ", seq_along(report$formulas$minimal_list)) else "Minimal 1",
@@ -452,13 +457,13 @@ dag_assist <- function(dag, formula, data, exposure, outcome,
         ),
         stringsAsFactors = FALSE
       ),
-      notes    = character(0)
+      # give the helper models and sets
+      models   = mods,
+      min_sets = report$controls_minimal_all,
+      canon    = report$controls_canonical
     )
     
     .report_latex_fragment(res_min, out)
-    
-    # avoid auto-printing to console on latex mode
-    # once again, going to revisit later
     return(invisible(structure(report, file = normalizePath(out, mustWork = FALSE))))
   }
   

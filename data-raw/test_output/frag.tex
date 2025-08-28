@@ -1,34 +1,90 @@
-% ---- DAGassist LaTeX fragment ----
+% ---- DAGassist LaTeX fragment (no preamble) ----
+% Requires: \usepackage{longtable}, \usepackage{booktabs}
 \begingroup\small
 \paragraph{Validation}
-\textbf{Status:} INVALID.
-\\[2pt]\textbf{Issues:}
-\begin{itemize}
-  \item character(0)
-  \item character(0)
-  \item character(0)
-  \item character(0)
-\end{itemize}
+\textbf{Status:} VALID.
+\\[2pt]\textit{No issues reported.}
 
 \paragraph{Variable roles}
-\begin{tabular}{@{ }l l l l l l l l l l@{ }}
-\hline
-variable & is\_exposure & is\_outcome & is\_confounder & is\_mediator & is\_collider & is\_descendant\_of\_outcome & is\_descendant\_of\_exposure & role & canon \\
-\hline
-A & FALSE & FALSE & FALSE & FALSE & FALSE & FALSE & FALSE & other & x \\
-B & FALSE & FALSE & FALSE & FALSE & FALSE & FALSE & FALSE & other & x \\
-C & FALSE & FALSE & FALSE & FALSE & TRUE & TRUE & TRUE & collider &  \\
-M & FALSE & FALSE & FALSE & TRUE & FALSE & FALSE & TRUE & mediator &  \\
-X & TRUE & FALSE & FALSE & FALSE & FALSE & FALSE & FALSE & exposure &  \\
-Y & FALSE & TRUE & FALSE & FALSE & FALSE & FALSE & TRUE & outcome &  \\
-Z & FALSE & FALSE & TRUE & FALSE & FALSE & FALSE & FALSE & confounder & x \\
-\hline
-\end{tabular}
+\begin{center}
+\setlength{\LTleft}{0pt}\setlength{\LTright}{0pt}
+\begin{longtable}{@{ }l l l l l l l l l l@{ }}
+\toprule
+Variable & Role & X & Y & Conf. & Med. & Col. & Desc(Y) & Desc(X) & Canon \\
+\midrule
+A & other &  &  &  &  &  &  &  & x \\
+B & other &  &  &  &  &  &  &  & x \\
+C & collider &  &  &  &  & x & x & x &  \\
+M & mediator &  &  &  & x &  &  & x &  \\
+X & exposure & x &  &  &  &  &  &  &  \\
+Y & outcome &  & x &  &  &  &  & x &  \\
+Z & confounder &  &  & x &  &  &  &  & x \\
+\bottomrule
+\end{longtable}
+\end{center}
 
 \paragraph{Adjustment sets}
-\begin{itemize}
-  \item Minimal 1: \{\}
-  \item Canonical: \{\}
-\end{itemize}
+\begin{center}
+\setlength{\LTleft}{0pt}\setlength{\LTright}{0pt}
+\begin{longtable}{@{ }l l@{ }}
+\toprule
+Set & Controls \\
+\midrule
+Minimal 1 & \{Z\} \\
+Canonical & \{A, B, Z\} \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+\paragraph{Model formulas}
+\begin{center}
+\setlength{\LTleft}{0pt}\setlength{\LTright}{0pt}
+\begin{longtable}{@{ }l p{.72\textwidth}@{ }}
+\toprule
+Model & Formula \\
+\midrule
+Original & Y \textasciitilde{} X + Z + C + M \\
+Minimal 1 & Y \textasciitilde{} X + Z \\
+Canonical & Y \textasciitilde{} X + A + B + Z \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+\paragraph{Model comparison}
+\begin{center}
+\setlength{\LTleft}{0pt}\setlength{\LTright}{0pt}
+\centering
+\begin{talltblr}[         %% tabularray outer open
+entry=none,label=none,
+note{}={+ p < 0.1, * p < 0.05, ** p < 0.01, *** p < 0.001},
+]                     %% tabularray outer close
+{                     %% tabularray inner open
+colspec={Q[]Q[]Q[]Q[]},
+column{2-4}={}{halign=c,},
+column{1}={}{halign=l,},
+hline{16}={1-4}{solid, black, 0.05em},
+}                     %% tabularray inner close
+\toprule
+& Original & Minimal 1 & Canonical \\ \midrule %% TinyTableHeader
+(Intercept) & 0.020 & -0.004 & 0.019 \\
+& (0.028) & (0.047) & (0.045) \\
+X & 0.017 & 1.423*** & 1.457*** \\
+& (0.073) & (0.076) & (0.073) \\
+Z & 0.294*** & 0.522*** & 0.518*** \\
+& (0.050) & (0.078) & (0.075) \\
+C & 0.621*** &  &  \\
+& (0.032) &  &  \\
+M & 0.290*** &  &  \\
+& (0.041) &  &  \\
+A &  &  & 0.286*** \\
+&  &  & (0.047) \\
+B &  &  & 0.011 \\
+&  &  & (0.044) \\
+Num.Obs. & 400 & 400 & 400 \\
+R2 & 0.938 & 0.832 & 0.846 \\
+\bottomrule
+\end{talltblr}
+
+\end{center}
 
 \endgroup

@@ -1,4 +1,32 @@
 ############################ INTERNAL HELPERS ##################################
+# Convert tinytable's tabularray (talltblr) to a booktabs longtable.
+.talltblr_to_longtable <- function(x) {
+  # How many columns? Parse colspec={Q[]Q[]...}
+  cs <- regmatches(x, regexpr("colspec=\\{[^}]*\\}", x, perl = TRUE))
+  n  <- 3L
+  if (length(cs) && nzchar(cs)) {
+    m <- gregexpr("Q\\[\\]", cs[[1]], perl = TRUE)[[1]]
+    if (length(m) && m[1] != -1L) n <- length(m)
+  }
+  colspec <- paste0("@{ }", paste(rep("l", n), collapse = " "), "@{ }")
+  
+  # Replace talltblr header with longtable header
+  x <- gsub("\\\\begin\\{talltblr\\}\\[[^\\]]*\\]\\s*\\{[^}]*\\}\\s*",
+            paste0("\\\\begin{longtable}{", colspec, "}\n"),
+            x, perl = TRUE)
+  
+  # Drop tabularray-only config lines (notes/column/hline config)
+  x <- gsub("^.*note\\{\\}\\=.*\\n", "", x, perl = TRUE)
+  x <- gsub("^column\\{[^}]*\\}\\=\\{\\}\\{[^}]*\\},?\\s*$", "", x, perl = TRUE)
+  x <- gsub("^hline\\{.*\\}.*\\n", "", x, perl = TRUE)
+  
+  # Close environment
+  x <- gsub("\\\\end\\{talltblr\\}", "\\\\end{longtable}", x, perl = TRUE)
+  
+  # Strip any siunitx remnants for safety
+  x <- gsub("\\\\num\\{([^}]*)\\}", "\\1", x, perl = TRUE)
+  x
+}
 
 .tex_escape <- function(x) {
   x <- as.character(x)
@@ -51,6 +79,15 @@
     colspec <- paste0("@{ }", paste(rep("l", ncol(df2)), collapse = " "), "@{ }")
   }
   
+  # Make term plain text
+  if ("Term" %in% colnames(df2)) {
+    df2[["Term"]] <- ifelse(nzchar(df2[["Term"]]),
+                            paste0("\\textnormal{", df2[["Term"]], "}"),
+                            df2[["Term"]])
+  }
+  # Wrap every cell in a group to avoid TeX mis-parsing leading symbols like '('
+  df2[] <- lapply(df2, function(col) ifelse(nzchar(col), paste0("{", col, "}"), col))
+
   header  <- paste(.tex_escape(colnames(df2)), collapse = " & ")
   body    <- apply(df2, 1L, function(r) paste(r, collapse = " & "))
   
@@ -94,42 +131,67 @@
   paste0("{", paste(.tex_escape(s), collapse = ", "), "}")
 }
 
-# Render modelsummary to plain LaTeX tabular, then convert to longtable & center.
+# Minimal, pretty model comparison: "coef (se)" in one cell, GOF at bottom.
 .msummary_to_longtable_centered <- function(mods) {
   if (!requireNamespace("modelsummary", quietly = TRUE)) {
     return(c("% modelsummary not installed; skipping model comparison"))
   }
-  lat <- tryCatch(
-    modelsummary::msummary(
-      mods,
-      output   = "latex_tabular",  # <- avoids tabularray/tinytable
-      stars    = TRUE,
-      gof_omit = "IC|Log|Adj|Pseudo|AIC|BIC|F$|RMSE$|Within|Between|Std|sigma"
-    ),
-    error = function(e) NULL
+  
+  df <- modelsummary::msummary(
+    mods,
+    output   = "data.frame",
+    stars    = TRUE,
+    gof_omit = "IC|Log|Adj|Pseudo|AIC|BIC|F$|RMSE$|Within|Between|Std|sigma"
   )
-  if (is.null(lat)) return(c("% modelsummary failed; skipping"))
-  if (is.character(lat)) lat <- paste(lat, collapse = "\n")
+  if (!is.data.frame(df) || nrow(df) == 0L) return(c("% empty modelsummary table"))
   
-  # If any \num{} remain, strip them (avoid siunitx dependency)
-  lat <- gsub("\\\\num\\{([^}]*)\\}", "\\1", lat, perl = TRUE)
+  # Make everything character; fill NAs with ""
+  df[] <- lapply(df, function(x) { y <- as.character(x); y[is.na(y)] <- ""; y })
   
-  # Remove floating table wrappers if present
-  lat <- gsub("\\\\begin\\{table\\*?}[^\n]*\n", "", lat, perl = TRUE)
-  lat <- gsub("\\\\end\\{table\\*?}", "", lat, perl = TRUE)
-  lat <- gsub("\\\\caption\\{[^}]*\\}", "", lat, perl = TRUE)
-  lat <- gsub("\\\\label\\{[^}]*\\}",   "", lat, perl = TRUE)
+  meta        <- intersect(c("part","term","statistic"), names(df))
+  model_cols  <- setdiff(names(df), meta)
+  if (!length(model_cols)) return(c("% no model columns"))
   
-  # Convert tabular -> longtable
-  lat <- gsub("\\\\begin\\{tabular\\}", "\\\\begin{longtable}", lat)
-  lat <- gsub("\\\\end\\{tabular\\}",   "\\\\end{longtable}",   lat)
+  est <- df[df$part == "estimates", c("term","statistic", model_cols), drop = FALSE]
+  gof <- df[df$part == "gof",       c("term",            model_cols), drop = FALSE]
   
-  c("\\begin{center}",
-    "\\setlength{\\LTleft}{0pt}\\setlength{\\LTright}{0pt}",
-    lat,
-    "\\end{center}")
+  est_est <- est[est$statistic == "estimate",   , drop = FALSE]
+  est_se  <- est[est$statistic == "std.error",  , drop = FALSE]
+  
+  # Keep the original order of terms as in estimates
+  terms <- est_est$term
+  pretty <- data.frame(Term = terms, check.names = FALSE, stringsAsFactors = FALSE)
+  
+  # Build coef (se) per model column (strip any preexisting SE parentheses 
+  # because double parinth trips latex)
+  for (mc in model_cols) {
+    coef_vals <- est_est[[mc]]
+    se_vals   <- est_se [match(terms, est_se$term), mc]
+    
+    coef_vals <- ifelse(is.na(coef_vals), "", coef_vals)
+    # remove any '(' or ')' already present, then wrap once
+    se_clean  <- ifelse(is.na(se_vals) | !nzchar(se_vals), "", gsub("[()]", "", se_vals))
+    
+    pretty[[mc]] <- ifelse(nzchar(se_clean),
+                           paste0(coef_vals, " (", se_clean, ")"),
+                           coef_vals)
+  }
+  
+  # Append blank line and GOF rows (if any)
+  if (nrow(gof)) {
+    blank <- data.frame(Term = "", as.list(rep("", length(model_cols))),
+                        check.names = FALSE, stringsAsFactors = FALSE)
+    names(blank)[-1] <- model_cols
+    names(gof)[1] <- "Term"
+    pretty <- rbind(pretty, blank, gof)
+  }
+  
+  # Print as centered longtable with booktabs
+  c(
+    .df_to_longtable_centered(pretty),
+    "{\\footnotesize \\emph{Notes:} + p $< 0.1$, * p $< 0.05$, ** p $< 0.01$, *** p $< 0.001$.}"
+  )
 }
-
 ################################################################################
 
 # R/report_latex.R

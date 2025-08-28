@@ -185,10 +185,8 @@
   }
   
   # Print as centered longtable with booktabs
-  c(
-    .df_to_longtable_centered(pretty),
-    "{\\footnotesize \\emph{Notes:} + p $< 0.1$, * p $< 0.05$, ** p $< 0.01$, *** p $< 0.001$.}"
-  )
+
+    .df_to_longtable_centered(pretty)
 }
 ################################################################################
 
@@ -201,55 +199,47 @@
   stopifnot(is.character(out), length(out) == 1L)
   dir.create(dirname(out), recursive = TRUE, showWarnings = FALSE)
   
-  status <- tryCatch(res$validation$status, error = function(e) "UNKNOWN")
-  issues <- tryCatch(res$validation$issues, error = function(e) character(0))
-  if (is.list(issues)) issues <- unlist(issues, use.names = FALSE)
-  issues <- issues[nzchar(issues)]
-  
   roles  <- tryCatch(res$roles_df, error = function(e) NULL)
-  f_tbl  <- tryCatch(res$models_df, error = function(e) NULL)
   mods   <- tryCatch(res$models,    error = function(e) NULL)
   msets  <- tryCatch(res$min_sets,  error = function(e) list())
   canon  <- tryCatch(res$canon,     error = function(e) character(0))
   
-  # Build LaTeX lines (lean layout; no validation; no adj-sets table)
+  # Build the single Notes line with p-value legend + controls summary
+  ctrl_min <- if (length(msets)) .set_brace(msets[[1]]) else "{}"
+  ctrl_can <- if (length(canon)) .set_brace(canon) else "{}"
+  notes_line <- paste0(
+    "{\\footnotesize \\emph{Notes:} + p $< 0.1$, * p $< 0.05$, ** p $< 0.01$, *** p $< 0.001$.",
+    " \\; \\textit{Controls:} Minimal ", ctrl_min, " \\; Canonical ", ctrl_can, ".}"
+  )
+  
   lines <- c(
     "% ---- DAGassist LaTeX fragment (no preamble) ----",
     "% Requires: \\usepackage{longtable}, \\usepackage{booktabs}",
     "\\begingroup\\footnotesize",
-    # compact layout for publication
     "\\setlength{\\LTleft}{0pt}\\setlength{\\LTright}{0pt}",
     "\\setlength{\\tabcolsep}{4pt}",
     "\\renewcommand{\\arraystretch}{0.95}",
     "\\setlength{\\aboverulesep}{0pt}\\setlength{\\belowrulesep}{0pt}",
     
-    # --- Variable roles (keep) ---
+    # Title
+    "\\begin{center}\\textbf{DAGassist Report:}\\end{center}",
+    
+    # Variable roles table (no heading)
     if (is.data.frame(roles) && nrow(roles)) {
       roles_pretty <- .roles_pretty(roles)
-      c("\\noindent\\textbf{Variable roles}",
-        .df_to_longtable_centered(roles_pretty),
-        # one-line controls summary instead of a whole table
-        {
-          ctrl_min <- if (length(msets)) .set_brace(msets[[1]]) else "{}"
-          ctrl_can <- if (length(canon)) .set_brace(canon) else "{}"
-          paste0("\\noindent\\textit{Controls:} Minimal ", ctrl_min,
-                 " \\quad Canonical ", ctrl_can, "\n")
-        })
+      c(.df_to_longtable_centered(roles_pretty))
     } else character(0),
     
-    # --- Model formulas (keep, compact) ---
-    if (is.data.frame(f_tbl) && nrow(f_tbl)) {
-      colnames(f_tbl) <- c("Model", "Formula")
-      c("\\noindent\\textbf{Model formulas}",
-        .df_to_longtable_centered(f_tbl, wrap_formula = TRUE))
-    } else character(0),
+    # tuck the two tables closer together
+    "\\vspace{-6pt}",
     
-    # --- Model comparison (keep) ---
+    # Model comparison (no heading)
     if (!is.null(mods)) {
-      c("\\noindent\\textbf{Model comparison}",
-        .msummary_to_longtable_centered(mods),
-        "{\\footnotesize \\emph{Notes:} + p $< 0.1$, * p $< 0.05$, ** p $< 0.01$, *** p $< 0.001$.}")
+      .msummary_to_longtable_centered(mods)
     } else character(0),
+    
+    # Single footnote-style notes (includes adjustment sets)
+    notes_line,
     
     "\\endgroup"
   )

@@ -8,9 +8,10 @@
 \setlength{\LTpre}{0pt}\setlength{\LTpost}{0pt}
 \begin{center}\textbf{DAGassist Report:}\end{center}
 \begin{center}
-\begin{longtable}{@{}l l l l l l l l l l@{}}
+\newlength{\DAWroles}\setlength{\DAWroles}{\dimexpr\textwidth - 18\tabcolsep\relax}
+\begin{longtable}{@{}p{0.29\DAWroles}p{0.18\DAWroles}p{0.067\DAWroles}p{0.067\DAWroles}p{0.067\DAWroles}p{0.067\DAWroles}p{0.067\DAWroles}p{0.067\DAWroles}p{0.067\DAWroles}p{0.067\DAWroles}@{}}
 \toprule
-Variable & Role & X & Y & Conf. & Med. & Col. & Desc(Y) & Desc(X) & Canon \\
+Variable & Role & {\centering X\par} & {\centering Y\par} & {\centering Conf.\par} & {\centering Med.\par} & {\centering Col.\par} & {\centering Desc(Y)\par} & {\centering Desc(X)\par} & {\centering Canon\par} \\
 \midrule
 A & other &  &  &  &  &  &  &  & x \\
 B & other &  &  &  &  &  &  &  & x \\
@@ -23,7 +24,7 @@ Z & confounder &  &  & x &  &  &  &  & x \\
 \end{longtable}
 \vspace{1pt}
 \begingroup\renewcommand{\arraystretch}{1.08}
-\begin{longtable}{@{}l l l l@{}}
+\begin{longtable}{@{}p{\dimexpr(\textwidth - 6\tabcolsep)/4\relax}p{\dimexpr(\textwidth - 6\tabcolsep)/4\relax}p{\dimexpr(\textwidth - 6\tabcolsep)/4\relax}p{\dimexpr(\textwidth - 6\tabcolsep)/4\relax}@{}}
 \toprule
 Term & Original & Minimal 1 & Canonical \\
 \midrule

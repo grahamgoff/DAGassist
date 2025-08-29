@@ -1,4 +1,13 @@
 ############################ INTERNAL HELPERS ##################################
+#force same width between df and modelsummary, to make them look like a single 
+#block
+.equal_width_colspec <- function(n) {
+  # total column count n; keep default \tabcolsep between columns
+  w <- sprintf("p{\\dimexpr(\\textwidth - %d\\tabcolsep)/%d\\relax}", 2L*(n-1L), n)
+  # no @{} between columns; only trim outer padding so left/right edges align
+  paste0("@{}", paste(rep(w, n), collapse = ""), "@{}")
+}
+
 # Convert tinytable's tabularray (talltblr) to a booktabs longtable.
 .talltblr_to_longtable <- function(x) {
   # How many columns? Parse colspec={Q[]Q[]...}
@@ -8,10 +17,8 @@
     m <- gregexpr("Q\\[\\]", cs[[1]], perl = TRUE)[[1]]
     if (length(m) && m[1] != -1L) n <- length(m)
   }
-  # Force equal-width columns to fill exactly \textwidth accounting for padding
-  w <- sprintf("p{\\dimexpr(\\textwidth - %d\\tabcolsep)/%d\\relax}", 2L*n, n)
-  colspec <- paste0("@{}", paste(rep(w, n), collapse = "@{}"), "@{}")
-  
+  #standard column width
+  colspec <- .equal_width_colspec(n)
   # Replace talltblr header with longtable header
   x <- gsub("\\\\begin\\{talltblr\\}\\[[^\\]]*\\]\\s*\\{[^}]*\\}\\s*",
             paste0("\\\\begin{longtable}{", colspec, "}\n"),
@@ -80,40 +87,19 @@
   df2 <- as.data.frame(df2, stringsAsFactors = FALSE, optional = TRUE)
   
   if (wrap_formula && "Formula" %in% colnames(df2) && ncol(df2) >= 2) {
-    mid <- max(0, ncol(df2) - 2)
-    colspec <- paste0("@{}l ", if (mid) paste(rep("l ", mid), collapse = ""), "p{.72\\textwidth}@{}")
-  }  else {
+    n <- ncol(df2)
+    colspec <- .equal_width_colspec(n)
+  } else {
     n <- ncol(df2)
     pre <- character(0)
     
     if (identical(colnames(df2)[1:2], c("Variable","Role"))) {
-      # Roles table: give first two columns more room, keep the rest narrow.
-      # Add a *tiny* gap between columns, but subtract it from the width budget
-      # so the table still totals exactly \textwidth.
-      # width budget that matches equal-width tables
-      pre <- c(
-        sprintf("\\newlength{\\DAWroles}\\setlength{\\DAWroles}{\\dimexpr\\textwidth - %d\\tabcolsep\\relax}", 2L*(n-1L))
-      )
-      
-      # shares: first two columns (a, b) wider; remaining (s) equal
-      s  <- 0.067
-      rem <- 1 - s * (n - 2L)
-      b  <- rem / 2.6
-      a  <- rem - b
-      
-      # no custom @{} gaps between columns; keep default \tabcolsep spacing
-      colspec <- paste0(
-        "@{}",
-        sprintf("p{%.2f\\DAWroles}", a),
-        sprintf("p{%.2f\\DAWroles}", b),
-        paste(rep(sprintf("p{%.3f\\DAWroles}", s), n - 2L), collapse = ""),
-        "@{}"
-      )
+      pre <- character(0)
+      colspec <- .equal_width_colspec(n)
       
     } else {
-      # new: correct width budget + keep default spacing between columns
-      w <- sprintf("p{\\dimexpr(\\textwidth - %d\\tabcolsep)/%d\\relax}", 2L*(n-1L), n)
-      colspec <- paste0("@{}", paste(rep(w, n), collapse = ""), "@{}")
+      #standardized nonroles branch
+      colspec <- .equal_width_colspec(n)
     }
   }
   #sets to same width as modelsummary

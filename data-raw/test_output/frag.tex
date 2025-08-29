@@ -4,21 +4,22 @@
 \setlength{\LTleft}{0pt}\setlength{\LTright}{0pt}
 \setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{0.95}
-\setlength{\aboverulesep}{0pt}\setlength{\belowrulesep}{0pt}
+\setlength{\aboverulesep}{0.6ex}\setlength{\belowrulesep}{1.0ex}
 \setlength{\LTpre}{0pt}\setlength{\LTpost}{0pt}
 \begin{center}\textbf{DAGassist Report:}\end{center}
 \begin{center}
-\begin{longtable}{@{}p{\dimexpr(\textwidth - 18\tabcolsep)/10\relax}p{\dimexpr(\textwidth - 18\tabcolsep)/10\relax}p{\dimexpr(\textwidth - 18\tabcolsep)/10\relax}p{\dimexpr(\textwidth - 18\tabcolsep)/10\relax}p{\dimexpr(\textwidth - 18\tabcolsep)/10\relax}p{\dimexpr(\textwidth - 18\tabcolsep)/10\relax}p{\dimexpr(\textwidth - 18\tabcolsep)/10\relax}p{\dimexpr(\textwidth - 18\tabcolsep)/10\relax}p{\dimexpr(\textwidth - 18\tabcolsep)/10\relax}p{\dimexpr(\textwidth - 18\tabcolsep)/10\relax}@{}}
+\newlength{\DAWtot}\setlength{\DAWtot}{\dimexpr\textwidth - 18\tabcolsep\relax}
+\begin{longtable}{@{}p{0.13580\DAWtot}p{0.34920\DAWtot}p{0.06438\DAWtot}p{0.06438\DAWtot}p{0.06438\DAWtot}p{0.06438\DAWtot}p{0.06438\DAWtot}p{0.06438\DAWtot}p{0.06438\DAWtot}p{0.06438\DAWtot}@{}}
 \toprule
-Variable & Role & {\centering X\par} & {\centering Y\par} & {\centering Conf.\par} & {\centering Med.\par} & {\centering Col.\par} & {\centering Desc(Y)\par} & {\centering Desc(X)\par} & {\centering Canon\par} \\
+Variable & Role & {\centering \mbox{X}\par} & {\centering \mbox{Y}\par} & {\centering \mbox{Conf.}\par} & {\centering \mbox{Med.}\par} & {\centering \mbox{Col.}\par} & {\centering \mbox{DY}\par} & {\centering \mbox{DX}\par} & {\centering \mbox{Canon}\par} \\
 \midrule
-A & other &  &  &  &  &  &  &  & x \\
-B & other &  &  &  &  &  &  &  & x \\
-C & collider &  &  &  &  & x & x & x &  \\
-M & mediator &  &  &  & x &  &  & x &  \\
-X & exposure & x &  &  &  &  &  &  &  \\
-Y & outcome &  & x &  &  &  &  & x &  \\
-Z & confounder &  &  & x &  &  &  &  & x \\
+A & other &  &  &  &  &  &  &  & \makebox[\linewidth][c]{x} \\
+B & other &  &  &  &  &  &  &  & \makebox[\linewidth][c]{x} \\
+C & collider &  &  &  &  & \makebox[\linewidth][c]{x} & \makebox[\linewidth][c]{x} & \makebox[\linewidth][c]{x} &  \\
+M & mediator &  &  &  & \makebox[\linewidth][c]{x} &  &  & \makebox[\linewidth][c]{x} &  \\
+X & exposure & \makebox[\linewidth][c]{x} &  &  &  &  &  &  &  \\
+Y & outcome &  & \makebox[\linewidth][c]{x} &  &  &  &  & \makebox[\linewidth][c]{x} &  \\
+Z & confounder &  &  & \makebox[\linewidth][c]{x} &  &  &  &  & \makebox[\linewidth][c]{x} \\
 \bottomrule
 \end{longtable}
 \vspace{1pt}
@@ -40,7 +41,7 @@ Term & Original & Minimal 1 & Canonical \\
 \end{longtable}
 \endgroup
 \end{center}
-{\footnotesize \emph{Notes:} + p $< 0.1$, * p $< 0.05$, ** p $< 0.01$, *** p $< 0.001$.\\
+{\footnotesize \emph{Star Key:} + p $< 0.1$, * p $< 0.05$, ** p $< 0.01$, *** p $< 0.001$.\\
 \hspace*{1.5em}\textit{Controls (minimal):} {Z}\\
 \hspace*{1.5em}\textit{Controls (canonical):} {A, B, Z}.}
 \endgroup

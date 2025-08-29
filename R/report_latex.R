@@ -1,4 +1,38 @@
 ############################ INTERNAL HELPERS ##################################
+# Single, robust colspec for the roles grid:
+# - grid gets a stable share that grows mildly with #grid columns
+# - Variable gets a low minimum but grows with name length, clamped
+.roles_colspec_auto <- function(n, var_names,
+                                var_min = 0.28, var_max = 0.60,
+                                var_slope = 0.012,    # growth per char beyond 10
+                                grid_base = 0.50,     # baseline grid share
+                                grid_step = 0.015,    # extra per grid col beyond 7
+                                grid_cap  = 0.60) {   # never exceed this
+  stopifnot(n >= 3L)
+  k <- n - 2L
+  pre <- c(sprintf("\\newlength{\\DAWtot}\\setlength{\\DAWtot}{\\dimexpr\\textwidth - %d\\tabcolsep\\relax}", 2L*(n-1L)))
+  
+  grid_frac <- min(grid_cap, grid_base + grid_step * max(0, k - 7))
+  
+  # SAFE: compute on the actual names vector
+  max_var_chars <- suppressWarnings(max(nchar(var_names), na.rm = TRUE))
+  if (!is.finite(max_var_chars)) max_var_chars <- 0
+  
+  var_frac <- min(var_max, max(var_min, var_min + var_slope * max(0, max_var_chars - 10)))
+  
+  left_tot <- 1 - grid_frac
+  grid_w   <- rep(grid_frac / k, k)
+  
+  colspec <- paste0(
+    "@{}",
+    sprintf("p{%.5f\\DAWtot}", left_tot * var_frac),
+    sprintf("p{%.5f\\DAWtot}", left_tot * (1 - var_frac)),
+    paste(sprintf("p{%.5f\\DAWtot}", grid_w), collapse = ""),
+    "@{}"
+  )
+  list(pre = pre, colspec = colspec)
+}
+
 #force same width between df and modelsummary, to make them look like a single 
 #block
 .equal_width_colspec <- function(n) {
@@ -6,6 +40,50 @@
   w <- sprintf("p{\\dimexpr(\\textwidth - %d\\tabcolsep)/%d\\relax}", 2L*(n-1L), n)
   # no @{} between columns; only trim outer padding so left/right edges align
   paste0("@{}", paste(rep(w, n), collapse = ""), "@{}")
+}
+
+# Fractional colspec for the roles grid.
+# - grid_frac = fraction of total width used by ALL X-grid cols (right side)
+# - var_frac  = share of the LEFT (non-grid) width given to Variable vs Role
+.roles_colspec_frac <- function(n, grid_frac = 0.34, var_frac = 0.64) {
+  stopifnot(n >= 3L)
+  k <- n - 2L  # number of X-grid columns
+  pre <- c(
+    sprintf("\\newlength{\\DAWtot}\\setlength{\\DAWtot}{\\dimexpr\\textwidth - %d\\tabcolsep\\relax}", 2L*(n-1L))
+  )
+  colspec <- paste0(
+    "@{}",
+    sprintf("p{%.3f\\DAWtot}", (1 - grid_frac) * var_frac),           # Variable
+    sprintf("p{%.3f\\DAWtot}", (1 - grid_frac) * (1 - var_frac)),     # Role
+    paste(rep(sprintf("p{%.5f\\DAWtot}", grid_frac / (n - 2L)), k), collapse = ""),
+    "@{}"
+  )
+  list(pre = pre, colspec = colspec)
+}
+
+# Weighted colspec for the roles grid: wide left pair, tight X-grid on right
+# ensures that long variable names have room and x grid is tight enough to easily
+# interpret
+.roles_colspec <- function(n, x_label = "Desc(Y)", var_frac = 0.66, pad_tabcolsep = 2L) {
+  stopifnot(n >= 3L)
+  k <- n - 2L  # number of X-grid columns
+  
+  pre <- c(
+    sprintf("\\newlength{\\DAWxcol}\\settowidth{\\DAWxcol}{%s}", x_label),
+    sprintf("\\addtolength{\\DAWxcol}{%d\\tabcolsep}", as.integer(pad_tabcolsep)),
+    sprintf("\\newlength{\\DAWrem}\\setlength{\\DAWrem}{\\dimexpr\\textwidth - %d\\tabcolsep - %d\\DAWxcol\\relax}",
+            2L*(n-1L), k)
+  )
+  
+  colspec <- paste0(
+    "@{}",
+    sprintf("p{%.3f\\DAWrem}", var_frac),          # Variable
+    sprintf("p{%.3f\\DAWrem}", 1 - var_frac),      # Role
+    paste(rep("p{\\DAWxcol}", k), collapse = ""),   # X-grid (X, Y, Conf., Med., Col., Desc(Y), Desc(X), Canon)
+    "@{}"
+  )
+  
+  list(pre = pre, colspec = colspec)
 }
 
 # Convert tinytable's tabularray (talltblr) to a booktabs longtable.
@@ -56,8 +134,8 @@
     is_confounder = "Conf.",
     is_mediator   = "Med.",
     is_collider   = "Col.",
-    is_descendant_of_outcome = "Desc(Y)",
-    is_descendant_of_exposure = "Desc(X)",
+    is_descendant_of_outcome = "DY",
+    is_descendant_of_exposure = "DX",
     canon = "Canon"
   )
   prefer <- c("variable","role","is_exposure","is_outcome","is_confounder",
@@ -94,11 +172,18 @@
     pre <- character(0)
     
     if (identical(colnames(df2)[1:2], c("Variable","Role"))) {
-      pre <- character(0)
-      colspec <- .equal_width_colspec(n)
+      # Single, stable roles layout
+      rc <- .roles_colspec_auto(n, var_names = df2[["Variable"]])
+      pre     <- rc$pre
+      colspec <- rc$colspec
       
+      # Center the X-grid body cells so 'x' marks align
+      if (n > 2L) {
+        df2[, 3:n] <- lapply(df2[, 3:n, drop = FALSE],
+                             function(v) ifelse(v == "" | is.na(v), "", sprintf("\\makebox[\\linewidth][c]{%s}", v)))
+      }
     } else {
-      #standardized nonroles branch
+      pre     <- character(0)
       colspec <- .equal_width_colspec(n)
     }
   }
@@ -106,7 +191,7 @@
   labs <- colnames(df2)
   if (identical(labs[1:2], c("Variable","Role"))) {
     # Keep first two headers left; center the grid labels INSIDE their p{…} cells.
-    rest <- sprintf("{\\centering %s\\par}", .tex_escape(labs[3:length(labs)]))
+    rest <- sprintf("{\\centering \\mbox{%s}\\par}", .tex_escape(labs[3:length(labs)]))
     header <- paste(c(.tex_escape(labs[1]), .tex_escape(labs[2]), rest), collapse = " & ")
   } else {
     header <- paste(.tex_escape(labs), collapse = " & ")
@@ -258,7 +343,7 @@
     "\\setlength{\\LTleft}{0pt}\\setlength{\\LTright}{0pt}",
     "\\setlength{\\tabcolsep}{4pt}",
     "\\renewcommand{\\arraystretch}{0.95}",
-    "\\setlength{\\aboverulesep}{0pt}\\setlength{\\belowrulesep}{0pt}",
+    "\\setlength{\\aboverulesep}{0.6ex}\\setlength{\\belowrulesep}{1.0ex}",
     "\\setlength{\\LTpre}{0pt}\\setlength{\\LTpost}{0pt}", 
     "\\begin{center}\\textbf{DAGassist Report:}\\end{center}",
     
@@ -286,7 +371,7 @@
       min_str   <- if (length(msets)) .set_brace(msets[[1]]) else "{}"
       canon_str <- .set_brace(canon)
       c(
-        "{\\footnotesize \\emph{Notes:} + p $< 0.1$, * p $< 0.05$, ** p $< 0.01$, *** p $< 0.001$.\\\\",
+        "{\\footnotesize \\emph{Star Key:} + p $< 0.1$, * p $< 0.05$, ** p $< 0.01$, *** p $< 0.001$.\\\\",
         paste0("\\hspace*{1.5em}\\textit{Controls (minimal):} ", min_str, "\\\\"),
         paste0("\\hspace*{1.5em}\\textit{Controls (canonical):} ", canon_str, ".}"))
     },

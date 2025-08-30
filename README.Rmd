@@ -29,7 +29,7 @@ Classifies variables by causal role, computes the smallest back-door adjustment 
 
 You can install the development version of DAGassist from [GitHub](https://github.com/) with:
 
-``` {r install, eval = FALSE}
+```{r install, eval = FALSE}
 install.packages("pak")
 pak::pak("grahamgoff/DAGassist")
 
@@ -37,11 +37,37 @@ pak::pak("grahamgoff/DAGassist")
 library(DAGassist) 
 ```
 
-## Example
-
-This is a basic example which shows you how to solve a common problem:
+## Quick start (console)
 
 ```{r run}
-dag_assist(dag=test_complex, formula = feols(Y ~ X + Z + B + A + C + M | region + time, data = test_df))
+DAGassist(dag = test_complex, 
+          formula = feols(Y ~ X + Z + B + A + C + M | region + time, data = test_df))
+```
+
+## Export your results in LaTeX, Word, Excel, or plain text
+
+```{r export}
+DAGassist(
+  test_complex, Y ~ X + Z + C + M, test_df,
+  type = "latex", out = "your/path", imply = TRUE
+)
+```
+
+```{r figure, echo=FALSE, out.width="75%", message=FALSE, warning=FALSE}
+knitr::include_graphics("man/figures/README-latex.png")
+```
+
+## Controlling DAG-based additions
+
+By default `imply` = FALSE so no variables are added to your spec based on the
+relationships in your DAG. Set `imply` = TRUE to get the complete minimal and 
+canonical adjustment sets, based on your DAG.
+
+```{r imply}
+DAGassist(
+  dag = test_complex,
+  formula = lm(Y~X+C, data = test_df),
+  imply = TRUE
+)
 ```
 

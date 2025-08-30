@@ -21,7 +21,8 @@ Suggests:
     modelsummary,
     broom,
     openxlsx,
-    writexl
+    writexl,
+    crayon
 Depends: 
     R (>= 3.5)
 LazyData: true

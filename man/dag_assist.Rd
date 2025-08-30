@@ -16,7 +16,7 @@ dag_assist(
   verbose = TRUE,
   type = c("console", "latex", "word", "docx", "excel", "xlsx", "text", "txt"),
   out = NULL,
-  auto_add = FALSE
+  imply = FALSE
 )
 }
 \arguments{
@@ -41,7 +41,7 @@ dag_assist(
 
 \item{out}{File path for latex fragment or word doc, default NULL}
 
-\item{auto_add}{logical. If TRUE, DAGassist will add variables not included in
+\item{imply}{logical. If TRUE, DAGassist will add variables not included in
 the user's main formula, based on the relationships in the DAG. If FALSE (default),
 only the original model is shown}
 }

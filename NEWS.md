@@ -9,16 +9,18 @@
 - [x] Handling multiple minimal adjustment sets
 - [x] Add more colors in output
 - [x] Add options for LaTeX output
+- [x] Add word output functionality
+- [x] Add excel output functionality
+- [x] Add plaintext output functionality
+- [x] Add export_report functionality, which will print a publication-grade 2-page robustness check with a single, simple call (for robustness check use)
 - [ ] Ensure that classify.R categories are **always** accurate
-- [ ] Add word output functionality
 - [ ] Verify Engine compatibility with all major engines
 - [ ] Handle diff-in-diff and fixed effects formula notation
 - [ ] Add graphics: gray scale of the original model, with the minimal set visibly differentiated.
-- [ ] Add export_report functionality, which will print a publication-grade 2-page robustness check with a single, simple call (for robustness check use)
 - [ ] Add a simple "covariate sensitivity" line to report, indicating if (i) the original model is statistically significant; (ii) the minimal or canonical set is statistically insignificant
 - [ ] Run `dag_assist` on a bunch of complex DAGS to refine the sorting algorithm in `compare.R`.
 - [ ] Change `dag_assist` to `DAGassist`.
-- [ ] Add `imply`, default TRUE, logical parameter to disable adding variables to formula/table based on DAG relationships.
+- [x] Add `imply`, default TRUE, logical parameter to disable adding variables to formula/table based on DAG relationships.
 - [ ] Get rid of the engine args param; it is obsolete
 
 ## UNRELEASED

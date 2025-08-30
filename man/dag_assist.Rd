@@ -15,7 +15,8 @@ dag_assist(
   engine_args = list(),
   verbose = TRUE,
   type = c("console", "latex", "word", "docx", "excel", "xlsx", "text", "txt"),
-  out = NULL
+  out = NULL,
+  auto_add = FALSE
 )
 }
 \arguments{
@@ -39,6 +40,10 @@ dag_assist(
 \item{type}{Output type: "console" (default) or "latex" or "word"}
 
 \item{out}{File path for latex fragment or word doc, default NULL}
+
+\item{auto_add}{logical. If TRUE, DAGassist will add variables not included in
+the user's main formula, based on the relationships in the DAG. If FALSE (default),
+only the original model is shown}
 }
 \value{
 a list of class \code{out} with the \code{DAGassist_report}, which has values

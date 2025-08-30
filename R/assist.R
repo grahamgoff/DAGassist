@@ -299,6 +299,9 @@ clr_bold   <- .clr_wrap("\033[1m",  "\033[22m")
 #' @param verbose default TRUE-- TRUE/FALSE -- suppresses formulas and notes.
 #' @param type Output type: "console" (default) or "latex" or "word"
 #' @param out File path for latex fragment or word doc, default NULL
+#' @param auto_add logical. If TRUE, DAGassist will add variables not included in
+#' the user's main formula, based on the relationships in the DAG. If FALSE (default),
+#' only the original model is shown
 #' 
 #' @return a list of class `out` with the `DAGassist_report`, which has values
 #'         validation: runs `validate_spec` from validate.R
@@ -318,8 +321,11 @@ clr_bold   <- .clr_wrap("\033[1m",  "\033[22m")
 
 dag_assist <- function(dag, formula, data, exposure, outcome,
                        engine = stats::lm, engine_args = list(),
-                       verbose = TRUE, type = c("console", "latex", "word", "docx",
-                                                "excel", "xlsx", "text", "txt"), out = NULL) {
+                       verbose = TRUE, 
+                       type = c("console", "latex", "word", "docx", 
+                                "excel", "xlsx", "text", "txt"), 
+                       out = NULL,
+                       auto_add = FALSE) {
   # set output type
   type <- match.arg(type)
   
@@ -378,22 +384,38 @@ dag_assist <- function(dag, formula, data, exposure, outcome,
   #if there are multiple min, push canonical to the end
   m_orig <- .safe_fit(engine, formula, data, engine_args)
   
-  # fit each Minimal, reusing m_orig if identical
-  m_mins <- lapply(f_mins, function(fm) {
-    if (.same_formula(fm, formula)) m_orig else .safe_fit(engine, fm, data, engine_args)
-  })
-  
-  # fit Canonical, reusing an existing fit if identical to Original or a Minimal_i
-  if (.same_formula(f_canon, formula)) {
-    m_canon <- m_orig
+  ## if auto add is true, imply the sets based on dag relationships,
+  ## otherwise, keep lists empty and specify in the report list
+  if (isTRUE(auto_add)) {
+    # formulas for all minimal sets—preserve fixest tails
+    f_mins <- lapply(minimal_sets_all, function(s) .build_formula_with_controls(formula, exposure, outcome, s))
+    # canonical formula
+    f_canon <- .build_formula_with_controls(formula, exposure, outcome, canonical)
+    
+    # fits for each Minimal
+    m_mins <- lapply(f_mins, function(fm) if (.same_formula(fm, formula)) m_orig else .safe_fit(engine, fm, data, engine_args))
+    
+    # fit Canonical, reusing if identical
+    if (.same_formula(f_canon, formula)) {
+      m_canon <- m_orig
+    } else {
+      same_idx <- which(vapply(f_mins, function(fm) .same_formula(fm, f_canon), logical(1)))
+      m_canon <- if (length(same_idx)) m_mins[[same_idx[1]]] else .safe_fit(engine, f_canon, data, engine_args)
+    }
+    
+    # mark canonical in roles table
+    if (is.data.frame(roles) && "variable" %in% names(roles)) {
+      roles$canon <- ifelse(roles$variable %in% canonical, "x", "")
+    }
   } else {
-    same_idx <- which(vapply(f_mins, function(fm) .same_formula(fm, f_canon), logical(1)))
-    m_canon <- if (length(same_idx)) m_mins[[same_idx[1]]] else .safe_fit(engine, f_canon, data, engine_args)
-  }
-  
-  # mark canonical in roles table
-  if (is.data.frame(roles) && "variable" %in% names(roles)) {
-    roles$canon <- ifelse(roles$variable %in% canonical, "x", "")
+    # no DAG-based additions: keep lists empty and avoid marking canon
+    f_mins  <- list()
+    f_canon <- formula
+    m_mins  <- list()
+    m_canon <- m_orig
+    if (is.data.frame(roles) && "canon" %in% names(roles)) {
+      roles$canon <- ""  # do not signal canonical membership when not adding
+    }
   }
   
   #8/28/25 renaming to "report", a more suitable name, to avoid naming conflict
@@ -408,17 +430,18 @@ dag_assist <- function(dag, formula, data, exposure, outcome,
     formulas = list(
       original = formula,
       # so it prints multiple formulas if there are multiple minimal sets
-      minimal = if (length(f_mins)) f_mins[[1]] else .build_minimal_formula(formula, exposure, outcome, minimal),
+      minimal = if (length(f_mins)) f_mins[[1]] else if (isTRUE(auto_add)) .build_minimal_formula(formula, exposure, outcome, minimal) else formula,
       minimal_list = f_mins, #  all minimal formulas
       canonical = f_canon
     ),
     models = list(
       original= m_orig,
-      minimal = if (length(m_mins)) m_mins[[1]] else .safe_fit(engine, .build_minimal_formula(formula, exposure, outcome, minimal), data, engine_args),
+      minimal = if (length(m_mins)) m_mins[[1]] else if (isTRUE(auto_add)) .safe_fit(engine, .build_minimal_formula(formula, exposure, outcome, minimal), data, engine_args) else m_orig,
       minimal_list = m_mins, # all minimal fits
       canonical = m_canon
     ),
-    verbose = isTRUE(verbose)
+    verbose = isTRUE(verbose),
+    auto_add = isTRUE(auto_add)
   )
   class(report) <- c("DAGassist_report", class(report))
   
@@ -431,16 +454,40 @@ dag_assist <- function(dag, formula, data, exposure, outcome,
     
     if (is.null(out)) stop("type='latex' requires `out=` file path.", call. = FALSE)
     
-    # Build the model list exactly like the console path
+    # Build the model list exactly like the console path, respecting auto_add
     mods <- list("Original" = report$models$original)
-    if (length(report$models$minimal_list)) {
-      for (i in seq_along(report$models$minimal_list)) {
-        mods[[sprintf("Minimal %d", i)]] <- report$models$minimal_list[[i]]
+    if (report$auto_add) {
+      if (length(report$models$minimal_list)) {
+        for (i in seq_along(report$models$minimal_list)) {
+          mods[[sprintf("Minimal %d", i)]] <- report$models$minimal_list[[i]]
+        }
+      } else if (length(report$controls_minimal)) {
+        mods[["Minimal 1"]] <- report$models$minimal
       }
-    } else {
-      mods[["Minimal 1"]] <- report$models$minimal
+      mods[["Canonical"]] <- report$models$canonical
     }
-    mods[["Canonical"]] <- report$models$canonical
+    
+    #### Build the rows for the helper only with what we’re showing
+    mdl_names <- names(mods)
+    f_map <- list(
+      Original  = report$formulas$original,
+      Canonical = report$formulas$canonical
+    )
+    if (length(report$formulas$minimal_list)) {
+      for (i in seq_along(report$formulas$minimal_list)) {
+        f_map[[sprintf("Minimal %d", i)]] <- report$formulas$minimal_list[[i]]
+      }
+    } else if (report$auto_add && length(report$controls_minimal)) {
+      f_map[["Minimal 1"]] <- report$formulas$minimal
+    }
+    
+    if (!report$auto_add) {
+      model_vec <- "Original"
+      formula_vec <- paste(deparse(report$formulas$original), collapse = " ")
+    } else {
+      model_vec <- mdl_names
+      formula_vec <- vapply(mdl_names, function(nm) paste(deparse(f_map[[nm]]), collapse = " "), character(1))
+    } ####
     
     res_min <- list(
       validation = list(
@@ -474,87 +521,71 @@ dag_assist <- function(dag, formula, data, exposure, outcome,
   
   ##### WORD OUT BRANCH #####
   if (type %in% c("docx","word")) {
-    # Build the model list exactly like the latex branch
     mods <- list("Original" = report$models$original)
-    if (length(report$models$minimal_list)) {
-      for (i in seq_along(report$models$minimal_list)) {
-        mods[[sprintf("Minimal %d", i)]] <- report$models$minimal_list[[i]]
+    if (report$auto_add) {
+      if (length(report$models$minimal_list)) {
+        for (i in seq_along(report$models$minimal_list)) {
+          mods[[sprintf("Minimal %d", i)]] <- report$models$minimal_list[[i]]
+        }
+      } else if (length(report$controls_minimal)) {
+        mods[["Minimal 1"]] <- report$models$minimal
       }
-    } else {
-      mods[["Minimal 1"]] <- report$models$minimal
+      mods[["Canonical"]] <- report$models$canonical
     }
-    mods[["Canonical"]] <- report$models$canonical
-    
     res_min <- list(
       validation = list(
         status = if (isTRUE(v$ok)) "VALID" else "INVALID",
         issues = if (!is.null(v$issues)) v$issues else character(0)
       ),
-      roles_df  = report$roles,
-      models_df = data.frame(
-        Model   = c("Original",
-                    if (length(report$formulas$minimal_list)) paste0("Minimal ", seq_along(report$formulas$minimal_list)) else "Minimal 1",
-                    "Canonical"),
-        Formula = c(
-          paste(deparse(report$formulas$original),  collapse = " "),
-          if (length(report$formulas$minimal_list))
-            vapply(report$formulas$minimal_list, function(f) paste(deparse(f), collapse = " "), character(1))
-          else
-            paste(deparse(report$formulas$minimal), collapse = " "),
-          paste(deparse(report$formulas$canonical), collapse = " ")
-        ),
-        stringsAsFactors = FALSE
-      ),
+      roles_df = report$roles,
       models   = mods,
       min_sets = report$controls_minimal_all,
       canon    = report$controls_canonical
     )
-    
     return(.report_docx(res_min, out))
   }
   
   #### EXCEL OUT BRANCH ####
   if (type %in% c("excel","xlsx")) {
-    # Build model list exactly like the other branches
     mods <- list("Original" = report$models$original)
-    if (length(report$models$minimal_list)) {
-      for (i in seq_along(report$models$minimal_list)) {
-        mods[[sprintf("Minimal %d", i)]] <- report$models$minimal_list[[i]]
+    if (report$auto_add) {
+      if (length(report$models$minimal_list)) {
+        for (i in seq_along(report$models$minimal_list)) {
+          mods[[sprintf("Minimal %d", i)]] <- report$models$minimal_list[[i]]
+        }
+      } else if (length(report$controls_minimal)) {
+        mods[["Minimal 1"]] <- report$models$minimal
       }
-    } else {
-      mods[["Minimal 1"]] <- report$models$minimal
+      mods[["Canonical"]] <- report$models$canonical
     }
-    mods[["Canonical"]] <- report$models$canonical
-    
     res_min <- list(
       roles_df = report$roles,
       models   = mods,
       min_sets = report$controls_minimal_all,
       canon    = report$controls_canonical
     )
-    
     .report_xlsx(res_min, out)
     return(invisible(structure(report, file = normalizePath(out, mustWork = FALSE))))
   }
   
   ##### TEXT OUT BRANCH #####
   if (type %in% c("text","txt")) {
-    # Build the model list exactly like the LaTeX/Word branches
     mods <- list("Original" = report$models$original)
-    if (length(report$models$minimal_list)) {
-      for (i in seq_along(report$models$minimal_list)) {
-        mods[[sprintf("Minimal %d", i)]] <- report$models$minimal_list[[i]]
+    if (report$auto_add) {
+      if (length(report$models$minimal_list)) {
+        for (i in seq_along(report$models$minimal_list)) {
+          mods[[sprintf("Minimal %d", i)]] <- report$models$minimal_list[[i]]
+        }
+      } else if (length(report$controls_minimal)) {
+        mods[["Minimal 1"]] <- report$models$minimal
       }
-    } else {
-      mods[["Minimal 1"]] <- report$models$minimal
+      mods[["Canonical"]] <- report$models$canonical
     }
-    mods[["Canonical"]] <- report$models$canonical
-    
     res_min <- list(
-      roles_df  = report$roles,
-      models    = mods,
-      min_sets  = report$controls_minimal_all,
-      canon     = report$controls_canonical
+      roles_df = report$roles,
+      models   = mods,
+      min_sets = report$controls_minimal_all,
+      canon    = report$controls_canonical
     )
     .report_txt(res_min, out)
     return(invisible(structure(report, file = normalizePath(out, mustWork = FALSE))))
@@ -562,10 +593,6 @@ dag_assist <- function(dag, formula, data, exposure, outcome,
   
   report
 }
-
-## out param
-
-
 
 #' print the DAGassist_report
 #' @param x Output of dag_assist() (class "report")
@@ -612,90 +639,94 @@ print.DAGassist_report <- function(x, ...) {
   # compare formulas
     cat(clr_bold("\nFormulas:\n", sep = ""))
     cat("  original:  ",  deparse(x$formulas$original),  "\n", sep = "")
-    if (length(x$formulas$minimal_list)) {
-      for (i in seq_along(x$formulas$minimal_list)) {
-        cat("  minimal ", sprintf("%-2d", i), ": ", deparse(x$formulas$minimal_list[[i]]), "\n", sep = "")
+    if (isTRUE(x$auto_add)) {
+      
+      if (length(x$formulas$minimal_list)) {
+        for (i in seq_along(x$formulas$minimal_list)) {
+          cat("  minimal ", sprintf("%-2d", i), ": ", deparse(x$formulas$minimal_list[[i]]), "\n", sep = "")
+       }
+      } else {
+      cat("  minimal 1: ", deparse(x$formulas$minimal), "\n", sep = "")
       }
-    } else {
-     cat("  minimal 1: ", deparse(x$formulas$minimal), "\n", sep = "")
-    }
-    cat("  canonical: ",  deparse(x$formulas$canonical), "\n", sep = "")
+      cat("  canonical: ",  deparse(x$formulas$canonical), "\n", sep = "")
   
-    ## Note if specs are identical (check all pairs and sets)
-    mins_fmls <- if (length(x$formulas$minimal_list)) x$formulas$minimal_list else list(x$formulas$minimal)
-    #initialize empty value for later
-    pairs <- character(0)
+      ## Note if specs are identical (check all pairs and sets)
+      mins_fmls <- if (length(x$formulas$minimal_list)) x$formulas$minimal_list else list(x$formulas$minimal)
+      #initialize empty value for later
+      pairs <- character(0)
   
-    # original vs each minimal 
-    for (i in seq_along(mins_fmls)) {
-      if (.same_formula(x$formulas$original, mins_fmls[[i]])) {
-        pairs <- c(pairs, sprintf("Original = Minimal %d", i))
+      # original vs each minimal 
+      for (i in seq_along(mins_fmls)) {
+        if (.same_formula(x$formulas$original, mins_fmls[[i]])) {
+          pairs <- c(pairs, sprintf("Original = Minimal %d", i))
+        }
       }
-    }
   
-    # canonical vs original
-    if (.same_formula(x$formulas$canonical, x$formulas$original)) {
-      pairs <- c(pairs, "Canonical = Original")
-    }
-  
-  # canonical vs each minimal 
-    for (i in seq_along(mins_fmls)) {
-      if (.same_formula(x$formulas$canonical, mins_fmls[[i]])) {
-        pairs <- c(pairs, sprintf("Canonical = Minimal %d", i))
+      # canonical vs original
+      if (.same_formula(x$formulas$canonical, x$formulas$original)) {
+        pairs <- c(pairs, "Canonical = Original")
       }
-    }
   
-  # minimal vs minimal 
-    if (length(mins_fmls) > 1) {
-      for (i in seq_len(length(mins_fmls) - 1L)) {
-        for (j in seq.int(i + 1L, length(mins_fmls))) {
-          if (.same_formula(mins_fmls[[i]], mins_fmls[[j]])) {
-            pairs <- c(pairs, sprintf("Minimal %d = Minimal %d", i, j))
+    # canonical vs each minimal 
+      for (i in seq_along(mins_fmls)) {
+        if (.same_formula(x$formulas$canonical, mins_fmls[[i]])) {
+          pairs <- c(pairs, sprintf("Canonical = Minimal %d", i))
+        }
+      }
+  
+    # minimal vs minimal 
+      if (length(mins_fmls) > 1) {
+        for (i in seq_len(length(mins_fmls) - 1L)) {
+          for (j in seq.int(i + 1L, length(mins_fmls))) {
+            if (.same_formula(mins_fmls[[i]], mins_fmls[[j]])) {
+              pairs <- c(pairs, sprintf("Minimal %d = Minimal %d", i, j))
+            }
           }
         }
       }
-    }
   
-    if (length(pairs)) {
-      cat(clr_yellow("\nNote: some specifications are identical (",
-          paste(pairs, collapse = "; "),
-          ").\nEstimates will match for those columns.\n", sep = ""))
-    }
-  
-    ## Concise note about DAG-derived additions 
-  
-    # user RHS terms from the original pre-| formula
-    user_rhs <- .rhs_terms_safe(x$formulas$original)
-  
-    exp_nm <- get_by_role(x$roles, "exposure")
-    out_nm <- get_by_role(x$roles, "outcome")
-  
-    # build one short line per column that added variables
-    lines <- character(0)
-    drop_exp <- if (!is.na(exp_nm) && nzchar(exp_nm)) exp_nm else character(0)
-  
-    mins_fmls <- if (length(x$formulas$minimal_list)) x$formulas$minimal_list else list(x$formulas$minimal)
-    for (i in seq_along(mins_fmls)) {
-      rhs_i  <- setdiff(.rhs_terms_safe(mins_fmls[[i]]), drop_exp)
-      added  <- setdiff(rhs_i, user_rhs)
-      if (length(added)) lines <- c(lines, sprintf("  - Minimal %d added: %s", i, .format_set(added)))
-     }
-  
-    rhs_c    <- setdiff(.rhs_terms_safe(x$formulas$canonical), drop_exp)
-    added_c  <- setdiff(rhs_c, user_rhs)
-    if (length(added_c)) lines <- c(lines, sprintf("  - Canonical added: %s", .format_set(added_c)))
-  
-    if (length(lines)) {
-      if (!is.na(exp_nm) && nzchar(exp_nm) && !is.na(out_nm) && nzchar(out_nm)) {
-        cat(clr_bold(clr_yellow("\nNote: DAGassist added variables not in your formula, based on the\nrelationships in your DAG, ",
-            "to block back-door paths\nbetween ", exp_nm, " and ", out_nm, ".\n", sep = "")))
-      } else {
-        cat(clr_bold(clr_yellow("\nNote: DAGassist added variables not in your formula, based on the\nrelationships in your DAG, ",
-            "to block back-door paths.\n", sep = "")))
+      if (length(pairs)) {
+        cat(clr_yellow("\nNote: some specifications are identical (",
+            paste(pairs, collapse = "; "),
+            ").\nEstimates will match for those columns.\n", sep = ""))
       }
-      cat(paste(lines, collapse = "\n"), "\n", sep = "")
+  
+      ## Concise note about DAG-derived additions 
+  
+      # user RHS terms from the original pre-| formula
+      user_rhs <- .rhs_terms_safe(x$formulas$original)
+  
+      exp_nm <- get_by_role(x$roles, "exposure")
+      out_nm <- get_by_role(x$roles, "outcome")
+  
+      # build one short line per column that added variables
+      lines <- character(0)
+      drop_exp <- if (!is.na(exp_nm) && nzchar(exp_nm)) exp_nm else character(0)
+  
+      mins_fmls <- if (length(x$formulas$minimal_list)) x$formulas$minimal_list else list(x$formulas$minimal)
+      for (i in seq_along(mins_fmls)) {
+        rhs_i  <- setdiff(.rhs_terms_safe(mins_fmls[[i]]), drop_exp)
+        added  <- setdiff(rhs_i, user_rhs)
+        if (length(added)) lines <- c(lines, sprintf("  - Minimal %d added: %s", i, .format_set(added)))
+       }
+  
+      rhs_c    <- setdiff(.rhs_terms_safe(x$formulas$canonical), drop_exp)
+      added_c  <- setdiff(rhs_c, user_rhs)
+      if (length(added_c)) lines <- c(lines, sprintf("  - Canonical added: %s", .format_set(added_c)))
+  
+      if (length(lines)) {
+        if (!is.na(exp_nm) && nzchar(exp_nm) && !is.na(out_nm) && nzchar(out_nm)) {
+          cat(clr_bold(clr_yellow("\nNote: DAGassist added variables not in your formula, based on the\nrelationships in your DAG, ",
+              "to block back-door paths\nbetween ", exp_nm, " and ", out_nm, ".\n", sep = "")))
+        } else {
+          cat(clr_bold(clr_yellow("\nNote: DAGassist added variables not in your formula, based on the\nrelationships in your DAG, ",
+              "to block back-door paths.\n", sep = "")))
+        }
+        cat(paste(lines, collapse = "\n"), "\n", sep = "")
+      }
     }
-  }
+  } # end of auto add
+  
   ## build the model list for modelsummary/broom
   mods <- list("Original" = x$models$original)
   if (length(x$models$minimal_list)) {

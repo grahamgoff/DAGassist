@@ -96,7 +96,7 @@ Model comparison:
 ``` r
 DAGassist(
   test_complex, Y ~ X + Z + C + M, test_df,
-  type = "latex", out = "your/path", imply = TRUE
+  type = "latex", out = "man/figures/README-latex.tex", imply = TRUE
 )
 ```
 

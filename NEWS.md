@@ -1,6 +1,6 @@
 # DAGassist NEWS
 
-## Roadmap to v0.2.0:
+## Roadmap to v0.3.0:
 
 - [ ] Ensure that classify.R categories are **always** accurate
 - [ ] Verify compatibility with all major engines

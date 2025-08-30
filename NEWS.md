@@ -8,11 +8,12 @@
 - [x] Include Canonical adjustment sets
 - [x] Handling multiple minimal adjustment sets
 - [x] Add more colors in output
+- [x] Add options for LaTeX output
 - [ ] Ensure that classify.R categories are **always** accurate
+- [ ] Add word output functionality
 - [ ] Verify Engine compatibility with all major engines
 - [ ] Handle diff-in-diff and fixed effects formula notation
 - [ ] Add graphics: gray scale of the original model, with the minimal set visibly differentiated.
-- [ ] Add options for LaTeX output
 - [ ] Add export_report functionality, which will print a publication-grade 2-page robustness check with a single, simple call (for robustness check use)
 - [ ] Add a simple "covariate sensitivity" line to report, indicating if (i) the original model is statistically significant; (ii) the minimal or canonical set is statistically insignificant
 - [ ] Run `dag_assist` on a bunch of complex DAGS to refine the sorting algorithm in `compare.R`.

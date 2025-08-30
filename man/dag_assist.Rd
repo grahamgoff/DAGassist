@@ -14,7 +14,7 @@ dag_assist(
   engine = stats::lm,
   engine_args = list(),
   verbose = TRUE,
-  type = c("console", "latex"),
+  type = c("console", "latex", "word", "docx"),
   out = NULL
 )
 }
@@ -36,9 +36,9 @@ dag_assist(
 
 \item{verbose}{default TRUE-- TRUE/FALSE -- suppresses formulas and notes.}
 
-\item{type}{Output type: "console" (default) or "latex"}
+\item{type}{Output type: "console" (default) or "latex" or "word"}
 
-\item{out}{File path for latex fragment, default NULL}
+\item{out}{File path for latex fragment or word doc, default NULL}
 }
 \value{
 a list of class \code{out} with the \code{DAGassist_report}, which has values

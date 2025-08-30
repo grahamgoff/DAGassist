@@ -131,9 +131,9 @@
     role     = "Role",
     is_exposure = "X",
     is_outcome  = "Y",
-    is_confounder = "Conf.",
-    is_mediator   = "Med.",
-    is_collider   = "Col.",
+    is_confounder = "CON",
+    is_mediator   = "MED",
+    is_collider   = "COL",
     is_descendant_of_outcome = "DY",
     is_descendant_of_exposure = "DX",
     canon = "Canon"
@@ -263,6 +263,7 @@
   }
   
   # glue std.errors in parentheses and collapse onto the estimate rows
+  # estimates and std.errors on separate rows (SEs on the line below)
   df[] <- lapply(df, function(x) { y <- as.character(x); y[is.na(y)] <- ""; y })
   meta_cols  <- intersect(c("part","term","statistic"), names(df))
   model_cols <- setdiff(names(df), meta_cols)
@@ -271,18 +272,30 @@
   
   term_order <- unique(est$term[est$statistic == "estimate"])
   rows <- list()
+  
   for (tm in term_order) {
-    e <- est[est$term == tm & est$statistic == "estimate", model_cols, drop = FALSE]
+    e <- est[est$term == tm & est$statistic == "estimate",  model_cols, drop = FALSE]
     s <- est[est$term == tm & est$statistic == "std.error", model_cols, drop = FALSE]
-    if (!nrow(s)) s <- as.data.frame(as.list(rep("", length(model_cols))), stringsAsFactors = FALSE)
-    names(s) <- model_cols
-    s[] <- lapply(s, function(v) ifelse(v == "" | is.na(v), "", paste0(" (", v, ")")))
+    
+    # estimates row
     rows[[length(rows) + 1L]] <- data.frame(
       Term = tm,
-      as.list(mapply(paste0, e[1,], s[1,], SIMPLIFY = TRUE)),
+      as.list(e[1, , drop = TRUE]),
       check.names = FALSE, stringsAsFactors = FALSE
     )
+    
+    # std.error row right underneath (in parentheses)
+    if (nrow(s)) {
+      s_par <- lapply(s[1, , drop = TRUE],
+                      function(v) ifelse(v == "" | is.na(v), "", paste0("(", v, ")")))
+      rows[[length(rows) + 1L]] <- data.frame(
+        Term = "",
+        as.list(s_par),
+        check.names = FALSE, stringsAsFactors = FALSE
+      )
+    }
   }
+  
   if (nrow(gof)) {
     for (i in seq_len(nrow(gof))) {
       g <- gof[i, , drop = FALSE]
@@ -293,6 +306,7 @@
       )
     }
   }
+  
   pretty <- do.call(rbind, rows)
   colnames(pretty) <- c("Term", model_cols)
   # Make the leftmost column robust: avoids TeX errors on leading '(' etc.
@@ -306,6 +320,10 @@
   single <- paste(body, collapse = "\n")
   single <- gsub("\\(\\s*\\(", "(", single)
   single <- gsub("\\)\\s*\\)", ")", single)
+  
+  #adds a rule separating estimates from gof rows
+  if (nrow(gof)) single <- sub(paste0("(?m)^(\\\\textnormal\\{", gsub("([][(){}.^$*+?|\\-\\\\])","\\\\\\1", gof$term[1]), "\\})"), "\\\\midrule[\\\\heavyrulewidth]\n\\1", single, perl = TRUE)
+  
   strsplit(single, "\n", fixed = TRUE)[[1]]
 }
 ################################################################################
@@ -347,7 +365,8 @@
     "\\setlength{\\LTpre}{0pt}\\setlength{\\LTpost}{0pt}", 
     "\\begin{center}\\textbf{DAGassist Report:}\\end{center}",
     
-    "\\begin{center}",
+    #this is like begin center but prevents paragraph space between the tables and notes
+    "\\begingroup\\setlength{\\parskip}{0pt}\\setlength{\\topsep}{0pt}\\setlength{\\partopsep}{0pt}\\centering",
     {
       roles <- tryCatch(res$roles_df, error = function(e) NULL)
       if (is.data.frame(roles) && nrow(roles)) {
@@ -362,7 +381,8 @@
         .msummary_to_longtable_centered(mods, wrap_center = FALSE)
       } else character(0)
     },
-    "\\end{center}",
+    #end center
+    "\\par\\endgroup",
     
     # Notes: stars, then each controls line on its own, indented
     {
@@ -371,7 +391,7 @@
       min_str   <- if (length(msets)) .set_brace(msets[[1]]) else "{}"
       canon_str <- .set_brace(canon)
       c(
-        "{\\footnotesize \\emph{Star Key:} + p $< 0.1$, * p $< 0.05$, ** p $< 0.01$, *** p $< 0.001$.\\\\",
+        "{\\footnotesize + p $< 0.1$, * p $< 0.05$, ** p $< 0.01$, *** p $< 0.001$.\\\\",
         paste0("\\hspace*{1.5em}\\textit{Controls (minimal):} ", min_str, "\\\\"),
         paste0("\\hspace*{1.5em}\\textit{Controls (canonical):} ", canon_str, ".}"))
     },

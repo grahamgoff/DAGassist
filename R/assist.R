@@ -297,8 +297,8 @@ clr_bold   <- .clr_wrap("\033[1m",  "\033[22m")
 #' @param engine the regression engine; default `stats::lm`
 #' @param engine_args a list with exra engine args---merged with any found in call
 #' @param verbose default TRUE-- TRUE/FALSE -- suppresses formulas and notes.
-#' @param type Output type: "console" (default) or "latex"
-#' @param out File path for latex fragment, default NULL
+#' @param type Output type: "console" (default) or "latex" or "word"
+#' @param out File path for latex fragment or word doc, default NULL
 #' 
 #' @return a list of class `out` with the `DAGassist_report`, which has values
 #'         validation: runs `validate_spec` from validate.R
@@ -318,7 +318,7 @@ clr_bold   <- .clr_wrap("\033[1m",  "\033[22m")
 
 dag_assist <- function(dag, formula, data, exposure, outcome,
                        engine = stats::lm, engine_args = list(),
-                       verbose = TRUE, type = c("console", "latex"), out = NULL) {
+                       verbose = TRUE, type = c("console", "latex", "word", "docx"), out = NULL) {
   # set output type
   type <- match.arg(type)
   
@@ -421,9 +421,13 @@ dag_assist <- function(dag, formula, data, exposure, outcome,
   )
   class(report) <- c("DAGassist_report", class(report))
   
-  ##### OUT BRANCH #####
+  ##### LATEX OUT BRANCH #####
   
   if (type == "latex") {
+    if (tolower(tools::file_ext(out)) == "docx") {
+      stop("LaTeX fragment must not be written to a .docx path. Use a .tex filename.", call. = FALSE)
+    }
+    
     if (is.null(out)) stop("type='latex' requires `out=` file path.", call. = FALSE)
     
     # Build the model list exactly like the console path
@@ -465,6 +469,47 @@ dag_assist <- function(dag, formula, data, exposure, outcome,
     
     .report_latex_fragment(res_min, out)
     return(invisible(structure(report, file = normalizePath(out, mustWork = FALSE))))
+  }
+  
+  ##### WORD OUT BRANCH #####
+  if (type %in% c("docx","word")) {
+    # Build the model list exactly like the latex branch
+    mods <- list("Original" = report$models$original)
+    if (length(report$models$minimal_list)) {
+      for (i in seq_along(report$models$minimal_list)) {
+        mods[[sprintf("Minimal %d", i)]] <- report$models$minimal_list[[i]]
+      }
+    } else {
+      mods[["Minimal 1"]] <- report$models$minimal
+    }
+    mods[["Canonical"]] <- report$models$canonical
+    
+    res_min <- list(
+      validation = list(
+        status = if (isTRUE(v$ok)) "VALID" else "INVALID",
+        issues = if (!is.null(v$issues)) v$issues else character(0)
+      ),
+      roles_df  = report$roles,
+      models_df = data.frame(
+        Model   = c("Original",
+                    if (length(report$formulas$minimal_list)) paste0("Minimal ", seq_along(report$formulas$minimal_list)) else "Minimal 1",
+                    "Canonical"),
+        Formula = c(
+          paste(deparse(report$formulas$original),  collapse = " "),
+          if (length(report$formulas$minimal_list))
+            vapply(report$formulas$minimal_list, function(f) paste(deparse(f), collapse = " "), character(1))
+          else
+            paste(deparse(report$formulas$minimal), collapse = " "),
+          paste(deparse(report$formulas$canonical), collapse = " ")
+        ),
+        stringsAsFactors = FALSE
+      ),
+      models   = mods,
+      min_sets = report$controls_minimal_all,
+      canon    = report$controls_canonical
+    )
+    
+    return(.report_docx(res_min, out))
   }
   
   report

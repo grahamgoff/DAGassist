@@ -13,6 +13,7 @@
 - [x] Add excel output functionality
 - [x] Add plaintext output functionality
 - [x] Add export_report functionality, which will print a publication-grade 2-page robustness check with a single, simple call (for robustness check use)
+- [x] Add `imply`, default TRUE, logical parameter to disable adding variables to formula/table based on DAG relationships.
 - [ ] Ensure that classify.R categories are **always** accurate
 - [ ] Verify Engine compatibility with all major engines
 - [ ] Handle diff-in-diff and fixed effects formula notation
@@ -20,7 +21,6 @@
 - [ ] Add a simple "covariate sensitivity" line to report, indicating if (i) the original model is statistically significant; (ii) the minimal or canonical set is statistically insignificant
 - [ ] Run `dag_assist` on a bunch of complex DAGS to refine the sorting algorithm in `compare.R`.
 - [ ] Change `dag_assist` to `DAGassist`.
-- [x] Add `imply`, default TRUE, logical parameter to disable adding variables to formula/table based on DAG relationships.
 - [ ] Get rid of the engine args param; it is obsolete
 
 ## UNRELEASED

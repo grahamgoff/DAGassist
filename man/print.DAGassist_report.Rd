@@ -7,7 +7,7 @@
 \method{print}{DAGassist_report}(x, ...)
 }
 \arguments{
-\item{x}{Output of dag_assist() (class "report")}
+\item{x}{Output of DAGassist() (class "report")}
 
 \item{...}{(ignored)}
 }
@@ -22,6 +22,6 @@ print the DAGassist_report
 # Use package datasets to avoid re-simulating
 data(test_df, package = "DAGassist")
 data(test_complex, package = "DAGassist")
-dag_assist(test_complex, Y ~ X + Z + C + M, test_df, exposure = "X", outcome = "Y")
+DAGassist(test_complex, Y ~ X + Z + C + M, test_df, exposure = "X", outcome = "Y")
 \dontshow{\}) # examplesIf}
 }

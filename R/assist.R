@@ -315,11 +315,11 @@ clr_bold   <- .clr_wrap("\033[1m",  "\033[22m")
 #' # Use package datasets to avoid re-simulating
 #' data(test_df, package = "DAGassist")
 #' data(test_complex, package = "DAGassist")
-#' dag_assist(test_complex, Y ~ X + Z + C + M, test_df, exposure = "X", outcome = "Y")
+#' DAGassist(test_complex, Y ~ X + Z + C + M, test_df, exposure = "X", outcome = "Y")
 #' 
 #' @export
 
-dag_assist <- function(dag, formula, data, exposure, outcome,
+DAGassist <- function(dag, formula, data, exposure, outcome,
                        engine = stats::lm, engine_args = list(),
                        verbose = TRUE, 
                        type = c("console", "latex", "word", "docx", 
@@ -595,7 +595,7 @@ dag_assist <- function(dag, formula, data, exposure, outcome,
 }
 
 #' print the DAGassist_report
-#' @param x Output of dag_assist() (class "report")
+#' @param x Output of DAGassist() (class "report")
 #' @param ... (ignored)
 #' @return Invisibly returns x
 #' 
@@ -603,7 +603,7 @@ dag_assist <- function(dag, formula, data, exposure, outcome,
 #' # Use package datasets to avoid re-simulating
 #' data(test_df, package = "DAGassist")
 #' data(test_complex, package = "DAGassist")
-#' dag_assist(test_complex, Y ~ X + Z + C + M, test_df, exposure = "X", outcome = "Y")
+#' DAGassist(test_complex, Y ~ X + Z + C + M, test_df, exposure = "X", outcome = "Y")
 #' 
 #' @export
 #' 

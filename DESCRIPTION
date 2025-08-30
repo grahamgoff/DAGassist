@@ -1,9 +1,22 @@
 Package: DAGassist
 Title: DAG-Driven Robustness Checks for R
-Version: 0.2.0.9000
+Version: 0.2.0
 Authors@R: 
-    person("Graham", "Goff", , "goffgrahamc@gmail.com", role = c("aut", "cre"))
-Description: Classify roles, flag bad controls, and compare original vs minimal adjustment sets.
+  c(
+    person("Graham", "Goff", 
+            email = "goffgrahamc@gmail.com", 
+            role = c("aut", "cre"),
+            comment = c(affiliation = "Dept. of International Affairs, Texas A&M University",
+                        ORCID = "0000-0002-0717-6995")
+    ),
+    person("Michael", "Denly",
+            email = "mdenly@tamu.edu",
+            role = "ctb",
+            comment = c(affiliation = "Dept. of International Affairs, Texas A&M University",
+                        ORCID = "0000-0002-7074-5011")
+    )
+  )  
+Description: Make DAG-based robustness checks easy: causal roles, bad controls, minimal adjustment sets, canonical adjustment sets, and model comparisons.
 License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

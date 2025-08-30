@@ -19,7 +19,9 @@ Suggests:
     covr,
     cli,
     modelsummary,
-    broom
+    broom,
+    openxlsx,
+    writexl
 Depends: 
     R (>= 3.5)
 LazyData: true

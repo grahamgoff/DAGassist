@@ -318,7 +318,8 @@ clr_bold   <- .clr_wrap("\033[1m",  "\033[22m")
 
 dag_assist <- function(dag, formula, data, exposure, outcome,
                        engine = stats::lm, engine_args = list(),
-                       verbose = TRUE, type = c("console", "latex", "word", "docx"), out = NULL) {
+                       verbose = TRUE, type = c("console", "latex", "word", "docx",
+                                                "excel", "xlsx", "text", "txt"), out = NULL) {
   # set output type
   type <- match.arg(type)
   
@@ -510,6 +511,53 @@ dag_assist <- function(dag, formula, data, exposure, outcome,
     )
     
     return(.report_docx(res_min, out))
+  }
+  
+  #### EXCEL OUT BRANCH ####
+  if (type %in% c("excel","xlsx")) {
+    # Build model list exactly like the other branches
+    mods <- list("Original" = report$models$original)
+    if (length(report$models$minimal_list)) {
+      for (i in seq_along(report$models$minimal_list)) {
+        mods[[sprintf("Minimal %d", i)]] <- report$models$minimal_list[[i]]
+      }
+    } else {
+      mods[["Minimal 1"]] <- report$models$minimal
+    }
+    mods[["Canonical"]] <- report$models$canonical
+    
+    res_min <- list(
+      roles_df = report$roles,
+      models   = mods,
+      min_sets = report$controls_minimal_all,
+      canon    = report$controls_canonical
+    )
+    
+    .report_xlsx(res_min, out)
+    return(invisible(structure(report, file = normalizePath(out, mustWork = FALSE))))
+  }
+  
+  ##### TEXT OUT BRANCH #####
+  if (type %in% c("text","txt")) {
+    # Build the model list exactly like the LaTeX/Word branches
+    mods <- list("Original" = report$models$original)
+    if (length(report$models$minimal_list)) {
+      for (i in seq_along(report$models$minimal_list)) {
+        mods[[sprintf("Minimal %d", i)]] <- report$models$minimal_list[[i]]
+      }
+    } else {
+      mods[["Minimal 1"]] <- report$models$minimal
+    }
+    mods[["Canonical"]] <- report$models$canonical
+    
+    res_min <- list(
+      roles_df  = report$roles,
+      models    = mods,
+      min_sets  = report$controls_minimal_all,
+      canon     = report$controls_canonical
+    )
+    .report_txt(res_min, out)
+    return(invisible(structure(report, file = normalizePath(out, mustWork = FALSE))))
   }
   
   report

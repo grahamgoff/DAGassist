@@ -14,7 +14,7 @@ dag_assist(
   engine = stats::lm,
   engine_args = list(),
   verbose = TRUE,
-  type = c("console", "latex", "word", "docx"),
+  type = c("console", "latex", "word", "docx", "excel", "xlsx", "text", "txt"),
   out = NULL
 )
 }

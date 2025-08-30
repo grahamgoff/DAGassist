@@ -219,13 +219,32 @@ get_by_role <- function(roles, value) {
   NA_character_
 }
 
+### color wrap helpers to prevent junking up knitr renders 
 # Accept ... and paste internally so you can pass multiple args. 
-# this is for the pretty colors
-.clr_wrap <- function(prefix, suffix) {
-  force(prefix); force(suffix)
-  function(...) paste0(prefix, paste0(..., collapse = ""), suffix)
+
+# TRUE when knitting
+.is_knit <- function() isTRUE(getOption("knitr.in.progress"))
+
+# Should we use ANSI colors right now?
+.allow_ansi <- function() {
+  # user option wins; default = colored only in interactive, non-knitr sessions
+  opt <- getOption("DAGassist.color", default = (interactive() && !.is_knit()))
+  opt &&
+    Sys.getenv("NO_COLOR", "") == "" &&                  # standard override
+    requireNamespace("crayon", quietly = TRUE) &&        # only if crayon is available
+    crayon::has_color()                                  # and the terminal supports it
 }
 
+# Wrap a string with ANSI codes only if .allow_ansi() is TRUE
+.clr_wrap <- function(prefix, suffix) {
+  force(prefix); force(suffix)
+  function(...) {
+    s <- paste0(..., collapse = "")
+    if (.allow_ansi()) paste0(prefix, s, suffix) else s
+  }
+}
+
+#the pretty colors
 clr_red    <- .clr_wrap("\033[31m", "\033[39m")
 clr_green  <- .clr_wrap("\033[32m", "\033[39m")
 clr_yellow <- .clr_wrap("\033[33m", "\033[39m")

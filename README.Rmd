@@ -15,6 +15,15 @@ devtools::load_all(quiet = TRUE)
 library(fixest)
 ```
 
+```{r col, include=FALSE}
+# make knitr treat output as plain text (no ANSI)
+options(
+  DAGassist.color = FALSE,  # we'll wire this up below
+  crayon.enabled = FALSE
+)
+Sys.setenv(NO_COLOR = "1")
+```
+
 # DAGassist
 
 <!-- badges: start -->

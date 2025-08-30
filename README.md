@@ -30,7 +30,7 @@ library(DAGassist)
 ``` r
 DAGassist(dag = test_complex, 
           formula = feols(Y ~ X + Z + B + A + C + M | region + time, data = test_df))
-[1m[34mDAGassist Report:[39m[22m 
+DAGassist Report: 
 
 Roles:
 variable  role        X  Y  conf  med  col  desc(Y)  desc(X)
@@ -41,13 +41,13 @@ M         mediator                x                  x
 C         collider                     x    x        x      
 A         other                                             
 B         other                                             
-[31m
+
  (!) Bad controls in your formula: {C, M}
-[39mMinimal controls 1: {Z}
+Minimal controls 1: {Z}
 Canonical controls: {A, B, Z}
-[1m
+
 Formulas:
-[22m  original:  Y ~ X + Z + B + A + C + M | region + time
+  original:  Y ~ X + Z + B + A + C + M | region + time
 
 Model comparison:
 
@@ -114,7 +114,7 @@ DAGassist(
   formula = lm(Y~X+C, data = test_df),
   imply = TRUE
 )
-[1m[34mDAGassist Report:[39m[22m 
+DAGassist Report: 
 
 Roles:
 variable  role        X  Y  conf  med  col  desc(Y)  desc(X)
@@ -125,20 +125,20 @@ M         mediator                x                  x
 C         collider                     x    x        x      
 A         other                                             
 B         other                                             
-[31m
+
  (!) Bad controls in your formula: {C}
-[39mMinimal controls 1: {Z}
+Minimal controls 1: {Z}
 Canonical controls: {A, B, Z}
-[1m
+
 Formulas:
-[22m  original:  Y ~ X + C
+  original:  Y ~ X + C
   minimal 1 : Y ~ X + Z
   canonical: Y ~ X + A + B + Z
-[1m[33m
+
 Note: DAGassist added variables not in your formula, based on the
 relationships in your DAG, to block back-door paths
 between X and Y.
-[39m[22m  - Minimal 1 added: {Z}
+  - Minimal 1 added: {Z}
   - Canonical added: {A, B, Z}
 
 Model comparison:

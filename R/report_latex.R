@@ -49,31 +49,6 @@
   x
 }
 
-.roles_pretty <- function(roles) {
-  r <- roles
-  map <- c(
-    variable = "Variable",
-    role     = "Role",
-    is_exposure = "X",
-    is_outcome  = "Y",
-    is_confounder = "CON",
-    is_mediator   = "MED",
-    is_collider   = "COL",
-    is_descendant_of_outcome = "DY",
-    is_descendant_of_exposure = "DX",
-    canon = "Canon"
-  )
-  prefer <- c("variable","role","is_exposure","is_outcome","is_confounder",
-              "is_mediator","is_collider","is_descendant_of_outcome",
-              "is_descendant_of_exposure","canon")
-  keep <- intersect(prefer, names(r))
-  r <- r[, c(keep, setdiff(names(r), keep)), drop = FALSE]
-  for (nm in names(r)) if (is.logical(r[[nm]])) r[[nm]] <- ifelse(r[[nm]], "x", "")
-  names(r) <- ifelse(names(r) %in% names(map), unname(map[names(r)]), names(r))
-  r
-}
-
-
 .df_to_longtable_centered <- function(df, raw_cols = character()) {
   stopifnot(is.data.frame(df))
   df2 <- df

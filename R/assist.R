@@ -1,4 +1,54 @@
 ######################## NON-EXPORTED HELPER FUNCTIONS #########################
+# Build a unified, named list of models for all outputs.
+.build_named_mods <- function(report) {
+  mods <- list("Original" = report$models$original)
+  
+  # Minimal(s)
+  if (length(report$models$minimal_list)) {
+    for (i in seq_along(report$models$minimal_list)) {
+      mods[[sprintf("Minimal %d", i)]] <- report$models$minimal_list[[i]]
+    }
+  } else if (length(report$controls_minimal)) {
+    mods[["Minimal 1"]] <- report$models$minimal
+  }
+  
+  # Canonical only if it differs from Original (matches your LaTeX behavior)
+  if (!.same_formula(report$formulas$canonical, report$formulas$original)) {
+    mods[["Canonical"]] <- report$models$canonical
+  }
+  
+  mods
+}
+
+# Build the (Model, Formula) data frame with labels that match .build_named_mods()
+.build_models_df <- function(report) {
+  labs <- c(
+    "Original",
+    if (length(report$formulas$minimal_list))
+      paste0("Minimal ", seq_along(report$formulas$minimal_list))
+    else if (length(report$controls_minimal))
+      "Minimal 1"
+    else character(0),
+    if (!.same_formula(report$formulas$canonical, report$formulas$original))
+      "Canonical"
+    else character(0)
+  )
+  
+  forms <- c(
+    paste(deparse(report$formulas$original), collapse = " "),
+    if (length(report$formulas$minimal_list))
+      vapply(report$formulas$minimal_list, function(f) paste(deparse(f), collapse = " "), character(1))
+    else if (length(report$controls_minimal))
+      paste(deparse(report$formulas$minimal), collapse = " ")
+    else character(0),
+    if (!.same_formula(report$formulas$canonical, report$formulas$original))
+      paste(deparse(report$formulas$canonical), collapse = " ")
+    else character(0)
+  )
+  
+  data.frame(Model = labs, Formula = forms, stringsAsFactors = FALSE)
+}
+
 ## infer x and y from the call, so the user does not have to make an extra 
 ## "engine" call 
 .infer_xy <- function(dag, exposure, outcome) {
@@ -454,31 +504,15 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
     imply = isTRUE(imply)
   )
   class(report) <- c("DAGassist_report", class(report))
-  
+  # Build unified artifacts once for all outputs
+  mods_full       <- .build_named_mods(report)
+  models_df_full  <- .build_models_df(report)
   ##### LATEX OUT BRANCH #####
-  
   if (type == "latex") {
     if (tolower(tools::file_ext(out)) == "docx") {
       stop("LaTeX fragment must not be written to a .docx path. Use a .tex filename.", call. = FALSE)
     }
-    
     if (is.null(out)) stop("type='latex' requires `out=` file path.", call. = FALSE)
-    
-    mods <- list("Original" = report$models$original)
-    
-    # Minimal(s)
-    if (length(report$models$minimal_list)) {
-      for (i in seq_along(report$models$minimal_list)) {
-        mods[[sprintf("Minimal %d", i)]] <- report$models$minimal_list[[i]]
-      }
-    } else if (length(report$controls_minimal)) {
-      mods[["Minimal 1"]] <- report$models$minimal
-    }
-    
-    # Canonical (skip if identical to Original)
-    if (!.same_formula(report$formulas$canonical, report$formulas$original)) {
-      mods[["Canonical"]] <- report$models$canonical
-    }
     
     res_min <- list(
       validation = list(
@@ -486,50 +520,24 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
         issues = if (!is.null(v$issues)) v$issues else character(0)
       ),
       roles_df  = report$roles,
-      models_df = data.frame(
-        Model   = c("Original",
-                    if (length(report$formulas$minimal_list)) paste0("Minimal ", seq_along(report$formulas$minimal_list)) else "Minimal 1",
-                    "Canonical"),
-        Formula = c(
-          paste(deparse(report$formulas$original),  collapse = " "),
-          if (length(report$formulas$minimal_list))
-            vapply(report$formulas$minimal_list, function(f) paste(deparse(f), collapse = " "), character(1))
-          else
-            paste(deparse(report$formulas$minimal), collapse = " "),
-          paste(deparse(report$formulas$canonical), collapse = " ")
-        ),
-        stringsAsFactors = FALSE
-      ),
-      # give the helper models and sets
-      models   = mods,
-      min_sets = report$controls_minimal_all,
-      canon    = report$controls_canonical
+      models_df = models_df_full,     # <— unified
+      models    = mods_full,          # <— unified
+      min_sets  = report$controls_minimal_all,
+      canon     = report$controls_canonical
     )
     
     .report_latex_fragment(res_min, out)
     return(invisible(structure(report, file = normalizePath(out, mustWork = FALSE))))
   }
-  
   ##### WORD OUT BRANCH #####
   if (type %in% c("docx","word")) {
-    mods <- list("Original" = report$models$original)
-    if (report$imply) {
-      if (length(report$models$minimal_list)) {
-        for (i in seq_along(report$models$minimal_list)) {
-          mods[[sprintf("Minimal %d", i)]] <- report$models$minimal_list[[i]]
-        }
-      } else if (length(report$controls_minimal)) {
-        mods[["Minimal 1"]] <- report$models$minimal
-      }
-      mods[["Canonical"]] <- report$models$canonical
-    }
     res_min <- list(
       validation = list(
         status = if (isTRUE(v$ok)) "VALID" else "INVALID",
         issues = if (!is.null(v$issues)) v$issues else character(0)
       ),
       roles_df = report$roles,
-      models   = mods,
+      models   = mods_full,                 # <— unified (always Original + Minimal(s) + maybe Canonical)
       min_sets = report$controls_minimal_all,
       canon    = report$controls_canonical
     )
@@ -538,20 +546,9 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
   
   #### EXCEL OUT BRANCH ####
   if (type %in% c("excel","xlsx")) {
-    mods <- list("Original" = report$models$original)
-    if (report$imply) {
-      if (length(report$models$minimal_list)) {
-        for (i in seq_along(report$models$minimal_list)) {
-          mods[[sprintf("Minimal %d", i)]] <- report$models$minimal_list[[i]]
-        }
-      } else if (length(report$controls_minimal)) {
-        mods[["Minimal 1"]] <- report$models$minimal
-      }
-      mods[["Canonical"]] <- report$models$canonical
-    }
     res_min <- list(
       roles_df = report$roles,
-      models   = mods,
+      models   = mods_full,          # <— unified
       min_sets = report$controls_minimal_all,
       canon    = report$controls_canonical
     )
@@ -561,20 +558,9 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
   
   ##### TEXT OUT BRANCH #####
   if (type %in% c("text","txt")) {
-    mods <- list("Original" = report$models$original)
-    if (report$imply) {
-      if (length(report$models$minimal_list)) {
-        for (i in seq_along(report$models$minimal_list)) {
-          mods[[sprintf("Minimal %d", i)]] <- report$models$minimal_list[[i]]
-        }
-      } else if (length(report$controls_minimal)) {
-        mods[["Minimal 1"]] <- report$models$minimal
-      }
-      mods[["Canonical"]] <- report$models$canonical
-    }
     res_min <- list(
       roles_df = report$roles,
-      models   = mods,
+      models   = mods_full,          # <— unified
       min_sets = report$controls_minimal_all,
       canon    = report$controls_canonical
     )

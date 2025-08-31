@@ -573,6 +573,7 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
 
 #' print the DAGassist_report
 #' @param x Output of DAGassist() (class "report")
+#' @param ... Additional arguments passed to or from methods (unused).
 #' @return Invisibly returns x
 #' 
 #' @examplesIf requireNamespace("dagitty", quietly = TRUE)

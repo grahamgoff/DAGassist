@@ -8,6 +8,8 @@
 }
 \arguments{
 \item{x}{Output of DAGassist() (class "report")}
+
+\item{...}{Additional arguments passed to or from methods (unused).}
 }
 \value{
 Invisibly returns x

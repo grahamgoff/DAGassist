@@ -1,5 +1,5 @@
 ############################ INTERNAL HELPERS ##################################
-# latex (modelsummary) → longtblr
+# talltblr to longtblr 
 .to_longtblr <- function(x) {
   # strip float wrappers/centering
   x <- gsub("\\\\begin\\{table\\}(\\[[^\\]]*\\])?\\s*", "", x, perl = TRUE)
@@ -120,7 +120,7 @@
   if (!requireNamespace("modelsummary", quietly = TRUE)) {
     return(c("% modelsummary not installed; skipping model comparison"))
   }
-  out <- modelsummary(
+  out <- modelsummary::modelsummary(
     mods,
     output    = "latex",
     stars     = TRUE,
@@ -137,7 +137,6 @@
 }
 
 ################################################################################
-
 # R/report_latex.R
 ## Minimal LaTeX fragment writer for DAGassist. Produces a PREAMBLE-LESS snippet.
 ## Include it in your paper with: \input{path/to/fragment.tex}
@@ -160,12 +159,6 @@
     "% ---- DAGassist LaTeX fragment (no preamble) ----",
     "% Requires: \\usepackage{tabularray} \\UseTblrLibrary{booktabs}",
     "\\begingroup\\footnotesize",
-    #"\\setlength{\\tabcolsep}{4pt}",
-    #"\\renewcommand{\\arraystretch}{0.95}",
-    #"\\setlength{\\aboverulesep}{0ex}\\setlength{\\belowrulesep}{0ex}",
-
-    # in .report_latex_fragment (unchanged pieces omitted)
-    #"\\begingroup\\setlength{\\parskip}{0pt}\\setlength{\\topsep}{0pt}\\setlength{\\partopsep}{0pt}\\centering",
     {
       if (is.data.frame(roles) && nrow(roles)) {
         c(.df_to_longtable_centered(.roles_pretty(roles)),
@@ -177,7 +170,6 @@
       if (!is.null(mods)) .msummary_to_longtable_centered(mods) else character(0)
     },
     "\\par\\endgroup",
-    
     # Notes: stars, then each controls line on its own, indented
     {
       msets <- tryCatch(res$min_sets, error = function(e) list())
@@ -186,8 +178,8 @@
       canon_str <- .set_brace(canon)
       c("\\vspace{1em}", 
         "\\footnotesize",
-        paste0("\\hspace*{1em}\\textit{Controls (minimal):} ", min_str, "\\\\"),
-        paste0("\\hspace*{2.5em}\\textit{Controls (canonical):} ", canon_str))
+        paste0("\\textit{Controls (minimal):} ", min_str, "\\\\"),
+        paste0("\\textit{Controls (canonical):} ", canon_str))
     }
   )
   

@@ -54,33 +54,33 @@ Model comparison:
 +------------+----------+-----------+-----------+
 |            | Original | Minimal 1 | Canonical |
 +============+==========+===========+===========+
-| X          | -0.026   | -0.026    | -0.026    |
+| X          | -0.026   | 1.416***  | 1.449***  |
 +------------+----------+-----------+-----------+
-|            | (0.100)  | (0.100)   | (0.100)   |
+|            | (0.100)  | (0.066)   | (0.059)   |
 +------------+----------+-----------+-----------+
-| Z          | 0.304*** | 0.304***  | 0.304***  |
+| Z          | 0.304*** | 0.535***  | 0.532***  |
 +------------+----------+-----------+-----------+
-|            | (0.045)  | (0.045)   | (0.045)   |
+|            | (0.045)  | (0.071)   | (0.072)   |
 +------------+----------+-----------+-----------+
-| B          | 0.037    | 0.037     | 0.037     |
+| B          | 0.037    |           | 0.005     |
 +------------+----------+-----------+-----------+
-|            | (0.037)  | (0.037)   | (0.037)   |
+|            | (0.037)  |           | (0.053)   |
 +------------+----------+-----------+-----------+
-| A          | -0.045   | -0.045    | -0.045    |
+| A          | -0.045   |           | 0.278***  |
 +------------+----------+-----------+-----------+
-|            | (0.026)  | (0.026)   | (0.026)   |
+|            | (0.026)  |           | (0.031)   |
 +------------+----------+-----------+-----------+
-| C          | 0.627*** | 0.627***  | 0.627***  |
+| C          | 0.627*** |           |           |
 +------------+----------+-----------+-----------+
-|            | (0.030)  | (0.030)   | (0.030)   |
+|            | (0.030)  |           |           |
 +------------+----------+-----------+-----------+
-| M          | 0.308*** | 0.308***  | 0.308***  |
+| M          | 0.308*** |           |           |
 +------------+----------+-----------+-----------+
-|            | (0.050)  | (0.050)   | (0.050)   |
+|            | (0.050)  |           |           |
 +------------+----------+-----------+-----------+
 | Num.Obs.   | 400      | 400       | 400       |
 +------------+----------+-----------+-----------+
-| R2         | 0.941    | 0.941     | 0.941     |
+| R2         | 0.941    | 0.838     | 0.851     |
 +------------+----------+-----------+-----------+
 | FE: region | X        | X         | X         |
 +------------+----------+-----------+-----------+
@@ -94,10 +94,27 @@ Model comparison:
 ## Export your results in LaTeX, Word, Excel, or plain text
 
 ``` r
-DAGassist(
+DAGassist( 
   test_complex, Y ~ X + Z + C + M, test_df,
   type = "latex", out = "man/figures/README-latex.tex", imply = TRUE
 )
+Warning: To compile a LaTeX document with this table, the following commands must be placed in the document preamble:
+
+\usepackage{tabularray}
+\usepackage{float}
+\usepackage{graphicx}
+\usepackage{codehigh}
+\usepackage[normalem]{ulem}
+\UseTblrLibrary{booktabs}
+\UseTblrLibrary{siunitx}
+\newcommand{\tinytableTabularrayUnderline}[1]{\underline{#1}}
+\newcommand{\tinytableTabularrayStrikeout}[1]{\sout{#1}}
+\NewTableCommand{\tinytableDefineColor}[3]{\definecolor{#1}{#2}{#3}}
+
+To disable `siunitx` and prevent `modelsummary` from wrapping numeric entries in `\num{}`, call:
+
+options("modelsummary_format_numeric_latex" = "plain")
+ This warning appears once per session.
 ```
 
 <img src="man/figures/README-latex.png" width="75%" />

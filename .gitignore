@@ -27,3 +27,4 @@ inst/doc/
 # Knitting/cache junk
 *.utf8.md
 *.knit.md
+*.tex

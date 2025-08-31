@@ -406,36 +406,27 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
   ## if auto add is true, imply the sets based on dag relationships,
   ## otherwise, keep lists empty and specify in the report list
   if (isTRUE(imply)) {
-    # formulas for all minimal sets—preserve fixest tails
-    f_mins <- lapply(minimal_sets_all, function(s) .build_formula_with_controls(formula, exposure, outcome, s))
-    # canonical formula
-    f_canon <- .build_formula_with_controls(formula, exposure, outcome, canonical)
-    
-    # fits for each Minimal
-    m_mins <- lapply(f_mins, function(fm) if (.same_formula(fm, formula)) m_orig else .safe_fit(engine, fm, data, engine_args))
-    
-    # fit Canonical, reusing if identical
-    if (.same_formula(f_canon, formula)) {
-      m_canon <- m_orig
-    } else {
-      same_idx <- which(vapply(f_mins, function(fm) .same_formula(fm, f_canon), logical(1)))
-      m_canon <- if (length(same_idx)) m_mins[[same_idx[1]]] else .safe_fit(engine, f_canon, data, engine_args)
-    }
-    
-    # mark canonical in roles table
     if (is.data.frame(roles) && "variable" %in% names(roles)) {
       roles$canon <- ifelse(roles$variable %in% canonical, "x", "")
     }
   } else {
-    # no DAG-based additions: keep lists empty and avoid marking canon
-    f_mins  <- list()
-    f_canon <- formula
-    m_mins  <- list()
-    m_canon <- m_orig
-    if (is.data.frame(roles) && "canon" %in% names(roles)) {
-      roles$canon <- ""  # do not signal canonical membership when not adding
-    }
+    if (is.data.frame(roles) && "canon" %in% names(roles)) roles$canon <- ""
   }
+  
+  # ---- ALWAYS fit alternates so display isn't tied to `imply` ----
+  m_mins <- lapply(
+    f_mins,
+    function(fm) if (.same_formula(fm, formula)) m_orig else .safe_fit(engine, fm, data, engine_args)
+  )
+  
+  m_canon <- if (.same_formula(f_canon, formula)) {
+    m_orig
+  } else {
+    same_idx <- which(vapply(f_mins, function(fm) .same_formula(fm, f_canon), logical(1)))
+    if (length(same_idx)) m_mins[[same_idx[1]]] else .safe_fit(engine, f_canon, data, engine_args)
+  }
+  # ----------------------------------------------------------------
+  
   
   #8/28/25 renaming to "report", a more suitable name, to avoid naming conflict
   # with out param
@@ -473,40 +464,21 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
     
     if (is.null(out)) stop("type='latex' requires `out=` file path.", call. = FALSE)
     
-    # Build the model list exactly like the console path, respecting imply
     mods <- list("Original" = report$models$original)
-    if (report$imply) {
-      if (length(report$models$minimal_list)) {
-        for (i in seq_along(report$models$minimal_list)) {
-          mods[[sprintf("Minimal %d", i)]] <- report$models$minimal_list[[i]]
-        }
-      } else if (length(report$controls_minimal)) {
-        mods[["Minimal 1"]] <- report$models$minimal
+    
+    # Minimal(s)
+    if (length(report$models$minimal_list)) {
+      for (i in seq_along(report$models$minimal_list)) {
+        mods[[sprintf("Minimal %d", i)]] <- report$models$minimal_list[[i]]
       }
+    } else if (length(report$controls_minimal)) {
+      mods[["Minimal 1"]] <- report$models$minimal
+    }
+    
+    # Canonical (skip if identical to Original)
+    if (!.same_formula(report$formulas$canonical, report$formulas$original)) {
       mods[["Canonical"]] <- report$models$canonical
     }
-    
-    #### Build the rows for the helper only with what we’re showing
-    mdl_names <- names(mods)
-    f_map <- list(
-      Original  = report$formulas$original,
-      Canonical = report$formulas$canonical
-    )
-    if (length(report$formulas$minimal_list)) {
-      for (i in seq_along(report$formulas$minimal_list)) {
-        f_map[[sprintf("Minimal %d", i)]] <- report$formulas$minimal_list[[i]]
-      }
-    } else if (report$imply && length(report$controls_minimal)) {
-      f_map[["Minimal 1"]] <- report$formulas$minimal
-    }
-    
-    if (!report$imply) {
-      model_vec <- "Original"
-      formula_vec <- paste(deparse(report$formulas$original), collapse = " ")
-    } else {
-      model_vec <- mdl_names
-      formula_vec <- vapply(mdl_names, function(nm) paste(deparse(f_map[[nm]]), collapse = " "), character(1))
-    } ####
     
     res_min <- list(
       validation = list(

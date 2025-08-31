@@ -1,6 +1,6 @@
 Package: DAGassist
 Title: DAG-Driven Robustness Checks for R
-Version: 0.2.0
+Version: 0.2.0.0
 Authors@R: 
   c(
     person("Graham", "Goff", 
@@ -21,24 +21,18 @@ License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-Imports: 
-    dagitty,
-    magrittr
-Suggests:
-    ggdag,
-    testthat (>= 3.0.0),
-    knitr,
-    rmarkdown,
-    covr,
-    cli,
-    modelsummary,
-    broom,
-    openxlsx,
-    writexl,
-    crayon
-Depends: 
-    R (>= 3.5)
+Imports: dagitty, magrittr
+Suggests: ggdag, testthat (>= 3.0.0), knitr, rmarkdown, covr, cli,
+        modelsummary, broom, openxlsx, writexl, crayon
+Depends: R (>= 3.5)
 LazyData: true
 Config/testthat/edition: 3
 URL: https://github.com/grahamgoff/DAGassist
 BugReports: https://github.com/grahamgoff/DAGassist/issues
+NeedsCompilation: no
+Packaged: 2025-08-30 03:02:08 UTC; grahamgoff
+Author: Graham Goff [aut, cre] (Dept. of International Affairs, Texas A&M
+    University, <https://orcid.org/0000-0002-0717-6995>),
+  Michael Denly [ctb] (Dept. of International Affairs, Texas A&M
+    University, <https://orcid.org/0000-0002-7074-5011>)
+Maintainer: Graham Goff <goffgrahamc@gmail.com>

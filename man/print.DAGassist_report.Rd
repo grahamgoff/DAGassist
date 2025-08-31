@@ -8,8 +8,6 @@
 }
 \arguments{
 \item{x}{Output of DAGassist() (class "report")}
-
-\item{...}{(ignored)}
 }
 \value{
 Invisibly returns x

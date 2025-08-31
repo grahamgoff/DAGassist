@@ -246,86 +246,21 @@
   paste0("{", paste(.tex_escape(s), collapse = ", "), "}")
 }
 
-.msummary_to_longtable_centered <- function(mods, wrap_center = TRUE) {
+.msummary_to_longtable_centered <- function(mods) {
   if (!requireNamespace("modelsummary", quietly = TRUE)) {
     return(c("% modelsummary not installed; skipping model comparison"))
   }
-  
-  df <- modelsummary::msummary(
+  out <- modelsummary(
     mods,
-    output   = "data.frame",
-    stars    = TRUE,
-    gof_omit = "IC|Log|Adj|Pseudo|AIC|BIC|F$|RMSE$|Within|Between|Std|sigma"
-  )
-  
-  if (!is.data.frame(df) || nrow(df) == 0L) {
-    return(c("% empty modelsummary table"))
-  }
-  
-  # glue std.errors in parentheses and collapse onto the estimate rows
-  # estimates and std.errors on separate rows (SEs on the line below)
-  df[] <- lapply(df, function(x) { y <- as.character(x); y[is.na(y)] <- ""; y })
-  meta_cols  <- intersect(c("part","term","statistic"), names(df))
-  model_cols <- setdiff(names(df), meta_cols)
-  est <- df[df$part == "estimates", , drop = FALSE]
-  gof <- df[df$part == "gof",       , drop = FALSE]
-  
-  term_order <- unique(est$term[est$statistic == "estimate"])
-  rows <- list()
-  
-  for (tm in term_order) {
-    e <- est[est$term == tm & est$statistic == "estimate",  model_cols, drop = FALSE]
-    s <- est[est$term == tm & est$statistic == "std.error", model_cols, drop = FALSE]
-    
-    # estimates row
-    rows[[length(rows) + 1L]] <- data.frame(
-      Term = tm,
-      as.list(e[1, , drop = TRUE]),
-      check.names = FALSE, stringsAsFactors = FALSE
-    )
-    
-    # std.error row right underneath (in parentheses)
-    if (nrow(s)) {
-      s_par <- lapply(s[1, , drop = TRUE],
-                      function(v) ifelse(v == "" | is.na(v), "", paste0("(", v, ")")))
-      rows[[length(rows) + 1L]] <- data.frame(
-        Term = "",
-        as.list(s_par),
-        check.names = FALSE, stringsAsFactors = FALSE
-      )
-    }
-  }
-  
-  if (nrow(gof)) {
-    for (i in seq_len(nrow(gof))) {
-      g <- gof[i, , drop = FALSE]
-      rows[[length(rows) + 1L]] <- data.frame(
-        Term = g$term,
-        as.list(g[1, model_cols, drop = FALSE]),
-        check.names = FALSE, stringsAsFactors = FALSE
-      )
-    }
-  }
-  
-  pretty <- do.call(rbind, rows)
-  colnames(pretty) <- c("Term", model_cols)
-  # Make the leftmost column robust: avoids TeX errors on leading '(' etc.
-  pretty$Term <- sprintf("\\textnormal{%s}", pretty$Term)
-  
-  # Build longtable WITHOUT its own center wrapper (Term is raw so macros survive)
-  core <- .df_to_longtable_centered(pretty, wrap_center = FALSE, raw_cols = "Term")
-  body <- c("\\begingroup\\renewcommand{\\arraystretch}{1.08}", core, "\\endgroup")
-  
-  # NEW: bulletproof against “((…))” doubling (rare toolchain hiccup)
-  single <- paste(body, collapse = "\n")
-  single <- gsub("\\(\\s*\\(", "(", single)
-  single <- gsub("\\)\\s*\\)", ")", single)
-  
-  #adds a rule separating estimates from gof rows
-  if (nrow(gof)) single <- sub(paste0("(?m)^(\\\\textnormal\\{", gsub("([][(){}.^$*+?|\\-\\\\])","\\\\\\1", gof$term[1]), "\\})"), "\\\\midrule[\\\\heavyrulewidth]\n\\1", single, perl = TRUE)
-  
-  strsplit(single, "\n", fixed = TRUE)[[1]]
+    output    = "latex",
+    stars     = TRUE,
+    escape    = FALSE,
+    gof_omit  = "IC|Log|Adj|Pseudo|AIC|BIC|F$|RMSE$|Within|Between|Std|sigma",
+    booktabs  = TRUE)
+  out <- as.character(out)              # coerce away knit_asis/other classes
+  out <- paste(out, collapse = "\n")    # ensure single string
 }
+
 ################################################################################
 
 # R/report_latex.R
@@ -378,7 +313,7 @@
     {
       mods <- tryCatch(res$models, error = function(e) NULL)
       if (!is.null(mods)) {
-        .msummary_to_longtable_centered(mods, wrap_center = FALSE)
+        .msummary_to_longtable_centered(mods)
       } else character(0)
     },
     #end center

@@ -1,38 +1,4 @@
 ############################ INTERNAL HELPERS ##################################
-# Single, robust colspec for the roles grid:
-# - grid gets a stable share that grows mildly with #grid columns
-# - Variable gets a low minimum but grows with name length, clamped
-.roles_colspec_auto <- function(n, var_names,
-                                var_min = 0.28, var_max = 0.60,
-                                var_slope = 0.012,    # growth per char beyond 10
-                                grid_base = 0.50,     # baseline grid share
-                                grid_step = 0.015,    # extra per grid col beyond 7
-                                grid_cap  = 0.60) {   # never exceed this
-  stopifnot(n >= 3L)
-  k <- n - 2L
-  pre <- c(sprintf("\\newlength{\\DAWtot}\\setlength{\\DAWtot}{\\dimexpr\\textwidth - %d\\tabcolsep\\relax}", 2L*(n-1L)))
-  
-  grid_frac <- min(grid_cap, grid_base + grid_step * max(0, k - 7))
-  
-  # SAFE: compute on the actual names vector
-  max_var_chars <- suppressWarnings(max(nchar(var_names), na.rm = TRUE))
-  if (!is.finite(max_var_chars)) max_var_chars <- 0
-  
-  var_frac <- min(var_max, max(var_min, var_min + var_slope * max(0, max_var_chars - 10)))
-  
-  left_tot <- 1 - grid_frac
-  grid_w   <- rep(grid_frac / k, k)
-  
-  colspec <- paste0(
-    "@{}",
-    sprintf("p{%.5f\\DAWtot}", left_tot * var_frac),
-    sprintf("p{%.5f\\DAWtot}", left_tot * (1 - var_frac)),
-    paste(sprintf("p{%.5f\\DAWtot}", grid_w), collapse = ""),
-    "@{}"
-  )
-  list(pre = pre, colspec = colspec)
-}
-
 #force same width between df and modelsummary, to make them look like a single 
 #block
 .equal_width_colspec <- function(n) {
@@ -40,25 +6,6 @@
   w <- sprintf("p{\\dimexpr(\\textwidth - %d\\tabcolsep)/%d\\relax}", 2L*(n-1L), n)
   # no @{} between columns; only trim outer padding so left/right edges align
   paste0("@{}", paste(rep(w, n), collapse = ""), "@{}")
-}
-
-# Fractional colspec for the roles grid.
-# - grid_frac = fraction of total width used by ALL X-grid cols (right side)
-# - var_frac  = share of the LEFT (non-grid) width given to Variable vs Role
-.roles_colspec_frac <- function(n, grid_frac = 0.34, var_frac = 0.64) {
-  stopifnot(n >= 3L)
-  k <- n - 2L  # number of X-grid columns
-  pre <- c(
-    sprintf("\\newlength{\\DAWtot}\\setlength{\\DAWtot}{\\dimexpr\\textwidth - %d\\tabcolsep\\relax}", 2L*(n-1L))
-  )
-  colspec <- paste0(
-    "@{}",
-    sprintf("p{%.3f\\DAWtot}", (1 - grid_frac) * var_frac),           # Variable
-    sprintf("p{%.3f\\DAWtot}", (1 - grid_frac) * (1 - var_frac)),     # Role
-    paste(rep(sprintf("p{%.5f\\DAWtot}", grid_frac / (n - 2L)), k), collapse = ""),
-    "@{}"
-  )
-  list(pre = pre, colspec = colspec)
 }
 
 # Weighted colspec for the roles grid: wide left pair, tight X-grid on right
@@ -86,32 +33,18 @@
   list(pre = pre, colspec = colspec)
 }
 
-# Convert tinytable's tabularray (talltblr) to a booktabs longtable.
-.talltblr_to_longtable <- function(x) {
-  # How many columns? Parse colspec={Q[]Q[]...}
-  cs <- regmatches(x, regexpr("colspec=\\{[^}]*\\}", x, perl = TRUE))
-  n  <- 3L
-  if (length(cs) && nzchar(cs)) {
-    m <- gregexpr("Q\\[\\]", cs[[1]], perl = TRUE)[[1]]
-    if (length(m) && m[1] != -1L) n <- length(m)
-  }
-  #standard column width
-  colspec <- .equal_width_colspec(n)
-  # Replace talltblr header with longtable header
-  x <- gsub("\\\\begin\\{talltblr\\}\\[[^\\]]*\\]\\s*\\{[^}]*\\}\\s*",
-            paste0("\\\\begin{longtable}{", colspec, "}\n"),
-            x, perl = TRUE)
+# Minimal: keep tabularray, just make it long and non-floating.
+.to_longtblr <- function(x) {
+  # optional: remove outer floats and \centering
+  x <- gsub("\\\\begin\\{table\\}(\\[[^\\]]*\\])?\\s*", "", x, perl = TRUE)
+  x <- gsub("\\\\end\\{table\\}\\s*", "", x, perl = TRUE)
+  x <- gsub("\\\\centering\\s*", "", x, perl = TRUE)
   
-  # Drop tabularray-only config lines (notes/column/hline config)
-  x <- gsub("^.*note\\{\\}\\=.*\\n", "", x, perl = TRUE)
-  x <- gsub("^column\\{[^}]*\\}\\=\\{\\}\\{[^}]*\\},?\\s*$", "", x, perl = TRUE)
-  x <- gsub("^hline\\{.*\\}.*\\n", "", x, perl = TRUE)
-  
-  # Close environment
-  x <- gsub("\\\\end\\{talltblr\\}", "\\\\end{longtable}", x, perl = TRUE)
-  
-  # Strip any siunitx remnants for safety
-  x <- gsub("\\\\num\\{([^}]*)\\}", "\\1", x, perl = TRUE)
+  # rename tblr/talltblr → longtblr (preserves options and setup blocks)
+  x <- gsub("\\\\begin\\{talltblr\\}", "\\\\begin{longtblr}", x, perl = TRUE)
+  x <- gsub("\\\\end\\{talltblr\\}",   "\\\\end{longtblr}",   x, perl = TRUE)
+  x <- gsub("\\\\begin\\{tblr\\}",     "\\\\begin{longtblr}", x, perl = TRUE)
+  x <- gsub("\\\\end\\{tblr\\}",       "\\\\end{longtblr}",   x, perl = TRUE)
   x
 }
 
@@ -148,96 +81,44 @@
   r
 }
 
-# Centered longtable. If wrap_formula=TRUE and a "Formula" column exists, wrap it.
-# NEW: wrap_center=TRUE by default, set FALSE to return only the longtable.
-# Centered longtable. If wrap_formula=TRUE and a "Formula" column exists, wrap it.
-# NEW: raw_cols = character() to mark columns that should NOT be escaped.
-.df_to_longtable_centered <- function(df, wrap_formula = FALSE, wrap_center = TRUE, raw_cols = character()) {
+
+.df_to_longtable_centered <- function(df, wrap_center = TRUE, raw_cols = character()) {
   stopifnot(is.data.frame(df))
   df2 <- df
+  
+  # Escape everything unless listed in raw_cols
+  esc <- function(x) {
+    x <- as.character(x)
+    x <- ifelse(is.na(x), "", x)
+    x <- gsub("\\\\", "\\\\textbackslash{}", x, perl = TRUE)
+    x <- gsub("([\\{\\}\\$\\#\\%\\_\\&])", "\\\\\\1", x, perl = TRUE)
+    x <- gsub("~", "\\\\textasciitilde{}", x, perl = TRUE)
+    x <- gsub("\\^", "\\\\textasciicircum{}", x, perl = TRUE)
+    x
+  }
   for (nm in names(df2)) {
-    if (!(nm %in% raw_cols)) {
-      df2[[nm]] <- .tex_escape(ifelse(is.na(df2[[nm]]), "", as.character(df2[[nm]])))
-    } else {
+    if (!(nm %in% raw_cols)) df2[[nm]] <- esc(df2[[nm]]) else {
       df2[[nm]] <- ifelse(is.na(df2[[nm]]), "", as.character(df2[[nm]]))
     }
   }
-  df2 <- as.data.frame(df2, stringsAsFactors = FALSE, optional = TRUE)
   
-  if (wrap_formula && "Formula" %in% colnames(df2) && ncol(df2) >= 2) {
-    n <- ncol(df2)
-    colspec <- .equal_width_colspec(n)
-  } else {
-    n <- ncol(df2)
-    pre <- character(0)
-    
-    if (identical(colnames(df2)[1:2], c("Variable","Role"))) {
-      # Single, stable roles layout
-      rc <- .roles_colspec_auto(n, var_names = df2[["Variable"]])
-      pre     <- rc$pre
-      colspec <- rc$colspec
-      
-      # Center the X-grid body cells so 'x' marks align
-      if (n > 2L) {
-        df2[, 3:n] <- lapply(df2[, 3:n, drop = FALSE],
-                             function(v) ifelse(v == "" | is.na(v), "", sprintf("\\makebox[\\linewidth][c]{%s}", v)))
-      }
-    } else {
-      pre     <- character(0)
-      colspec <- .equal_width_colspec(n)
-    }
-  }
-  #sets to same width as modelsummary
-  labs <- colnames(df2)
-  if (identical(labs[1:2], c("Variable","Role"))) {
-    # Keep first two headers left; center the grid labels INSIDE their p{…} cells.
-    rest <- sprintf("{\\centering \\mbox{%s}\\par}", .tex_escape(labs[3:length(labs)]))
-    header <- paste(c(.tex_escape(labs[1]), .tex_escape(labs[2]), rest), collapse = " & ")
-  } else {
-    header <- paste(.tex_escape(labs), collapse = " & ")
-  }
+  n <- ncol(df2)
+  colspec <- paste(rep("Q[]", n), collapse = "")
+  header  <- paste(esc(colnames(df2)), collapse = " & ")
+  rows    <- apply(df2, 1L, function(r) paste(r, collapse = " & "))
   
-  body   <- apply(df2, 1L, function(r) paste(r, collapse = " & "))
-  
-  core <- c(
-    pre,
-    paste0("\\begin{longtable}{", colspec, "}"),
+  lines <- c(
+    if (wrap_center) "\\begin{center}" else NULL,
+    paste0("\\begin{longtblr}{colspec={", colspec, "}}"),
     "\\toprule",
     paste0(header, " \\\\"),
     "\\midrule",
-    paste0(body, " \\\\"),
+    paste0(rows, " \\\\"),
     "\\bottomrule",
-    "\\end{longtable}"
+    "\\end{longtblr}",
+    if (wrap_center) "\\end{center}" else NULL
   )
-  
-  if (wrap_center) {
-    c("\\begin{center}",
-      "\\setlength{\\LTleft}{0pt}\\setlength{\\LTright}{0pt}",
-      core,
-      "\\end{center}")
-  } else {
-    core
-  }
-}
-
-.sets_to_df <- function(min_sets, canon) {
-  if (length(min_sets) == 0 && length(canon) == 0) {
-    return(data.frame(Set = character(0), Controls = character(0)))
-  }
-  rows <- list()
-  if (length(min_sets)) {
-    for (i in seq_along(min_sets)) {
-      rows[[length(rows)+1]] <- data.frame(
-        Set = paste0("Minimal ", i),
-        Controls = .set_brace(min_sets[[i]]),
-        stringsAsFactors = FALSE
-      )
-    }
-  } else {
-    rows[[length(rows)+1]] <- data.frame(Set = "Minimal 1", Controls = "{}", stringsAsFactors = FALSE)
-  }
-  rows[[length(rows)+1]] <- data.frame(Set = "Canonical", Controls = .set_brace(canon), stringsAsFactors = FALSE)
-  do.call(rbind, rows)
+  lines
 }
 
 .set_brace <- function(s) {
@@ -257,8 +138,11 @@
     escape    = FALSE,
     gof_omit  = "IC|Log|Adj|Pseudo|AIC|BIC|F$|RMSE$|Within|Between|Std|sigma",
     booktabs  = TRUE)
-  out <- as.character(out)              # coerce away knit_asis/other classes
-  out <- paste(out, collapse = "\n")    # ensure single string
+  
+  # Coerce to single string
+  out <- paste(as.character(out), collapse = "\n")
+  
+  out <- .to_longtblr(out)
 }
 
 ################################################################################

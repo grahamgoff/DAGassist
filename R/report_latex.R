@@ -1,4 +1,5 @@
 ############################ INTERNAL HELPERS ##################################
+# latex (modelsummary) → longtblr
 .to_longtblr <- function(x) {
   # strip float wrappers/centering
   x <- gsub("\\\\begin\\{table\\}(\\[[^\\]]*\\])?\\s*", "", x, perl = TRUE)
@@ -11,16 +12,30 @@
   x <- gsub("\\\\begin\\{tblr\\}",     "\\\\begin{longtblr}", x, perl = TRUE)
   x <- gsub("\\\\end\\{tblr\\}",       "\\\\end{longtblr}",   x, perl = TRUE)
   
-  # ensure width=\textwidth on ANY longtblr
-  # case A: no [options] present
-  x <- gsub("\\\\begin\\{longtblr\\}\\s*\\{",
-            "\\\\begin{longtblr}[width=\\\\textwidth]{", x, perl = TRUE)
-  # case B: has [options] but no width= yet
-  x <- gsub("\\\\begin\\{longtblr\\}\\[(?![^\\]]*width=)([^\\]]*)\\]",
-            "\\\\begin{longtblr}[width=\\\\textwidth,\\1]", x, perl = TRUE)
+  # remove illegal outer keys in [ ... ]
+  x <- gsub("(\\\\begin\\{longtblr\\}\\[[^\\]]*)\\b(?:width|abovesep|belowsep|presep|postsep|rowsep)\\s*=\\s*[^,\\]]+(,)?",
+            "\\1\\2", x, perl = TRUE)
+  x <- gsub("\\\\begin\\{longtblr\\}\\s*\\[\\s*,", "\\\\begin{longtblr}[", x, perl = TRUE)
+  x <- gsub(",\\]", "]", x, perl = TRUE)
   
-  # make columns flexible so they fill exactly \textwidth
+  # if an outer [...] already exists, inject the space throttling specs at its start
+  x <- gsub("(\\\\begin\\{longtblr\\}\\[)\\s*", "\\1presep=0pt,postsep=0pt,", x, perl = TRUE)
+  
+  # if there is NO outer [...], create one
+  x <- gsub("\\\\begin\\{longtblr\\}(?!\\[)\\s*\\{",
+            "\\\\begin{longtblr}[presep=0pt,postsep=0pt]{",
+            x, perl = TRUE)
+  
+  # ensure INNER { ... } has the same keys as the first table
+  x <- gsub("\\\\begin\\{longtblr\\}(\\[[^\\]]*\\])?\\s*\\{",
+            "\\\\begin{longtblr}\\1{width=\\\\textwidth,presep=0pt,postsep=0pt,abovesep=0pt,belowsep=0pt,rowsep=0pt,",
+            x, perl = TRUE)
+  
+  # flexible columns
   x <- gsub("Q\\[", "X[", x, perl = TRUE)
+  
+  # optional: align the look by removing the second table's top rule
+  x <- sub("\\\\toprule", "", x, perl = TRUE)
   
   x
 }
@@ -80,11 +95,12 @@
   # first column left, the rest centered; all flexible X to fill \textwidth
   colspec <- paste(c("X[l]", rep("X[c]", max(0, n - 1))), collapse = "")
   
-  header  <- paste(esc(colnames(df2)), collapse = " & ")
+  header  <- paste(colnames(df2), collapse = " & ")
   rows    <- apply(df2, 1L, function(r) paste(r, collapse = " & "))
   
   c(
-    sprintf("\\begin{longtblr}[width=\\textwidth]{colspec={%s}}", colspec),
+    "\\begin{longtblr}[presep=0pt, postsep=0pt, caption={DAGassist Report:}, label={tab:dagassist}]%",
+    sprintf("{width=\\textwidth,colspec={%s}}", colspec),
     "\\toprule",
     paste0(header, " \\\\"),
     "\\midrule",
@@ -116,6 +132,8 @@
   out <- paste(as.character(out), collapse = "\n")
   
   out <- .to_longtblr(out)
+  
+  return(strsplit(out, "\n")[[1]])
 }
 
 ################################################################################
@@ -142,37 +160,34 @@
     "% ---- DAGassist LaTeX fragment (no preamble) ----",
     "% Requires: \\usepackage{tabularray} \\UseTblrLibrary{booktabs}",
     "\\begingroup\\footnotesize",
-    "\\setlength{\\tabcolsep}{4pt}",
-    "\\renewcommand{\\arraystretch}{0.95}",
-    "\\setlength{\\aboverulesep}{0.6ex}\\setlength{\\belowrulesep}{1.0ex}",
-    "\\begin{center}\\textbf{DAGassist Report:}\\end{center}",
-    
-    #this is like begin center but prevents paragraph space between the tables and notes
-    "\\begingroup\\setlength{\\parskip}{0pt}\\setlength{\\topsep}{0pt}\\setlength{\\partopsep}{0pt}\\centering",
+    #"\\setlength{\\tabcolsep}{4pt}",
+    #"\\renewcommand{\\arraystretch}{0.95}",
+    #"\\setlength{\\aboverulesep}{0ex}\\setlength{\\belowrulesep}{0ex}",
+
+    # in .report_latex_fragment (unchanged pieces omitted)
+    #"\\begingroup\\setlength{\\parskip}{0pt}\\setlength{\\topsep}{0pt}\\setlength{\\partopsep}{0pt}\\centering",
     {
-      roles <- tryCatch(res$roles_df, error = function(e) NULL)
       if (is.data.frame(roles) && nrow(roles)) {
-        rp <- .roles_pretty(roles)
-        c(.df_to_longtable_centered(rp),
-          "\\vspace{1pt}")   ## <- was +2pt; make it slightly negative to literally attach
+        c(.df_to_longtable_centered(.roles_pretty(roles)),
+          "% no vertical glue between tables",
+          "\\nointerlineskip")
       } else character(0)
     },
     {
-      mods <- tryCatch(res$models, error = function(e) NULL)
-      if (!is.null(mods)) {
-        .msummary_to_longtable_centered(mods)
-      } else character(0)
+      if (!is.null(mods)) .msummary_to_longtable_centered(mods) else character(0)
     },
     "\\par\\endgroup",
+    
     # Notes: stars, then each controls line on its own, indented
     {
       msets <- tryCatch(res$min_sets, error = function(e) list())
       canon <- tryCatch(res$canon,    error = function(e) character(0))
       min_str   <- if (length(msets)) .set_brace(msets[[1]]) else "{}"
       canon_str <- .set_brace(canon)
-      c(
-        paste0("\\hspace*{1.5em}\\textit{Controls (minimal):} ", min_str, "\\\\"),
-        paste0("\\hspace*{1.5em}\\textit{Controls (canonical):} ", canon_str))
+      c("\\vspace{1em}", 
+        "\\footnotesize",
+        paste0("\\hspace*{1em}\\textit{Controls (minimal):} ", min_str, "\\\\"),
+        paste0("\\hspace*{2.5em}\\textit{Controls (canonical):} ", canon_str))
     }
   )
   

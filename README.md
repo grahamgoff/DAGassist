@@ -94,9 +94,9 @@ Model comparison:
 ## Export your results in LaTeX, Word, Excel, or plain text
 
 ``` r
-DAGassist(
-  test_complex, Y ~ X + Z + C + M, test_df,
-  type = "latex", out = "man/figures/README-latex.tex", imply = TRUE
+DAGassist( 
+  test_complex, Y ~ X + Z + C + M + A + B, test_df,
+  type = "latex", out = "man/figures/README-latex.tex"
 )
 ```
 

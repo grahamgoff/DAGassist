@@ -53,6 +53,8 @@
   stopifnot(is.data.frame(df))
   df2 <- df
   
+  if (ncol(df2) >= 1) df2[[1]] <- gsub(" ", "\\\\allowbreak ", df2[[1]], fixed = TRUE)
+  
   esc <- function(x) {
     x <- as.character(x)
     x <- ifelse(is.na(x), "", x)
@@ -67,21 +69,42 @@
   }
   
   n <- ncol(df2)
-  # first column left, the rest centered; all flexible X to fill \textwidth
-  colspec <- paste(c("X[l]", rep("X[c]", max(0, n - 1))), collapse = "")
+  ##weight columns
+  k <- max(0L, n - 2L)# number of flag columns
   
-  header  <- paste(colnames(df2), collapse = " & ")
-  rows    <- apply(df2, 1L, function(r) paste(r, collapse = " & "))
+  role_w <- 15L # fixed share for Role
+  flag_w <- 8L # fixed share for each flag column
   
-  c(
+  # map longest variable label length and cap at 70
+  plain1 <- if (n >= 1) gsub("\\\\[a-z]+\\{[^}]*\\}", "", df2[[1]]) else character()
+  L<- if (length(plain1)) max(nchar(plain1), na.rm = TRUE) else 0L
+  
+  # piecewise var col width
+  var_w <- if (L <= 15) 35L # short labels
+  else if (L <= 22) 50L 
+  else if (L <= 30) 60L # longer phrases
+  else 70L # absolute cap 
+  
+  # build column width spec
+  weights <- c(var_w, role_w, rep(flag_w, k))
+  aligns  <- c("l", "l", rep("c", k))
+  colspec <- paste0(mapply(function(w, a) sprintf("X[%d,%s]", w, a), weights, aligns), collapse = "")
+  
+  header <- paste(colnames(df2), collapse = " & ")
+  rows   <- apply(df2, 1L, function(r) paste(r, collapse = " & "))
+  
+  c(# tighten spacing + give TeX a little elasticity to avoid overfull boxes
+    "\\begingroup\\setlength{\\emergencystretch}{3em}",
+    # small colsep so center columns "touch" visually
     "\\begin{longtblr}[presep=0pt, postsep=0pt, caption={DAGassist Report:}, label={tab:dagassist}]%",
-    sprintf("{width=\\textwidth,colspec={%s}}", colspec),
+    sprintf("{width=\\textwidth,colsep=1.5pt,rowsep=0pt,abovesep=0pt,belowsep=0pt,colspec={%s}}", colspec),
     "\\toprule",
     paste0(header, " \\\\"),
     "\\midrule",
     paste0(rows, " \\\\"),
     "\\bottomrule",
-    "\\end{longtblr}"
+    "\\end{longtblr}",
+    "\\endgroup"
   )
 }
 
@@ -95,13 +118,17 @@
   if (!requireNamespace("modelsummary", quietly = TRUE)) {
     return(c("% modelsummary not installed; skipping model comparison"))
   }
-  out <- modelsummary::modelsummary(
-    mods,
-    output    = "latex",
-    stars     = TRUE,
-    escape    = FALSE,
-    gof_omit  = "IC|Log|Adj|Pseudo|AIC|BIC|F$|RMSE$|Within|Between|Std|sigma",
-    booktabs  = TRUE)
+  #suppress the once-per-session warning about siunitx
+  out <- suppressWarnings(
+    modelsummary::modelsummary(
+      mods,
+      output    = "latex",
+      stars     = TRUE,
+      escape    = TRUE,
+      gof_omit  = "IC|Log|Adj|Pseudo|AIC|BIC|F$|RMSE$|Within|Between|Std|sigma",
+      booktabs  = TRUE
+      )
+    )
   
   # Coerce to single string
   out <- paste(as.character(out), collapse = "\n")
@@ -132,7 +159,7 @@
   
   lines <- c(
     "% ---- DAGassist LaTeX fragment (no preamble) ----",
-    "% Requires: \\usepackage{tabularray} \\UseTblrLibrary{booktabs}",
+    "% Requires: \\usepackage{tabularray} \\UseTblrLibrary{booktabs,siunitx,talltblr}",
     "\\begingroup\\footnotesize",
     {
       if (is.data.frame(roles) && nrow(roles)) {

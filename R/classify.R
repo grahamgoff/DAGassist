@@ -113,32 +113,21 @@ classify_nodes <- function(dag, exposure, outcome) {
     }
     seen
   }
-  ## strict collider test
-  # A node m is a collider-on-XY-path if:
-  #  - it has >= 2 parents, and
-  #  - at least one parent is reachable from X without going through m, and
-  #  - a different parent is reachable from Y without going through m.
+  ## collider test
+  # A node m is a collider if both X and Y are direct parents
+  #  - it has >= 2 parents pX and pY, such that
+  #     - pX is reachable from X without passing through m
+  #     - pY is reachable from Y without passing through m
+  # this logic captures both direct X->m<-Y AND
+  # indirect X->[...]->pX->m<-pY<-[...]<-Y 
   is_xy_collider <- function(m) {
     parents_m <- dagitty::parents(dag, m)
-    if (length(parents_m) < 2) return(FALSE)
-    
-    from_X <- reachable_without(dag, start = exposure, ban = m)
-    from_Y <- reachable_without(dag, start = outcome,  ban = m)
-    
-    # parents that lie on the X side / Y side
-    px <- intersect(parents_m, from_X)
-    py <- intersect(parents_m, from_Y)
-    
-    # need at least one parent on each side, and they must be different nodes
-    if (length(px) >= 1 && length(py) >= 1 && length(unique(c(px, py))) >= 2) {
-      return(TRUE)
-    }
-    FALSE
+    (exposure %in% parents_m) && (outcome %in% parents_m)
   }
-  #get node names
-  nodes <- names(dag) # e.g.  X Y Z C
-  #runs the is_xy_collider test for all names in nodes
-  is_collider <- vapply(nodes, is_xy_collider, logical(1)) # e.g. FALSE FALSE FALSE TRUE
+  
+  # Evaluate collider status for all nodes
+  nodes <- names(dag)
+  is_collider <- vapply(nodes, is_xy_collider, logical(1))
   
   ### definition sets
   

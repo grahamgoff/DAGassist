@@ -118,8 +118,7 @@
   }
   
   #build a modelsummary map: names = raw coef names, values = labels
-  #this is similar to just running coef_map because it drops unlabeled, but
-  #this is less fragile 
+  #this is similar to just running coef_rename but it deals with escape
   cm <- NULL
   if (length(coef_rename)) {
     #manually escape to avoid issues
@@ -142,8 +141,8 @@
       gof_omit = "IC|Log|Adj|Pseudo|AIC|BIC|F$|RMSE$|Within|Between|Std|sigma",
       booktabs = TRUE,
       # always drop intercepts and factor dummies that are not labeled
-      coef_omit = "(?i)^(\\(Intercept\\)|factor\\()",    
-      coef_map=cm
+      #coef_omit = "(?i)^(\\(Intercept\\)|factor\\()",    
+      coef_rename=cm
     )
   )
   # Coerce to single string

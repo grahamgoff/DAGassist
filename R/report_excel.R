@@ -14,7 +14,7 @@
   df_roles <- .roles_pretty(roles)
 
   # models sheet from shared helper
-  built     <- .build_modelsummary_pretty_df(mods)
+  built     <- .build_modelsummary_pretty_df(mods, coef_rename=res$coef_rename)
   df_models <- built$df
   
   df_notes <- data.frame(

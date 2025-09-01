@@ -272,7 +272,8 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
   #### EXCEL OUT BRANCH ####
   if (type %in% c("excel","xlsx")) {
     res_min <- list(
-      roles_df = report$roles,
+      roles_df = report$roles_display,
+      coef_rename = labmap,
       models = mods_full,         
       min_sets = report$controls_minimal_all,
       canon = report$controls_canonical

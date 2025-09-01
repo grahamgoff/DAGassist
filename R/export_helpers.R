@@ -222,17 +222,22 @@
 #output list of columns
 #grab dataframe from modelsummary and reshape for excel and .txt so they dont need markdown
 #normalize columns pre-rbind() to avoid name matching errors
-.build_modelsummary_pretty_df <- function(mods) {
+.build_modelsummary_pretty_df <- function(mods, coef_rename=NULL) {
   #return empty result cleanly if no modelsummary
   if (!requireNamespace("modelsummary", quietly = TRUE)) {
     return(list(df = NULL, gof_first = NA_character_))
+  }
+  #guard: allow missing/empty label spec
+  if (is.null(coef_rename) || (is.character(coef_rename) && !length(coef_rename))) {
+    coef_rename <- NULL
   }
   #grab df from modelsummary
   df <- modelsummary::msummary(
     mods, 
     output = "data.frame",
     stars = TRUE, 
-    gof_omit = .MS_GOF_OMIT
+    gof_omit = .MS_GOF_OMIT,
+    coef_rename = coef_rename
     )
   #exit early if null
   if (!is.data.frame(df) || !nrow(df)) {

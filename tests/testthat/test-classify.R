@@ -11,7 +11,7 @@ test_that("roles: confounder / mediator / collider on-path", {
   expect_equal(r2$role[r2$variable=="M"], "mediator")
   
   ## collider
-  d3 <- dagitty::dagitty("dag { X -> C <- Z -> Y }")   
+  d3 <- dagitty::dagitty("dag { X -> C <- Y }")   
   r3 <- classify_nodes(d3, "X","Y")
   expect_true(r3$is_collider[r3$variable=="C"])
   

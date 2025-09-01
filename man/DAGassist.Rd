@@ -107,7 +107,7 @@ falls back to a bundled or default reference DOCX, else Pandoc defaults.
 \item \code{text}/\code{txt} writes a \strong{plain-text} report suitable for logs/notes.
 }
 
-\strong{Dependencies.} Minimal core requires {dagitty}. Optional enhancements:
+\strong{Dependencies.} Minimal core requires \code{{dagitty}}. Optional enhancements:
 \code{{modelsummary}} (pretty tables), \code{{broom}} (fallback tidying), \code{{rmarkdown}}
 \itemize{
 \item \strong{Pandoc} (DOCX), \code{{writexl}} (XLSX).

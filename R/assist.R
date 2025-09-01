@@ -58,7 +58,7 @@
 #' * `excel`/`xlsx` writes an **Excel** workbook with tidy tables.
 #' * `text`/`txt` writes a **plain-text** report suitable for logs/notes.
 #'
-#' **Dependencies.** Minimal core requires {dagitty}. Optional enhancements:
+#' **Dependencies.** Minimal core requires `{dagitty}`. Optional enhancements:
 #' `{modelsummary}` (pretty tables), `{broom}` (fallback tidying), `{rmarkdown}`
 #' + **Pandoc** (DOCX), `{writexl}` (XLSX).
 #'

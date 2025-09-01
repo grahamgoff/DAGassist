@@ -243,7 +243,7 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
         issues = if (!is.null(v$issues)) v$issues else character(0)
       ),
       coef_rename = labmap,
-      roles_df = report$roles,
+      roles_df = report$roles_display,
       models_df = models_df_full,     
       models = mods_full,        
       min_sets = report$controls_minimal_all,

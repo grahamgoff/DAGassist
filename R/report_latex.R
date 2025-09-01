@@ -53,8 +53,6 @@
   stopifnot(is.data.frame(df))
   df2 <- df
   
-  if (ncol(df2) >= 1) df2[[1]] <- gsub(" ", "\\\\allowbreak ", df2[[1]], fixed = TRUE)
-  
   esc <- function(x) {
     x <- as.character(x)
     x <- ifelse(is.na(x), "", x)
@@ -67,7 +65,7 @@
   for (nm in names(df2)) {
     df2[[nm]] <- if (nm %in% raw_cols) ifelse(is.na(df2[[nm]]), "", as.character(df2[[nm]])) else esc(df2[[nm]])
   }
-  
+
   n <- ncol(df2)
   ##weight columns
   k <- max(0L, n - 2L)# number of flag columns

@@ -6,85 +6,86 @@
 #' XLSX, plain text). It also supports passing a **single engine call** (e.g.
 #' `feols(Y ~ X + Z | fe, data = df)`) instead of a plain formula.
 #'
-#' @param dag A **dagitty** object (see [dagitty::dagitty()]).
-#' @param formula Either (a) a standard model formula `Y ~ X + ...`, or
-#'   (b) a single **engine call** such as `feols(Y ~ X + Z | fe, data = df, ...)`.
-#'   When an engine call is provided, `engine`, `data`, and extra arguments are
-#'   automatically extracted from the call.
-#' @param data A `data.frame` (or compatible); optional if supplied via the
-#'   engine call in `formula`.
-#' @param exposure Optional character scalar; if missing/empty, inferred from the
-#'   DAG (must be unique).
-#' @param outcome Optional character scalar; if missing/empty, inferred from the
-#'   DAG (must be unique).
-#' @param engine Modeling function, default [stats::lm]. Ignored if `formula`
-#'   is a single engine call (in that case the function is taken from the call).
-#' @param engine_args Named list of extra arguments forwarded to `engine(...)`.
-#'   If `formula` is an engine call, arguments from the call are merged with
-#'   `engine_args` (call values take precedence).
-#' @param verbose Logical (default `TRUE`). Controls verbosity in the console
-#'   printer (formulas + notes).
-#' @param type Output type. One of
-#'   `"console"` (default), `"latex"`/`"docx"`/`"word"`,
-#'   `"excel"`/`"xlsx"`, `"text"`/`"txt"`.
-#' @param out Output file path for the non-console types:
-#'   * `type="latex"`: a **LaTeX fragment** written to `out` (must end with `.tex`).
-#'   * `type="docx"`/`"word"`: a **Word (.docx)** file written to `out`.
-#'   * `type="excel"`/`"xlsx"`: an **Excel (.xlsx)** file written to `out`.
-#'   * `type="text"`/`"txt"`: a **plain-text** file written to `out`.
-#'   Ignored for `type="console"`.
-#' @param imply Logical; if `TRUE`, DAGassist highlights variables added by DAG
-#'   logic (minimal/canonical sets) in the notes and marks canonical roles in
-#'   the roles table. Models are *always* fit for minimal/canonical to allow
-#'   side-by-side comparison, regardless of `imply`.
+#'@param dag A **dagitty** object (see [dagitty::dagitty()]).
+#'@param formula Either (a) a standard model formula `Y ~ X + ...`, or
+#'  (b) a single **engine call** such as `feols(Y ~ X + Z | fe, data = df, ...)`.
+#'  When an engine call is provided, `engine`, `data`, and extra arguments are
+#'  automatically extracted from the call.
+#'@param data A `data.frame` (or compatible--e.g. tibble); optional if supplied via the
+#'  engine call in `formula`.
+#'@param exposure Optional character scalar; if missing/empty, inferred from the
+#'  DAG (must be unique).
+#'@param outcome Optional character scalar; if missing/empty, inferred from the
+#'  DAG (must be unique).
+#'@param engine Modeling function, default [stats::lm]. Ignored if `formula`
+#'  is a single engine call (in that case the function is taken from the call).
+#'@param engine_args Named list of extra arguments forwarded to `engine(...)`.
+#'  If `formula` is an engine call, arguments from the call are merged with
+#'  `engine_args` (call values take precedence).
+#'@param verbose Logical (default `TRUE`). Controls verbosity in the console
+#'  printer (formulas + notes).
+#'@param type Output type. One of
+#'  `"console"` (default), `"latex"`/`"docx"`/`"word"`,
+#'  `"excel"`/`"xlsx"`, `"text"`/`"txt"`.
+#'@param out Output file path for the non-console types:
+#'  * `type="latex"`: a **LaTeX fragment** written to `out` (must end with `.tex`).
+#'  * `type="docx"`/`"word"`: a **Word (.docx)** file written to `out`.
+#'  * `type="excel"`/`"xlsx"`: an **Excel (.xlsx)** file written to `out`.
+#'  * `type="text"`/`"txt"`: a **plain-text** file written to `out`.
+#'  Ignored for `type="console"`.
+#'@param imply Logical; if `TRUE`, DAGassist highlights variables added by DAG
+#'  logic (minimal/canonical sets) in the notes and marks canonical roles in
+#'  the roles table. Models are *always* fit for minimal/canonical to allow
+#'  side-by-side comparison, regardless of `imply`.
+#'@param labels optional variable labels. can be named char vector or df or unnamed
+#'  char vector
+#'@details
+#'    **Engine-call parsing.** If `formula` is a call (e.g., `feols(Y ~ X | fe, data=df)`),
+#'  DAGassist extracts the engine function, the formula, the data argument, and
+#'  any additional engine arguments directly from that call; these are merged with
+#'  `engine`/`engine_args` you pass explicitly (call arguments win).
 #'
-#' @details
-#' **Engine-call parsing.** If `formula` is a call (e.g., `feols(Y ~ X | fe, data=df)`),
-#' DAGassist extracts the engine function, the formula, the data argument, and
-#' any additional engine arguments directly from that call; these are merged with
-#' `engine`/`engine_args` you pass explicitly (call arguments win).
+#'    **Fixest tails.** For engines like **fixest** that use `|` to denote FE/IV
+#'  parts, DAGassist preserves any `| ...` “tail” when constructing minimal or
+#'  canonical formulas (e.g., `Y ~ X + controls | fe | iv(...)`).
 #'
-#' **Fixest tails.** For engines like **fixest** that use `|` to denote FE/IV
-#' parts, DAGassist preserves any `| ...` “tail” when constructing minimal or
-#' canonical formulas (e.g., `Y ~ X + controls | fe | iv(...)`).
-#'
-#' **Output types.**
-#' * `console` prints roles, sets, formulas (if `verbose`), and a compact model
+#'    **Output types.**
+#'  * `console` prints* roles, sets, formulas (if `verbose`), and a compact model
 #'   comparison with `{modelsummary}` if available, then falls back gracefully.
-#' * `latex` writes a **LaTeX fragment** you can `\input{}` into a paper.
-#' * `docx`/`word` writes a **Word** doc via Pandoc. It will use a reference
+#'  * `latex` writes a **LaTeX fragment** you can `\input{}` into a paper.
+#'  * `docx`/`word` writes a **Word** doc via Pandoc. It will use a reference
 #'   document if set via `options(DAGassist.ref_docx="path/to/ref.docx")`, else
 #'   falls back to a bundled or default reference DOCX, else Pandoc defaults.
-#' * `excel`/`xlsx` writes an **Excel** workbook with tidy tables.
-#' * `text`/`txt` writes a **plain-text** report suitable for logs/notes.
+#'  * `excel`/`xlsx` writes an **Excel** workbook with tidy tables.
+#'  * `text`/`txt` writes a **plain-text** report suitable for logs/notes.
 #'
-#' **Dependencies.** Minimal core requires `{dagitty}`. Optional enhancements:
-#' `{modelsummary}` (pretty tables), `{broom}` (fallback tidying), `{rmarkdown}`
-#' + **Pandoc** (DOCX), `{writexl}` (XLSX).
+#'    **Dependencies.** Minimal core requires `{dagitty}`. Optional enhancements:
+#'  `{modelsummary}` (pretty tables), `{broom}` (fallback tidying), `{rmarkdown}`
+#'  + **Pandoc** (DOCX), `{writexl}` (XLSX).
 #'
-#' @return An object of class `"DAGassist_report"`, invisibly for file outputs,
-#'   and printed for `type="console"`. The list contains:
-#'   \itemize{
-#'     \item `validation` — result from internal `validate_spec(...)` (includes `ok`).
-#'     \item `roles` — roles data.frame from `classify_nodes(...)`.
-#'     \item `bad_in_user` — variables in user controls that are mediator/collider/descendant of outcome.
-#'     \item `controls_minimal` — (legacy) one minimal set (character vector).
-#'     \item `controls_minimal_all` — list of all minimal sets (character vectors).
-#'     \item `controls_canonical` — canonical set (character vector; may be empty).
-#'     \item `formulas` — list with `original`, `minimal`, `minimal_list`, `canonical`.
-#'     \item `models` — list with fitted models `original`, `minimal`, `minimal_list`, `canonical`.
-#'     \item `verbose`, `imply` — flags as provided.
-#'   }
+#'@return An object of class `"DAGassist_report"`, invisibly for file outputs,
+#'and printed for `type="console"`. The list contains:
+#'  \itemize{
+#'    \item `validation` — result from internal `validate_spec(...)` (includes `ok`).
+#'    \item `roles` — roles data.frame from `classify_nodes(...)`.
+#'    \item `bad_in_user` — variables in user controls that are mediator/collider/descendant of outcome.
+#'    \item `controls_minimal` — (legacy) one minimal set (character vector).
+#'    \item `controls_minimal_all` — list of all minimal sets (character vectors).
+#'    \item `controls_canonical` — canonical set (character vector; may be empty).
+#'    \item `formulas` — list with `original`, `minimal`, `minimal_list`, `canonical`.
+#'    \item `models` — list with fitted models `original`, `minimal`, `minimal_list`, `canonical`.
+#'    \item `verbose`, `imply` — flags as provided.
+#'  }
 #'
-#' @section Errors and edge cases:
-#' * If exposure/outcome cannot be inferred uniquely, the function stops with a clear message.
-#' * Fitting errors (e.g., FE collinearity) are captured and displayed in comparisons
+#'@section Errors and edge cases:
+#'  * If exposure/outcome cannot be inferred uniquely, the function stops with a clear message.
+#'  * Fitting errors (e.g., FE collinearity) are captured and displayed in comparisons
 #'   without aborting the whole pipeline.
 #'
-#' @seealso [print.DAGassist_report()] for the console printer, and the helper
-#'   exporters in `report_*` modules.
+#'@seealso [print.DAGassist_report()] for the console printer, and the helper
+#'  exporters in `report_*` modules.
 #'
-#' @examplesIf requireNamespace("dagitty", quietly = TRUE)
+#'@examplesIf requireNamespace("dagitty", quietly = TRUE)
 #' # Package example data:
 #' data(test_df, package = "DAGassist")
 #' data(test_complex, package = "DAGassist")
@@ -104,12 +105,13 @@
 #' @export
 
 DAGassist <- function(dag, formula, data, exposure, outcome,
-                       engine = stats::lm, engine_args = list(),
-                       verbose = TRUE, 
-                       type = c("console", "latex", "word", "docx", 
+                      engine = stats::lm, engine_args = list(),
+                      labels = NULL,
+                      verbose = TRUE, 
+                      type = c("console", "latex", "word", "docx", 
                                 "excel", "xlsx", "text", "txt"), 
-                       out = NULL,
-                       imply = FALSE) {
+                      out = NULL,
+                      imply = FALSE) {
   # set output type
   type <- match.arg(type)
   
@@ -136,12 +138,19 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
   exposure <- xy$exposure
   outcome  <- xy$outcome
   
-  # Validate inputs using the now-normalized pieces
+  #validate inputs using the now-normalized pieces
   v <- validate_spec(dag, formula, data, exposure, outcome)
   if (!v$ok) return(list(validation = v))
   
-  # Classify nodes
+  #classify nodes
   roles <- classify_nodes(dag, exposure, outcome)
+  
+  #normalize labels and prepare roles table
+  labmap <- tryCatch(.normalize_labels(labels, vars = unique(roles$variable)),
+                     error = function(e) { NULL })
+  #make a display copy for exporters without touching internal names
+  roles_display <- tryCatch(.apply_labels_to_roles_df(roles, labmap),
+                            error = function(e) roles)
   
   # what controls did the user use? (only from the pre-| part if present)
   rhs_terms <- .rhs_terms_safe(formula)
@@ -194,6 +203,8 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
   report <- list(
     validation = v, 
     roles = roles,
+    roles_display = roles_display,
+    labels_map = labmap,
     bad_in_user = bad_in_user,
     controls_minimal = minimal, # keeps legacy single-min key
     controls_minimal_all = minimal_sets_all, # all minimal sets
@@ -231,6 +242,7 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
         status = if (isTRUE(v$ok)) "VALID" else "INVALID",
         issues = if (!is.null(v$issues)) v$issues else character(0)
       ),
+      coef_rename = labmap,
       roles_df = report$roles,
       models_df = models_df_full,     
       models = mods_full,        
@@ -321,7 +333,18 @@ print.DAGassist_report <- function(x, ...) {
   verbose <- if (is.null(x$verbose)) TRUE else isTRUE(x$verbose)
   
   cat("\nRoles:\n")
-  print(x$roles)  # pretty roles table
+  # Only label the variable names; keep the logical flags intact for the S3 printer
+  r <- tryCatch(
+    .apply_labels_to_roles_df(x$roles, x$labels_map),
+    error = function(e) x$roles
+  )
+  
+  # ensure the class is still there (usually preserved, but this is harmless)
+  if (!inherits(r, "DAGassist_roles")) {
+    class(r) <- unique(c("DAGassist_roles", class(r)))
+  }
+  
+  print(r)  # <- do NOT call .roles_pretty() here
   
   if (length(x$bad_in_user)) {
     cat(clr_red("\n (!) Bad controls in your formula: {", paste(x$bad_in_user, collapse = ", "), "}\n", sep = ""))
@@ -442,5 +465,5 @@ print.DAGassist_report <- function(x, ...) {
   }
   mods[["Canonical"]] <- x$models$canonical
   
-  .print_model_comparison_list(mods)
+  .print_model_comparison_list(mods, coef_rename = x$labels_map)
 }

@@ -264,6 +264,7 @@
   attr(stats::terms(base), "term.labels")
 }
 
+
 ###return ALL minimal adjustment sets as a list 
 ##IN
 #dag--dagitty object
@@ -323,6 +324,47 @@
   )
 }
 
+#normalize labels into a named character vector: names = variable, values = label
+.normalize_labels <- function(labels, vars) {
+  if (missing(vars) || is.null(vars)) vars <- character(0)
+  if (is.null(labels)) return(character(0))
+  # already a named character vector
+  if (is.character(labels) && length(names(labels))) return(labels)
+  # flatten named list to named character
+  if (is.list(labels) && length(names(labels))) {
+    vals <- unlist(labels, use.names = TRUE, recursive = FALSE)
+    vals <- vals[!vapply(vals, is.list, logical(1))]
+    if (is.character(vals) && length(names(vals))) return(vals)
+  }
+  # df/list with cols variable and label
+  if (is.list(labels) && all(c("variable","label") %in% names(labels))) {
+    v <- as.character(labels$variable)
+    l <- as.character(labels$label)
+    names(l) <- v
+    return(l)
+  }
+  # unnamed character vector in same order as vars
+  if (is.character(labels) && !length(names(labels)) && length(vars) && length(labels) == length(vars)) {
+    names(labels) <- as.character(vars)
+    return(labels)
+  }
+  character(0)
+}
+
+#apply labels to roles df for downstream var name continuity
+#does not rename col names
+.apply_labels_to_roles_df <- function(roles, labmap) {
+  if (is.null(roles) || !is.data.frame(roles)) return(roles)
+  df <- roles
+  disp <- as.character(df$variable)
+  if (length(labmap)) {
+    idx <- match(df$variable, names(labmap))
+    repl <- !is.na(idx)
+    disp[repl] <- unname(labmap[idx[repl]])
+  }
+  df$variable <- disp
+  df
+}
 ###print side-by-side comparison of models with graceful fallbacks
 ###THIS IS FOR CONSOLE. export has different helpers
 ##IN
@@ -336,15 +378,20 @@
 #omit gof rows to keep table small
 #fit errors are printed as messages via DAGassist_fit_error
 #returns invisibly
-.print_model_comparison_list <- function(mods) {
+.print_model_comparison_list <- function(mods, coef_rename=NULL) {
   ##preferred path: modelsummary
   if (requireNamespace("modelsummary", quietly = TRUE)) {
-    tab <- modelsummary::msummary(
+    args <- list(
       mods,
-      stars = TRUE,#default stars
-      output   = "markdown",#good for console
+      stars    = TRUE,
+      output   = "markdown",
       gof_omit = "IC|Log|Adj|Pseudo|AIC|BIC|F$|RMSE$|Within|Between|Std|sigma"
     )
+    # only pass a VALID rename map (named char, length > 0)
+    if (is.character(coef_rename) && length(coef_rename) && length(names(coef_rename))) {
+      args$coef_rename <- coef_rename
+    }
+    tab <- do.call(modelsummary::msummary, args)
     cat("\nModel comparison:\n")
     #handle either vector or object
     if (is.character(tab)) {
@@ -372,6 +419,11 @@
       }
       #print compact subset of typical columns
       cols <- intersect(c("term","estimate","std.error","statistic","p.value"), names(tt))
+      #relabel if coef_rename is present
+      if (length(coef_rename)) {
+        idx <- match(tt$term, names(coef_rename))
+        tt$term[!is.na(idx)] <- unname(coef_rename[idx[!is.na(idx)]])
+      }
       cat("\n", nm, ":\n", sep = "") 
       #10 row head
       print(utils::head(tt[, cols, drop = FALSE], 10))

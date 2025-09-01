@@ -12,6 +12,7 @@ DAGassist(
   outcome,
   engine = stats::lm,
   engine_args = list(),
+  labels = NULL,
   verbose = TRUE,
   type = c("console", "latex", "word", "docx", "excel", "xlsx", "text", "txt"),
   out = NULL,
@@ -26,7 +27,7 @@ DAGassist(
 When an engine call is provided, \code{engine}, \code{data}, and extra arguments are
 automatically extracted from the call.}
 
-\item{data}{A \code{data.frame} (or compatible); optional if supplied via the
+\item{data}{A \code{data.frame} (or compatible--e.g. tibble); optional if supplied via the
 engine call in \code{formula}.}
 
 \item{exposure}{Optional character scalar; if missing/empty, inferred from the
@@ -41,6 +42,9 @@ is a single engine call (in that case the function is taken from the call).}
 \item{engine_args}{Named list of extra arguments forwarded to \code{engine(...)}.
 If \code{formula} is an engine call, arguments from the call are merged with
 \code{engine_args} (call values take precedence).}
+
+\item{labels}{optional variable labels. can be named char vector or df or unnamed
+char vector}
 
 \item{verbose}{Logical (default \code{TRUE}). Controls verbosity in the console
 printer (formulas + notes).}
@@ -97,7 +101,7 @@ canonical formulas (e.g., \code{Y ~ X + controls | fe | iv(...)}).
 
 \strong{Output types.}
 \itemize{
-\item \code{console} prints roles, sets, formulas (if \code{verbose}), and a compact model
+\item \code{console} prints* roles, sets, formulas (if \code{verbose}), and a compact model
 comparison with \code{{modelsummary}} if available, then falls back gracefully.
 \item \code{latex} writes a \strong{LaTeX fragment} you can \verb{\\input\{\}} into a paper.
 \item \code{docx}/\code{word} writes a \strong{Word} doc via Pandoc. It will use a reference
@@ -105,10 +109,10 @@ document if set via \code{options(DAGassist.ref_docx="path/to/ref.docx")}, else
 falls back to a bundled or default reference DOCX, else Pandoc defaults.
 \item \code{excel}/\code{xlsx} writes an \strong{Excel} workbook with tidy tables.
 \item \code{text}/\code{txt} writes a \strong{plain-text} report suitable for logs/notes.
-}
 
 \strong{Dependencies.} Minimal core requires \code{{dagitty}}. Optional enhancements:
 \code{{modelsummary}} (pretty tables), \code{{broom}} (fallback tidying), \code{{rmarkdown}}
+}
 \itemize{
 \item \strong{Pandoc} (DOCX), \code{{writexl}} (XLSX).
 }

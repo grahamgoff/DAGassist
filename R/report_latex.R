@@ -118,24 +118,22 @@
   if (!requireNamespace("modelsummary", quietly = TRUE)) {
     return(c("% modelsummary not installed; skipping model comparison"))
   }
+  
   #suppress the once-per-session warning about siunitx
   out <- suppressWarnings(
     modelsummary::modelsummary(
       mods,
-      output    = "latex",
-      stars     = TRUE,
-      escape    = TRUE,
-      gof_omit  = "IC|Log|Adj|Pseudo|AIC|BIC|F$|RMSE$|Within|Between|Std|sigma",
-      booktabs  = TRUE
-      )
+      output = "latex",
+      stars = TRUE,
+      escape = TRUE,
+      gof_omit = "IC|Log|Adj|Pseudo|AIC|BIC|F$|RMSE$|Within|Between|Std|sigma",
+      booktabs = TRUE
     )
-  
+  )
   # Coerce to single string
   out <- paste(as.character(out), collapse = "\n")
-  
   out <- .to_longtblr(out)
-  
-  return(strsplit(out, "\n")[[1]])
+  strsplit(out, "\n")[[1]]
 }
 
 ################################################################################
@@ -149,10 +147,10 @@
   dir.create(dirname(out), recursive = TRUE, showWarnings = FALSE)
   
   roles  <- tryCatch(res$roles_df, error = function(e) NULL)
-  mods   <- tryCatch(res$models,    error = function(e) NULL)
-  msets  <- tryCatch(res$min_sets,  error = function(e) list())
-  canon  <- tryCatch(res$canon,     error = function(e) character(0))
-  
+  mods   <- tryCatch(res$models, error = function(e) NULL)
+  msets  <- tryCatch(res$min_sets, error = function(e) list())
+  canon  <- tryCatch(res$canon, error = function(e) character(0))
+
   # Build the single Notes line with p-value legend + controls summary
   ctrl_min <- if (length(msets)) .set_brace(msets[[1]]) else "{}"
   ctrl_can <- if (length(canon)) .set_brace(canon) else "{}"

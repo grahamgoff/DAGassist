@@ -206,6 +206,23 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
     if (length(same_idx)) m_mins[[same_idx[1]]] else .safe_fit(engine, f_canon, data, engine_args)
   }
 
+  ###list unevaluated nuisance vars
+  .collect_rhs <- function(fml) .rhs_terms_safe(fml)
+  
+  rhs_all <- unique(unlist(c(
+    list(.collect_rhs(formula)),
+    lapply(f_mins, .collect_rhs),
+    list(.collect_rhs(f_canon))
+  )))
+  #compare to DAG node names via roles$variable
+  dag_nodes <- roles$variable
+  unevaluated <- sort(setdiff(rhs_all, dag_nodes))
+  #if exposure or outcome were somehow not in DAG unlist
+  unevaluated <- setdiff(unevaluated, c(exposure, outcome))
+  #pretty string for exporters
+  unevaluated_str <- if (length(unevaluated)) paste(unevaluated, collapse = ", ") else ""
+  
+  
   report <- list(
     validation = v, 
     roles = roles,
@@ -228,6 +245,8 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
       minimal_list = m_mins, # all minimal fits
       canonical = m_canon
     ),
+    unevaluated = unevaluated,
+    unevaluated_str = unevaluated_str,
     verbose = isTRUE(verbose),
     imply = isTRUE(imply)
   )
@@ -253,7 +272,8 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
       models_df = models_df_full,     
       models = mods_full,        
       min_sets = report$controls_minimal_all,
-      canon = report$controls_canonical
+      canon = report$controls_canonical,
+      unevaluated_str = report$unevaluated_str
     )
     .report_latex_fragment(res_min, out)
     return(invisible(structure(report, file = normalizePath(out, mustWork = FALSE))))
@@ -270,7 +290,8 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
       coef_rename = labmap,
       models = mods_full,                
       min_sets = report$controls_minimal_all,
-      canon = report$controls_canonical
+      canon = report$controls_canonical,
+      unevaluated_str = report$unevaluated_str
     )
     return(.report_docx(res_min, out))
   }
@@ -282,7 +303,8 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
       coef_rename = labmap,
       models = mods_full,         
       min_sets = report$controls_minimal_all,
-      canon = report$controls_canonical
+      canon = report$controls_canonical,
+      unevaluated_str = report$unevaluated_str
     )
     .report_xlsx(res_min, out)
     return(invisible(structure(report, file = normalizePath(out, mustWork = FALSE))))
@@ -295,7 +317,8 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
       coef_rename = labmap,
       models = mods_full,         
       min_sets = report$controls_minimal_all,
-      canon = report$controls_canonical
+      canon = report$controls_canonical,
+      unevaluated_str = report$unevaluated_str
     )
     .report_txt(res_min, out)
     return(invisible(structure(report, file = normalizePath(out, mustWork = FALSE))))
@@ -370,6 +393,12 @@ print.DAGassist_report <- function(x, ...) {
     cat("Minimal controls 1: {}\n")
   }
   cat("Canonical controls: ", .format_set(x$controls_canonical), "\n", sep = "")
+  
+  if (length(x$unevaluated)) {
+    cat("\nNote: The following regressors, which are included in the below ",
+        "models, were not evaluated by DAGassist because they are not nodes in the DAG:\n  {",
+        x$unevaluated_str, "}\n", sep = "")
+  }
   
   if(verbose){
   # compare formulas

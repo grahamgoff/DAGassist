@@ -17,22 +17,26 @@
     lines <- c(lines, "## Roles", "", .df_to_md_pipe(rp), "")
   }
   
-  # Models (stacked Term / (SE) / GOF)
+  #standard stacked models 
   built <- .build_modelsummary_pretty_df(mods, coef_rename = cmap)
   if (!is.null(built$df) && nrow(built$df)) {
     lines <- c(lines, "## Models", "", .df_to_md_pipe(built$df), "")
   }
   
-  # Notes
-  lines <- c(lines,
-             "## Notes",
-             "",
-             "+ p < 0.1, * p < 0.05, ** p < 0.01, *** p < 0.001.",
-             paste0("*Controls (minimal):* ",
-                    if (length(msets)) .set_brace_plain(msets[[1]]) else "{}"),
-             paste0("*Controls (canonical):* ", .set_brace_plain(canon), "."),
-             ""
+  #make notes
+  notes <- c(
+    "## Notes",
+    "",
+    "+ p < 0.1, * p < 0.05, ** p < 0.01, *** p < 0.001.",
+    paste0("*Controls (minimal):* ",
+           if (length(msets)) .set_brace_plain(msets[[1]]) else "{}"),
+    paste0("*Controls (canonical):* ", .set_brace_plain(canon), ".")
   )
+  if (!is.null(res$unevaluated_str) && nzchar(res$unevaluated_str)) {
+    notes <- c(notes,
+               paste0("*Unevaluated regressors (not in DAG):* {", res$unevaluated_str, "}"))
+  }
+  lines <- c(lines, notes, "")
   
   dir.create(dirname(out), recursive = TRUE, showWarnings = FALSE)
   writeLines(lines, out, useBytes = TRUE)

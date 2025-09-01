@@ -192,10 +192,24 @@
       canon <- tryCatch(res$canon,    error = function(e) character(0))
       min_str   <- if (length(msets)) .set_brace(msets[[1]]) else "{}"
       canon_str <- .set_brace(canon)
-      c("\\vspace{1em}", 
+      
+      notes <- c(
+        "\\vspace{1em}",
         "\\footnotesize",
-        paste0("\\textit{Controls (minimal):} ", min_str, "\\\\"),
-        paste0("\\textit{Controls (canonical):} ", canon_str))
+        paste0("\\textit{Controls (minimal):} ",   min_str,   "\\\\"),
+        paste0("\\textit{Controls (canonical):} ", canon_str)
+      )
+      
+      if (!is.null(res$unevaluated_str) && nzchar(res$unevaluated_str)) {
+        # keep wording tight and consistent:
+        notes <- c(
+          notes,
+          sprintf("\\textit{Unevaluated regressors (not in DAG):} {%s}",
+                  .tex_escape(res$unevaluated_str))
+        )
+      }
+      #return a pure character vector from the block
+      notes 
     }
   )
   

@@ -7,17 +7,18 @@
   mods  <- tryCatch(res$models,    error = function(e) NULL)
   msets <- tryCatch(res$min_sets,  error = function(e) list())
   canon <- tryCatch(res$canon,     error = function(e) character(0))
+  cmap  <- tryCatch(res$coef_rename, error = function(e) NULL)  
   
   lines <- c("DAGassist Report:", "")
   
-  # Roles (pretty if helper exists; else identity)
+  #use pretty roles x grid if available. else, print bool stacks
   if (is.data.frame(roles) && nrow(roles)) {
     rp <- if (exists(".roles_pretty", mode = "function")) .roles_pretty(roles) else roles
     lines <- c(lines, "## Roles", "", .df_to_md_pipe(rp), "")
   }
   
   # Models (stacked Term / (SE) / GOF)
-  built <- .build_modelsummary_pretty_df(mods)
+  built <- .build_modelsummary_pretty_df(mods, coef_rename = cmap)
   if (!is.null(built$df) && nrow(built$df)) {
     lines <- c(lines, "## Models", "", .df_to_md_pipe(built$df), "")
   }

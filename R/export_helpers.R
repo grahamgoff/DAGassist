@@ -24,10 +24,11 @@
 # - otherwise, build plain table by hand
 # regardless, first column l-aligned, else c-align
 # all `|` escapred for correct parsing
-.df_to_md_pipe <- function(df) {
+.df_to_md_pipe <- function(df, docx_spans = FALSE) {
   #make Role cells non-hyphenating in DOCX via a custom character style.
-  #only affects the DOCX path, since this function is used for Word export
-  if ("Role" %in% names(df)) {
+  #only affects the DOCX path via docx_spans. report_word sends a TRUE val, which
+  #enables custom word styling. it is default false, so this does not afect txt
+  if (isTRUE(docx_spans) && "Role" %in% names(df)) {
     wrap_role <- function(x) {
       v <- as.character(x); v[is.na(v)] <- ""
       # Pandoc bracketed span with a DOCX custom style
@@ -48,7 +49,9 @@
     on.exit(names(df) <- old_names, add = TRUE)
     names(df) <- nn
     # kable returns char vector. coerce to plan character just to be safe
-    return(as.character(knitr::kable(df, format = "pipe", align = align)))
+    return(as.character(knitr::kable(
+      df, format = "pipe", align = align, escape = !isTRUE(docx_spans)
+      )))
   }
   ## fallback path: build manually
   #escape | for easy cell splitting

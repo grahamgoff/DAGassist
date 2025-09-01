@@ -10,7 +10,7 @@
   
   if (is.data.frame(roles) && nrow(roles)) {
     rp <- .roles_pretty(roles)  # keep your existing roles prettyfier
-    md <- c(md, "## Roles", "", .df_to_md_pipe(rp), "")
+    md <- c(md, "## Roles", "", .df_to_md_pipe(rp, docx_spans=TRUE), "")
   }
   
   md <- c(md, "## Models", "", .msummary_to_markdown(mods, coef_rename=res$coef_rename), "")

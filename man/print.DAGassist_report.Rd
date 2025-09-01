@@ -2,26 +2,36 @@
 % Please edit documentation in R/assist.R
 \name{print.DAGassist_report}
 \alias{print.DAGassist_report}
-\title{print the DAGassist_report}
+\title{Print method for DAGassist reports}
 \usage{
 \method{print}{DAGassist_report}(x, ...)
 }
 \arguments{
-\item{x}{Output of DAGassist() (class "report")}
+\item{x}{A \code{"DAGassist_report"} object returned by \code{\link[=DAGassist]{DAGassist()}}.}
 
-\item{...}{Additional arguments passed to or from methods (unused).}
+\item{...}{Additional arguments (currently unused; present for S3 compatibility).}
 }
 \value{
-Invisibly returns x
+Invisibly returns \code{x}.
 }
 \description{
-print the DAGassist_report
+Nicely prints the roles table, highlights potential bad controls, shows
+minimal/canonical adjustment sets, optionally shows formulas, and renders a
+compact model comparison (using \code{{modelsummary}} if available, falling back
+to \code{{broom}} or basic \code{coef()} preview).
+}
+\details{
+The printer respects the \code{verbose} flag in the report: when \code{TRUE}, it
+includes formulas and a brief note on variables added by DAG logic (minimal
+and canonical sets). Fitting errors are shown inline per model column and do
+not abort printing.
 }
 \examples{
 \dontshow{if (requireNamespace("dagitty", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
-# Use package datasets to avoid re-simulating
 data(test_df, package = "DAGassist")
 data(test_complex, package = "DAGassist")
-DAGassist(test_complex, Y ~ X + Z + C + M, test_df, exposure = "X", outcome = "Y")
+r <- DAGassist(test_complex, Y ~ X + Z + C + M, data = test_df,
+               exposure = "X", outcome = "Y")
+print(r)
 \dontshow{\}) # examplesIf}
 }

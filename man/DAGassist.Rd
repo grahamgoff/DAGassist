@@ -2,8 +2,7 @@
 % Please edit documentation in R/assist.R
 \name{DAGassist}
 \alias{DAGassist}
-\title{Main function
-Run the DAGassist pipeline and print a compact report, tying it all together}
+\title{Run the DAGassist pipeline and produce a compact report (console/LaTeX/Word/Excel/Text)}
 \usage{
 DAGassist(
   dag,
@@ -20,49 +19,129 @@ DAGassist(
 )
 }
 \arguments{
-\item{dag}{a valid dagitty object}
+\item{dag}{A \strong{dagitty} object (see \code{\link[dagitty:dagitty]{dagitty::dagitty()}}).}
 
-\item{formula}{a regression formula \emph{or} a single engine call--e.g.
-\code{feols(Y~X+Z | A, data = df, cluster = ~id)}}
+\item{formula}{Either (a) a standard model formula \code{Y ~ X + ...}, or
+(b) a single \strong{engine call} such as \code{feols(Y ~ X + Z | fe, data = df, ...)}.
+When an engine call is provided, \code{engine}, \code{data}, and extra arguments are
+automatically extracted from the call.}
 
-\item{data}{a valid data frame, (optional if supplied via formula call)}
+\item{data}{A \code{data.frame} (or compatible); optional if supplied via the
+engine call in \code{formula}.}
 
-\item{exposure}{optional; inferred from the DAG if missing}
+\item{exposure}{Optional character scalar; if missing/empty, inferred from the
+DAG (must be unique).}
 
-\item{outcome}{optional; inferred from DAG if missing}
+\item{outcome}{Optional character scalar; if missing/empty, inferred from the
+DAG (must be unique).}
 
-\item{engine}{the regression engine; default \code{stats::lm}}
+\item{engine}{Modeling function, default \link[stats:lm]{stats::lm}. Ignored if \code{formula}
+is a single engine call (in that case the function is taken from the call).}
 
-\item{engine_args}{a list with exra engine args---merged with any found in call}
+\item{engine_args}{Named list of extra arguments forwarded to \code{engine(...)}.
+If \code{formula} is an engine call, arguments from the call are merged with
+\code{engine_args} (call values take precedence).}
 
-\item{verbose}{default TRUE-- TRUE/FALSE -- suppresses formulas and notes.}
+\item{verbose}{Logical (default \code{TRUE}). Controls verbosity in the console
+printer (formulas + notes).}
 
-\item{type}{Output type: "console" (default) or "latex" or "word"}
+\item{type}{Output type. One of
+\code{"console"} (default), \code{"latex"}/\code{"docx"}/\code{"word"},
+\code{"excel"}/\code{"xlsx"}, \code{"text"}/\code{"txt"}.}
 
-\item{out}{File path for latex fragment or word doc, default NULL}
+\item{out}{Output file path for the non-console types:
+\itemize{
+\item \code{type="latex"}: a \strong{LaTeX fragment} written to \code{out} (must end with \code{.tex}).
+\item \code{type="docx"}/\code{"word"}: a \strong{Word (.docx)} file written to \code{out}.
+\item \code{type="excel"}/\code{"xlsx"}: an \strong{Excel (.xlsx)} file written to \code{out}.
+\item \code{type="text"}/\code{"txt"}: a \strong{plain-text} file written to \code{out}.
+Ignored for \code{type="console"}.
+}}
 
-\item{imply}{logical. If TRUE, DAGassist will add variables not included in
-the user's main formula, based on the relationships in the DAG. If FALSE (default),
-only the original model is shown}
+\item{imply}{Logical; if \code{TRUE}, DAGassist highlights variables added by DAG
+logic (minimal/canonical sets) in the notes and marks canonical roles in
+the roles table. Models are \emph{always} fit for minimal/canonical to allow
+side-by-side comparison, regardless of \code{imply}.}
 }
 \value{
-a list of class \code{out} with the \code{DAGassist_report}, which has values
-validation: runs \code{validate_spec} from validate.R
-roles: runs \code{classify_nodes} from classify.R
-bad_in_user: does the user include mediator, collider or descendant as controls?
-controls_minimal: runs \code{pick_minimal_controls} from compare.R
-formulas: a list with the original regression formula + minimal formula
-models: a list with the full original regression call + minimal regression call
+An object of class \code{"DAGassist_report"}, invisibly for file outputs,
+and printed for \code{type="console"}. The list contains:
+\itemize{
+\item \code{validation} — result from internal \code{validate_spec(...)} (includes \code{ok}).
+\item \code{roles} — roles data.frame from \code{classify_nodes(...)}.
+\item \code{bad_in_user} — variables in user controls that are mediator/collider/descendant of outcome.
+\item \code{controls_minimal} — (legacy) one minimal set (character vector).
+\item \code{controls_minimal_all} — list of all minimal sets (character vectors).
+\item \code{controls_canonical} — canonical set (character vector; may be empty).
+\item \code{formulas} — list with \code{original}, \code{minimal}, \code{minimal_list}, \code{canonical}.
+\item \code{models} — list with fitted models \code{original}, \code{minimal}, \code{minimal_list}, \code{canonical}.
+\item \code{verbose}, \code{imply} — flags as provided.
+}
 }
 \description{
-Main function
-Run the DAGassist pipeline and print a compact report, tying it all together
+\code{DAGassist()} validates a DAG + model specification, classifies node roles,
+builds minimal and canonical adjustment sets, fits comparable models, and
+renders a compact report in several formats (console, LaTeX fragment, DOCX,
+XLSX, plain text). It also supports passing a \strong{single engine call} (e.g.
+\code{feols(Y ~ X + Z | fe, data = df)}) instead of a plain formula.
 }
+\details{
+\strong{Engine-call parsing.} If \code{formula} is a call (e.g., \code{feols(Y ~ X | fe, data=df)}),
+DAGassist extracts the engine function, the formula, the data argument, and
+any additional engine arguments directly from that call; these are merged with
+\code{engine}/\code{engine_args} you pass explicitly (call arguments win).
+
+\strong{Fixest tails.} For engines like \strong{fixest} that use \code{|} to denote FE/IV
+parts, DAGassist preserves any \verb{| ...} “tail” when constructing minimal or
+canonical formulas (e.g., \code{Y ~ X + controls | fe | iv(...)}).
+
+\strong{Output types.}
+\itemize{
+\item \code{console} prints roles, sets, formulas (if \code{verbose}), and a compact model
+comparison with \code{{modelsummary}} if available, then falls back gracefully.
+\item \code{latex} writes a \strong{LaTeX fragment} you can \verb{\\input\{\}} into a paper.
+\item \code{docx}/\code{word} writes a \strong{Word} doc via Pandoc. It will use a reference
+document if set via \code{options(DAGassist.ref_docx="path/to/ref.docx")}, else
+falls back to a bundled or default reference DOCX, else Pandoc defaults.
+\item \code{excel}/\code{xlsx} writes an \strong{Excel} workbook with tidy tables.
+\item \code{text}/\code{txt} writes a \strong{plain-text} report suitable for logs/notes.
+}
+
+\strong{Dependencies.} Minimal core requires {dagitty}. Optional enhancements:
+\code{{modelsummary}} (pretty tables), \code{{broom}} (fallback tidying), \code{{rmarkdown}}
+\itemize{
+\item \strong{Pandoc} (DOCX), \code{{writexl}} (XLSX).
+}
+}
+\section{Errors and edge cases}{
+
+\itemize{
+\item If exposure/outcome cannot be inferred uniquely, the function stops with a clear message.
+\item Fitting errors (e.g., FE collinearity) are captured and displayed in comparisons
+without aborting the whole pipeline.
+}
+}
+
 \examples{
 \dontshow{if (requireNamespace("dagitty", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
-# Use package datasets to avoid re-simulating
+# Package example data:
 data(test_df, package = "DAGassist")
 data(test_complex, package = "DAGassist")
-DAGassist(test_complex, Y ~ X + Z + C + M, test_df, exposure = "X", outcome = "Y")
+
+# Basic console report
+DAGassist(test_complex, Y ~ X + Z + C + M, data = test_df,
+          exposure = "X", outcome = "Y")
+
+# Engine-call parsing (fixest example, if available):
+\dontrun{
+DAGassist(test_complex,
+          fixest::feols(Y ~ X + Z | C, data = test_df),
+          exposure = "X", outcome = "Y",
+          type = "docx", out = "report.docx")
+}
 \dontshow{\}) # examplesIf}
+}
+\seealso{
+\code{\link[=print.DAGassist_report]{print.DAGassist_report()}} for the console printer, and the helper
+exporters in \verb{report_*} modules.
 }

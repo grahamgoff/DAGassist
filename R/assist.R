@@ -1,36 +1,106 @@
-################################################################################
-#' Main function
-#' Run the DAGassist pipeline and print a compact report, tying it all together
-#' 
-#' @param dag a valid dagitty object
-#' @param formula a regression formula *or* a single engine call--e.g.
-#' `feols(Y~X+Z | A, data = df, cluster = ~id)` 
-#' @param data a valid data frame, (optional if supplied via formula call)
-#' @param exposure optional; inferred from the DAG if missing
-#' @param outcome optional; inferred from DAG if missing 
-#' @param engine the regression engine; default `stats::lm`
-#' @param engine_args a list with exra engine args---merged with any found in call
-#' @param verbose default TRUE-- TRUE/FALSE -- suppresses formulas and notes.
-#' @param type Output type: "console" (default) or "latex" or "word"
-#' @param out File path for latex fragment or word doc, default NULL
-#' @param imply logical. If TRUE, DAGassist will add variables not included in
-#' the user's main formula, based on the relationships in the DAG. If FALSE (default),
-#' only the original model is shown
-#' 
-#' @return a list of class `out` with the `DAGassist_report`, which has values
-#'         validation: runs `validate_spec` from validate.R
-#'         roles: runs `classify_nodes` from classify.R
-#'         bad_in_user: does the user include mediator, collider or descendant as controls?
-#'         controls_minimal: runs `pick_minimal_controls` from compare.R
-#'         formulas: a list with the original regression formula + minimal formula
-#'         models: a list with the full original regression call + minimal regression call
-#'         
+#' Run the DAGassist pipeline and produce a compact report (console/LaTeX/Word/Excel/Text)
+#'
+#' `DAGassist()` validates a DAG + model specification, classifies node roles,
+#' builds minimal and canonical adjustment sets, fits comparable models, and
+#' renders a compact report in several formats (console, LaTeX fragment, DOCX,
+#' XLSX, plain text). It also supports passing a **single engine call** (e.g.
+#' `feols(Y ~ X + Z | fe, data = df)`) instead of a plain formula.
+#'
+#' @param dag A **dagitty** object (see [dagitty::dagitty()]).
+#' @param formula Either (a) a standard model formula `Y ~ X + ...`, or
+#'   (b) a single **engine call** such as `feols(Y ~ X + Z | fe, data = df, ...)`.
+#'   When an engine call is provided, `engine`, `data`, and extra arguments are
+#'   automatically extracted from the call.
+#' @param data A `data.frame` (or compatible); optional if supplied via the
+#'   engine call in `formula`.
+#' @param exposure Optional character scalar; if missing/empty, inferred from the
+#'   DAG (must be unique).
+#' @param outcome Optional character scalar; if missing/empty, inferred from the
+#'   DAG (must be unique).
+#' @param engine Modeling function, default [stats::lm]. Ignored if `formula`
+#'   is a single engine call (in that case the function is taken from the call).
+#' @param engine_args Named list of extra arguments forwarded to `engine(...)`.
+#'   If `formula` is an engine call, arguments from the call are merged with
+#'   `engine_args` (call values take precedence).
+#' @param verbose Logical (default `TRUE`). Controls verbosity in the console
+#'   printer (formulas + notes).
+#' @param type Output type. One of
+#'   `"console"` (default), `"latex"`/`"docx"`/`"word"`,
+#'   `"excel"`/`"xlsx"`, `"text"`/`"txt"`.
+#' @param out Output file path for the non-console types:
+#'   * `type="latex"`: a **LaTeX fragment** written to `out` (must end with `.tex`).
+#'   * `type="docx"`/`"word"`: a **Word (.docx)** file written to `out`.
+#'   * `type="excel"`/`"xlsx"`: an **Excel (.xlsx)** file written to `out`.
+#'   * `type="text"`/`"txt"`: a **plain-text** file written to `out`.
+#'   Ignored for `type="console"`.
+#' @param imply Logical; if `TRUE`, DAGassist highlights variables added by DAG
+#'   logic (minimal/canonical sets) in the notes and marks canonical roles in
+#'   the roles table. Models are *always* fit for minimal/canonical to allow
+#'   side-by-side comparison, regardless of `imply`.
+#'
+#' @details
+#' **Engine-call parsing.** If `formula` is a call (e.g., `feols(Y ~ X | fe, data=df)`),
+#' DAGassist extracts the engine function, the formula, the data argument, and
+#' any additional engine arguments directly from that call; these are merged with
+#' `engine`/`engine_args` you pass explicitly (call arguments win).
+#'
+#' **Fixest tails.** For engines like **fixest** that use `|` to denote FE/IV
+#' parts, DAGassist preserves any `| ...` “tail” when constructing minimal or
+#' canonical formulas (e.g., `Y ~ X + controls | fe | iv(...)`).
+#'
+#' **Output types.**
+#' * `console` prints roles, sets, formulas (if `verbose`), and a compact model
+#'   comparison with `{modelsummary}` if available, then falls back gracefully.
+#' * `latex` writes a **LaTeX fragment** you can `\input{}` into a paper.
+#' * `docx`/`word` writes a **Word** doc via Pandoc. It will use a reference
+#'   document if set via `options(DAGassist.ref_docx="path/to/ref.docx")`, else
+#'   falls back to a bundled or default reference DOCX, else Pandoc defaults.
+#' * `excel`/`xlsx` writes an **Excel** workbook with tidy tables.
+#' * `text`/`txt` writes a **plain-text** report suitable for logs/notes.
+#'
+#' **Dependencies.** Minimal core requires {dagitty}. Optional enhancements:
+#' `{modelsummary}` (pretty tables), `{broom}` (fallback tidying), `{rmarkdown}`
+#' + **Pandoc** (DOCX), `{writexl}` (XLSX).
+#'
+#' @return An object of class `"DAGassist_report"`, invisibly for file outputs,
+#'   and printed for `type="console"`. The list contains:
+#'   \itemize{
+#'     \item `validation` — result from internal `validate_spec(...)` (includes `ok`).
+#'     \item `roles` — roles data.frame from `classify_nodes(...)`.
+#'     \item `bad_in_user` — variables in user controls that are mediator/collider/descendant of outcome.
+#'     \item `controls_minimal` — (legacy) one minimal set (character vector).
+#'     \item `controls_minimal_all` — list of all minimal sets (character vectors).
+#'     \item `controls_canonical` — canonical set (character vector; may be empty).
+#'     \item `formulas` — list with `original`, `minimal`, `minimal_list`, `canonical`.
+#'     \item `models` — list with fitted models `original`, `minimal`, `minimal_list`, `canonical`.
+#'     \item `verbose`, `imply` — flags as provided.
+#'   }
+#'
+#' @section Errors and edge cases:
+#' * If exposure/outcome cannot be inferred uniquely, the function stops with a clear message.
+#' * Fitting errors (e.g., FE collinearity) are captured and displayed in comparisons
+#'   without aborting the whole pipeline.
+#'
+#' @seealso [print.DAGassist_report()] for the console printer, and the helper
+#'   exporters in `report_*` modules.
+#'
 #' @examplesIf requireNamespace("dagitty", quietly = TRUE)
-#' # Use package datasets to avoid re-simulating
+#' # Package example data:
 #' data(test_df, package = "DAGassist")
 #' data(test_complex, package = "DAGassist")
-#' DAGassist(test_complex, Y ~ X + Z + C + M, test_df, exposure = "X", outcome = "Y")
-#' 
+#'
+#' # Basic console report
+#' DAGassist(test_complex, Y ~ X + Z + C + M, data = test_df,
+#'           exposure = "X", outcome = "Y")
+#'
+#' # Engine-call parsing (fixest example, if available):
+#' \dontrun{
+#' DAGassist(test_complex,
+#'           fixest::feols(Y ~ X + Z | C, data = test_df),
+#'           exposure = "X", outcome = "Y",
+#'           type = "docx", out = "report.docx")
+#' }
+#'
 #' @export
 
 DAGassist <- function(dag, formula, data, exposure, outcome,
@@ -108,7 +178,7 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
     if (is.data.frame(roles) && "canon" %in% names(roles)) roles$canon <- ""
   }
   
-  # ---- ALWAYS fit alternates so display isn't tied to `imply` ----
+  # always fit alternates so display isn't tied to imply
   m_mins <- lapply(
     f_mins,
     function(fm) if (.same_formula(fm, formula)) m_orig else .safe_fit(engine, fm, data, engine_args)
@@ -120,11 +190,7 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
     same_idx <- which(vapply(f_mins, function(fm) .same_formula(fm, f_canon), logical(1)))
     if (length(same_idx)) m_mins[[same_idx[1]]] else .safe_fit(engine, f_canon, data, engine_args)
   }
-  # ----------------------------------------------------------------
-  
-  
-  #8/28/25 renaming to "report", a more suitable name, to avoid naming conflict
-  # with out param
+
   report <- list(
     validation = v, 
     roles = roles,
@@ -150,8 +216,9 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
   )
   class(report) <- c("DAGassist_report", class(report))
   # Build unified artifacts once for all outputs
-  mods_full       <- .build_named_mods(report)
-  models_df_full  <- .build_models_df(report)
+  mods_full <- .build_named_mods(report)
+  models_df_full <- .build_models_df(report)
+  
   ##### LATEX OUT BRANCH #####
   if (type == "latex") {
     if (tolower(tools::file_ext(out)) == "docx") {
@@ -164,16 +231,16 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
         status = if (isTRUE(v$ok)) "VALID" else "INVALID",
         issues = if (!is.null(v$issues)) v$issues else character(0)
       ),
-      roles_df  = report$roles,
-      models_df = models_df_full,     # <— unified
-      models    = mods_full,          # <— unified
-      min_sets  = report$controls_minimal_all,
-      canon     = report$controls_canonical
+      roles_df = report$roles,
+      models_df = models_df_full,     
+      models = mods_full,        
+      min_sets = report$controls_minimal_all,
+      canon = report$controls_canonical
     )
-    
     .report_latex_fragment(res_min, out)
     return(invisible(structure(report, file = normalizePath(out, mustWork = FALSE))))
   }
+  
   ##### WORD OUT BRANCH #####
   if (type %in% c("docx","word")) {
     res_min <- list(
@@ -182,9 +249,9 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
         issues = if (!is.null(v$issues)) v$issues else character(0)
       ),
       roles_df = report$roles,
-      models   = mods_full,                 # <— unified (always Original + Minimal(s) + maybe Canonical)
+      models = mods_full,                
       min_sets = report$controls_minimal_all,
-      canon    = report$controls_canonical
+      canon = report$controls_canonical
     )
     return(.report_docx(res_min, out))
   }
@@ -193,9 +260,9 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
   if (type %in% c("excel","xlsx")) {
     res_min <- list(
       roles_df = report$roles,
-      models   = mods_full,          # <— unified
+      models = mods_full,         
       min_sets = report$controls_minimal_all,
-      canon    = report$controls_canonical
+      canon = report$controls_canonical
     )
     .report_xlsx(res_min, out)
     return(invisible(structure(report, file = normalizePath(out, mustWork = FALSE))))
@@ -205,9 +272,9 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
   if (type %in% c("text","txt")) {
     res_min <- list(
       roles_df = report$roles,
-      models   = mods_full,          # <— unified
+      models = mods_full,         
       min_sets = report$controls_minimal_all,
-      canon    = report$controls_canonical
+      canon = report$controls_canonical
     )
     .report_txt(res_min, out)
     return(invisible(structure(report, file = normalizePath(out, mustWork = FALSE))))
@@ -216,30 +283,45 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
   report
 }
 
-#' print the DAGassist_report
-#' @param x Output of DAGassist() (class "report")
-#' @param ... Additional arguments passed to or from methods (unused).
-#' @return Invisibly returns x
-#' 
+#' Print method for DAGassist reports
+#'
+#' Nicely prints the roles table, highlights potential bad controls, shows
+#' minimal/canonical adjustment sets, optionally shows formulas, and renders a
+#' compact model comparison (using `{modelsummary}` if available, falling back
+#' to `{broom}` or basic `coef()` preview).
+#'
+#' @param x A `"DAGassist_report"` object returned by [DAGassist()].
+#' @param ... Additional arguments (currently unused; present for S3 compatibility).
+#'
+#' @details
+#' The printer respects the `verbose` flag in the report: when `TRUE`, it
+#' includes formulas and a brief note on variables added by DAG logic (minimal
+#' and canonical sets). Fitting errors are shown inline per model column and do
+#' not abort printing.
+#'
+#' @return Invisibly returns `x`.
+#'
 #' @examplesIf requireNamespace("dagitty", quietly = TRUE)
-#' # Use package datasets to avoid re-simulating
 #' data(test_df, package = "DAGassist")
 #' data(test_complex, package = "DAGassist")
-#' DAGassist(test_complex, Y ~ X + Z + C + M, test_df, exposure = "X", outcome = "Y")
-#' 
+#' r <- DAGassist(test_complex, Y ~ X + Z + C + M, data = test_df,
+#'                exposure = "X", outcome = "Y")
+#' print(r)
+#'
 #' @export
-#' 
+#' @method print DAGassist_report
+ 
 print.DAGassist_report <- function(x, ...) {
   
   cat(clr_bold(clr_blue("DAGassist Report:")), "\n")
-  #cat("Validation: ", if (x$validation$ok) "VALID" else "INVALID", "\n", sep = "")
+  
   if (!x$validation$ok) { print(x$validation); return(invisible(x)) }
   
   #set verbose flag for suppressing certain parts
   verbose <- if (is.null(x$verbose)) TRUE else isTRUE(x$verbose)
   
   cat("\nRoles:\n")
-  print(x$roles)  # your pretty roles table
+  print(x$roles)  # pretty roles table
   
   if (length(x$bad_in_user)) {
     cat(clr_red("\n (!) Bad controls in your formula: {", paste(x$bad_in_user, collapse = ", "), "}\n", sep = ""))
@@ -247,7 +329,7 @@ print.DAGassist_report <- function(x, ...) {
     cat(clr_green("\nNo bad controls detected in your formula.\n"))
   }
   
-  # compare adjsutment sets
+  # compare adjustment sets
   if (length(x$controls_minimal_all)) {
     for (i in seq_along(x$controls_minimal_all)) {
       cat("Minimal controls ", i, ": ", .format_set(x$controls_minimal_all[[i]]), "\n", sep = "")
@@ -272,7 +354,7 @@ print.DAGassist_report <- function(x, ...) {
       }
       cat("  canonical: ",  deparse(x$formulas$canonical), "\n", sep = "")
   
-      ## Note if specs are identical (check all pairs and sets)
+      ## note if specs are identical --check all pairs and sets
       mins_fmls <- if (length(x$formulas$minimal_list)) x$formulas$minimal_list else list(x$formulas$minimal)
       #initialize empty value for later
       pairs <- character(0)

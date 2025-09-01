@@ -323,58 +323,114 @@
   )
 }
 
-# Flexible comparison printer for a named list of models.
+###print side-by-side comparison of models with graceful fallbacks
+###THIS IS FOR CONSOLE. export has different helpers
+##IN
+#mods -- naed list of fitted model objects
+###NOTES:
+##priority order
+#if modelsummary is installed, use msummary
+#else if broom is installed, print simple tidy preview
+#else print basic coef head
+##OTHER NOTES
+#omit gof rows to keep table small
+#fit errors are printed as messages via DAGassist_fit_error
+#returns invisibly
 .print_model_comparison_list <- function(mods) {
+  ##preferred path: modelsummary
   if (requireNamespace("modelsummary", quietly = TRUE)) {
     tab <- modelsummary::msummary(
       mods,
-      stars = TRUE,
-      output   = "markdown",
+      stars = TRUE,#default stars
+      output   = "markdown",#good for console
       gof_omit = "IC|Log|Adj|Pseudo|AIC|BIC|F$|RMSE$|Within|Between|Std|sigma"
     )
     cat("\nModel comparison:\n")
-    if (is.character(tab)) cat(paste(tab, collapse = "\n")) else print(tab)
+    #handle either vector or object
+    if (is.character(tab)) {
+      cat(paste(tab, collapse = "\n"))
+    } else {
+      print(tab)
+    }
     return(invisible(NULL))
   }
+  ##fallback:broom snapshot
   if (requireNamespace("broom", quietly = TRUE)) {
     cat("\nModel comparison (fallback; install {modelsummary} for a nicer table):\n")
     for (nm in names(mods)) {
       m <- mods[[nm]]
+      #if fit failed, print error capture from earliers
       if (inherits(m, "DAGassist_fit_error")) {
-        cat("\n", nm, " (fit error): ", m$error, "\n", sep = ""); next
+        cat("\n", nm, " (fit error): ", m$error, "\n", sep = "")
+        next
       }
+      #try to tidy. if not supported, notify and move on to next fallback
       tt <- tryCatch(broom::tidy(m), error = function(e) NULL)
-      if (is.null(tt)) { cat("\n", nm, ": could not be tidied.\n", sep = ""); next }
+      if (is.null(tt)) { 
+        cat("\n", nm, ": could not be tidied.\n", sep = "")
+        next 
+      }
+      #print compact subset of typical columns
       cols <- intersect(c("term","estimate","std.error","statistic","p.value"), names(tt))
-      cat("\n", nm, ":\n", sep = ""); print(utils::head(tt[, cols, drop = FALSE], 10))
+      cat("\n", nm, ":\n", sep = "") 
+      #10 row head
+      print(utils::head(tt[, cols, drop = FALSE], 10))
     }
     return(invisible(NULL))
   }
-  cat("\nModel comparison (basic):\n")
+  ##last resort:coef() head
+  cat("\nModel comparison (fallback; install {modelsummary} for a nicer table):\n")
   for (nm in names(mods)) {
     m <- mods[[nm]]
     cat("\n", nm, " (coef head):\n", sep = "")
-    if (inherits(m, "DAGassist_fit_error")) { cat("fit error: ", m$error, "\n", sep = ""); next }
+    if (inherits(m, "DAGassist_fit_error")) { 
+      cat("fit error: ", m$error, "\n", sep = "") 
+      next 
+    }
     print(utils::head(tryCatch(stats::coef(m), error = function(e) NULL)))
   }
   invisible(NULL)
 }
 
-## helps find the exposure and outcome names for the note on DAG-derived additions
+#### helps find the exposure and outcome names 
+#### used for the note on DAG-derived additions when imply = TRUE
+###IN:
+##roles -- dff produced by classify_nodes() with columns:
+#variable -- char; node name
+#role -- char
+#is_exposure -- bool
+#is_outcome -- bool
+##value -- char scalar; expected vals "exposure" or "outcome"
+###NOTES1
+##if string role exists, prefer
+##otherwise, fall back to logical flag columns is_exposure/is_outcome
+##if not found, return NA_character_
+###NOTES2
+##only first match ret for downstream processing
+##handles missing values
 get_by_role <- function(roles, value) {
+  #prefer explicit role column if exists
   if ("role" %in% names(roles)) {
     v <- roles$variable[roles$role == value]
     if (length(v)) return(v[1])
   }
-  if (identical(value, "exposure") && !is.null(roles$is_exposure) && any(roles$is_exposure))
+  #fallbacks: bool flags
+  if (identical(value, "exposure") &&
+      !is.null(roles$is_exposure) &&
+      any(roles$is_exposure)) {
     return(roles$variable[roles$is_exposure][1])
-  if (identical(value, "outcome")  && !is.null(roles$is_outcome)  && any(roles$is_outcome))
+  }
+  if (identical(value, "outcome") &&
+      !is.null(roles$is_outcome) &&
+      any(roles$is_outcome)) {
     return(roles$variable[roles$is_outcome][1])
+  }
+  # nothing found
   NA_character_
 }
 
 ### color wrap helpers to prevent junking up knitr renders 
-# Accept ... and paste internally so you can pass multiple args. 
+# accept ... and paste internally so user can pass multiple args. 
 
 # TRUE when knitting
 .is_knit <- function() isTRUE(getOption("knitr.in.progress"))

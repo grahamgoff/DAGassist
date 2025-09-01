@@ -131,8 +131,13 @@ validate_spec <- function(dag, formula, data, exposure, outcome){
   if (!exposure %in% data_vars) add_issue("error", "missing_in_data", exposure, "Exposure not found in data.")
   if (!outcome  %in% data_vars) add_issue("error", "missing_in_data", outcome,  "Outcome not found in data.")
   
-  #add entries to issue table if there are variables in the formula that are not present in the data or DAG
-  for (v in setdiff(formula_vars, dag_vars))  add_issue("error", "missing_in_dag",  v, "Variable in formula not found in DAG.")
+  # treat model vars not in DAG as nuisance except exposure/outcome 
+  missing_in_dag <- setdiff(setdiff(formula_vars, c(exposure, outcome)), dag_vars)
+  for (v in missing_in_dag) {
+    add_issue("warn", "not_in_dag_treated_as_nuisance", v,
+              "Variable appears in the model but is not in the DAG; treating as a nuisance term (not used for role classification).")
+  }
+  
   for (v in setdiff(formula_vars, data_vars)) add_issue("error", "missing_in_data", v, "Variable in formula not found in data.")
   
   ## check the formula structure

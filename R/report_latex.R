@@ -112,9 +112,24 @@
   paste0("{", paste(.tex_escape(s), collapse = ", "), "}")
 }
 
-.msummary_to_longtable_centered <- function(mods) {
+.msummary_to_longtable_centered <- function(mods, coef_rename=NULL) {
   if (!requireNamespace("modelsummary", quietly = TRUE)) {
     return(c("% modelsummary not installed; skipping model comparison"))
+  }
+  
+  #build a modelsummary map: names = raw coef names, values = labels
+  #this is similar to just running coef_map because it drops unlabeled, but
+  #this is less fragile 
+  cm <- NULL
+  if (length(coef_rename)) {
+    #manually escape to avoid issues
+    esc <- function(s) gsub("([%_&#{}~^$\\\\])", "\\\\\\1", s, perl = TRUE)
+    #escape is false in the modelsummary spec to allow manual \mbox 
+    #we need \mbox to avoid weird auto line breaks in long labels
+    nowrap <- function(s) paste0("\\mbox{", esc(s), "}")
+    vals <- vapply(unname(coef_rename), nowrap, character(1))
+    names(vals) <- names(coef_rename)
+    cm <- vals
   }
   
   #suppress the once-per-session warning about siunitx
@@ -123,9 +138,12 @@
       mods,
       output = "latex",
       stars = TRUE,
-      escape = TRUE,
+      escape = FALSE,
       gof_omit = "IC|Log|Adj|Pseudo|AIC|BIC|F$|RMSE$|Within|Between|Std|sigma",
-      booktabs = TRUE
+      booktabs = TRUE,
+      # always drop intercepts and factor dummies that are not labeled
+      coef_omit = "(?i)^(\\(Intercept\\)|factor\\()",    
+      coef_map=cm
     )
   )
   # Coerce to single string
@@ -165,7 +183,7 @@
       } else character(0)
     },
     {
-      if (!is.null(mods)) .msummary_to_longtable_centered(mods) else character(0)
+      if (!is.null(mods)) .msummary_to_longtable_centered(mods, coef_rename=res$coef_rename) else character(0)
     },
     "\\par\\endgroup",
     # Notes: stars, then each controls line on its own, indented

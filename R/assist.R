@@ -148,6 +148,11 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
   #normalize labels and prepare roles table
   labmap <- tryCatch(.normalize_labels(labels, vars = unique(roles$variable)),
                      error = function(e) { NULL })
+  # drop \n from labs
+  if (length(labmap)) {
+    clean <- function(x) trimws(gsub("[\\r\\n]+", " ", x, perl = TRUE))
+    labmap <- vapply(labmap, clean, character(1))
+  }
   #make a display copy for exporters without touching internal names
   roles_display <- tryCatch(.apply_labels_to_roles_df(roles, labmap),
                             error = function(e) roles)

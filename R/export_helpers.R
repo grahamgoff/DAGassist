@@ -25,16 +25,39 @@
 # regardless, first column l-aligned, else c-align
 # all `|` escapred for correct parsing
 .df_to_md_pipe <- function(df) {
+  #make Role cells non-hyphenating in DOCX via a custom character style.
+  #only affects the DOCX path, since this function is used for Word export
+  if ("Role" %in% names(df)) {
+    wrap_role <- function(x) {
+      v <- as.character(x); v[is.na(v)] <- ""
+      # Pandoc bracketed span with a DOCX custom style
+      sprintf("[%s]{custom-style=\"DA_NoHyphen\"}", v)
+    }
+    df[["Role"]] <- wrap_role(df[["Role"]])
+  }
   # use knitr::kable() when available
   if (requireNamespace("knitr", quietly = TRUE)) {
     #alignment vector: "l" for first column, else "c"
     align <- rep("c", ncol(df)); align[1] <- "l"
+    #make short headers unbreakable in DOCX via inline code spans
+    tokens <- c("X","Y","CON","MED","COL","DY","DX")
+    nn <- names(df)
+    nn[nn %in% tokens] <- sprintf("`%s`", nn[nn %in% tokens])
+    
+    old_names <- names(df)
+    on.exit(names(df) <- old_names, add = TRUE)
+    names(df) <- nn
     # kable returns char vector. coerce to plan character just to be safe
     return(as.character(knitr::kable(df, format = "pipe", align = align)))
   }
   ## fallback path: build manually
   #escape | for easy cell splitting
   esc <- function(x) gsub("\\|", "\\\\|", x, perl = TRUE)
+  # unbreakable headers for the manual header path
+  tokens <- c("X","Y","CON","MED","COL","DY","DX")
+  nn <- names(df)
+  nn[nn %in% tokens] <- sprintf("`%s`", nn[nn %in% tokens])
+  
   #header row----separate columns by |
   hdr <- paste(names(df), collapse = " | ")
   # build distinct separators: 
@@ -60,10 +83,14 @@
 ##render list of fitted models as markdown table via modelsummary
 #input: `mods` --- named list of model objects
 #output: char vector markdown table
-.msummary_to_markdown <- function(mods) {
+.msummary_to_markdown <- function(mods, coef_rename=NULL) {
   #if modelsummary is not installed returen a placeholder line and nudge install
   if (!requireNamespace("modelsummary", quietly = TRUE)) {
     return(c("% modelsummary not installed; skipping model comparison"))
+  }
+  #so it does not crash when there is no label = arg
+  if (is.null(coef_rename) || (is.character(coef_rename) && !length(coef_rename))) {
+    coef_rename <- NULL
   }
   #render model comparison as markdown. stars included for comparison, gof rows 
   # omitted for space 
@@ -72,7 +99,8 @@
     output = "markdown", 
     stars = TRUE, 
     escape = FALSE, 
-    gof_omit = .MS_GOF_OMIT
+    gof_omit = .MS_GOF_OMIT,
+    coef_rename = coef_rename
   )
   #normalize into string and recollapse to ensure all char no class
   out <- paste(as.character(out), collapse = "\n")
@@ -138,7 +166,7 @@
   # convert with wd pinned to output dir
   rmarkdown::pandoc_convert(
     input  = mdfile,
-    from   = "markdown_strict+pipe_tables+grid_tables+raw_html",
+    from   = "markdown_strict+pipe_tables+grid_tables+raw_html+bracketed_spans",
     to     = "docx",
     output = out_file,
     options = opts,

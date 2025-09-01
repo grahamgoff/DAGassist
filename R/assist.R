@@ -260,7 +260,8 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
         status = if (isTRUE(v$ok)) "VALID" else "INVALID",
         issues = if (!is.null(v$issues)) v$issues else character(0)
       ),
-      roles_df = report$roles,
+      roles_df = report$roles_display,
+      coef_rename = labmap,
       models = mods_full,                
       min_sets = report$controls_minimal_all,
       canon = report$controls_canonical

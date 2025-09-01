@@ -13,7 +13,7 @@
     md <- c(md, "## Roles", "", .df_to_md_pipe(rp), "")
   }
   
-  md <- c(md, "## Models", "", .msummary_to_markdown(mods), "")
+  md <- c(md, "## Models", "", .msummary_to_markdown(mods, coef_rename=res$coef_rename), "")
   
   md <- c(md, paste0("*Controls (minimal):* ",
                      if (length(msets)) .set_brace_plain(msets[[1]]) else "{}"),

@@ -155,7 +155,7 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
   # what controls did the user use? (only from the pre-| part if present)
   rhs_terms <- .rhs_terms_safe(formula)
   # only DAG nodes can be bad controls; ignore nuisance (eg fe, did, transforms)
-  user_controls <- intersect(setdiff(rhs_terms, c(exposure)), x$roles$variable)
+  user_controls <- intersect(setdiff(rhs_terms, c(exposure)), roles$variable)
   
   # "bad controls"
   bad <- roles$variable[roles$is_mediator | roles$is_collider | roles$is_descendant_of_outcome]

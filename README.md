@@ -94,27 +94,10 @@ Model comparison:
 ## Export your results in LaTeX, Word, Excel, or plain text
 
 ``` r
-DAGassist( 
+DAGassist(
   test_complex, Y ~ X + Z + C + M, test_df,
   type = "latex", out = "man/figures/README-latex.tex", imply = TRUE
 )
-Warning: To compile a LaTeX document with this table, the following commands must be placed in the document preamble:
-
-\usepackage{tabularray}
-\usepackage{float}
-\usepackage{graphicx}
-\usepackage{codehigh}
-\usepackage[normalem]{ulem}
-\UseTblrLibrary{booktabs}
-\UseTblrLibrary{siunitx}
-\newcommand{\tinytableTabularrayUnderline}[1]{\underline{#1}}
-\newcommand{\tinytableTabularrayStrikeout}[1]{\sout{#1}}
-\NewTableCommand{\tinytableDefineColor}[3]{\definecolor{#1}{#2}{#3}}
-
-To disable `siunitx` and prevent `modelsummary` from wrapping numeric entries in `\num{}`, call:
-
-options("modelsummary_format_numeric_latex" = "plain")
- This warning appears once per session.
 ```
 
 <img src="man/figures/README-latex.png" width="75%" />

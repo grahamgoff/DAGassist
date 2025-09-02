@@ -1,0 +1,56 @@
+% ---- DAGassist LaTeX fragment (no preamble) ----
+% Requires: \usepackage{tabularray} \UseTblrLibrary{booktabs,siunitx,talltblr}
+\begingroup\footnotesize
+\begingroup\setlength{\emergencystretch}{3em}
+\begin{longtblr}[presep=0pt, postsep=0pt, caption={DAGassist Report:}, label={tab:dagassist}]%
+{width=\textwidth,colsep=1.5pt,rowsep=0pt,abovesep=0pt,belowsep=0pt,colspec={X[35,l]X[15,l]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]}}
+\toprule
+Variable & Role & X & Y & CON & MED & COL & DY & DX \\
+\midrule
+A & other &  &  &  &  &  &  &  \\
+B & other &  &  &  &  &  &  &  \\
+C & collider &  &  &  &  & x & x & x \\
+M & mediator &  &  &  & x &  &  & x \\
+X & exposure & x &  &  &  &  &  &  \\
+Y & outcome &  & x &  &  &  &  & x \\
+Z & confounder &  &  & x &  &  &  &  \\
+\bottomrule
+\end{longtblr}
+\endgroup
+% no vertical glue between tables
+\nointerlineskip
+\begin{longtblr}[presep=0pt,postsep=0pt,%% tabularray outer open
+entry=none,label=none,
+note{}={+ p \num{< 0.1}, * p \num{< 0.05}, ** p \num{< 0.01}, *** p \num{< 0.001}},
+]                     %% tabularray outer close
+{                     %% tabularray inner open
+colspec={X[]X[]X[]X[]},
+column{2-4}={}{halign=c,},
+column{1}={}{halign=l,},
+hline{16}={1-4}{solid, black, 0.05em},
+}                     %% tabularray inner close
+
+& Original & Minimal 1 & Canonical \\ \midrule %% TinyTableHeader
+(Intercept) & \num{0.019} & \num{-0.004} & \num{0.019} \\
+& (\num{0.028}) & (\num{0.047}) & (\num{0.045}) \\
+X & \num{-0.012} & \num{1.423}*** & \num{1.457}*** \\
+& (\num{0.076}) & (\num{0.076}) & (\num{0.073}) \\
+Z & \num{0.298}*** & \num{0.522}*** & \num{0.518}*** \\
+& (\num{0.049}) & (\num{0.078}) & (\num{0.075}) \\
+C & \num{0.623}*** &  &  \\
+& (\num{0.032}) &  &  \\
+M & \num{0.316}*** &  &  \\
+& (\num{0.048}) &  &  \\
+A & \num{-0.033} &  & \num{0.286}*** \\
+& (\num{0.036}) &  & (\num{0.047}) \\
+B & \num{0.049}+ &  & \num{0.011} \\
+& (\num{0.028}) &  & (\num{0.044}) \\
+Num.Obs. & \num{400} & \num{400} & \num{400} \\
+R2 & \num{0.938} & \num{0.832} & \num{0.846} \\
+\bottomrule
+\end{longtblr}
+\par\endgroup
+\vspace{1em}
+\footnotesize
+\textit{Controls (minimal):} {Z}\\
+\textit{Controls (canonical):} {A, B, Z}

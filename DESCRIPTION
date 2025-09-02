@@ -27,7 +27,7 @@ Suggests: ggdag, testthat (>= 3.0.0), knitr, rmarkdown, covr, cli,
 Depends: R (>= 3.5)
 LazyData: true
 Config/testthat/edition: 3
-URL: https://github.com/grahamgoff/DAGassist
+URL: https://github.com/grahamgoff/DAGassist, https://grahamgoff.github.io/DAGassist/
 BugReports: https://github.com/grahamgoff/DAGassist/issues
 NeedsCompilation: no
 Packaged: 2025-08-30 03:02:08 UTC; grahamgoff

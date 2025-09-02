@@ -1,6 +1,6 @@
 Package: DAGassist
 Title: DAG-Driven Robustness Checks for R
-Version: 0.2.0.0
+Version: 0.2.1.0
 Authors@R: 
   c(
     person("Graham", "Goff", 

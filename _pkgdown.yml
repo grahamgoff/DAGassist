@@ -1,4 +1,6 @@
 url: https://grahamgoff.github.io/DAGassist/
 template:
   bootstrap: 5
-
+  bslib:
+    bootswatch: darkly
+    

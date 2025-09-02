@@ -10,6 +10,22 @@
 - [ ] Run `dag_assist` on a bunch of complex DAGS to refine the sorting algorithm in `compare.R`.
 - [ ] Get rid of the engine args param, which is obsolete
 
+# DAGassist 0.2.1 
+
+## Added
+- **variable labels** across roles + model tables (LaTeX, .docx, .xlsx, .txt).
+- **unevaluated regressors** note: list RHS terms not in the DAG, shown in all outputs.
+- **LaTeX + Word + Excel + Text**:
+  - keep factor dummies and fixed effects by default.
+  - better `longtblr` conversion/spacing; improved dynamic column width weighting and line breaking for long labels.
+  - auto-escape labels for neat output.
+  - cleaner summaries and label support.
+## Changed
+  - consolidated helpers (`assist_helpers.R` + `export_helpers.R`).
+  - improved handling of nuisance vars (FEs/tails).
+  - significantly improved documentation to prep for CRAN release. 
+  - broader validation against real replication data.
+
 # DAGassist 0.2.0
 
 ## Breaking changes

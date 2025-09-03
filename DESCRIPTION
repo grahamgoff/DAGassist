@@ -23,7 +23,7 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Imports: dagitty, magrittr
 Suggests: ggdag, testthat (>= 3.0.0), knitr, rmarkdown, covr, cli,
-        modelsummary, broom, openxlsx, writexl, crayon
+        modelsummary, broom, openxlsx, writexl, crayon, tidyverse
 Depends: R (>= 3.5)
 LazyData: true
 Config/testthat/edition: 3

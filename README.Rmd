@@ -28,12 +28,13 @@ Sys.setenv(NO_COLOR = "1")
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/grahamgoff/DAGassist/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/grahamgoff/DAGassist/actions/workflows/R-CMD-check.yaml)
-[![pkgdown](https://github.com/grahamgoff/DAGassist/actions/workflows/pkgdown.yaml/badge.svg)](https://github.com/grahamgoff/DAGassist/actions/workflows/pkgdown.yaml)
+[![pages-build-deployment](https://github.com/grahamgoff/DAGassist/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/grahamgoff/DAGassist/actions/workflows/pages/pages-build-deployment)
 <!-- badges: end -->
 
 **An all-in-one DAG-driven robustness check.**
-Classifies variables by causal role, computes the smallest back-door adjustment set, and compares the significance of the original and minimal models.
+Classify variables by causal role, compute the smallest and largest permissible back-door adjustment sets, and compare the significance of models.
 
+See the [Making Reports](articles/making-reports.html) vignette for details on producing publication-quality DAGassist reports in `LaTex`, `Word`, `Excel`, and `plaintext`. 
 
 ## Installation
 

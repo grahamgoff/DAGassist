@@ -16,7 +16,7 @@ Authors@R:
                         ORCID = "0000-0002-7074-5011")
     )
   )  
-Description: Make DAG-based robustness checks easy: causal roles, bad controls, minimal adjustment sets, canonical adjustment sets, and model comparisons.
+Description: DAG-based robustness checks: causal roles, bad controls, adjustment sets, and model comparisons.
 License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -36,3 +36,4 @@ Author: Graham Goff [aut, cre] (Dept. of International Affairs, Texas A&M
   Michael Denly [ctb] (Dept. of International Affairs, Texas A&M
     University, <https://orcid.org/0000-0002-7074-5011>)
 Maintainer: Graham Goff <goffgrahamc@gmail.com>
+VignetteBuilder: knitr

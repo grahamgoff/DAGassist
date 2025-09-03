@@ -4,3 +4,7 @@ template:
   bslib:
     bootswatch: darkly
     
+articles:
+ - title: "Making Reports"
+  contents:
+    - making-reports

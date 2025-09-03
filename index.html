@@ -11,8 +11,8 @@
 <script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="DAG-Driven Robustness Checks for R">
-<meta name="description" content="Make DAG-based robustness checks easy: causal roles, bad controls, minimal adjustment sets, canonical adjustment sets, and model comparisons.">
-<meta property="og:description" content="Make DAG-based robustness checks easy: causal roles, bad controls, minimal adjustment sets, canonical adjustment sets, and model comparisons.">
+<meta name="description" content="DAG-based robustness checks: causal roles, bad controls, adjustment sets, and model comparisons.">
+<meta property="og:description" content="DAG-based robustness checks: causal roles, bad controls, adjustment sets, and model comparisons.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -32,6 +32,7 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="articles/index.html">Articles</a></li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -51,11 +52,12 @@
 </h1></div>
 <!-- badges: start -->
 
-<p><strong>An all-in-one DAG-driven robustness check.</strong> Classifies variables by causal role, computes the smallest back-door adjustment set, and compares the significance of the original and minimal models.</p>
+<p><strong>An all-in-one DAG-driven robustness check.</strong> Classify variables by causal role, compute the smallest and largest permissible back-door adjustment sets, and compare the significance of models.</p>
+<p>See the <a href="https://grahamgoff.github.io/DAGassist/articles/making-reports.html">Making Reports</a> vignette for details on producing publication-quality DAGassist reports in <code>LaTex</code>, <code>Word</code>, <code>Excel</code>, and <code>plaintext</code>.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>You can install the development version of DAGassist from <a href="https://github.com/" class="external-link">GitHub</a> with:</p>
+<p>You can install the development version of DAGassist from <a href="https://github.com/grahamgoff/DAGassist" class="external-link">GitHub</a> with:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"pak"</span><span class="op">)</span></span>
 <span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"grahamgoff/DAGassist"</span><span class="op">)</span></span>
@@ -248,7 +250,7 @@
 <h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
 <li><a href="https://github.com/grahamgoff/DAGassist/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/grahamgoff/DAGassist/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a></li>
-<li><a href="https://github.com/grahamgoff/DAGassist/actions/workflows/pkgdown.yaml" class="external-link"><img src="https://github.com/grahamgoff/DAGassist/actions/workflows/pkgdown.yaml/badge.svg" alt="pkgdown"></a></li>
+<li><a href="https://github.com/grahamgoff/DAGassist/actions/workflows/pages/pages-build-deployment" class="external-link"><img src="https://github.com/grahamgoff/DAGassist/actions/workflows/pages/pages-build-deployment/badge.svg" alt="pages-build-deployment"></a></li>
 </ul>
 </div>
 

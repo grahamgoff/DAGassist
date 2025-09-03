@@ -13,14 +13,15 @@
 causal role, compute the smallest and largest permissible back-door
 adjustment sets, and compare the significance of models.
 
-See the [Making Reports](articles/making-reports.html) vignette for
-details on producing publication-quality DAGassist reports in `LaTex`,
-`Word`, `Excel`, and `plaintext`.
+See the [Making
+Reports](https://grahamgoff.github.io/DAGassist/articles/making-reports.html)
+vignette for details on producing publication-quality DAGassist reports
+in `LaTex`, `Word`, `Excel`, and `plaintext`.
 
 ## Installation
 
 You can install the development version of DAGassist from
-[GitHub](https://github.com/) with:
+[GitHub](https://github.com/grahamgoff/DAGassist) with:
 
 ``` r
 install.packages("pak")

@@ -3,8 +3,8 @@ template:
   bootstrap: 5
   bslib:
     bootswatch: darkly
-    
+
 articles:
- - title: "Making Reports"
-  contents:
-    - making-reports
+  - title: "Making Reports"
+    contents:
+      - making-reports

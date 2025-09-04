@@ -31,3 +31,5 @@ inst/doc/
 *.tex
 docs
 inst/doc
+/doc/
+/Meta/

@@ -2,7 +2,7 @@
 title: "Getting Started with Report Creation"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{getting-started}
+  %\VignetteIndexEntry{Getting Started with Report Creation}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -58,7 +58,7 @@ library(rmarkdown)
 For the purposes of this tutorial, we will be working with a slight variation of 
 Figure 1.2 of "Counterfactuals and Causal Inference". 
 
-```{r dag, echo=FALSE, warning=FALSE, message=FALSE, fig.width=8, fig.height=4, dpi=150, out.width="100%"}
+```{r dag, echo=FALSE, warning=FALSE, message=FALSE, fig.width=8, fig.height=4, dpi=150, out.width="100%", fig.alt="Example DAG"}
 library(ggdag)
 library(dagitty)
 library(tidyverse)

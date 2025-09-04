@@ -12,3 +12,5 @@
 ^\.Renviron$
 ^DAGassist\.Rproj$
 ^LICENSE\.md$
+^doc$
+^Meta$

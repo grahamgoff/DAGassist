@@ -1,0 +1,76 @@
+---
+title: "Getting the most out of DAGassist"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Get Started}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r ex-dag, include=FALSE}
+library(dagitty)
+library(ggdag)
+
+dag_model <- dagify(
+  Y ~ X + M + Z + A + B,
+  X ~ Z,
+  C ~ X + Y,
+  M ~ X,
+  exposure = "X",
+  outcome  = "Y"
+)
+
+set.seed(42)
+n <- 2000
+
+#exogenous variables
+A <- rnorm(n, 0, 1)
+B <- rnorm(n, 0, 1)
+Z <- rnorm(n, 0, 1)
+
+#structural equations
+# X ~ Z
+beta_zx <- 0.8
+X <- beta_zx * Z + rnorm(n, 0, 1)
+
+# M ~ X
+beta_xm <- 0.9
+M <- beta_xm * X + rnorm(n, 0, 1)
+
+# Y ~ X + M + Z + A + B
+bX <- 0.7; bM <- 0.6; bZ <- 0.3; bA <- 0.2; bB <- -0.1
+Y <- bX*X + bM*M + bZ*Z + bA*A + bB*B + rnorm(n, 0, 1)
+
+# C ~ X + Y 
+bXC <- 0.5; bYC <- 0.4
+C <- bXC*X + bYC*Y + rnorm(n, 0, 1)
+
+df <- data.frame(A, B, Z, X, M, Y, C)
+```
+
+## Setup
+```{r setup}
+library(DAGassist)
+library(dagitty)
+```
+
+## Controlling DAG-based additions
+
+By default `imply` = FALSE so no variables are added to your spec based on the
+relationships in your DAG. Set `imply` = TRUE to get the complete minimal and 
+canonical adjustment sets, based on your DAG.
+
+```{r imply}
+DAGassist(
+  dag = dag_model,
+  formula = lm(Y~X+C, data = df),
+  imply = TRUE
+)
+```

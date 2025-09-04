@@ -5,6 +5,9 @@ template:
     bootswatch: darkly
 
 articles:
+  - title: "Get Started"
+    contents:
+      - get-started
   - title: "Making Reports"
     contents:
       - making-reports

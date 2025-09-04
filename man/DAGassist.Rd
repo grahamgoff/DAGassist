@@ -128,20 +128,27 @@ without aborting the whole pipeline.
 
 \examples{
 \dontshow{if (requireNamespace("dagitty", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
-# Package example data:
-data(test_df, package = "DAGassist")
-data(test_complex, package = "DAGassist")
+\dontshow{set.seed(1)}
+\dontshow{
+# Build the DAG directly with dagitty
+g <- dagitty::dagitty("dag { Z -> X; X -> M; X -> Y; M -> Y; Z -> Y; A -> Y; B -> Y; X -> C; Y -> C }")
+dagitty::exposures(g) <- "X"; dagitty::outcomes(g) <- "Y"
 
-# Basic console report
-DAGassist(test_complex, Y ~ X + Z + C + M, data = test_df,
-          exposure = "X", outcome = "Y")
+n <- 150
+A <- rnorm(n); B <- rnorm(n); Z <- rnorm(n)
+X <- 0.8*Z + rnorm(n)
+M <- 0.9*X + rnorm(n)
+Y <- 0.7*X + 0.6*M + 0.3*Z + 0.2*A - 0.1*B + rnorm(n)
+C <- 0.5*X + 0.4*Y + rnorm(n)
+df <- data.frame(A,B,Z,X,M,Y,C)
+}
+# generate a console DAGassist report
+DAGassist(dag = g, formula = lm(Y ~ X + Z + C + M, data = df))
 
-# Engine-call parsing (fixest example, if available):
-\dontrun{
-DAGassist(test_complex,
-          fixest::feols(Y ~ X + Z | C, data = test_df),
-          exposure = "X", outcome = "Y",
-          type = "docx", out = "report.docx")
+# generate a LaTeX DAGassist report
+\donttest{
+DAGassist(dag = g, formula = lm(Y ~ X + Z + C + M, data = df),
+          type = "latex", out = file.path(tempdir(), "frag.tex"))
 }
 \dontshow{\}) # examplesIf}
 }

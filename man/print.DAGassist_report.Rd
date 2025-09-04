@@ -26,12 +26,3 @@ includes formulas and a brief note on variables added by DAG logic (minimal
 and canonical sets). Fitting errors are shown inline per model column and do
 not abort printing.
 }
-\examples{
-\dontshow{if (requireNamespace("dagitty", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
-data(test_df, package = "DAGassist")
-data(test_complex, package = "DAGassist")
-r <- DAGassist(test_complex, Y ~ X + Z + C + M, data = test_df,
-               exposure = "X", outcome = "Y")
-print(r)
-\dontshow{\}) # examplesIf}
-}

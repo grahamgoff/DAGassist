@@ -193,70 +193,14 @@ exporters in <code>report_*</code> modules.</p></div>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Package example data:</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">test_df</span>, package <span class="op">=</span> <span class="st">"DAGassist"</span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>data set ‘test_df’ not found</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">test_complex</span>, package <span class="op">=</span> <span class="st">"DAGassist"</span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>data set ‘test_complex’ not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Basic console report</span></span></span>
 <span class="r-in"><span><span class="fu">DAGassist</span><span class="op">(</span><span class="va">test_complex</span>, <span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">Z</span> <span class="op">+</span> <span class="va">C</span> <span class="op">+</span> <span class="va">M</span>, data <span class="op">=</span> <span class="va">test_df</span>,</span></span>
 <span class="r-in"><span>          exposure <span class="op">=</span> <span class="st">"X"</span>, outcome <span class="op">=</span> <span class="st">"Y"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> DAGassist Report: </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Roles:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> variable  role        X  Y  conf  med  col  desc(Y)  desc(X)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> X         exposure    x                                     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Y         outcome        x                           x      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Z         confounder        x                               </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> M         mediator                x                  x      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> C         collider                     x    x        x      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> A         other                                             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> B         other                                             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  (!) Bad controls in your formula: {C, M}</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Minimal controls 1: {Z}</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Canonical controls: {A, B, Z}</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Formulas:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   original:  Y ~ X + Z + C + M</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Model comparison:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +-------------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |             | Original | Minimal 1 | Canonical |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +=============+==========+===========+===========+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | (Intercept) | 0.020    | -0.004    | 0.019     |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +-------------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |             | (0.028)  | (0.047)   | (0.045)   |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +-------------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | X           | 0.017    | 1.423***  | 1.457***  |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +-------------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |             | (0.073)  | (0.076)   | (0.073)   |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +-------------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | Z           | 0.294*** | 0.522***  | 0.518***  |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +-------------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |             | (0.050)  | (0.078)   | (0.075)   |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +-------------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | C           | 0.621*** |           |           |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +-------------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |             | (0.032)  |           |           |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +-------------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | M           | 0.290*** |           |           |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +-------------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |             | (0.041)  |           |           |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +-------------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | A           |          |           | 0.286***  |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +-------------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |             |          |           | (0.047)   |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +-------------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | B           |          |           | 0.011     |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +-------------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |             |          |           | (0.044)   |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +-------------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | Num.Obs.    | 400      | 400       | 400       |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +-------------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | R2          | 0.938    | 0.832     | 0.846     |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +=============+==========+===========+===========+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | + p &lt; 0.1, * p &lt; 0.05, ** p &lt; 0.01, *** p &lt;    |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | 0.001                                          |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +=============+==========+===========+===========+ </span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'test_complex' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Engine-call parsing (fixest example, if available):</span></span></span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>

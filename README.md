@@ -19,7 +19,7 @@ vignette for details on producing publication-quality DAGassist reports
 in `LaTex`, `Word`, `Excel`, and `plaintext`.
 
 See the [Getting
-Started](https://grahamgoff.github.io/DAGassist/articles/getting-started.html)
+Started](https://grahamgoff.github.io/DAGassist/articles/get-started.html)
 vignette for examples of how to use and get the most out of DAGassist.
 
 ## Installation

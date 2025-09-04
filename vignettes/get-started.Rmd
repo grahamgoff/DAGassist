@@ -1,5 +1,5 @@
 ---
-title: "Getting the most out of DAGassist"
+title: "Getting The Most Out of DAGassist"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Get Started}

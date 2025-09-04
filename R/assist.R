@@ -351,8 +351,6 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
 #' r <- DAGassist(test_complex, Y ~ X + Z + C + M, data = test_df,
 #'                exposure = "X", outcome = "Y")
 #' print(r)
-#'
-#' @export
 #' @method print DAGassist_report
  
 print.DAGassist_report <- function(x, ...) {

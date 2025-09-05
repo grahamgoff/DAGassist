@@ -11,3 +11,28 @@ articles:
   - title: "Making Reports"
     contents:
       - making-reports
+
+reference:
+  - title: "Main function"
+    desc: >
+      The primary pipeline function to generate reports.
+    contents:
+      - DAGassist
+
+  - title: "Useful supplements"
+    desc: >
+      Helper functions that can be useful on their own.
+    contents:
+      - bad_controls_in
+      - classify_nodes
+
+  - title: "Internal functions"
+    desc: >
+      Lower-level helpers and print methods, usually not called directly.
+    contents:
+      - compare_specs
+      - print.DAGassist_compare
+      - print.DAGassist_report
+      - print.DAGassist_roles
+      - print.DAGassist_validation
+      - validate_spec

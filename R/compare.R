@@ -59,7 +59,7 @@ bad_controls_in <- function(dag, controls, exposure, outcome) {
 #' # identify the minimal adjustment set
 #' pick_minimal_controls(d, exposure = "X", outcome = "Y")
 #' # expected: "Z"
-#' @export
+#' @noRd
 pick_minimal_controls <- function(dag, exposure, outcome) {
   sets <- dagitty::adjustmentSets(dag, exposure = exposure, outcome = outcome)
   # no sets at all: no adjustment needed
@@ -89,7 +89,7 @@ pick_minimal_controls <- function(dag, exposure, outcome) {
 #' @param outcome  Character; outcome variable name.
 #' @param controls Character vector of controls (default empty).
 #' 
-#' @export
+#' @noRd
 update_to_controls <- function(exposure, outcome, controls = character(0)) {
   reformulate(termlabels = c(exposure, controls), response = outcome)
 }
@@ -160,7 +160,6 @@ compare_specs <- function(dag, formula, data, exposure, outcome,
 #' df <- data.frame(Y, X, Z)
 #' cmp <- compare_specs(d, Y ~ X + Z, df, exposure = "X", outcome = "Y")
 #' print(cmp)
-#' @export
 print.DAGassist_compare <- function(x, ...) {
   cat("DAGassist compare\n")
   if (!x$validation$ok) {

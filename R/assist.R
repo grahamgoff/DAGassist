@@ -351,7 +351,7 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
 #'
 #' @return Invisibly returns `x`.
 #'
-#' @method print DAGassist_report
+#' @export
  
 print.DAGassist_report <- function(x, ...) {
   

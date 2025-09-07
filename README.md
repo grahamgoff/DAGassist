@@ -22,6 +22,10 @@ See the [Getting
 Started](https://grahamgoff.github.io/DAGassist/articles/get-started.html)
 vignette for examples of how to use and get the most out of DAGassist.
 
+See the [Supported
+Models](https://grahamgoff.github.io/DAGassist/articles/compatability.html)
+vignette for documentation on what engines DAGassist supports.
+
 ## Installation
 
 You can install the development version of DAGassist from

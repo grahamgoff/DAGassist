@@ -1,0 +1,72 @@
+---
+title: "Supported Models"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Supported Models}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+| Package | Function |
+|---------|----------|
+| fixest  | feols    |
+| lme4    | glmer    |
+| MASS    | glm.nb   |
+| stats   | lm       |
+
+
+## Example usage
+
+### fixest::feols
+
+```{r feols, eval=FALSE}
+
+DAGassist(
+  dag = dag_model,
+  formula = fixest::feols(
+    psoe ~ time * treated2 + log_pop + no_education + growthunemployment+ 
+      men_50_rs + immigration_rs + ebal_w | province,
+    data = df,
+    cluster = ~municipality)
+```
+
+### lme4::glmer
+
+```{r glmer, eval=FALSE}
+
+DAGassist(
+    dag = dag_model,
+    formula = lme4::glmer(
+        dsu_file ~ specific + lnearnings + distortion + progress + duration +
+            eu + japan + mexico + korea + nonoecd + 
+            lntotdirx + lnprod + lnpolcon + active301 +
+            (1 | isic3_4dig),
+        data   = df,
+        family = binomial(link = "logit"),
+        control = glmerControl(optimizer = "bobyqa"))
+)
+```
+
+### MASS::glm.nb
+
+```{r glm-nb, eval=FALSE}
+DAGassist(
+  dag = dag_model,
+  formula = MASS::glm.nb(
+    protestcount ~ civilcas_percapita + sigact_percapita + log_pop + shiapop_perc
+      kurdpop_perc + urban + totaloilvolx + lognearestcity + feb2011 + nov2010 +
+      laggedprotestcount + illiterate + incomequintilelowest + 
+      incomequintilehighest + urate + powercontinuous,
+    data = iraqevents_timeseries_small,
+    control = glm.control(maxit = 50),
+    link = "log"   
+)
+```
+

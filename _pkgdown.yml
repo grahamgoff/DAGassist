@@ -11,7 +11,10 @@ articles:
   - title: "Making Reports"
     contents:
       - making-reports
-
+  - title: "Supported Models"
+    contents:
+      - compatability
+      
 reference:
   - title: "Main function"
     desc: >

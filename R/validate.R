@@ -5,8 +5,8 @@
 #looks at the full formula and freaks out if there are ANY variables in the formula
 #that are not in the DAG. this fixes that. 
 .fixest_base_formula <- function(fml) {
-  s <- paste(deparse(fml, width.cutoff = 500), collapse = " ")
-  base <- trimws(strsplit(s, "\\|")[[1]][1])
+  s <- paste(deparse(fml, width.cutoff = 500L), collapse = " ")
+  base <- .split_top_level(s, sep = "|")[1]
   stats::as.formula(base, env = environment(fml))
 }
 ################################################################################

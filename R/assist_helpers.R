@@ -173,15 +173,94 @@
   list(engine = fn, formula = fml, data = data_obj, engine_args = engine_args)
 }
 
-#strip fixest FE/IV parts for parsing RHS terms, and return
-#base formula (pre-`|`) AND tail string OR "" if none
+# split on a single-character separator only when we're at top level
+# this helps with RE | 
+.split_top_level <- function(s, sep = "|") {
+  chars <- strsplit(s, "", fixed = TRUE)[[1]]
+  out <- character(); buf <- character()
+  depth <- 0L
+  in_quote <- FALSE; qchar <- ""
+  n <- length(chars)
+  
+  i <- 1L
+  while (i <= n) {
+    ch <- chars[i]
+    
+    # track quotes (skip escaped quotes)
+    if (!in_quote && (ch == "'" || ch == '"')) {
+      in_quote <- TRUE; qchar <- ch
+      buf <- c(buf, ch); i <- i + 1L; next
+    } else if (in_quote && ch == qchar) {
+      buf <- c(buf, ch); in_quote <- FALSE; qchar <- ""
+      i <- i + 1L; next
+    }
+    
+    if (!in_quote) {
+      if (ch == "(") { depth <- depth + 1L; buf <- c(buf, ch); i <- i + 1L; next }
+      if (ch == ")") { depth <- max(0L, depth - 1L); buf <- c(buf, ch); i <- i + 1L; next }
+      
+      # split only on top-level sep
+      if (ch == sep && depth == 0L) {
+        out <- c(out, trimws(paste(buf, collapse = "")))
+        buf <- character()
+        i <- i + 1L
+        next
+      }
+    }
+    
+    buf <- c(buf, ch)
+    i <- i + 1L
+  }
+  
+  c(out, trimws(paste(buf, collapse = "")))
+}
+
+# Helper: collect any calls whose operator is '|' or '||' anywhere in the RHS.
+# This is engine-agnostic and does not import lme4.
+.collect_bar_calls <- function(expr, acc = list()) {
+  if (is.call(expr)) {
+    head <- as.character(expr[[1L]])
+    if (head %in% c("|", "||")) {
+      acc <- c(acc, list(expr))
+    }
+    # Recurse into all arguments
+    for (i in seq_along(expr)) {
+      acc <- .collect_bar_calls(expr[[i]], acc)
+    }
+  }
+  acc
+}
+
+# strip fixest FE/IV parts AND preserve random-effect bars (| or ||) from the RHS
 .strip_fixest_parts <- function(fml) {
-  s <- paste(deparse(fml, width.cutoff = 500), collapse = " ")
-  parts <- strsplit(s, "\\|")[[1]]
-  base <- trimws(parts[1])
-  tail <- if (length(parts) >= 2) paste0(" | ", paste(trimws(parts[-1]), collapse = " | ")) else ""
-  base_fml <- stats::as.formula(base, env = environment(fml))
-  list(base = base_fml, tail = tail)
+  s <- paste(deparse(fml, width.cutoff = 500L), collapse = " ")
+  
+  # 1) Split only on top-level '|' (fixest FE/IV); your current splitter is correct.
+  parts <- .split_top_level(s, sep = "|")
+  base_text   <- parts[1]
+  fixest_tail <- if (length(parts) >= 2) paste0(" | ", paste(parts[-1], collapse = " | ")) else ""
+  
+  # 2) Parse the base (pre-fixest) as a formula so we can read the RHS expression.
+  base_fml <- stats::as.formula(base_text, env = environment(fml))
+  
+  # 3) Engine-agnostic capture of RE bars: collect any subcalls with head '|' or '||' on the RHS.
+  re_tail <- ""
+  rhs <- tryCatch(base_fml[[3L]], error = function(e) NULL)
+  if (!is.null(rhs)) {
+    bars <- .collect_bar_calls(rhs)
+    if (length(bars)) {
+      bar_txt <- vapply(
+        bars,
+        function(x) paste0("(", paste(deparse(x), collapse = " "), ")"),
+        character(1)
+      )
+      # These are added as + ( ... ) terms on the RHS
+      re_tail <- paste0(" + ", paste(bar_txt, collapse = " + "))
+    }
+  }
+  
+  # 4) Return base + combined tail: first the RE bars we found, then any fixest tail.
+  list(base = base_fml, tail = paste0(re_tail, fixest_tail))
 }
 
 # Build a minimal formula that preserves any fixest '|' tail if present

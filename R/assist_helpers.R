@@ -526,7 +526,7 @@
     for (nm in names(failed)) cat(sprintf("  - %s: %s\n", nm, failed[[nm]]$error))
   }
   if (!length(ok)) {
-    cat("\nAll model fits failed — no comparison table to print.\n")
+    cat("\nAll model fits failed - no comparison table to print.\n")
     return(invisible(NULL))
   }
   ##preferred path: modelsummary

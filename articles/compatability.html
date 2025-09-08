@@ -60,6 +60,15 @@
 
     
     
+<p>This vignette shows <strong>model engines</strong> that
+<code>DAGassist</code> has been verified to work with and provides
+concrete usage examples. The list is illustrative, not exhaustive.
+<code>DAGassist</code> is model-agnostic: if an engine accepts a
+standard <code>formula + data</code> interface, it will usually
+work.</p>
+<p>If you want support documented (or added) for an engine not shown
+here, please <a href="https://grahamgoff.github.io/DAGassist/">open an
+issue or PR on GitHub.</a></p>
 <table class="table">
 <thead><tr class="header">
 <th>Package</th>
@@ -67,12 +76,28 @@
 </tr></thead>
 <tbody>
 <tr class="odd">
+<td>estimatr</td>
+<td>lm_robust</td>
+</tr>
+<tr class="even">
+<td>fixest</td>
+<td>feglm</td>
+</tr>
+<tr class="odd">
 <td>fixest</td>
 <td>feols</td>
 </tr>
 <tr class="even">
+<td>lfe</td>
+<td>felm</td>
+</tr>
+<tr class="odd">
 <td>lme4</td>
 <td>glmer</td>
+</tr>
+<tr class="even">
+<td>lmerTest</td>
+<td>lmer</td>
 </tr>
 <tr class="odd">
 <td>MASS</td>
@@ -85,24 +110,98 @@
 </tbody>
 </table>
 <div class="section level2">
+<h2 id="notes">Notes<a class="anchor" aria-label="anchor" href="#notes"></a>
+</h2>
+<ul>
+<li>
+<strong>Clusters:</strong> You may pass cluster variables as a bare
+name, a string, or a one-sided formula (e.g.,
+<code>clusters = cat_b</code>, <code>"cat_b"</code>, or
+<code>~cat_b</code>). <code>DAGassist</code> resolves them within
+<code>data</code>.</li>
+<li>
+<strong>Fixed/Random effects:</strong> Random-effects bars (e.g.,
+<code>(1 | group)</code>) and fixest FE/IV tails <code>(| fe ...)</code>
+in your formula are preserved.</li>
+<li>
+<strong>Difference-in-Differences:</strong> DiD notation works, but
+the interaction term must be included as a node in the DAG, named
+exactly as in the model, and set as the exposure. <code>DAGassist</code>
+breaks if the exposure is missing or mismatched.</li>
+</ul>
+</div>
+<div class="section level2">
 <h2 id="example-usage">Example usage<a class="anchor" aria-label="anchor" href="#example-usage"></a>
 </h2>
 <div class="section level3">
+<h3 id="estimatrlm_robust">estimatr::lm_robust<a class="anchor" aria-label="anchor" href="#estimatrlm_robust"></a>
+</h3>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span></span>
+<span>    dag <span class="op">=</span> <span class="va">dag_model</span>,</span>
+<span>    formula <span class="op">=</span> <span class="fu">estimatr</span><span class="fu">::</span><span class="fu">lm_robust</span><span class="op">(</span></span>
+<span>        <span class="va">ancvs_change_1116</span> <span class="op">~</span> <span class="va">western_belt</span> <span class="op">+</span></span>
+<span>            <span class="va">unemploy_broad</span> <span class="op">+</span> <span class="va">black_popshare</span> <span class="op">+</span> <span class="va">col_popshare</span> <span class="op">+</span></span>
+<span>            <span class="va">indasian_popshare</span> <span class="op">+</span> <span class="va">other_popshare</span> <span class="op">+</span> <span class="va">share_formal</span> <span class="op">+</span></span>
+<span>            <span class="va">share_informal</span> <span class="op">+</span> <span class="va">share_traditional</span> <span class="op">+</span> <span class="va">afrikaans_popshare</span> <span class="op">+</span></span>
+<span>            <span class="va">english_popshare</span> <span class="op">+</span> <span class="va">isindebele_popshare</span> <span class="op">+</span> <span class="va">isixhosa_popshare</span> <span class="op">+</span></span>
+<span>            <span class="va">sepedi_popshare</span> <span class="op">+</span> <span class="va">sesotho_popshare</span> <span class="op">+</span> <span class="va">setswana_popshare</span> <span class="op">+</span></span>
+<span>            <span class="va">signlanguage_popshare</span> <span class="op">+</span> <span class="va">siswati_popshare</span> <span class="op">+</span> <span class="va">tshivenda_popshare</span> <span class="op">+</span></span>
+<span>            <span class="va">xitsonga_popshare</span> <span class="op">+</span></span>
+<span>            <span class="va">latitude</span> <span class="op">+</span> <span class="va">longitude</span> <span class="op">+</span> <span class="va">latitudelongitude</span>,</span>
+<span>        data     <span class="op">=</span> <span class="va">df</span>,</span>
+<span>        clusters <span class="op">=</span> <span class="va">cat_b</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="fixestfeglm">fixest::feglm<a class="anchor" aria-label="anchor" href="#fixestfeglm"></a>
+</h3>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span></span>
+<span>    dag <span class="op">=</span> <span class="va">dag_model2</span>,</span>
+<span>    formula <span class="op">=</span> <span class="fu">fixest</span><span class="fu">::</span><span class="fu">feglm</span><span class="op">(</span></span>
+<span>        <span class="va">exc_eq</span> <span class="op">~</span> <span class="va">cat4_prevalence_best</span> <span class="op">+</span> <span class="va">nonvprotgovt</span> <span class="op">+</span> <span class="va">v2x_gencs</span> <span class="op">+</span></span>
+<span>            <span class="va">WINGOImputed_fill</span> <span class="op">+</span> <span class="va">UNintervention</span> <span class="op">+</span> <span class="va">majpowintervention</span> <span class="op">+</span> <span class="va">UNwomen</span> <span class="op">+</span> </span>
+<span>            <span class="va">religious</span> <span class="op">+</span> <span class="va">ideolleft</span> <span class="op">+</span> <span class="va">lgt</span> <span class="op">+</span> <span class="va">substantive</span> <span class="op">+</span> <span class="va">v2x_gencl</span> <span class="op">+</span> </span>
+<span>            <span class="va">Krause_wpm_neg</span> <span class="op">+</span> <span class="va">eqgen_binary</span>,</span>
+<span>        data <span class="op">=</span> <span class="va">df</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/stats/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">interstateonly</span><span class="op">==</span><span class="fl">0</span>, <span class="va">inter_intrastate</span><span class="op">==</span><span class="fl">0</span><span class="op">)</span>,</span>
+<span>        family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="st">"logit"</span><span class="op">)</span>,</span>
+<span>        cluster <span class="op">=</span> <span class="op">~</span><span class="va">cowcode</span></span>
+<span>    <span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
 <h3 id="fixestfeols">fixest::feols<a class="anchor" aria-label="anchor" href="#fixestfeols"></a>
 </h3>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a></span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">DAGassist</span>(</span>
-<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>  <span class="at">dag =</span> dag_model,</span>
-<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>  <span class="at">formula =</span> fixest<span class="sc">::</span><span class="fu">feols</span>(</span>
-<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>    psoe <span class="sc">~</span> time <span class="sc">*</span> treated2 <span class="sc">+</span> log_pop <span class="sc">+</span> no_education <span class="sc">+</span> growthunemployment<span class="sc">+</span> </span>
-<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>      men_50_rs <span class="sc">+</span> immigration_rs <span class="sc">+</span> ebal_w <span class="sc">|</span> province,</span>
-<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>    <span class="at">data =</span> df,</span>
-<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>    <span class="at">cluster =</span> <span class="sc">~</span>municipality)</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span></span>
+<span>  dag <span class="op">=</span> <span class="va">dag_model</span>,</span>
+<span>  formula <span class="op">=</span> <span class="fu">fixest</span><span class="fu">::</span><span class="fu">feols</span><span class="op">(</span></span>
+<span>    <span class="va">psoe</span> <span class="op">~</span> <span class="va">time</span> <span class="op">*</span> <span class="va">treated2</span> <span class="op">+</span> <span class="va">log_pop</span> <span class="op">+</span> <span class="va">no_education</span> <span class="op">+</span> <span class="va">growthunemployment</span><span class="op">+</span> </span>
+<span>      <span class="va">men_50_rs</span> <span class="op">+</span> <span class="va">immigration_rs</span> <span class="op">+</span> <span class="va">ebal_w</span> <span class="op">|</span> <span class="va">province</span>,</span>
+<span>    data <span class="op">=</span> <span class="va">df</span>,</span>
+<span>    cluster <span class="op">=</span> <span class="op">~</span><span class="va">municipality</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="lfefelm">lfe::felm<a class="anchor" aria-label="anchor" href="#lfefelm"></a>
+</h3>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span>dag<span class="op">=</span><span class="va">dag_model</span>,</span>
+<span>          formula <span class="op">=</span> <span class="fu">lfe</span><span class="fu">::</span><span class="fu">felm</span><span class="op">(</span></span>
+<span>              <span class="va">share_female</span> <span class="op">~</span> <span class="va">lag_democracy_stock_poly_95</span> <span class="op">+</span> <span class="va">lag_v2xcl_rol</span> <span class="op">+</span> </span>
+<span>                  <span class="va">lag_v2xcl_prpty</span> <span class="op">+</span> <span class="va">lag_v2x_rule</span> <span class="op">+</span> <span class="va">lag_v2x_jucon</span> <span class="op">+</span></span>
+<span>                  <span class="va">lag_v2xlg_legcon</span> <span class="op">+</span> <span class="va">lag_v2x_corr</span> <span class="op">+</span> <span class="va">lag_v2clstown</span> <span class="op">+</span> </span>
+<span>                  <span class="va">lag_v2xcs_ccsi</span> <span class="op">+</span> <span class="va">lag_v2xps_party</span> <span class="op">|</span> <span class="va">year</span> <span class="op">+</span> <span class="va">country_isocode</span> <span class="op">|</span> <span class="fl">0</span> <span class="op">|</span> </span>
+<span>                  <span class="va">country_isocode</span>,</span>
+<span>              data<span class="op">=</span><span class="va">df_cross</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="lme4glmer">lme4::glmer<a class="anchor" aria-label="anchor" href="#lme4glmer"></a>
 </h3>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span></span>
 <span>    dag <span class="op">=</span> <span class="va">dag_model</span>,</span>
@@ -117,19 +216,48 @@
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
+<h3 id="lmertestlmer">lmerTest::lmer<a class="anchor" aria-label="anchor" href="#lmertestlmer"></a>
+</h3>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span></span>
+<span>    dag <span class="op">=</span> <span class="va">dag_model</span>,</span>
+<span>    formula <span class="op">=</span> <span class="fu">lmerTest</span><span class="fu">::</span><span class="fu">lmer</span><span class="op">(</span></span>
+<span>        <span class="va">ekloges_PERCENTAGE_May_2012_GD</span> <span class="op">~</span> <span class="va">ekloges_PERCENTAGE_2009_GD</span> <span class="op">+</span></span>
+<span>            <span class="va">N_AntifaEvent_notzero2_Oc09_May12</span> <span class="op">+</span> <span class="va">avg_age</span> <span class="op">+</span> <span class="va">log_population</span>  <span class="op">+</span></span>
+<span>            <span class="va">prop_ksenoi</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">code_perif</span><span class="op">)</span>, </span>
+<span>        data<span class="op">=</span><span class="va">dta</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
 <h3 id="massglm-nb">MASS::glm.nb<a class="anchor" aria-label="anchor" href="#massglm-nb"></a>
 </h3>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">DAGassist</span>(</span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  <span class="at">dag =</span> dag_model,</span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="at">formula =</span> MASS<span class="sc">::</span><span class="fu">glm.nb</span>(</span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>    protestcount <span class="sc">~</span> civilcas_percapita <span class="sc">+</span> sigact_percapita <span class="sc">+</span> log_pop <span class="sc">+</span> shiapop_perc</span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>      kurdpop_perc <span class="sc">+</span> urban <span class="sc">+</span> totaloilvolx <span class="sc">+</span> lognearestcity <span class="sc">+</span> feb2011 <span class="sc">+</span> nov2010 <span class="sc">+</span></span>
-<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>      laggedprotestcount <span class="sc">+</span> illiterate <span class="sc">+</span> incomequintilelowest <span class="sc">+</span> </span>
-<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>      incomequintilehighest <span class="sc">+</span> urate <span class="sc">+</span> powercontinuous,</span>
-<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>    <span class="at">data =</span> iraqevents_timeseries_small,</span>
-<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>    <span class="at">control =</span> <span class="fu">glm.control</span>(<span class="at">maxit =</span> <span class="dv">50</span>),</span>
-<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>    <span class="at">link =</span> <span class="st">"log"</span>   </span>
-<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">DAGassist</span>(</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  <span class="at">dag =</span> dag_model,</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="at">formula =</span> MASS<span class="sc">::</span><span class="fu">glm.nb</span>(</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>    protestcount <span class="sc">~</span> civilcas_percapita <span class="sc">+</span> sigact_percapita <span class="sc">+</span> log_pop <span class="sc">+</span> shiapop_perc</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>      kurdpop_perc <span class="sc">+</span> urban <span class="sc">+</span> totaloilvolx <span class="sc">+</span> lognearestcity <span class="sc">+</span> feb2011 <span class="sc">+</span> nov2010 <span class="sc">+</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>      laggedprotestcount <span class="sc">+</span> illiterate <span class="sc">+</span> incomequintilelowest <span class="sc">+</span> </span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>      incomequintilehighest <span class="sc">+</span> urate <span class="sc">+</span> powercontinuous,</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>    <span class="at">data =</span> iraqevents_timeseries_small,</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>    <span class="at">control =</span> <span class="fu">glm.control</span>(<span class="at">maxit =</span> <span class="dv">50</span>),</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>    <span class="at">link =</span> <span class="st">"log"</span>)</span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="statslm">stats::lm<a class="anchor" aria-label="anchor" href="#statslm"></a>
+</h3>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span></span>
+<span>  dag <span class="op">=</span> <span class="va">dag_model</span>,</span>
+<span>  formula <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span></span>
+<span>    <span class="va">restraint</span> <span class="op">~</span> <span class="va">nonvio2</span> <span class="op">+</span> <span class="va">prime_frat</span> <span class="op">+</span> <span class="va">prime_future</span> <span class="op">+</span> <span class="va">prime_RU</span> <span class="op">+</span> <span class="va">prime_UN</span> <span class="op">+</span> </span>
+<span>      <span class="va">oppose92coup2</span> <span class="op">+</span> <span class="va">civwar</span> <span class="op">+</span> <span class="va">islamist</span> <span class="op">+</span> <span class="va">supp_sharia</span> <span class="op">+</span> <span class="va">active</span> <span class="op">+</span> <span class="va">conscript</span> <span class="op">+</span> </span>
+<span>      <span class="va">soldier</span> <span class="op">+</span> <span class="va">junoff</span> <span class="op">+</span> <span class="va">senoff</span> <span class="op">+</span> <span class="va">branch2</span> <span class="op">+</span> <span class="va">train_west</span> <span class="op">+</span> <span class="va">train_russia</span> <span class="op">+</span> </span>
+<span>      <span class="va">train_china</span> <span class="op">+</span> <span class="va">young</span> <span class="op">+</span> <span class="va">sex</span> <span class="op">+</span> <span class="va">edu</span> <span class="op">+</span> <span class="va">urban_area</span> <span class="op">+</span> <span class="va">employed</span> <span class="op">+</span> <span class="va">student</span> <span class="op">+</span> </span>
+<span>      <span class="va">arabic</span> <span class="op">+</span> <span class="va">econ1</span> <span class="op">+</span> <span class="va">corr1</span> <span class="op">+</span> <span class="va">dem</span> <span class="op">+</span> <span class="va">supp_opp_parties</span> <span class="op">+</span> <span class="va">continue</span> <span class="op">+</span> <span class="va">protested</span> <span class="op">+</span> </span>
+<span>      <span class="va">preboutef</span> <span class="op">+</span> <span class="va">post_exp</span> <span class="op">+</span> <span class="va">mon</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">fgov</span><span class="op">)</span>, </span>
+<span>    data<span class="op">=</span><span class="va">data</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

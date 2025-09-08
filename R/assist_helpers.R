@@ -123,6 +123,30 @@
   is.call(expr) && identical(expr[[1]], as.name("~"))
 }
 
+# Resolve an argument that might reference a data column into the actual vector.
+# Accepts: character "col", bare symbol col, or one-sided formula ~ col
+# Returns: data[[col]] if found; otherwise NULL (caller can decide what to do)
+.resolve_in_data_arg <- function(expr, data) {
+  # character: "col"
+  if (is.character(expr) && length(expr) == 1L && expr %in% names(data)) {
+    return(data[[expr]])
+  }
+  # bare name: col
+  if (is.name(expr)) {
+    nm <- as.character(expr)
+    if (nm %in% names(data)) return(data[[nm]])
+  }
+  # one-sided formula: ~ col
+  if (inherits(expr, "formula") && length(expr) == 2L) {
+    vars <- all.vars(expr)
+    if (length(vars) == 1L && vars %in% names(data)) {
+      return(data[[vars]])
+    }
+  }
+  # not resolvable
+  NULL
+}
+
 ## Extract engine, formula, data, and extra args from an unevaluated call like
 ##   feols(Y ~ X + Z | A, data = df, cluster = ~id)
 ## to avoid separate, explicit "formula", "data", "engine", and "engine_args"
@@ -158,14 +182,48 @@
   }
   data_expr <- args_list[[d_idx]]
   data_obj  <- eval(data_expr, envir = eval_env)
-  
   # everything else becomes engine_args
-  keep <- setdiff(seq_along(args_list), c(f_idx, d_idx))
+  keep  <- setdiff(seq_along(args_list), c(f_idx, d_idx))
   extra <- args_list[keep]
-  # evaluate each remaining arg now so do.call can use them
+  ##handles cluster arguments
   if (length(extra)) {
-    engine_args <- lapply(extra, function(e) eval(e, envir = eval_env))
-    names(engine_args) <- names(extra)
+    nms <- names(extra)
+    engine_args <- vector("list", length(extra))
+
+    for (i in seq_along(extra)) {
+      nm <- nms[i]
+      ex <- extra[[i]]
+
+      # Try normal evaluation first
+      val <- try(eval(ex, envir = eval_env), silent = TRUE)
+
+      # If it failed OR it's a cluster-like arg given as a "column pointer",
+      # resolve from `data_obj` when possible
+      is_try_err <- inherits(val, "try-error")
+      is_cluster_arg <- nzchar(nm) && nm %in% c("clusters", "cluster")
+
+      if (is_try_err || is_cluster_arg) {
+        # If normal eval failed OR the result is a *single* character that names a column,
+        # or the original expr is a symbol/formula naming a column, swap in data[[...]]
+        candidate <- if (!is_try_err) {
+          # eval succeeded: maybe user passed "cat_b"
+          if (is.character(val) && length(val) == 1L) .resolve_in_data_arg(val, data_obj) else NULL
+        } else {
+          # eval failed: try resolving the *expression* inside `data`
+          .resolve_in_data_arg(ex, data_obj)
+        }
+
+        if (!is.null(candidate)) {
+          val <- candidate
+        } else if (is_try_err) {
+          # give the original, readable error if we couldn't resolve
+          stop(as.character(attr(val, "condition")), call. = FALSE)
+        }
+      }
+
+      engine_args[[i]] <- val
+    }
+    names(engine_args) <- nms
   } else {
     engine_args <- list()
   }
@@ -458,13 +516,26 @@
 #fit errors are printed as messages via DAGassist_fit_error
 #returns invisibly
 .print_model_comparison_list <- function(mods, coef_rename=NULL) {
+  ##quick fail if there is an issue
+  failed_idx <- vapply(mods, inherits, logical(1), what = "DAGassist_fit_error")
+  failed <- mods[failed_idx]
+  ok <- mods[!failed_idx]
+  
+  if (length(failed)) {
+    cat("\nFit issues:\n")
+    for (nm in names(failed)) cat(sprintf("  - %s: %s\n", nm, failed[[nm]]$error))
+  }
+  if (!length(ok)) {
+    cat("\nAll model fits failed — no comparison table to print.\n")
+    return(invisible(NULL))
+  }
   ##preferred path: modelsummary
   if (requireNamespace("modelsummary", quietly = TRUE)) {
     args <- list(
       mods,
-      stars    = TRUE,
-      output   = "markdown",
-      gof_omit = "IC|Log|Adj|Pseudo|AIC|BIC|F$|RMSE$|Within|Between|Std|sigma"
+      stars = TRUE,
+      output = "markdown",
+      gof_map = NA
     )
     # only pass a VALID rename map (named char, length > 0)
     if (is.character(coef_rename) && length(coef_rename) && length(names(coef_rename))) {

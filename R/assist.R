@@ -133,12 +133,14 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
     # only fill data if user didn't also pass `data=` explicitly
     if (missing(data) || is.null(data)) data <- parsed$data
     # merge engine_args: call args take precedence; user-supplied list can add/override
-    engine_args <- utils::modifyList(parsed$engine_args, engine_args)
+    ##this keeps it from crashing with modelsummary error if either side is not a list
+    engine_args <- utils::modifyList(
+      if (is.list(parsed$engine_args)) parsed$engine_args else list(),
+      if (is.list(engine_args))        engine_args        else list())
   } else {
     # User passed a plain formula; keep engine and data as provided
     # nothing to do here
   }
-  
   ## infer exposure/outcome from DAG if user didn't set them
   xy <- .infer_xy(dag, exposure, outcome)
   exposure <- xy$exposure

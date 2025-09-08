@@ -16,6 +16,7 @@ knitr::opts_chunk$set(
 
 | Package | Function |
 |---------|----------|
+| estimatr| lm_robust|
 | fixest  | feols    |
 | lme4    | glmer    |
 | MASS    | glm.nb   |
@@ -23,6 +24,26 @@ knitr::opts_chunk$set(
 
 
 ## Example usage
+
+### estimatr::lm_robust
+```{r lm-robust, eval=FALSE}
+DAGassist(
+    dag = dag_model,
+    formula = estimatr::lm_robust(
+        ancvs_change_1116 ~ western_belt +
+            unemploy_broad + black_popshare + col_popshare +
+            indasian_popshare + other_popshare + share_formal +
+            share_informal + share_traditional + afrikaans_popshare +
+            english_popshare + isindebele_popshare + isixhosa_popshare +
+            sepedi_popshare + sesotho_popshare + setswana_popshare +
+            signlanguage_popshare + siswati_popshare + tshivenda_popshare +
+            xitsonga_popshare +
+            latitude + longitude + latitudelongitude,
+        data     = df,
+        clusters = cat_b)
+)
+```
+
 
 ### fixest::feols
 
@@ -35,6 +56,7 @@ DAGassist(
       men_50_rs + immigration_rs + ebal_w | province,
     data = df,
     cluster = ~municipality)
+)
 ```
 
 ### lme4::glmer
@@ -66,7 +88,7 @@ DAGassist(
       incomequintilehighest + urate + powercontinuous,
     data = iraqevents_timeseries_small,
     control = glm.control(maxit = 50),
-    link = "log"   
+    link = "log")
 )
 ```
 

@@ -364,6 +364,32 @@
   keys       <- vapply(candidates, function(s) paste(s, collapse = "|"), character(1))
   candidates[[order(keys)[1]]]
 }
+###helpers to enable intercept and factor row suppression
+.escape_regex <- function(x) gsub("([\\W])", "\\\\\\1", x, perl = TRUE)
+
+.build_coef_omit <- function(data, omit_intercept = FALSE, omit_factors = FALSE) {
+  pats <- character(0)
+  
+  if (isTRUE(omit_intercept)) {
+    #handles "(Intercept)" and "Intercept"
+    pats <- c(pats, "^\\(Intercept\\)$|^Intercept$")
+  }
+  
+  if (isTRUE(omit_factors) && !is.null(data)) {
+    fac_names <- names(Filter(function(x) is.factor(x) || is.character(x), data))
+    if (length(fac_names)) {
+      #Robust to fixest/lm/glm/lme4 naming: "var::level", "varlevel", "var:level"
+      #match any coefficient term beginning with one of the factor vars
+      #followed by typical separators or word boundary
+      fac_escaped <- vapply(fac_names, .escape_regex, "", USE.NAMES = FALSE)
+      fac_pat <- paste0("^(", paste(fac_escaped, collapse = "|"),
+                        ")(::|:|=|\\b).*$")
+      pats <- c(pats, fac_pat)
+    }
+  }
+  
+  if (length(pats)) paste(pats, collapse = "|") else NULL
+}
 
 ###Build a formula from control set, preserving any fixest | tail, as in minimal
 ##IN
@@ -515,7 +541,7 @@
 #omit gof rows to keep table small
 #fit errors are printed as messages via DAGassist_fit_error
 #returns invisibly
-.print_model_comparison_list <- function(mods, coef_rename=NULL) {
+.print_model_comparison_list <- function(mods, coef_rename=NULL, coef_omit=NULL) {
   ##quick fail if there is an issue
   failed_idx <- vapply(mods, inherits, logical(1), what = "DAGassist_fit_error")
   failed <- mods[failed_idx]
@@ -540,6 +566,9 @@
     # only pass a VALID rename map (named char, length > 0)
     if (is.character(coef_rename) && length(coef_rename) && length(names(coef_rename))) {
       args$coef_rename <- coef_rename
+    }#pass the coef omit arg to model
+    if (!is.null(coef_omit)) {
+      args$coef_omit <- coef_omit
     }
     tab <- do.call(modelsummary::msummary, args)
     cat("\nModel comparison:\n")

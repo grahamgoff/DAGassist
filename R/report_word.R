@@ -13,7 +13,10 @@
     md <- c(md, "## Roles", "", .df_to_md_pipe(rp, docx_spans=TRUE), "")
   }
   
-  md <- c(md, "## Models", "", .msummary_to_markdown(mods, coef_rename=res$coef_rename), "")
+  md <- c(md, "## Models", "", 
+          .msummary_to_markdown(mods, 
+                                coef_rename=res$coef_rename,
+                                coef_omit = res$coef_omit), "")
   
   md <- c(md,
           paste0("*Controls (minimal):* ",

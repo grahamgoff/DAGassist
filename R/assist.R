@@ -39,6 +39,9 @@
 #'  side-by-side comparison, regardless of `imply`.
 #'@param labels optional variable labels. can be named char vector or df or unnamed
 #'  char vector
+#'@param omit_intercept logical; drop the intercept rows from output. Default TRUE.
+#'@param omit_factors logical; drop all factor-level rows. Default TRUE.
+#'
 #'@details
 #'    **Engine-call parsing.** If `formula` is a call (e.g., `feols(Y ~ X | fe, data=df)`),
 #'  DAGassist extracts the engine function, the formula, the data argument, and
@@ -111,13 +114,16 @@
 #' @export
 
 DAGassist <- function(dag, formula, data, exposure, outcome,
-                      engine = stats::lm, engine_args = list(),
+                      engine = stats::lm, 
                       labels = NULL,
                       verbose = TRUE, 
                       type = c("console", "latex", "word", "docx", 
                                 "excel", "xlsx", "text", "txt"), 
                       out = NULL,
-                      imply = FALSE) {
+                      imply = FALSE,
+                      omit_intercept = TRUE,
+                      omit_factors = TRUE,
+                      engine_args = list()) {
   # set output type
   type <- match.arg(type)
   
@@ -258,6 +264,18 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
     verbose = isTRUE(verbose),
     imply = isTRUE(imply)
   )
+  #compute and store row omit info
+  report$settings <- list(
+    omit_intercept = isTRUE(omit_intercept),
+    omit_factors = isTRUE(omit_factors)
+  )
+  report$.__data <- data
+  report$settings$coef_omit <- .build_coef_omit(
+    data = report$.__data,
+    omit_intercept = report$settings$omit_intercept,
+    omit_factors = report$settings$omit_factors
+  )
+  
   class(report) <- c("DAGassist_report", class(report))
   # Build unified artifacts once for all outputs
   mods_full <- .build_named_mods(report)
@@ -276,6 +294,7 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
         issues = if (!is.null(v$issues)) v$issues else character(0)
       ),
       coef_rename = labmap,
+      coef_omit  = report$settings$coef_omit,
       roles_df = report$roles_display,
       models_df = models_df_full,     
       models = mods_full,        
@@ -295,6 +314,7 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
         issues = if (!is.null(v$issues)) v$issues else character(0)
       ),
       roles_df = report$roles_display,
+      coef_omit  = report$settings$coef_omit,
       coef_rename = labmap,
       models = mods_full,                
       min_sets = report$controls_minimal_all,
@@ -308,6 +328,7 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
   if (type %in% c("excel","xlsx")) {
     res_min <- list(
       roles_df = report$roles_display,
+      coef_omit  = report$settings$coef_omit,
       coef_rename = labmap,
       models = mods_full,         
       min_sets = report$controls_minimal_all,
@@ -322,6 +343,7 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
   if (type %in% c("text","txt")) {
     res_min <- list(
       roles_df = report$roles_display,
+      coef_omit  = report$settings$coef_omit,
       coef_rename = labmap,
       models = mods_full,         
       min_sets = report$controls_minimal_all,
@@ -503,5 +525,8 @@ print.DAGassist_report <- function(x, ...) {
   }
   mods[["Canonical"]] <- x$models$canonical
   
-  .print_model_comparison_list(mods, coef_rename = x$labels_map)
+  #spec intercept and factor row omit
+  coef_omit <- x$settings$coef_omit
+  
+  .print_model_comparison_list(mods, coef_rename = x$labels_map, coef_omit = coef_omit)
 }

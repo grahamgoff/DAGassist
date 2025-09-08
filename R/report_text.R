@@ -18,7 +18,9 @@
   }
   
   #standard stacked models 
-  built <- .build_modelsummary_pretty_df(mods, coef_rename = cmap)
+  built <- .build_modelsummary_pretty_df(mods, 
+                                         coef_rename = cmap,
+                                         coef_omit = res$coef_omit)
   if (!is.null(built$df) && nrow(built$df)) {
     lines <- c(lines, "## Models", "", .df_to_md_pipe(built$df), "")
   }

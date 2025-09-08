@@ -86,7 +86,7 @@
 ##render list of fitted models as markdown table via modelsummary
 #input: `mods` --- named list of model objects
 #output: char vector markdown table
-.msummary_to_markdown <- function(mods, coef_rename=NULL) {
+.msummary_to_markdown <- function(mods, coef_rename=NULL, coef_omit=NULL) {
   #if modelsummary is not installed returen a placeholder line and nudge install
   if (!requireNamespace("modelsummary", quietly = TRUE)) {
     return(c("% modelsummary not installed; skipping model comparison"))
@@ -103,7 +103,8 @@
     stars = TRUE, 
     escape = FALSE, 
     gof_omit = .MS_GOF_OMIT,
-    coef_rename = coef_rename
+    coef_rename = coef_rename,
+    coef_omit = coef_omit
   )
   #normalize into string and recollapse to ensure all char no class
   out <- paste(as.character(out), collapse = "\n")
@@ -225,7 +226,7 @@
 #output list of columns
 #grab dataframe from modelsummary and reshape for excel and .txt so they dont need markdown
 #normalize columns pre-rbind() to avoid name matching errors
-.build_modelsummary_pretty_df <- function(mods, coef_rename=NULL) {
+.build_modelsummary_pretty_df <- function(mods, coef_rename=NULL, coef_omit=NULL) {
   #return empty result cleanly if no modelsummary
   if (!requireNamespace("modelsummary", quietly = TRUE)) {
     return(list(df = NULL, gof_first = NA_character_))
@@ -240,7 +241,8 @@
     output = "data.frame",
     stars = TRUE, 
     gof_omit = .MS_GOF_OMIT,
-    coef_rename = coef_rename
+    coef_rename = coef_rename,
+    coef_omit = coef_omit
     )
   #exit early if null
   if (!is.data.frame(df) || !nrow(df)) {

@@ -11,12 +11,14 @@ DAGassist(
   exposure,
   outcome,
   engine = stats::lm,
-  engine_args = list(),
   labels = NULL,
   verbose = TRUE,
   type = c("console", "latex", "word", "docx", "excel", "xlsx", "text", "txt"),
   out = NULL,
-  imply = FALSE
+  imply = FALSE,
+  omit_intercept = TRUE,
+  omit_factors = TRUE,
+  engine_args = list()
 )
 }
 \arguments{
@@ -38,10 +40,6 @@ DAG (must be unique).}
 
 \item{engine}{Modeling function, default \link[stats:lm]{stats::lm}. Ignored if \code{formula}
 is a single engine call (in that case the function is taken from the call).}
-
-\item{engine_args}{Named list of extra arguments forwarded to \code{engine(...)}.
-If \code{formula} is an engine call, arguments from the call are merged with
-\code{engine_args} (call values take precedence).}
 
 \item{labels}{optional variable labels. can be named char vector or df or unnamed
 char vector}
@@ -66,6 +64,14 @@ Ignored for \code{type="console"}.
 logic (minimal/canonical sets) in the notes and marks canonical roles in
 the roles table. Models are \emph{always} fit for minimal/canonical to allow
 side-by-side comparison, regardless of \code{imply}.}
+
+\item{omit_intercept}{logical; drop the intercept rows from output. Default TRUE.}
+
+\item{omit_factors}{logical; drop all factor-level rows. Default TRUE.}
+
+\item{engine_args}{Named list of extra arguments forwarded to \code{engine(...)}.
+If \code{formula} is an engine call, arguments from the call are merged with
+\code{engine_args} (call values take precedence).}
 }
 \value{
 An object of class \code{"DAGassist_report"}, invisibly for file outputs,

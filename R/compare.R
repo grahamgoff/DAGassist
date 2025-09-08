@@ -89,6 +89,7 @@ pick_minimal_controls <- function(dag, exposure, outcome) {
 #' @param outcome  Character; outcome variable name.
 #' @param controls Character vector of controls (default empty).
 #' 
+#' @importFrom stats reformulate
 #' @noRd
 update_to_controls <- function(exposure, outcome, controls = character(0)) {
   reformulate(termlabels = c(exposure, controls), response = outcome)
@@ -160,6 +161,9 @@ compare_specs <- function(dag, formula, data, exposure, outcome,
 #' df <- data.frame(Y, X, Z)
 #' cmp <- compare_specs(d, Y ~ X + Z, df, exposure = "X", outcome = "Y")
 #' print(cmp)
+#' 
+#' @importFrom stats coef
+#' @importFrom utils head
 print.DAGassist_compare <- function(x, ...) {
   cat("DAGassist compare\n")
   if (!x$validation$ok) {

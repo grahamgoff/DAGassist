@@ -1,6 +1,6 @@
 Package: DAGassist
-Title: DAG-Driven Robustness Checks for R
-Version: 0.2.1.0
+Title: Test Robustness with Directed Acyclic Graphs
+Version: 0.2.1
 Authors@R: 
   c(
     person("Graham", "Goff", 
@@ -16,7 +16,7 @@ Authors@R:
                         ORCID = "0000-0002-7074-5011")
     )
   )  
-Description: DAG-based robustness checks: causal roles, bad controls, adjustment sets, and model comparisons.
+Description: Provides robustness checks driven by directed acyclic graphs (DAGs). Given a 'dagitty' DAG object and a model specification, 'DAGassist' classifies variables by causal roles, flags problematic controls, and generates a neat report comparing the original model with minimal and canonical adjustment sets. Exports publication-grade reports in LaTeX, Word, Excel, or plain text. 
 License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -25,15 +25,7 @@ Imports: dagitty, magrittr
 Suggests: ggdag, testthat (>= 3.0.0), knitr, rmarkdown, covr, cli,
         modelsummary, broom, openxlsx, writexl, crayon, tidyverse
 Depends: R (>= 3.5)
-LazyData: true
 Config/testthat/edition: 3
 URL: https://github.com/grahamgoff/DAGassist, https://grahamgoff.github.io/DAGassist/
 BugReports: https://github.com/grahamgoff/DAGassist/issues
-NeedsCompilation: no
-Packaged: 2025-08-30 03:02:08 UTC; grahamgoff
-Author: Graham Goff [aut, cre] (Dept. of International Affairs, Texas A&M
-    University, <https://orcid.org/0000-0002-0717-6995>),
-  Michael Denly [ctb] (Dept. of International Affairs, Texas A&M
-    University, <https://orcid.org/0000-0002-7074-5011>)
-Maintainer: Graham Goff <goffgrahamc@gmail.com>
 VignetteBuilder: knitr

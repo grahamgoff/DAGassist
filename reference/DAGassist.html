@@ -59,12 +59,14 @@ XLSX, plain text). It also supports passing a <strong>single engine call</strong
 <span>  <span class="va">exposure</span>,</span>
 <span>  <span class="va">outcome</span>,</span>
 <span>  engine <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span>,</span>
-<span>  engine_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"console"</span>, <span class="st">"latex"</span>, <span class="st">"word"</span>, <span class="st">"docx"</span>, <span class="st">"excel"</span>, <span class="st">"xlsx"</span>, <span class="st">"text"</span>, <span class="st">"txt"</span><span class="op">)</span>,</span>
 <span>  out <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  imply <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  imply <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  omit_intercept <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  omit_factors <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  engine_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -103,12 +105,6 @@ DAG (must be unique).</p></dd>
 is a single engine call (in that case the function is taken from the call).</p></dd>
 
 
-<dt id="arg-engine-args">engine_args<a class="anchor" aria-label="anchor" href="#arg-engine-args"></a></dt>
-<dd><p>Named list of extra arguments forwarded to <code>engine(...)</code>.
-If <code>formula</code> is an engine call, arguments from the call are merged with
-<code>engine_args</code> (call values take precedence).</p></dd>
-
-
 <dt id="arg-labels">labels<a class="anchor" aria-label="anchor" href="#arg-labels"></a></dt>
 <dd><p>optional variable labels. can be named char vector or df or unnamed
 char vector</p></dd>
@@ -139,6 +135,20 @@ Ignored for <code>type="console"</code>.</p></li>
 logic (minimal/canonical sets) in the notes and marks canonical roles in
 the roles table. Models are <em>always</em> fit for minimal/canonical to allow
 side-by-side comparison, regardless of <code>imply</code>.</p></dd>
+
+
+<dt id="arg-omit-intercept">omit_intercept<a class="anchor" aria-label="anchor" href="#arg-omit-intercept"></a></dt>
+<dd><p>logical; drop the intercept rows from output. Default TRUE.</p></dd>
+
+
+<dt id="arg-omit-factors">omit_factors<a class="anchor" aria-label="anchor" href="#arg-omit-factors"></a></dt>
+<dd><p>logical; drop all factor-level rows. Default TRUE.</p></dd>
+
+
+<dt id="arg-engine-args">engine_args<a class="anchor" aria-label="anchor" href="#arg-engine-args"></a></dt>
+<dd><p>Named list of extra arguments forwarded to <code>engine(...)</code>.
+If <code>formula</code> is an engine call, arguments from the call are merged with
+<code>engine_args</code> (call values take precedence).</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -214,40 +224,36 @@ exporters in <code>report_*</code> modules.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Model comparison:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +-------------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |             | Original | Minimal 1 | Canonical |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +=============+==========+===========+===========+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | (Intercept) | -0.002   | -0.077    | -0.078    |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +-------------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |             | (0.083)  | (0.104)   | (0.103)   |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +-------------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | X           | 0.467*** | 1.306***  | 1.321***  |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +-------------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |             | (0.122)  | (0.098)   | (0.098)   |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +-------------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | Z           | 0.185+   | 0.235+    | 0.222+    |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +-------------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |             | (0.102)  | (0.127)   | (0.126)   |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +-------------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | C           | 0.368*** |           |           |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +-------------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |             | (0.076)  |           |           |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +-------------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | M           | 0.512*** |           |           |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +-------------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |             | (0.077)  |           |           |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +-------------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | A           |          |           | 0.196+    |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +-------------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |             |          |           | (0.115)   |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +-------------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | B           |          |           | -0.062    |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +-------------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |             |          |           | (0.101)   |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +=============+==========+===========+===========+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | + p &lt; 0.1, * p &lt; 0.05, ** p &lt; 0.01, *** p &lt;    |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | 0.001                                          |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +=============+==========+===========+===========+ </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> +---+----------+-----------+-----------+</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |   | Original | Minimal 1 | Canonical |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> +===+==========+===========+===========+</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> | X | 0.467*** | 1.306***  | 1.321***  |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> +---+----------+-----------+-----------+</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |   | (0.122)  | (0.098)   | (0.098)   |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> +---+----------+-----------+-----------+</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> | Z | 0.185+   | 0.235+    | 0.222+    |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> +---+----------+-----------+-----------+</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |   | (0.102)  | (0.127)   | (0.126)   |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> +---+----------+-----------+-----------+</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> | C | 0.368*** |           |           |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> +---+----------+-----------+-----------+</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |   | (0.076)  |           |           |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> +---+----------+-----------+-----------+</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> | M | 0.512*** |           |           |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> +---+----------+-----------+-----------+</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |   | (0.077)  |           |           |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> +---+----------+-----------+-----------+</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> | A |          |           | 0.196+    |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> +---+----------+-----------+-----------+</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |   |          |           | (0.115)   |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> +---+----------+-----------+-----------+</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> | B |          |           | -0.062    |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> +---+----------+-----------+-----------+</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |   |          |           | (0.101)   |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> +===+==========+===========+===========+</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> | + p &lt; 0.1, * p &lt; 0.05, ** p &lt; 0.01,  |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> | *** p &lt; 0.001                        |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> +===+==========+===========+===========+ </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># generate a LaTeX DAGassist report</span></span></span>
 <span class="r-in"><span><span class="co"># \donttest{</span></span></span>

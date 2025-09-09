@@ -13,7 +13,7 @@ articles:
       - making-reports
   - title: "Supported Models"
     contents:
-      - compatability
+      - compatibility
       
 reference:
   - title: "Main function"

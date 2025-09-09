@@ -29,7 +29,7 @@ inst/doc/
 *.knit.md
 *.tex
 *.tex
-docs
+docs/
 inst/doc
 /doc/
 /Meta/

@@ -61,20 +61,58 @@
     
     
 <div class="section level2">
-<h2 id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a>
+<h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
+<p><code><a href="../reference/DAGassist.html">DAGassist()</a></code> is meant to be simple and easy to use, and
+most of its features can be enjoyed via a simple two-parameter
+argument:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span></span>
+<span>  dag <span class="op">=</span> <span class="va">your_dag_model</span>,</span>
+<span>  formula <span class="op">=</span> <span class="va">your_regression_call</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>However, <code><a href="../reference/DAGassist.html">DAGassist()</a></code> includes several parameters for
+more specific applications. This vignette explains how to use those
+parameters to <strong>get the most out of
+<code><a href="../reference/DAGassist.html">DAGassist()</a></code></strong>.</p>
+<div class="section level3">
+<h3 id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a>
+</h3>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/grahamgoff/DAGassist" class="external-link">DAGassist</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://www.dagitty.net" class="external-link">dagitty</a></span><span class="op">)</span></span></code></pre></div>
 </div>
-<div class="section level2">
-<h2 id="controlling-dag-based-additions">Controlling DAG-based additions<a class="anchor" aria-label="anchor" href="#controlling-dag-based-additions"></a>
-</h2>
+<div class="section level3">
+<h3 id="formula-arguments">
+<code>formula</code> arguments<a class="anchor" aria-label="anchor" href="#formula-arguments"></a>
+</h3>
+<p><code>DAGassist</code> supports formulaic, imputed, and
+regression-based <code>formula</code> arguments.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co">#formulaic formula</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">DAGassist</span>(</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="at">dag =</span> dag_model,</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="at">formula =</span> Y <span class="sc">~</span> X <span class="sc">+</span> C,</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  <span class="at">data =</span> df,</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>  <span class="at">exposure =</span> <span class="st">"X"</span>,</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>  <span class="at">outcome =</span> <span class="st">"Y"</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>)</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#imputed formula</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="fu">DAGassist</span>(</span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>  <span class="at">dag =</span> dag_model,</span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a>  <span class="at">formula =</span> (Y <span class="sc">~</span> X <span class="sc">+</span> C, <span class="at">data=</span>df),</span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a>  <span class="at">exposure =</span> X,</span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a>  <span class="at">outcome =</span> Y</span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="controlling-dag-based-additions">Controlling DAG-based additions<a class="anchor" aria-label="anchor" href="#controlling-dag-based-additions"></a>
+</h3>
 <p>By default <code>imply</code> = FALSE so no variables are added to
 your spec based on the relationships in your DAG. Set <code>imply</code>
 = TRUE to get the complete minimal and canonical adjustment sets, based
 on your DAG.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span></span>
 <span>  dag <span class="op">=</span> <span class="va">dag_model</span>,</span>
 <span>  formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">Y</span><span class="op">~</span><span class="va">X</span><span class="op">+</span><span class="va">C</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span>,</span>
@@ -135,6 +173,7 @@ on your DAG.</p>
 <span><span class="co">#&gt; | + p &lt; 0.1, * p &lt; 0.05, ** p &lt; 0.01,  |</span></span>
 <span><span class="co">#&gt; | *** p &lt; 0.001                        |</span></span>
 <span><span class="co">#&gt; +===+==========+===========+===========+</span></span></code></pre></div>
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

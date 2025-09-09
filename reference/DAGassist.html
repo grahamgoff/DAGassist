@@ -212,12 +212,10 @@ exporters in <code>report_*</code> modules.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Z         confounder        x                               </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> M         mediator                x                  x      </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> C         collider                     x    x        x      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> A         other                                             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> B         other                                             </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  (!) Bad controls in your formula: {C, M}</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Minimal controls 1: {Z}</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Canonical controls: {A, B, Z}</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Canonical controls: {Z}</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Formulas:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   original:  Y ~ X + Z + C + M</span>
@@ -227,13 +225,13 @@ exporters in <code>report_*</code> modules.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> +---+----------+-----------+-----------+</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |   | Original | Minimal 1 | Canonical |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> +===+==========+===========+===========+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | X | 0.467*** | 1.306***  | 1.321***  |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> | X | 0.467*** | 1.306***  | 1.306***  |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> +---+----------+-----------+-----------+</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |   | (0.122)  | (0.098)   | (0.098)   |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> +---+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | Z | 0.185+   | 0.235+    | 0.222+    |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> | Z | 0.185+   | 0.235+    | 0.235+    |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> +---+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |   | (0.102)  | (0.127)   | (0.126)   |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |   | (0.102)  | (0.127)   | (0.127)   |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> +---+----------+-----------+-----------+</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> | C | 0.368*** |           |           |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> +---+----------+-----------+-----------+</span>
@@ -242,14 +240,6 @@ exporters in <code>report_*</code> modules.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> | M | 0.512*** |           |           |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> +---+----------+-----------+-----------+</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |   | (0.077)  |           |           |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +---+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | A |          |           | 0.196+    |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +---+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |   |          |           | (0.115)   |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +---+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | B |          |           | -0.062    |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +---+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |   |          |           | (0.101)   |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> +===+==========+===========+===========+</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> | + p &lt; 0.1, * p &lt; 0.05, ** p &lt; 0.01,  |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> | *** p &lt; 0.001                        |</span>

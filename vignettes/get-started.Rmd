@@ -11,6 +11,7 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+devtools::load_all()
 ```
 
 ```{r ex-dag, include=FALSE}
@@ -51,7 +52,10 @@ Y <- bX*X + bM*M + bZ*Z + bA*A + bB*B + rnorm(n, 0, 1)
 bXC <- 0.5; bYC <- 0.4
 C <- bXC*X + bYC*Y + rnorm(n, 0, 1)
 
-df <- data.frame(A, B, Z, X, M, Y, C)
+reg_levels <- c("North", "South", "East", "West")
+region <- factor(sample(reg_levels, n, replace = TRUE))
+
+df <- data.frame(A, B, Z, X, M, Y, C, region)
 ```
 
 # Introduction
@@ -67,15 +71,14 @@ DAGassist(
 However, `DAGassist()` includes several parameters for more specific applications. This vignette explains how to use those parameters to **get the most out of `DAGassist()`**.
 
 ## Setup
-```{r setup}
+```{r setup, eval=FALSE}
 library(DAGassist)
 library(dagitty)
 ```
 
 ## `formula` arguments
 
-`DAGassist` supports formulaic, imputed, and regression-based `formula` arguments.
-
+`DAGassist` supports formulaic and regression-based `formula` arguments. 
 
 ```{r formula, eval=FALSE}
 #formulaic formula
@@ -90,23 +93,72 @@ DAGassist(
 #imputed formula
 DAGassist(
   dag = dag_model,
-  formula = (Y ~ X + C, data=df),
-  exposure = X,
-  outcome = Y
+  formula = lm(Y ~ X + C, data=df)
 )
 ```
+The two formulas above will print identical output. 
 
+## `imply` arguments
 
-## Controlling DAG-based additions
-
-By default `imply` = FALSE so no variables are added to your spec based on the
-relationships in your DAG. Set `imply` = TRUE to get the complete minimal and 
-canonical adjustment sets, based on your DAG.
-
-```{r imply}
+In cases where you only want `DAGassist` to use the variables explicitly called in your formula, use `imply = FALSE`. 
+```{r imply-false}
+DAGassist(
+  dag = dag_model,
+  formula = lm(Y~X+C, data = df),
+  imply = FALSE
+)
+```
+In cases where you want `DAGassist` to explore all of the causal relationships explicated in your DAG, use    `imply = TRUE`. 
+```{r imply-true}
 DAGassist(
   dag = dag_model,
   formula = lm(Y~X+C, data = df),
   imply = TRUE
 )
 ```
+`DAGassist` will notify you of which variables it added. `imply` = FALSE by default.
+
+## `omit_factors` and `omit_intercept` arguments
+
+`DAGassist` omits factor and intercept rows by default, but you can explicitly include them. However, if they are not included in your DAG, `DAGassist` will not evaluate them, and will not include them in the minimal or canonical models.
+```{r omit}
+DAGassist(
+  dag = dag_model,
+  formula = fixest::feols(
+    Y ~ X + C + i(region),  
+    data = df),
+  omit_factors = FALSE,
+  omit_intercept = FALSE
+)
+```
+
+## `labels` arguments
+
+You can include a label list.
+```{r labels}
+labs <- list(
+  X = "Exposure",
+  C = "Collider"
+)
+
+DAGassist(
+  dag = dag_model,
+  formula = lm(
+    Y ~ X + C, data = df),
+  labels = labs
+)
+```
+Note that the `label` parameter uses `modelsummary()` `coef_rename` logic, so an incomplete label list will not throw any errors. 
+
+```{r rename}
+DAGassist(
+  dag = dag_model,
+  formula = lm(
+    Y ~ X + C, data = df),
+  labels = labs,
+  imply = TRUE
+)
+```
+
+
+

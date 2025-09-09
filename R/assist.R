@@ -33,10 +33,8 @@
 #'  * `type="excel"`/`"xlsx"`: an **Excel (.xlsx)** file written to `out`.
 #'  * `type="text"`/`"txt"`: a **plain-text** file written to `out`.
 #'  Ignored for `type="console"`.
-#'@param imply Logical; if `TRUE`, DAGassist highlights variables added by DAG
-#'  logic (minimal/canonical sets) in the notes and marks canonical roles in
-#'  the roles table. Models are *always* fit for minimal/canonical to allow
-#'  side-by-side comparison, regardless of `imply`.
+#'@param imply Logical; default `FALSE`. If `TRUE`, `DAGassist()` only evaluates 
+#'  variables listed in the `formula` argument. 
 #'@param labels optional variable labels. can be named char vector or df or unnamed
 #'  char vector
 #'@param omit_intercept logical; drop the intercept rows from output. Default TRUE.

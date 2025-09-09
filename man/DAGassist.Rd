@@ -60,10 +60,8 @@ printer (formulas + notes).}
 Ignored for \code{type="console"}.
 }}
 
-\item{imply}{Logical; if \code{TRUE}, DAGassist highlights variables added by DAG
-logic (minimal/canonical sets) in the notes and marks canonical roles in
-the roles table. Models are \emph{always} fit for minimal/canonical to allow
-side-by-side comparison, regardless of \code{imply}.}
+\item{imply}{Logical; default \code{FALSE}. If \code{TRUE}, \code{DAGassist()} only evaluates
+variables listed in the \code{formula} argument.}
 
 \item{omit_intercept}{logical; drop the intercept rows from output. Default TRUE.}
 

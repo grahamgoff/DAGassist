@@ -39,4 +39,3 @@ reference:
       - print.DAGassist_report
       - print.DAGassist_roles
       - print.DAGassist_validation
-      - validate_spec

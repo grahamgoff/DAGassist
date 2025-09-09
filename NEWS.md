@@ -1,14 +1,14 @@
-# DAGassist NEWS
+# DAGassist 0.2.2
 
-## Roadmap to v0.3.0:
+## Highlights:
 
-- [ ] Ensure that classify.R categories are **always** accurate
-- [ ] Verify compatibility with all major engines
-- [ ] Handle diff-in-diff and fixed effects formula notation
-- [ ] Add graphics: gray scale of the original model, with the minimal set visibly differentiated.
-- [ ] Add a simple "covariate sensitivity" line to report, indicating if (i) the original model is statistically significant; (ii) the minimal or canonical set is statistically insignificant
-- [ ] Run `dag_assist` on a bunch of complex DAGS to refine the sorting algorithm in `compare.R`.
-- [ ] Get rid of the engine args param, which is obsolete
+- Built **pkgdown** site and several supporting vignettes.
+- Significantly enhanced package documentation in preparation for CRAN release.
+- Trimmed exported functions.
+- Enhanced and documented engine compatibility.
+- Added `omit_factors` and `omit_intercept` parameters.
+- Reworked `imply` parameter so it restricts evaluation to variables listed in RHS.
+- Fixed cluster argument bug.
 
 # DAGassist 0.2.1 
 

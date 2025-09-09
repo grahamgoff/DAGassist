@@ -6,7 +6,6 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
-
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -55,11 +54,48 @@ C <- bXC*X + bYC*Y + rnorm(n, 0, 1)
 df <- data.frame(A, B, Z, X, M, Y, C)
 ```
 
+# Introduction
+
+`DAGassist()` is meant to be simple and easy to use, and most of its features can be enjoyed via a simple two-parameter argument:
+```{r example, eval=FALSE}
+DAGassist(
+  dag = your_dag_model,
+  formula = your_regression_call
+)
+```
+
+However, `DAGassist()` includes several parameters for more specific applications. This vignette explains how to use those parameters to **get the most out of `DAGassist()`**.
+
 ## Setup
 ```{r setup}
 library(DAGassist)
 library(dagitty)
 ```
+
+## `formula` arguments
+
+`DAGassist` supports formulaic, imputed, and regression-based `formula` arguments.
+
+
+```{r formula, eval=FALSE}
+#formulaic formula
+DAGassist(
+  dag = dag_model,
+  formula = Y ~ X + C,
+  data = df,
+  exposure = "X",
+  outcome = "Y"
+)
+
+#imputed formula
+DAGassist(
+  dag = dag_model,
+  formula = (Y ~ X + C, data=df),
+  exposure = X,
+  outcome = Y
+)
+```
+
 
 ## Controlling DAG-based additions
 

@@ -134,15 +134,15 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
   if (is.call(spec_expr) && !identical(spec_expr[[1]], as.name("~"))) {
     # User passed an engine call like feols(y ~ x | fe, data = df, ...)
     parsed <- .extract_from_engine_call(spec_expr, eval_env = parent.frame())
-    engine      <- parsed$engine
-    formula     <- parsed$formula
+    engine <- parsed$engine
+    formula <- parsed$formula
     # only fill data if user didn't also pass `data=` explicitly
     if (missing(data) || is.null(data)) data <- parsed$data
     # merge engine_args: call args take precedence; user-supplied list can add/override
     ##this keeps it from crashing with modelsummary error if either side is not a list
     engine_args <- utils::modifyList(
       if (is.list(parsed$engine_args)) parsed$engine_args else list(),
-      if (is.list(engine_args))        engine_args        else list())
+      if (is.list(engine_args)) engine_args else list())
   } else {
     # User passed a plain formula; keep engine and data as provided
     # nothing to do here
@@ -150,7 +150,7 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
   ## infer exposure/outcome from DAG if user didn't set them
   xy <- .infer_xy(dag, exposure, outcome)
   exposure <- xy$exposure
-  outcome  <- xy$outcome
+  outcome <- xy$outcome
   
   #validate inputs using the now-normalized pieces
   v <- validate_spec(dag, formula, data, exposure, outcome)
@@ -170,7 +170,6 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
   #make a display copy for exporters without touching internal names
   roles_display <- tryCatch(.apply_labels_to_roles_df(roles, labmap),
                             error = function(e) roles)
-  
   # what controls did the user use? (only from the pre-| part if present)
   rhs_terms <- .rhs_terms_safe(formula)
   # only DAG nodes can be bad controls; ignore nuisance (eg fe, did, transforms)
@@ -179,23 +178,57 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
   # "bad controls"
   bad <- roles$variable[roles$is_mediator | roles$is_collider | roles$is_descendant_of_outcome]
   bad_in_user <- intersect(user_controls, bad)
-  
-  
   # all the minimal sets
   minimal_sets_all <- .minimal_sets_all(dag, exposure, outcome)
   # keep a single minimal for reference
-  minimal <- if (length(minimal_sets_all)) minimal_sets_all[[1]] else character(0)
-  
-  # formulas for all minimal sets---preserve fixest tails
-  f_mins <- lapply(minimal_sets_all, function(s) .build_formula_with_controls(formula, exposure, outcome, s))
-  
+  #minimal <- if (length(minimal_sets_all)) minimal_sets_all[[1]] else character(0)
   # canonical set and formula
   canonical <- .pick_canonical_controls(dag, exposure, outcome)
-  f_canon   <- .build_formula_with_controls(formula, exposure, outcome, canonical)
   
+  ## respect the formula (only use variables in the formula) when imply=FALSE
+  # identify variables actually in user formula
+  vars_in_formula <- unique(c(exposure, outcome, user_controls))
+  ## sets for display. intersect with user RHS when imply = FALSE
+  #minimal
+  sets_min_for_use <- if (isTRUE(imply)) {
+    minimal_sets_all
+  } else {
+    lapply(minimal_sets_all, function(s) intersect(s, user_controls))
+  }
+  #canonical
+  canon_for_use <- if (isTRUE(imply)) {
+    canonical
+  } else {
+    intersect(canonical, user_controls)
+  }
+  # limit roles table to vars in the formula 
+  #with labels
+  roles_display_formula <- tryCatch(
+    .apply_labels_to_roles_df(
+      roles[roles$variable %in% vars_in_formula, , drop = FALSE],
+      labmap
+    ),
+    error = function(e) roles[roles$variable %in% vars_in_formula, , drop = FALSE]
+  )
+  # choose which roles table to show
+  if (!isTRUE(imply)) {
+    roles_display <- roles_display_formula
+  }
+  
+  #build formulas
+  minimal <- if (length(sets_min_for_use)) sets_min_for_use[[1]] else character(0)
+  
+  # formulas for all minimal sets---preserve fixest tails
+  f_mins <- lapply(
+    sets_min_for_use, 
+    function(s) .build_formula_with_controls(formula, exposure, outcome, s)
+    )
+
+  f_canon <- .build_formula_with_controls(formula, exposure, outcome, canon_for_use)  
   #fits: always show Original, every Minimal, and Canonical at the end 
   #if there are multiple min, push canonical to the end
   m_orig <- .safe_fit(engine, formula, data, engine_args)
+
   
   ## if auto add is true, imply the sets based on dag relationships,
   ## otherwise, keep lists empty and specify in the report list
@@ -222,7 +255,6 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
 
   ###list unevaluated nuisance vars
   .collect_rhs <- function(fml) .rhs_terms_safe(fml)
-  
   rhs_all <- unique(unlist(c(
     list(.collect_rhs(formula)),
     lapply(f_mins, .collect_rhs),
@@ -236,16 +268,17 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
   #pretty string for exporters
   unevaluated_str <- if (length(unevaluated)) paste(unevaluated, collapse = ", ") else ""
   
-  
   report <- list(
     validation = v, 
     roles = roles,
     roles_display = roles_display,
     labels_map = labmap,
     bad_in_user = bad_in_user,
+    
     controls_minimal = minimal, # keeps legacy single-min key
-    controls_minimal_all = minimal_sets_all, # all minimal sets
-    controls_canonical = canonical,
+    controls_minimal_all = sets_min_for_use, # all minimal sets
+    controls_canonical = canon_for_use,
+    
     formulas = list(
       original = formula,
       # so it prints multiple formulas if there are multiple minimal sets
@@ -264,6 +297,7 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
     verbose = isTRUE(verbose),
     imply = isTRUE(imply)
   )
+  
   #compute and store row omit info
   report$settings <- list(
     omit_intercept = isTRUE(omit_intercept),
@@ -389,16 +423,14 @@ print.DAGassist_report <- function(x, ...) {
   cat("\nRoles:\n")
   # Only label the variable names; keep the logical flags intact for the S3 printer
   r <- tryCatch(
-    .apply_labels_to_roles_df(x$roles, x$labels_map),
-    error = function(e) x$roles
+    .apply_labels_to_roles_df(x$roles_display, x$labels_map),
+    error = function(e) x$roles_display
   )
-  
   # ensure the class is still there (usually preserved, but this is harmless)
   if (!inherits(r, "DAGassist_roles")) {
     class(r) <- unique(c("DAGassist_roles", class(r)))
   }
-  
-  print(r)  # <- do NOT call .roles_pretty() here
+  print(r)  
   
   if (length(x$bad_in_user)) {
     cat(clr_red("\n (!) Bad controls in your formula: {", paste(x$bad_in_user, collapse = ", "), "}\n", sep = ""))
@@ -448,19 +480,16 @@ print.DAGassist_report <- function(x, ...) {
           pairs <- c(pairs, sprintf("Original = Minimal %d", i))
         }
       }
-  
       # canonical vs original
       if (.same_formula(x$formulas$canonical, x$formulas$original)) {
         pairs <- c(pairs, "Canonical = Original")
       }
-  
     # canonical vs each minimal 
       for (i in seq_along(mins_fmls)) {
         if (.same_formula(x$formulas$canonical, mins_fmls[[i]])) {
           pairs <- c(pairs, sprintf("Canonical = Minimal %d", i))
         }
       }
-  
     # minimal vs minimal 
       if (length(mins_fmls) > 1) {
         for (i in seq_len(length(mins_fmls) - 1L)) {
@@ -482,7 +511,6 @@ print.DAGassist_report <- function(x, ...) {
   
       # user RHS terms from the original pre-| formula
       user_rhs <- .rhs_terms_safe(x$formulas$original)
-  
       exp_nm <- get_by_role(x$roles, "exposure")
       out_nm <- get_by_role(x$roles, "outcome")
   
@@ -492,13 +520,13 @@ print.DAGassist_report <- function(x, ...) {
   
       mins_fmls <- if (length(x$formulas$minimal_list)) x$formulas$minimal_list else list(x$formulas$minimal)
       for (i in seq_along(mins_fmls)) {
-        rhs_i  <- setdiff(.rhs_terms_safe(mins_fmls[[i]]), drop_exp)
-        added  <- setdiff(rhs_i, user_rhs)
+        rhs_i <- setdiff(.rhs_terms_safe(mins_fmls[[i]]), drop_exp)
+        added <- setdiff(rhs_i, user_rhs)
         if (length(added)) lines <- c(lines, sprintf("  - Minimal %d added: %s", i, .format_set(added)))
        }
   
-      rhs_c    <- setdiff(.rhs_terms_safe(x$formulas$canonical), drop_exp)
-      added_c  <- setdiff(rhs_c, user_rhs)
+      rhs_c <- setdiff(.rhs_terms_safe(x$formulas$canonical), drop_exp)
+      added_c <- setdiff(rhs_c, user_rhs)
       if (length(added_c)) lines <- c(lines, sprintf("  - Canonical added: %s", .format_set(added_c)))
   
       if (length(lines)) {
@@ -512,7 +540,7 @@ print.DAGassist_report <- function(x, ...) {
         cat(paste(lines, collapse = "\n"), "\n", sep = "")
       }
     }
-  } # end of auto add
+  }
   
   ## build the model list for modelsummary/broom
   mods <- list("Original" = x$models$original)
@@ -527,6 +555,5 @@ print.DAGassist_report <- function(x, ...) {
   
   #spec intercept and factor row omit
   coef_omit <- x$settings$coef_omit
-  
   .print_model_comparison_list(mods, coef_rename = x$labels_map, coef_omit = coef_omit)
 }

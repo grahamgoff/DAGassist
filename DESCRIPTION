@@ -1,6 +1,6 @@
 Package: DAGassist
 Title: Test Robustness with Directed Acyclic Graphs
-Version: 0.2.1
+Version: 0.2.2
 Authors@R: 
   c(
     person("Graham", "Goff", 

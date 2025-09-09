@@ -17,3 +17,4 @@
 ^dev$
 ^cran-comments\.md$
 ^NEWS\.html$
+^revdep$

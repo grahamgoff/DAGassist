@@ -55,9 +55,6 @@ library(rmarkdown)
 
 ## Example DAG
 
-For the purposes of this tutorial, we will be working with a slight variation of 
-Figure 1.2 of "Counterfactuals and Causal Inference". 
-
 ```{r dag, echo=FALSE, warning=FALSE, message=FALSE, fig.width=8, fig.height=4, dpi=150, out.width="100%", fig.alt="Example DAG"}
 library(ggdag)
 library(dagitty)

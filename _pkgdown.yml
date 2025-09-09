@@ -7,6 +7,7 @@ template:
 articles:
   - title: "Get Started"
     contents:
+      - quick-tour
       - get-started
   - title: "Making Reports"
     contents:

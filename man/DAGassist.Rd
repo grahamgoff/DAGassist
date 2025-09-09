@@ -75,15 +75,15 @@ If \code{formula} is an engine call, arguments from the call are merged with
 An object of class \code{"DAGassist_report"}, invisibly for file outputs,
 and printed for \code{type="console"}. The list contains:
 \itemize{
-\item \code{validation} — result from internal \code{validate_spec(...)} (includes \code{ok}).
-\item \code{roles} — roles data.frame from \code{classify_nodes(...)}.
-\item \code{bad_in_user} — variables in user controls that are mediator/collider/descendant of outcome.
-\item \code{controls_minimal} — (legacy) one minimal set (character vector).
-\item \code{controls_minimal_all} — list of all minimal sets (character vectors).
-\item \code{controls_canonical} — canonical set (character vector; may be empty).
-\item \code{formulas} — list with \code{original}, \code{minimal}, \code{minimal_list}, \code{canonical}.
-\item \code{models} — list with fitted models \code{original}, \code{minimal}, \code{minimal_list}, \code{canonical}.
-\item \code{verbose}, \code{imply} — flags as provided.
+\item \code{validation} - result from internal \code{validate_spec(...)} (includes \code{ok}).
+\item \code{roles} - roles data.frame from \code{classify_nodes(...)}.
+\item \code{bad_in_user} - variables in user controls that are mediator/collider/descendant of outcome.
+\item \code{controls_minimal} - (legacy) one minimal set (character vector).
+\item \code{controls_minimal_all} - list of all minimal sets (character vectors).
+\item \code{controls_canonical} - canonical set (character vector; may be empty).
+\item \code{formulas} - list with \code{original}, \code{minimal}, \code{minimal_list}, \code{canonical}.
+\item \code{models} - list with fitted models \code{original}, \code{minimal}, \code{minimal_list}, \code{canonical}.
+\item \code{verbose}, \code{imply} - flags as provided.
 }
 }
 \description{

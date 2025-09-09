@@ -1,0 +1,93 @@
+---
+title: "DAGassist in 10 minutes"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{quick-tour}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# What you'll learn
+- How to go from a `dagitty` DAG + formula to a compact report
+- How to interpret `Original` vs `Minimal` vs `Canonical`
+-	How to export to `LaTeX` / `Word` / `Excel` / `text`
+
+## Load packages
+
+```{r setup}
+library(DAGassist)
+# load helper libraries
+library(modelsummary)
+library(dagitty)
+```
+
+## Make your DAG and data
+
+```{r sample}
+n <- 500
+Z <- rnorm(n)
+A <- rnorm(n)
+X <- 0.6*Z + rnorm(n)
+M <- 0.5*X + 0.3*Z + rnorm(n)
+Y <- 1.0*X + 0.0*M + 0.5*Z + rnorm(n)
+df <- data.frame(Y, X, M, Z, A)
+
+dag_model <- dagitty('
+  dag {
+    Z -> X
+    Z -> Y
+    A -> Y
+    X -> M
+    X -> Y
+    M -> Y
+    X [exposure]
+    Y [outcome]
+  }')
+```
+
+## Generate a console report with `DAGassist`
+
+See the [Getting Started](https://grahamgoff.github.io/DAGassist/articles/get-started.html) vignette for a guide on using different parameters get the most out of DAGassist. For the purpose of this tutorial, we will keep it simple. 
+
+See the [Supported Models](https://grahamgoff.github.io/DAGassist/articles/compatability.html) vignette for documentation on what engines `DAGassist` supports. Since `DAGassist` is model-agnostic, if an engine accepts a standard `formula + data` interface, it will usually work. 
+
+**Interpreting the output:**
+
+- `Bad controls` are variables that, when adjusted for, open spurious correlations between the independent and dependent variable. `DAGassist` seeks to identify these controls and clarify their effect on your `Original model`.
+- `Minimal` is the smallest adjustment set necessary to close all back-door paths from the independent to the dependent variable.
+- `Canonical` is the largest permissable adjustment set. Essentially, the `canonical` set contains all control variables that are not `bad`. 
+
+```{r console-report}
+
+DAGassist(
+  dag = dag_model,
+  formula = lm(Y ~ X + M + Z + A, data = df)
+)
+```
+
+## Exporting
+
+See the [Making Reports](https://grahamgoff.github.io/DAGassist/articles/making-reports.html) vignette for more detailed information on producing publication-quality `DAGassist` reports in `LaTex`, `Word`, `Excel`, and `plaintext`.
+
+Since `DAGassist` is designed to make appendix robustness checks, this is an example of how to output a report in `LaTeX`.
+
+
+```{r report}
+#initialize a temporary path
+out_tex <- file.path(tempdir(), "dagassist_report.tex")
+
+DAGassist(
+  dag = dag_model,
+  formula = lm(Y ~ X + M + Z + A, data = df),
+  type = "latex", 
+  out = out_tex) #put your output directory and file name here
+
+cat(readLines(out_tex), sep = "\n") # show the output
+```

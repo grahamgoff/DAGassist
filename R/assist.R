@@ -67,15 +67,15 @@
 #'@return An object of class `"DAGassist_report"`, invisibly for file outputs,
 #'and printed for `type="console"`. The list contains:
 #'  \itemize{
-#'    \item `validation` — result from internal `validate_spec(...)` (includes `ok`).
-#'    \item `roles` — roles data.frame from `classify_nodes(...)`.
-#'    \item `bad_in_user` — variables in user controls that are mediator/collider/descendant of outcome.
-#'    \item `controls_minimal` — (legacy) one minimal set (character vector).
-#'    \item `controls_minimal_all` — list of all minimal sets (character vectors).
-#'    \item `controls_canonical` — canonical set (character vector; may be empty).
-#'    \item `formulas` — list with `original`, `minimal`, `minimal_list`, `canonical`.
-#'    \item `models` — list with fitted models `original`, `minimal`, `minimal_list`, `canonical`.
-#'    \item `verbose`, `imply` — flags as provided.
+#'    \item `validation` - result from internal `validate_spec(...)` (includes `ok`).
+#'    \item `roles` - roles data.frame from `classify_nodes(...)`.
+#'    \item `bad_in_user` - variables in user controls that are mediator/collider/descendant of outcome.
+#'    \item `controls_minimal` - (legacy) one minimal set (character vector).
+#'    \item `controls_minimal_all` - list of all minimal sets (character vectors).
+#'    \item `controls_canonical` - canonical set (character vector; may be empty).
+#'    \item `formulas` - list with `original`, `minimal`, `minimal_list`, `canonical`.
+#'    \item `models` - list with fitted models `original`, `minimal`, `minimal_list`, `canonical`.
+#'    \item `verbose`, `imply` - flags as provided.
 #'  }
 #'
 #'@section Errors and edge cases:

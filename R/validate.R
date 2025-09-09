@@ -18,7 +18,7 @@
 #' @param data data frame
 #' @param exposure Character; exposure node name (X).
 #' @param outcome Character; outcome node name (Y).
-#'
+#' @noRd
 #' @return A list of class `DAGassist_validation` with values:  
 #' `ok` (logical), `issues` (data.frame), `vars` (list)
 #'

@@ -21,7 +21,7 @@ to identify causal roles, create reports, and check robustness.
 See the [Making
 Reports](https://grahamgoff.github.io/DAGassist/articles/making-reports.html)
 vignette for details on producing publication-quality `DAGassist`
-reports in `LaTex`, `Word`, `Excel`, and `plaintext`.
+reports in `LaTex`, `Word`, `Excel`, and `plain text`.
 
 See the [Parameter
 Guide](https://grahamgoff.github.io/DAGassist/articles/get-started.html)
@@ -55,14 +55,14 @@ DAGassist(dag = dag_model,
 #> DAGassist Report: 
 #> 
 #> Roles:
-#> variable  role        X  Y  conf  med  col  desc(Y)  desc(X)
-#> X         exposure    x                                     
-#> Y         outcome        x                           x      
-#> Z         confounder        x                               
-#> M         mediator                x                  x      
-#> C         collider                     x    x        x      
-#> A         other                                             
-#> B         other                                             
+#> variable  role        X  Y  conf  med  col  IO  dMed  dCol
+#> X         exposure    x                                   
+#> Y         outcome        x                      x         
+#> Z         confounder        x                             
+#> M         mediator                x                       
+#> C         collider                     x    x   x         
+#> A         other                                           
+#> B         other                                           
 #> 
 #>  (!) Bad controls in your formula: {M, C}
 #> Minimal controls 1: {Z}

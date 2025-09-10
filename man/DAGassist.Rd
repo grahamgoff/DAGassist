@@ -85,7 +85,7 @@ and printed for \code{type="console"}. The list contains:
 \item \code{validation} - result from \code{validate_spec(...)} which verifies acyclicity and X/Y declarations.
 \item \code{roles} - raw roles data.frame from \code{classify_nodes(...)} (logic columns).
 \item \code{roles_display} - roles grid after labeling/renaming for exporters.
-\item \code{bad_in_user} - variables in the user’s RHS that are \code{MED}/\code{COL}/\code{IO}/\code{DMed}/\code{DCol}.
+\item \code{bad_in_user} - variables in the user's RHS that are \code{MED}/\code{COL}/\code{IO}/\code{DMed}/\code{DCol}.
 \item \code{controls_minimal} - (legacy) one minimal set (character vector).
 \item \code{controls_minimal_all} - list of all minimal sets (character vectors).
 \item \code{controls_canonical} - canonical set (character vector; may be empty).
@@ -108,7 +108,7 @@ engine arguments directly from that call; these are merged with \code{engine}/\c
 you pass explicitly (call arguments win).
 
 \strong{Fixest tails.} For engines like \strong{fixest} that use \code{|} to denote FE/IV parts,
-DAGassist preserves any \verb{| ...} “tail” when constructing minimal/canonical formulas
+DAGassist preserves any \verb{| ...} tail when constructing minimal/canonical formulas
 (e.g., \code{Y ~ X + controls | fe | iv(...)}).
 
 \strong{Roles grid.} The roles table displays short headers:
@@ -120,7 +120,7 @@ Descendants are \strong{proper} (exclude the node itself) and can be any distanc
 The internal \code{is_descendant_of_exposure} is retained for logic but hidden in displays.
 }
 
-\strong{Bad controls.} For total-effect estimation, DAGassist flags as “bad controls”
+\strong{Bad controls.} For total-effect estimation, DAGassist flags as \verb{bad controls}
 any variables that are \code{MED}, \code{COL}, \code{IO}, \code{DMed}, or \code{DCol}. These are warned in
 the console and omitted from the model-comparison table. Valid confounders (pre-treatment)
 are eligible for minimal/canonical adjustment sets.
@@ -152,7 +152,7 @@ with \code{{modelsummary}} if available (falls back gracefully otherwise).
 \item \code{DMed} - descendant of a mediator; do \strong{not} adjust when estimating total effects.
 \item \code{DCol} - descendant of a collider; adjusting opens a spurious path, so do \strong{not} adjust.
 \item \code{other} - safe, non-confounding predictors (e.g., affect \code{Y} only). Included in the canonical
-model but omitted from the minimal set because they’re not required for identification.
+model but omitted from the minimal set because they're not required for identification.
 }
 
 \strong{MODEL COMPARISON.}

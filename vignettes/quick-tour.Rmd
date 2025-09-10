@@ -1,6 +1,9 @@
 ---
 title: "DAGassist in 10 minutes"
-output: rmarkdown::html_vignette
+output: 
+  rmarkdown::pdf_document:
+    number_sections: false
+    fig_caption: false
 vignette: >
   %\VignetteIndexEntry{quick-tour}
   %\VignetteEngine{knitr::rmarkdown}

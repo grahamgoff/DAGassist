@@ -18,3 +18,12 @@
 ^cran-comments\.md$
 ^NEWS\.html$
 ^revdep$
+^pkgdown\.yml$
+^public$
+^site$
+^reference$
+^articles$
+^man/figures/README-.*\.(png|svg)$
+^\.github$
+^cran-comments\.md$
+^CODE_OF_CONDUCT\.md$

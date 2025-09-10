@@ -52,7 +52,7 @@
 #' you pass explicitly (call arguments win).
 #'
 #' **Fixest tails.** For engines like **fixest** that use `|` to denote FE/IV parts,
-#' DAGassist preserves any `| ...` “tail” when constructing minimal/canonical formulas
+#' DAGassist preserves any `| ...` tail when constructing minimal/canonical formulas
 #' (e.g., `Y ~ X + controls | fe | iv(...)`).
 #'
 #' **Roles grid.** The roles table displays short headers:
@@ -62,7 +62,7 @@
 #'   Descendants are **proper** (exclude the node itself) and can be any distance downstream.
 #'   The internal `is_descendant_of_exposure` is retained for logic but hidden in displays.
 #'
-#' **Bad controls.** For total-effect estimation, DAGassist flags as “bad controls”
+#' **Bad controls.** For total-effect estimation, DAGassist flags as `bad controls`
 #' any variables that are `MED`, `COL`, `IO`, `DMed`, or `DCol`. These are warned in
 #' the console and omitted from the model-comparison table. Valid confounders (pre-treatment)
 #' are eligible for minimal/canonical adjustment sets.
@@ -85,7 +85,7 @@
 #'   \item `validation` - result from `validate_spec(...)` which verifies acyclicity and X/Y declarations.
 #'   \item `roles` - raw roles data.frame from `classify_nodes(...)` (logic columns).
 #'   \item `roles_display` - roles grid after labeling/renaming for exporters.
-#'   \item `bad_in_user` - variables in the user’s RHS that are `MED`/`COL`/`IO`/`DMed`/`DCol`.
+#'   \item `bad_in_user` - variables in the user's RHS that are `MED`/`COL`/`IO`/`DMed`/`DCol`.
 #'   \item `controls_minimal` - (legacy) one minimal set (character vector).
 #'   \item `controls_minimal_all` - list of all minimal sets (character vectors).
 #'   \item `controls_canonical` - canonical set (character vector; may be empty).
@@ -106,7 +106,7 @@
 #'   \item `DMed` - descendant of a mediator; do **not** adjust when estimating total effects.
 #'   \item `DCol` - descendant of a collider; adjusting opens a spurious path, so do **not** adjust.
 #'   \item `other` - safe, non-confounding predictors (e.g., affect `Y` only). Included in the canonical
-#'         model but omitted from the minimal set because they’re not required for identification.
+#'         model but omitted from the minimal set because they're not required for identification.
 #' }
 #' 
 #' **MODEL COMPARISON.**

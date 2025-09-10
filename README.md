@@ -103,4 +103,7 @@ DAGassist(dag = dag_model,
 #> | + p < 0.1, * p < 0.05, ** p < 0.01,   |
 #> | *** p < 0.001                         |
 #> +===+===========+===========+===========+
+
+# note: this example uses a test DAG and dataset, which was created
+# silently to avoid confusion. 
 ```

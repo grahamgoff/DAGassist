@@ -1,9 +1,6 @@
 ---
 title: "Getting the Most out of DAGassist Using Parameters"
-output: 
-  rmarkdown::pdf_document:
-    number_sections: false
-    fig_caption: false
+output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Get Started}
   %\VignetteEngine{knitr::rmarkdown}

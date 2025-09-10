@@ -1,9 +1,6 @@
 ---
 title: "Supported Models"
-output: 
-  rmarkdown::pdf_document:
-    number_sections: false
-    fig_caption: false
+output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Supported Models}
   %\VignetteEngine{knitr::rmarkdown}

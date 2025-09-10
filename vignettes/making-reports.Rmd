@@ -1,9 +1,6 @@
 ---
 title: "Getting Started with Report Creation"
-output: 
-  rmarkdown::pdf_document:
-    number_sections: false
-    fig_caption: false
+output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Getting Started with Report Creation}
   %\VignetteEngine{knitr::rmarkdown}

@@ -8,7 +8,7 @@
 - Added `dMed` (descendant of mediator) and `dCol` (descendant of collider)
 - Updated documentation and added vignettes
 
-This is the last release before CRAN sumbission. 
+This is the last release before CRAN submission. 
 
 # DAGassist 0.2.2
 

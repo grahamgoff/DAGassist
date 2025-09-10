@@ -138,6 +138,19 @@ classify_nodes <- function(dag, exposure, outcome) {
   med_set <- setdiff(intersect(descX, ancY), c(exposure, outcome))  # desc X/anc Y, not endpoint
   doY_set <- descY # descendants of outcome
   doX_set <- setdiff(descX, exposure) # descendants of exposure (not X itself)
+  # descendants of mediators and colliders for display flags
+  dmed_set <- character(0)
+  if (length(med_set)) {
+    for (m in med_set) {
+      dmed_set <- union(dmed_set, setdiff(dagitty::descendants(dag, m), m))
+    }
+  }
+  dcol_set <- character(0)
+  if (length(collider_set)) {
+    for (c in collider_set) {
+      dcol_set <- union(dcol_set, setdiff(dagitty::descendants(dag, c), c))
+    }
+  }
   
   # assign boolean flags by set
   df <- data.frame(
@@ -149,18 +162,22 @@ classify_nodes <- function(dag, exposure, outcome) {
     is_collider                = nodes %in% collider_set,
     is_descendant_of_outcome   = nodes %in% doY_set,
     is_descendant_of_exposure  = nodes %in% doX_set,
+    is_descendant_of_mediator  = nodes %in% dmed_set,
+    is_descendant_of_collider  = nodes %in% dcol_set,
     stringsAsFactors = FALSE
   )
   
   # choose primary flag by node
   # precedence is reverse-sequential
   role <- rep("other", nrow(df))
-  role[df$is_confounder]             <- "confounder"
-  role[df$is_mediator]               <- "mediator"
-  role[df$is_descendant_of_outcome]  <- "descendant_of_outcome"
-  role[df$is_collider]               <- "collider"
-  role[df$is_outcome]                <- "outcome"
-  role[df$is_exposure]               <- "exposure"
+  role[df$is_confounder] <- "confounder"
+  role[df$is_descendant_of_mediator] <- "desc. mediator"
+  role[df$is_descendant_of_collider] <- "desc. collider"
+  role[df$is_mediator]<- "mediator"
+  role[df$is_descendant_of_outcome] <- "intermed. out."
+  role[df$is_collider] <- "collider"
+  role[df$is_outcome] <- "outcome"
+  role[df$is_exposure] <- "exposure"
   
   #write to df
   df$role <- role
@@ -197,14 +214,15 @@ print.DAGassist_roles <- function(x, n = Inf, ...) {
   # build a display table
   out <- data.frame(
     variable = df$variable,
-    role     = df$role,
-    X        = tick(df$is_exposure),
-    Y        = tick(df$is_outcome),
-    conf     = tick(df$is_confounder),
-    med      = tick(df$is_mediator),
-    col      = tick(df$is_collider),
-    `desc(Y)`= tick(df$is_descendant_of_outcome),
-    `desc(X)`= tick(df$is_descendant_of_exposure),
+    role = df$role,
+    X = tick(df$is_exposure),
+    Y = tick(df$is_outcome),
+    conf = tick(df$is_confounder),
+    med = tick(df$is_mediator),
+    col = tick(df$is_collider),
+    IO = tick(df$is_descendant_of_outcome),
+    dMed = tick(df$is_descendant_of_mediator),
+    dCol = tick(df$is_descendant_of_collider),
     check.names = FALSE,
     stringsAsFactors = FALSE
   )

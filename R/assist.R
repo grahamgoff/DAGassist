@@ -154,8 +154,15 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
   v <- validate_spec(dag, formula, data, exposure, outcome)
   if (!v$ok) return(list(validation = v))
   
-  #classify nodes
-  roles <- classify_nodes(dag, exposure, outcome)
+  #identify vars in user formula
+  rhs_terms0 <- .rhs_terms_safe(formula)
+  vars_in_formula <- unique(c(exposure, outcome, intersect(rhs_terms0, names(dag))))
+  
+  # pick which DAG to evaluate on depending on imply param
+  dag_eval <- if (!isTRUE(imply)) .restrict_dag_to(dag, vars_in_formula) else dag
+  
+  # classify nodes on the evaluation DAG (PRUNED when imply = FALSE)
+  roles <- classify_nodes(dag_eval, exposure, outcome)
   
   #normalize labels and prepare roles table
   labmap <- tryCatch(.normalize_labels(labels, vars = unique(roles$variable)),
@@ -174,14 +181,20 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
   user_controls <- intersect(setdiff(rhs_terms, c(exposure)), roles$variable)
   
   # "bad controls"
-  bad <- roles$variable[roles$is_mediator | roles$is_collider | roles$is_descendant_of_outcome]
+  bad <- roles$variable[
+    roles$is_mediator |
+      roles$is_collider |
+      roles$is_descendant_of_outcome |
+      roles$is_descendant_of_mediator |   
+      roles$is_descendant_of_collider     
+  ]
   bad_in_user <- intersect(user_controls, bad)
   # all the minimal sets
-  minimal_sets_all <- .minimal_sets_all(dag, exposure, outcome)
+  minimal_sets_all <- .minimal_sets_all(dag_eval, exposure, outcome)
   # keep a single minimal for reference
   #minimal <- if (length(minimal_sets_all)) minimal_sets_all[[1]] else character(0)
   # canonical set and formula
-  canonical <- .pick_canonical_controls(dag, exposure, outcome)
+  canonical <- .pick_canonical_controls(dag_eval, exposure, outcome)
   
   ## respect the formula (only use variables in the formula) when imply=FALSE
   # identify variables actually in user formula

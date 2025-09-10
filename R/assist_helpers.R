@@ -40,6 +40,29 @@
   mods
 }
 
+# Build a dagitty subgraph restricted to `keep` nodes.
+# Keeps only edges with both endpoints in `keep`.
+.restrict_dag_to <- function(dag, keep) {
+  keep <- intersect(keep, names(dag))
+  # Build edges via parents() to avoid depending on dagitty::edges format
+  edge_str <- character(0)
+  for (w in keep) {
+    ps <- intersect(dagitty::parents(dag, w), keep)
+    if (length(ps)) edge_str <- c(edge_str, paste(ps, "->", w))
+  }
+  if (length(edge_str)) {
+    spec <- paste0("dag { ", paste(edge_str, collapse = "; "), " }")
+  } else {
+    # No edges; declare a node-only DAG
+    spec <- paste0("dag { ", paste(keep, collapse = "; "), " }")
+  }
+  d2 <- dagitty::dagitty(spec)
+  # carry exposure/outcome tags if still present
+  try(dagitty::exposures(d2) <- intersect(dagitty::exposures(dag), keep), silent = TRUE)
+  try(dagitty::outcomes(d2)  <- intersect(dagitty::outcomes(dag),  keep), silent = TRUE)
+  d2
+}
+
 ###grab .build_named_mods labels and build df
 ##IN: report
 ##OUT: df with cols `Model` and `Formula`

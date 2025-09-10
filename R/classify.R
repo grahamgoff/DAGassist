@@ -161,7 +161,7 @@ classify_nodes <- function(dag, exposure, outcome) {
     is_mediator                = nodes %in% med_set,
     is_collider                = nodes %in% collider_set,
     is_descendant_of_outcome   = nodes %in% doY_set,
-    is_descendant_of_exposure  = nodes %in% doX_set,
+    #is_descendant_of_exposure  = nodes %in% doX_set,
     is_descendant_of_mediator  = nodes %in% dmed_set,
     is_descendant_of_collider  = nodes %in% dcol_set,
     stringsAsFactors = FALSE
@@ -171,10 +171,10 @@ classify_nodes <- function(dag, exposure, outcome) {
   # precedence is reverse-sequential
   role <- rep("other", nrow(df))
   role[df$is_confounder] <- "confounder"
-  role[df$is_descendant_of_mediator] <- "desc. mediator"
-  role[df$is_descendant_of_collider] <- "desc. collider"
+  role[df$is_descendant_of_mediator] <- "Dmediator"
+  role[df$is_descendant_of_collider] <- "Dcollider"
   role[df$is_mediator]<- "mediator"
-  role[df$is_descendant_of_outcome] <- "intermed. out."
+  role[df$is_descendant_of_outcome] <- "intOut"
   role[df$is_collider] <- "collider"
   role[df$is_outcome] <- "outcome"
   role[df$is_exposure] <- "exposure"
@@ -187,19 +187,19 @@ classify_nodes <- function(dag, exposure, outcome) {
   df
 }
 
-#' Pretty-print node classifications (aligned)
+#' Print node classifications (aligned)
 #' @param x Output of classify_nodes() (class "DAGassist_roles")
 #' @param n Max rows to print (default all)
 #' @param ... (ignored)
 #' @return Invisibly returns x
-#' NOTE: will eventually need to modify this to make it latex/kable compatible,
-#' but for now, just console output is fine
 #' @export
 print.DAGassist_roles <- function(x, n = Inf, ...) {
   df <- x
   
   # order exposure and outcome at the top every time, then everything else
-  role_order <- c("confounder","mediator","collider","descendant_of_outcome","other")
+  role_order <- c("confounder","mediator","collider",
+                  "descendant_of_outcome","descendant_of_collider",
+                  "descendant_of_mediator","other")
   ord <- order(
     !df$is_exposure,  # exposures first
     !df$is_outcome,   # outcomes next

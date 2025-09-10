@@ -57,7 +57,7 @@
   #escape | for easy cell splitting
   esc <- function(x) gsub("\\|", "\\\\|", x, perl = TRUE)
   # unbreakable headers for the manual header path
-  tokens <- c("X","Y","CON","MED","COL","DY","DX")
+  tokens <- c("X","Y","CON","MED","COL","IO","dMed", "dCol")
   nn <- names(df)
   nn[nn %in% tokens] <- sprintf("`%s`", nn[nn %in% tokens])
   
@@ -201,6 +201,7 @@
     is_confounder = "CON",
     is_mediator = "MED",
     is_collider = "COL",
+    is_descendant_of_outcome = "IO",
     is_descendant_of_mediator = "dMed", 
     is_descendant_of_collider = "dCol",
     canon = "Canon"
@@ -208,8 +209,7 @@
   #set fallback labels and order
   prefer <- c("variable","role","is_exposure","is_outcome","is_confounder",
               "is_mediator","is_collider","is_descendant_of_outcome",
-              "is_descendant_of_exposure","is_descendant_of_mediator",
-              "is_descendant_of_collider","canon")
+              "is_descendant_of_mediator","is_descendant_of_collider","canon")
   #only keep labs that exist
   keep <- intersect(prefer, names(r))
   r <- r[, c(keep, setdiff(names(r), keep)), drop = FALSE]

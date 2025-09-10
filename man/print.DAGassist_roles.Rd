@@ -2,7 +2,7 @@
 % Please edit documentation in R/classify.R
 \name{print.DAGassist_roles}
 \alias{print.DAGassist_roles}
-\title{Pretty-print node classifications (aligned)}
+\title{Print node classifications (aligned)}
 \usage{
 \method{print}{DAGassist_roles}(x, n = Inf, ...)
 }
@@ -15,9 +15,7 @@
 }
 \value{
 Invisibly returns x
-NOTE: will eventually need to modify this to make it latex/kable compatible,
-but for now, just console output is fine
 }
 \description{
-Pretty-print node classifications (aligned)
+Print node classifications (aligned)
 }

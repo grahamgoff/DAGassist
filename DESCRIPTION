@@ -2,10 +2,14 @@ Package: DAGassist
 Title: Test Robustness with Directed Acyclic Graphs
 Version: 0.2.3
 Authors@R: c(
-    person("Graham", "Goff", , "goffgrahamc@gmail.com", role = c("aut", "cre"),
-           comment = c(affiliation = "Dept. of International Affairs, Texas A&M University", ORCID = "0000-0002-0717-6995")),
-    person("Michael", "Denly", , "mdenly@tamu.edu", role = "ctb",
-           comment = c(affiliation = "Dept. of International Affairs, Texas A&M University", ORCID = "0000-0002-7074-5011"))
+    person("Graham", "Goff", 
+      email = "goffgrahamc@gmail.com", 
+      role = c("aut", "cre"),
+      comment = c(ORCID = "0000-0002-0717-6995")),
+    person("Michael", "Denly", 
+      email = "mdenly@tamu.edu", 
+      role = "ctb",
+      comment = c(ORCID = "0000-0002-7074-5011"))
   )
 Description: Provides robustness checks driven by directed acyclic graphs
     (DAGs). Given a 'dagitty' DAG object and a model specification,
@@ -30,18 +34,17 @@ Imports:
     utils,
     writexl
 Suggests: 
-    modelsummary,
-    knitr,
-    rmarkdown,
     fixest,
     ggdag,
+    knitr,
+    modelsummary,
+    rmarkdown,
     testthat (>= 3.0.0),
     tidyverse
 VignetteBuilder: 
     knitr
+Config/Needs/website: pkgdown
 Config/testthat/edition: 3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-Config/Needs/website: pkgdown
-

@@ -4,7 +4,6 @@
 ^pkgdown$
 ^_pkgdown\.yml$
 ^README\.Rmd$
-^NEWS\.md$
 ^\.Rproj\.user$
 ^\.vscode$
 ^\.idea$

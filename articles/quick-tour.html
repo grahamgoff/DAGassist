@@ -66,9 +66,8 @@
 <ul>
 <li>How to go from a <code>dagitty</code> DAG + formula to a compact
 report</li>
-<li>How to interpret <code>Original</code> vs <code>Minimal</code> vs
-<code>Canonical</code>
-</li>
+<li>How to interpret the report, and what the variable categories and
+comparison models mean</li>
 <li>How to export to <code>LaTeX</code> / <code>Word</code> /
 <code>Excel</code> / <code>text</code>
 </li>
@@ -121,18 +120,63 @@ model-agnostic, if an engine accepts a standard
 <p><strong>Interpreting the output:</strong></p>
 <ul>
 <li>
-<code>Bad controls</code> are variables that, when adjusted for,
-open spurious correlations between the independent and dependent
-variable. <code>DAGassist</code> seeks to identify these controls and
-clarify their effect on your <code>Original model</code>.</li>
+<strong>ROLES:</strong> <code>DAGassist</code> classifies the
+variables in your formula by causal role, based on the relationships in
+your DAG. It classifies according to these categories.
+<ul>
+<li>
+<strong>X</strong> is the <code>treatment</code> /
+<code>independent variable</code> / <code>exposure</code>.</li>
+<li>
+<strong>Y</strong> is the <code>outcome</code> /
+<code>dependent variable</code>.</li>
+<li>
+<strong>conf</strong> stands for <code>confounder</code>, a common
+cause of X and Y. Confounders create a spurious association between X
+and Y, and must be adjusted for.</li>
+<li>
+<strong>med</strong> stands for <code>mediator</code>, a variable
+that lies on a path from X to Y, which transmit some of the effect from
+X to Y. One should not adjust for mediators if one wants to estimate the
+total effect of X on Y.</li>
+<li>
+<strong>col</strong> stands for <code>collider</code>, a direct
+common descendant of X and Y. Colliders already block paths, so
+adjusting for it opens a spurious association between X and Y.</li>
+<li>
+<strong>IO</strong> stands for <code>intermediate outcome</code>, a
+descendant of Y, which introduces bias if adjusted for.</li>
+<li>
+<strong>dMed / Dmediator</strong> stands for
+<code>descendant of a mediator</code>, which should not be adjusted for
+when estimating total effect.</li>
+<li>
+<strong>dCol / Dcollider</strong> stands for
+<code>descendant of a collider</code>. Adjusting for a descendant of a
+collider opens a spurious association between X and Y.</li>
+<li>
+<strong>other</strong> variables, such as those that only affect the
+outcome, do not fit any of the previous definitions. They are included
+in the canonical model because they can be safely included as controls,
+but are omitted from the minimal model because their inclusion is not
+strictly necessary. Since <code>other</code> variables’ effects are
+generally neutral, it is usually best to use the minimal adjustment set
+as your baseline model.</li>
+</ul>
+</li>
+<li><strong>MODEL COMPARISON:</strong></li>
 <li>
 <code>Minimal</code> is the smallest adjustment set necessary to
 close all back-door paths from the independent to the dependent
-variable.</li>
+variable. The minimal set only includes <code>confounders</code> as
+controls.</li>
 <li>
-<code>Canonical</code> is the largest permissable adjustment set.
+<code>Canonical</code> is the largest permissible adjustment set.
 Essentially, the <code>canonical</code> set contains all control
-variables that are not <code>bad</code>.</li>
+variables that are not <code>confounders</code>, <code>mediators</code>,
+<code>intermediate outcomes</code>,
+<code>descendants of mediatiors</code>, or
+<code>descendants of colliders</code>.</li>
 </ul>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
@@ -203,7 +247,7 @@ checks, this is an example of how to output a report in
 <span>  type <span class="op">=</span> <span class="st">"latex"</span>, </span>
 <span>  out <span class="op">=</span> <span class="va">out_tex</span><span class="op">)</span> <span class="co">#put your output directory and file name here</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="va">out_tex</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span> <span class="co"># show the output</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="va">out_tex</span>, n <span class="op">=</span> <span class="fl">15</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span> <span class="co"># briefly show the output</span></span>
 <span><span class="co">#&gt; % ---- DAGassist LaTeX fragment (no preamble) ----</span></span>
 <span><span class="co">#&gt; % Requires: \usepackage{tabularray} \UseTblrLibrary{booktabs,siunitx,talltblr}</span></span>
 <span><span class="co">#&gt; \begingroup\footnotesize</span></span>
@@ -218,40 +262,7 @@ checks, this is an example of how to output a report in
 <span><span class="co">#&gt; X &amp; exposure &amp; x &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  \\</span></span>
 <span><span class="co">#&gt; Y &amp; outcome &amp;  &amp; x &amp;  &amp;  &amp;  &amp;  &amp; x &amp;  \\</span></span>
 <span><span class="co">#&gt; Z &amp; confounder &amp;  &amp;  &amp; x &amp;  &amp;  &amp;  &amp;  &amp;  \\</span></span>
-<span><span class="co">#&gt; \bottomrule</span></span>
-<span><span class="co">#&gt; \end{longtblr}</span></span>
-<span><span class="co">#&gt; \endgroup</span></span>
-<span><span class="co">#&gt; % no vertical glue between tables</span></span>
-<span><span class="co">#&gt; \nointerlineskip</span></span>
-<span><span class="co">#&gt; \begin{longtblr}[presep=0pt,postsep=0pt,%% tabularray outer open</span></span>
-<span><span class="co">#&gt; entry=none,label=none,</span></span>
-<span><span class="co">#&gt; note{}={+ p \num{&lt; 0.1}, * p \num{&lt; 0.05}, ** p \num{&lt; 0.01}, *** p \num{&lt; 0.001}},</span></span>
-<span><span class="co">#&gt; ]                     %% tabularray outer close</span></span>
-<span><span class="co">#&gt; {                     %% tabularray inner open</span></span>
-<span><span class="co">#&gt; colspec={X[]X[]X[]X[]},</span></span>
-<span><span class="co">#&gt; column{2-4}={}{halign=c,},</span></span>
-<span><span class="co">#&gt; column{1}={}{halign=l,},</span></span>
-<span><span class="co">#&gt; hline{10}={1-4}{solid, black, 0.05em},</span></span>
-<span><span class="co">#&gt; }                     %% tabularray inner close</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; &amp; Original &amp; Minimal 1 &amp; Canonical \\ \midrule %% TinyTableHeader</span></span>
-<span><span class="co">#&gt; X &amp; \num{1.063}*** &amp; \num{1.056}*** &amp; \num{1.056}*** \\</span></span>
-<span><span class="co">#&gt; &amp; (\num{0.051}) &amp; (\num{0.046}) &amp; (\num{0.046}) \\</span></span>
-<span><span class="co">#&gt; M &amp; \num{-0.015} &amp;  &amp;  \\</span></span>
-<span><span class="co">#&gt; &amp; (\num{0.047}) &amp;  &amp;  \\</span></span>
-<span><span class="co">#&gt; Z &amp; \num{0.456}*** &amp; \num{0.451}*** &amp; \num{0.451}*** \\</span></span>
-<span><span class="co">#&gt; &amp; (\num{0.055}) &amp; (\num{0.053}) &amp; (\num{0.053}) \\</span></span>
-<span><span class="co">#&gt; A &amp; \num{0.007} &amp;  &amp; \num{0.007} \\</span></span>
-<span><span class="co">#&gt; &amp; (\num{0.046}) &amp;  &amp; (\num{0.046}) \\</span></span>
-<span><span class="co">#&gt; Num.Obs. &amp; \num{500} &amp; \num{500} &amp; \num{500} \\</span></span>
-<span><span class="co">#&gt; R2 &amp; \num{0.714} &amp; \num{0.714} &amp; \num{0.714} \\</span></span>
-<span><span class="co">#&gt; \bottomrule</span></span>
-<span><span class="co">#&gt; \end{longtblr}</span></span>
-<span><span class="co">#&gt; \par\endgroup</span></span>
-<span><span class="co">#&gt; \vspace{1em}</span></span>
-<span><span class="co">#&gt; \footnotesize</span></span>
-<span><span class="co">#&gt; \textit{Controls (minimal):} {Z}\\</span></span>
-<span><span class="co">#&gt; \textit{Controls (canonical):} {A, Z}</span></span></code></pre></div>
+<span><span class="co">#&gt; \bottomrule</span></span></code></pre></div>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

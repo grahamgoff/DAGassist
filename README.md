@@ -16,7 +16,7 @@ adjustment sets, and compare the significance of models.
 See the [Quick
 Tour](https://grahamgoff.github.io/DAGassist/articles/quick-tour.html)
 vignette for a 10 minute start-to-finish guide on how to use `DAGassist`
-to identify causal roles, create reports, and check robustness.
+to identify causal roles, create reports, and interpret the results.
 
 See the [Making
 Reports](https://grahamgoff.github.io/DAGassist/articles/making-reports.html)

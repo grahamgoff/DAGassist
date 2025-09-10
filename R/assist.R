@@ -1,4 +1,4 @@
-#' Run the DAGassist pipeline and produce a compact report (console/LaTeX/Word/Excel/Text)
+#' Produce a compact `DAGassist` report (console/LaTeX/Word/Excel/Text)
 #'
 #' `DAGassist()` validates a DAG + model specification, classifies node roles,
 #' builds minimal and canonical adjustment sets, fits comparable models, and
@@ -6,78 +6,116 @@
 #' XLSX, plain text). It also supports passing a **single engine call** (e.g.
 #' `feols(Y ~ X + Z | fe, data = df)`) instead of a plain formula.
 #'
-#'@param dag A **dagitty** object (see [dagitty::dagitty()]).
-#'@param formula Either (a) a standard model formula `Y ~ X + ...`, or
-#'  (b) a single **engine call** such as `feols(Y ~ X + Z | fe, data = df, ...)`.
-#'  When an engine call is provided, `engine`, `data`, and extra arguments are
-#'  automatically extracted from the call.
-#'@param data A `data.frame` (or compatible--e.g. tibble); optional if supplied via the
-#'  engine call in `formula`.
-#'@param exposure Optional character scalar; if missing/empty, inferred from the
-#'  DAG (must be unique).
-#'@param outcome Optional character scalar; if missing/empty, inferred from the
-#'  DAG (must be unique).
-#'@param engine Modeling function, default [stats::lm]. Ignored if `formula`
-#'  is a single engine call (in that case the function is taken from the call).
-#'@param engine_args Named list of extra arguments forwarded to `engine(...)`.
-#'  If `formula` is an engine call, arguments from the call are merged with
-#'  `engine_args` (call values take precedence).
-#'@param verbose Logical (default `TRUE`). Controls verbosity in the console
-#'  printer (formulas + notes).
-#'@param type Output type. One of
-#'  `"console"` (default), `"latex"`/`"docx"`/`"word"`,
-#'  `"excel"`/`"xlsx"`, `"text"`/`"txt"`.
-#'@param out Output file path for the non-console types:
-#'  * `type="latex"`: a **LaTeX fragment** written to `out` (must end with `.tex`).
-#'  * `type="docx"`/`"word"`: a **Word (.docx)** file written to `out`.
-#'  * `type="excel"`/`"xlsx"`: an **Excel (.xlsx)** file written to `out`.
-#'  * `type="text"`/`"txt"`: a **plain-text** file written to `out`.
-#'  Ignored for `type="console"`.
-#'@param imply Logical; default `FALSE`. If `TRUE`, `DAGassist()` only evaluates 
-#'  variables listed in the `formula` argument. 
-#'@param labels optional variable labels. can be named char vector or df or unnamed
-#'  char vector
-#'@param omit_intercept logical; drop the intercept rows from output. Default TRUE.
-#'@param omit_factors logical; drop all factor-level rows. Default TRUE.
+#' @param dag A **dagitty** object (see [dagitty::dagitty()]).
+#' @param formula Either (a) a standard model formula `Y ~ X + ...`, or
+#'   (b) a single **engine call** such as `feols(Y ~ X + Z | fe, data = df, ...)`.
+#'   When an engine call is provided, `engine`, `data`, and extra arguments are
+#'   automatically extracted from the call.
+#' @param data A `data.frame` (or compatible, e.g. tibble). Optional if supplied
+#'   via the engine call in `formula`.
+#' @param exposure Optional character scalar; if missing/empty, inferred from the
+#'   DAG (must be unique).
+#' @param outcome Optional character scalar; if missing/empty, inferred from the
+#'   DAG (must be unique).
+#' @param engine Modeling function, default [stats::lm]. Ignored if `formula`
+#'   is a single engine call (in that case the function is taken from the call).
+#' @param engine_args Named list of extra arguments forwarded to `engine(...)`.
+#'   If `formula` is an engine call, arguments from the call are merged with
+#'   `engine_args` (call values take precedence).
+#' @param verbose Logical (default `TRUE`). Controls verbosity in the console
+#'   printer (formulas + notes).
+#' @param type Output type. One of
+#'   `"console"` (default), `"latex"`/`"docx"`/`"word"`,
+#'   `"excel"`/`"xlsx"`, `"text"`/`"txt"`.
+#' @param out Output file path for the non-console types:
+#'   * `type="latex"`: a **LaTeX fragment** written to `out` (must end with `.tex`).
+#'   * `type="docx"`/`"word"`: a **Word (.docx)** file written to `out`.
+#'   * `type="excel"`/`"xlsx"`: an **Excel (.xlsx)** file written to `out`.
+#'   * `type="text"`/`"txt"`: a **plain-text** file written to `out`.
+#'   Ignored for `type="console"`.
+#' @param imply Logical; default `FALSE`. **Evaluation scope.**
+#'   - If `FALSE` (default): restrict DAG evaluation to variables **named in the formula**
+#'     (prune the DAG to exposure, outcome, and RHS terms). Roles/sets/bad-controls are
+#'     computed on this pruned graph, and the roles table **only** shows those variables.
+#'     This is most useful if you want to refine your specific call. 
+#'   - If `TRUE`: evaluate on the **full DAG** and allow DAG-implied controls in the
+#'     minimal/canonical sets; roles table shows all nodes. This is most useful if you
+#'     want to refine your overall control variable selection.
+#' @param labels Optional variable labels (named character vector or data.frame).
+#' @param omit_intercept Logical; drop intercept rows from the model comparison (default `TRUE`).
+#' @param omit_factors Logical; drop factor-level rows from the model comparison (default `TRUE`).
 #'
 #'@details
-#'    **Engine-call parsing.** If `formula` is a call (e.g., `feols(Y ~ X | fe, data=df)`),
-#'  DAGassist extracts the engine function, the formula, the data argument, and
-#'  any additional engine arguments directly from that call; these are merged with
-#'  `engine`/`engine_args` you pass explicitly (call arguments win).
+#' **Engine-call parsing.** If `formula` is a call (e.g., `feols(Y ~ X | fe, data=df)`),
+#' DAGassist extracts the engine function, formula, data argument, and any additional
+#' engine arguments directly from that call; these are merged with `engine`/`engine_args`
+#' you pass explicitly (call arguments win).
 #'
-#'    **Fixest tails.** For engines like **fixest** that use `|` to denote FE/IV
-#'  parts, DAGassist preserves any `| ...` “tail” when constructing minimal or
-#'  canonical formulas (e.g., `Y ~ X + controls | fe | iv(...)`).
+#' **Fixest tails.** For engines like **fixest** that use `|` to denote FE/IV parts,
+#' DAGassist preserves any `| ...` “tail” when constructing minimal/canonical formulas
+#' (e.g., `Y ~ X + controls | fe | iv(...)`).
 #'
-#'    **Output types.**
-#'  * `console` prints* roles, sets, formulas (if `verbose`), and a compact model
-#'   comparison with `{modelsummary}` if available, then falls back gracefully.
-#'  * `latex` writes a **LaTeX fragment** you can `\input{}` into a paper.
-#'  * `docx`/`word` writes a **Word** doc via Pandoc. It will use a reference
-#'   document if set via `options(DAGassist.ref_docx="path/to/ref.docx")`, else
-#'   falls back to a bundled or default reference DOCX, else Pandoc defaults.
-#'  * `excel`/`xlsx` writes an **Excel** workbook with tidy tables.
-#'  * `text`/`txt` writes a **plain-text** report suitable for logs/notes.
+#' **Roles grid.** The roles table displays short headers:
+#'   - `X` (exposure), `Y` (outcome), `CON` (confounder), `MED` (mediator),
+#'     `COL` (collider), `IO` (intermediate outcome = proper descendant of `Y`),
+#'     `DMed` (proper descendant of any mediator), `DCol` (proper descendant of any collider).
+#'   Descendants are **proper** (exclude the node itself) and can be any distance downstream.
+#'   The internal `is_descendant_of_exposure` is retained for logic but hidden in displays.
 #'
-#'    **Dependencies.** Minimal core requires `{dagitty}`. Optional enhancements:
-#'  `{modelsummary}` (pretty tables), `{broom}` (fallback tidying), `{rmarkdown}`
-#'  + **Pandoc** (DOCX), `{writexl}` (XLSX).
+#' **Bad controls.** For total-effect estimation, DAGassist flags as “bad controls”
+#' any variables that are `MED`, `COL`, `IO`, `DMed`, or `DCol`. These are warned in
+#' the console and omitted from the model-comparison table. Valid confounders (pre-treatment)
+#' are eligible for minimal/canonical adjustment sets.
 #'
-#'@return An object of class `"DAGassist_report"`, invisibly for file outputs,
-#'and printed for `type="console"`. The list contains:
-#'  \itemize{
-#'    \item `validation` - result from internal `validate_spec(...)` (includes `ok`).
-#'    \item `roles` - roles data.frame from `classify_nodes(...)`.
-#'    \item `bad_in_user` - variables in user controls that are mediator/collider/descendant of outcome.
-#'    \item `controls_minimal` - (legacy) one minimal set (character vector).
-#'    \item `controls_minimal_all` - list of all minimal sets (character vectors).
-#'    \item `controls_canonical` - canonical set (character vector; may be empty).
-#'    \item `formulas` - list with `original`, `minimal`, `minimal_list`, `canonical`.
-#'    \item `models` - list with fitted models `original`, `minimal`, `minimal_list`, `canonical`.
-#'    \item `verbose`, `imply` - flags as provided.
-#'  }
+#' **Output types.**
+#' * `console` prints roles, sets, formulas (if `verbose`), and a compact model comparison
+#'   with `{modelsummary}` if available (falls back gracefully otherwise).
+#' * `latex` writes a **LaTeX fragment** you can `\\input{}` into a paper.
+#' * `docx`/`word` writes a **Word** doc (uses `options(DAGassist.ref_docx=...)` if set).
+#' * `excel`/`xlsx` writes an **Excel** workbook with tidy tables.
+#' * `text`/`txt` writes a **plain-text** report for logs/notes.
 #'
+#' **Dependencies.** Core requires `{dagitty}`. Optional enhancements: `{modelsummary}`
+#' (pretty tables), `{broom}` (fallback tidying), `{rmarkdown}` + **Pandoc** (DOCX),
+#' `{writexl}` (XLSX).
+#'
+#' @return An object of class `"DAGassist_report"`, invisibly for file outputs,
+#' and printed for `type="console"`. The list contains:
+#' \itemize{
+#'   \item `validation` - result from `validate_spec(...)` which verifies acyclicity and X/Y declarations.
+#'   \item `roles` - raw roles data.frame from `classify_nodes(...)` (logic columns).
+#'   \item `roles_display` - roles grid after labeling/renaming for exporters.
+#'   \item `bad_in_user` - variables in the user’s RHS that are `MED`/`COL`/`IO`/`DMed`/`DCol`.
+#'   \item `controls_minimal` - (legacy) one minimal set (character vector).
+#'   \item `controls_minimal_all` - list of all minimal sets (character vectors).
+#'   \item `controls_canonical` - canonical set (character vector; may be empty).
+#'   \item `formulas` - list with `original`, `minimal`, `minimal_list`, `canonical`.
+#'   \item `models` - list with fitted models `original`, `minimal`, `minimal_list`, `canonical`.
+#'   \item `verbose`, `imply` - flags as provided.
+#'} 
+#'
+#'@section Interpreting the output:
+#' **ROLES.** Variables in your formula are classified by DAG-based causal role:
+#' \itemize{
+#'   \item `X` - treatment / exposure.
+#'   \item `Y` - outcome / dependent variable.
+#'   \item `CON` - confounder (common cause of `X` and `Y`); adjust for these.
+#'   \item `MED` - mediator (on a path from `X` to `Y`); do **not** adjust when estimating total effects.
+#'   \item `COL` - collider (direct descendant of `X` and `Y`); adjusting opens a spurious path, so do **not** adjust.
+#'   \item `IO` - intermediate outcome (descendant of `Y`); do **not** adjust.
+#'   \item `DMed` - descendant of a mediator; do **not** adjust when estimating total effects.
+#'   \item `DCol` - descendant of a collider; adjusting opens a spurious path, so do **not** adjust.
+#'   \item `other` - safe, non-confounding predictors (e.g., affect `Y` only). Included in the canonical
+#'         model but omitted from the minimal set because they’re not required for identification.
+#' }
+#' 
+#' **MODEL COMPARISON.**
+#' \itemize{
+#'   \item **Minimal** - the smallest adjustment set that blocks all back-door paths
+#'         (confounders only).
+#'   \item **Canonical** - the largest permissible set: includes all controls that are not
+#'         `MED`, `COL`, `IO`, `DMed`, or `DCol`. `other` variables may appear here.
+#' }
 #'@section Errors and edge cases:
 #'  * If exposure/outcome cannot be inferred uniquely, the function stops with a clear message.
 #'  * Fitting errors (e.g., FE collinearity) are captured and displayed in comparisons

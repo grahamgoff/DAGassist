@@ -2,7 +2,7 @@
 % Please edit documentation in R/assist.R
 \name{DAGassist}
 \alias{DAGassist}
-\title{Run the DAGassist pipeline and produce a compact report (console/LaTeX/Word/Excel/Text)}
+\title{Produce a compact \code{DAGassist} report (console/LaTeX/Word/Excel/Text)}
 \usage{
 DAGassist(
   dag,
@@ -29,8 +29,8 @@ DAGassist(
 When an engine call is provided, \code{engine}, \code{data}, and extra arguments are
 automatically extracted from the call.}
 
-\item{data}{A \code{data.frame} (or compatible--e.g. tibble); optional if supplied via the
-engine call in \code{formula}.}
+\item{data}{A \code{data.frame} (or compatible, e.g. tibble). Optional if supplied
+via the engine call in \code{formula}.}
 
 \item{exposure}{Optional character scalar; if missing/empty, inferred from the
 DAG (must be unique).}
@@ -41,8 +41,7 @@ DAG (must be unique).}
 \item{engine}{Modeling function, default \link[stats:lm]{stats::lm}. Ignored if \code{formula}
 is a single engine call (in that case the function is taken from the call).}
 
-\item{labels}{optional variable labels. can be named char vector or df or unnamed
-char vector}
+\item{labels}{Optional variable labels (named character vector or data.frame).}
 
 \item{verbose}{Logical (default \code{TRUE}). Controls verbosity in the console
 printer (formulas + notes).}
@@ -60,12 +59,20 @@ printer (formulas + notes).}
 Ignored for \code{type="console"}.
 }}
 
-\item{imply}{Logical; default \code{FALSE}. If \code{TRUE}, \code{DAGassist()} only evaluates
-variables listed in the \code{formula} argument.}
+\item{imply}{Logical; default \code{FALSE}. \strong{Evaluation scope.}
+\itemize{
+\item If \code{FALSE} (default): restrict DAG evaluation to variables \strong{named in the formula}
+(prune the DAG to exposure, outcome, and RHS terms). Roles/sets/bad-controls are
+computed on this pruned graph, and the roles table \strong{only} shows those variables.
+This is most useful if you want to refine your specific call.
+\item If \code{TRUE}: evaluate on the \strong{full DAG} and allow DAG-implied controls in the
+minimal/canonical sets; roles table shows all nodes. This is most useful if you
+want to refine your overall control variable selection.
+}}
 
-\item{omit_intercept}{logical; drop the intercept rows from output. Default TRUE.}
+\item{omit_intercept}{Logical; drop intercept rows from the model comparison (default \code{TRUE}).}
 
-\item{omit_factors}{logical; drop all factor-level rows. Default TRUE.}
+\item{omit_factors}{Logical; drop factor-level rows from the model comparison (default \code{TRUE}).}
 
 \item{engine_args}{Named list of extra arguments forwarded to \code{engine(...)}.
 If \code{formula} is an engine call, arguments from the call are merged with
@@ -75,9 +82,10 @@ If \code{formula} is an engine call, arguments from the call are merged with
 An object of class \code{"DAGassist_report"}, invisibly for file outputs,
 and printed for \code{type="console"}. The list contains:
 \itemize{
-\item \code{validation} - result from internal \code{validate_spec(...)} (includes \code{ok}).
-\item \code{roles} - roles data.frame from \code{classify_nodes(...)}.
-\item \code{bad_in_user} - variables in user controls that are mediator/collider/descendant of outcome.
+\item \code{validation} - result from \code{validate_spec(...)} which verifies acyclicity and X/Y declarations.
+\item \code{roles} - raw roles data.frame from \code{classify_nodes(...)} (logic columns).
+\item \code{roles_display} - roles grid after labeling/renaming for exporters.
+\item \code{bad_in_user} - variables in the user’s RHS that are \code{MED}/\code{COL}/\code{IO}/\code{DMed}/\code{DCol}.
 \item \code{controls_minimal} - (legacy) one minimal set (character vector).
 \item \code{controls_minimal_all} - list of all minimal sets (character vectors).
 \item \code{controls_canonical} - canonical set (character vector; may be empty).
@@ -95,32 +103,67 @@ XLSX, plain text). It also supports passing a \strong{single engine call} (e.g.
 }
 \details{
 \strong{Engine-call parsing.} If \code{formula} is a call (e.g., \code{feols(Y ~ X | fe, data=df)}),
-DAGassist extracts the engine function, the formula, the data argument, and
-any additional engine arguments directly from that call; these are merged with
-\code{engine}/\code{engine_args} you pass explicitly (call arguments win).
+DAGassist extracts the engine function, formula, data argument, and any additional
+engine arguments directly from that call; these are merged with \code{engine}/\code{engine_args}
+you pass explicitly (call arguments win).
 
-\strong{Fixest tails.} For engines like \strong{fixest} that use \code{|} to denote FE/IV
-parts, DAGassist preserves any \verb{| ...} “tail” when constructing minimal or
-canonical formulas (e.g., \code{Y ~ X + controls | fe | iv(...)}).
+\strong{Fixest tails.} For engines like \strong{fixest} that use \code{|} to denote FE/IV parts,
+DAGassist preserves any \verb{| ...} “tail” when constructing minimal/canonical formulas
+(e.g., \code{Y ~ X + controls | fe | iv(...)}).
+
+\strong{Roles grid.} The roles table displays short headers:
+\itemize{
+\item \code{X} (exposure), \code{Y} (outcome), \code{CON} (confounder), \code{MED} (mediator),
+\code{COL} (collider), \code{IO} (intermediate outcome = proper descendant of \code{Y}),
+\code{DMed} (proper descendant of any mediator), \code{DCol} (proper descendant of any collider).
+Descendants are \strong{proper} (exclude the node itself) and can be any distance downstream.
+The internal \code{is_descendant_of_exposure} is retained for logic but hidden in displays.
+}
+
+\strong{Bad controls.} For total-effect estimation, DAGassist flags as “bad controls”
+any variables that are \code{MED}, \code{COL}, \code{IO}, \code{DMed}, or \code{DCol}. These are warned in
+the console and omitted from the model-comparison table. Valid confounders (pre-treatment)
+are eligible for minimal/canonical adjustment sets.
 
 \strong{Output types.}
 \itemize{
-\item \code{console} prints* roles, sets, formulas (if \code{verbose}), and a compact model
-comparison with \code{{modelsummary}} if available, then falls back gracefully.
-\item \code{latex} writes a \strong{LaTeX fragment} you can \verb{\\input\{\}} into a paper.
-\item \code{docx}/\code{word} writes a \strong{Word} doc via Pandoc. It will use a reference
-document if set via \code{options(DAGassist.ref_docx="path/to/ref.docx")}, else
-falls back to a bundled or default reference DOCX, else Pandoc defaults.
+\item \code{console} prints roles, sets, formulas (if \code{verbose}), and a compact model comparison
+with \code{{modelsummary}} if available (falls back gracefully otherwise).
+\item \code{latex} writes a \strong{LaTeX fragment} you can \verb{\\\\input\{\}} into a paper.
+\item \code{docx}/\code{word} writes a \strong{Word} doc (uses \code{options(DAGassist.ref_docx=...)} if set).
 \item \code{excel}/\code{xlsx} writes an \strong{Excel} workbook with tidy tables.
-\item \code{text}/\code{txt} writes a \strong{plain-text} report suitable for logs/notes.
+\item \code{text}/\code{txt} writes a \strong{plain-text} report for logs/notes.
+}
 
-\strong{Dependencies.} Minimal core requires \code{{dagitty}}. Optional enhancements:
-\code{{modelsummary}} (pretty tables), \code{{broom}} (fallback tidying), \code{{rmarkdown}}
+\strong{Dependencies.} Core requires \code{{dagitty}}. Optional enhancements: \code{{modelsummary}}
+(pretty tables), \code{{broom}} (fallback tidying), \code{{rmarkdown}} + \strong{Pandoc} (DOCX),
+\code{{writexl}} (XLSX).
 }
+\section{Interpreting the output}{
+
+\strong{ROLES.} Variables in your formula are classified by DAG-based causal role:
 \itemize{
-\item \strong{Pandoc} (DOCX), \code{{writexl}} (XLSX).
+\item \code{X} - treatment / exposure.
+\item \code{Y} - outcome / dependent variable.
+\item \code{CON} - confounder (common cause of \code{X} and \code{Y}); adjust for these.
+\item \code{MED} - mediator (on a path from \code{X} to \code{Y}); do \strong{not} adjust when estimating total effects.
+\item \code{COL} - collider (direct descendant of \code{X} and \code{Y}); adjusting opens a spurious path, so do \strong{not} adjust.
+\item \code{IO} - intermediate outcome (descendant of \code{Y}); do \strong{not} adjust.
+\item \code{DMed} - descendant of a mediator; do \strong{not} adjust when estimating total effects.
+\item \code{DCol} - descendant of a collider; adjusting opens a spurious path, so do \strong{not} adjust.
+\item \code{other} - safe, non-confounding predictors (e.g., affect \code{Y} only). Included in the canonical
+model but omitted from the minimal set because they’re not required for identification.
+}
+
+\strong{MODEL COMPARISON.}
+\itemize{
+\item \strong{Minimal} - the smallest adjustment set that blocks all back-door paths
+(confounders only).
+\item \strong{Canonical} - the largest permissible set: includes all controls that are not
+\code{MED}, \code{COL}, \code{IO}, \code{DMed}, or \code{DCol}. \code{other} variables may appear here.
 }
 }
+
 \section{Errors and edge cases}{
 
 \itemize{

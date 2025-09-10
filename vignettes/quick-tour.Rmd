@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 
 # What you'll learn
 - How to go from a `dagitty` DAG + formula to a compact report
-- How to interpret `Original` vs `Minimal` vs `Canonical`
+- How to interpret the report, and what the variable categories and comparison models mean
 -	How to export to `LaTeX` / `Word` / `Excel` / `text`
 
 ## Load packages
@@ -60,9 +60,20 @@ See the [Supported Models](https://grahamgoff.github.io/DAGassist/articles/compa
 
 **Interpreting the output:**
 
-- `Bad controls` are variables that, when adjusted for, open spurious correlations between the independent and dependent variable. `DAGassist` seeks to identify these controls and clarify their effect on your `Original model`.
-- `Minimal` is the smallest adjustment set necessary to close all back-door paths from the independent to the dependent variable.
-- `Canonical` is the largest permissable adjustment set. Essentially, the `canonical` set contains all control variables that are not `bad`. 
+- **ROLES:** `DAGassist` classifies the variables in your formula by causal role, based on the relationships in your DAG. It classifies according to these categories.
+  - **X** is the `treatment` / `independent variable` / `exposure`.
+  - **Y** is the `outcome` / `dependent variable`.
+  - **conf** stands for `confounder`, a common cause of X and Y. Confounders create a spurious association between X and Y, and must be adjusted for. 
+  - **med** stands for `mediator`, a variable that lies on a path from X to Y, which transmit some of the effect from X to Y. One should not adjust for mediators if one wants to estimate the total effect of X on Y. 
+  - **col** stands for `collider`, a direct common descendant of X and Y. Colliders already block paths, so adjusting for it opens a spurious association between X and Y. 
+  - **IO** stands for `intermediate outcome`, a descendant of Y, which introduces bias if adjusted for.
+  - **dMed / Dmediator** stands for `descendant of a mediator`, which should not be adjusted for when estimating total effect.
+  - **dCol / Dcollider** stands for `descendant of a collider`. Adjusting for a descendant of a collider opens a spurious association between X and Y.
+  - **other** variables, such as those that only affect the outcome, do not fit any of the previous definitions. They are included in the canonical model because they can be safely included as controls, but are omitted from the minimal model because their inclusion is not strictly necessary. Since `other` variables' effects are generally neutral, it is usually best to use the minimal adjustment set as your baseline model. 
+
+- **MODEL COMPARISON:** 
+- `Minimal` is the smallest adjustment set necessary to close all back-door paths from the independent to the dependent variable. The minimal set only includes `confounders` as controls.
+- `Canonical` is the largest permissible adjustment set. Essentially, the `canonical` set contains all control variables that are not `confounders`, `mediators`, `intermediate outcomes`, `descendants of mediatiors`, or `descendants of colliders`. 
 
 ```{r console-report}
 
@@ -72,12 +83,12 @@ DAGassist(
 )
 ```
 
+
 ## Exporting
 
 See the [Making Reports](https://grahamgoff.github.io/DAGassist/articles/making-reports.html) vignette for more detailed information on producing publication-quality `DAGassist` reports in `LaTex`, `Word`, `Excel`, and `plaintext`.
 
 Since `DAGassist` is designed to make appendix robustness checks, this is an example of how to output a report in `LaTeX`.
-
 
 ```{r report}
 #initialize a temporary path
@@ -89,5 +100,6 @@ DAGassist(
   type = "latex", 
   out = out_tex) #put your output directory and file name here
 
-cat(readLines(out_tex), sep = "\n") # show the output
+cat(readLines(out_tex, n = 15), sep = "\n") # briefly show the output
 ```
+

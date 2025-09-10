@@ -1,6 +1,6 @@
 Package: DAGassist
 Title: Test Robustness with Directed Acyclic Graphs
-Version: 0.2.2
+Version: 0.2.3
 Authors@R: c(
     person("Graham", "Goff", , "goffgrahamc@gmail.com", role = c("aut", "cre"),
            comment = c(affiliation = "Dept. of International Affairs, Texas A&M University", ORCID = "0000-0002-0717-6995")),

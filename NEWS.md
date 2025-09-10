@@ -1,3 +1,15 @@
+# DAGassist 0.2.3
+
+## Highlights:
+
+- Fixed `imply` logic. Previously, for the roles table, `imply = FALSE` would only display RHS variables, but still assessed all DAG-based relationships.
+- Renamed `desc(Y)` `IO`, for `intermediate outcome`
+- Dropped `desc(X)` as a roles column
+- Added `dMed` (descendant of mediator) and `dCol` (descendant of collider)
+- Updated documentation and added vignettes
+
+This is the last release before CRAN sumbission. 
+
 # DAGassist 0.2.2
 
 ## Highlights:

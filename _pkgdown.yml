@@ -4,17 +4,26 @@ template:
   bslib:
     bootswatch: darkly
 
+development:
+  mode: auto
+
+navbar:
+  structure:
+    left:  [home, articles, reference]
+    right: [news]
+    
 articles:
-  - title: "Get Started"
+  - title: "Tutorials"
     contents:
       - quick-tour
       - get-started
-  - title: "Making Reports"
+  - title: "How-to Guides"
     contents:
       - making-reports
-  - title: "Supported Models"
-    contents:
       - compatibility
+  - title: "Extended Documentation"
+    contents:
+      - ecosystem
       
 reference:
   - title: "Main function"

@@ -1,0 +1,14 @@
+---
+title: "DAGassist in the R DAG Ecosystem"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(DAGassist)
+```

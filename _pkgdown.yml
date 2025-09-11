@@ -23,7 +23,7 @@ articles:
       - compatibility
   - title: "Extended Documentation"
     contents:
-      - ecosystem
+      - articles/ecosystem
       
 reference:
   - title: "Main function"

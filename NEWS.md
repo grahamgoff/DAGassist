@@ -2,7 +2,7 @@
 
 ## Highlights:
 - Removed `compare_specs()` and `print.compare_specs()`, which were unused and causing issues.
-- Updated `DESCRIPTION` to reference `dagitty` and Pearl(2009) under methods.
+- Updated `DESCRIPTION` to reference `dagitty` and relevant article under methods.
 
 This is for CRAN re-submission.
 

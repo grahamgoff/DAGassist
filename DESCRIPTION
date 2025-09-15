@@ -11,12 +11,15 @@ Authors@R: c(
       role = "ctb",
       comment = c(ORCID = "0000-0002-7074-5011"))
   )
-Description: Provides robustness checks driven by directed acyclic graphs
-    (DAGs). Given a 'dagitty' DAG object and a model specification,
-    'DAGassist' classifies variables by causal roles, flags problematic
-    controls, and generates a neat report comparing the original model
-    with minimal and canonical adjustment sets. Exports publication-grade
-    reports in LaTeX, Word, Excel, or plain text.
+Description: Check robustness with directed acyclic graphs (DAGs). Given a 
+    'dagitty' DAG object and a model specification, 'DAGassist' classifies 
+    variables by causal roles, flags problematic controls, and generates a 
+    report comparing the original model with minimal and canonical adjustment 
+    sets. Exports publication-grade reports in 'LaTeX', 'Word', 'Excel', or 
+    plain text. 'DAGassist' is built on top of 'dagitty', an R package that uses 
+    the 'DAGitty' web tool (<https://dagitty.net/>) for creating and analyzing 
+    DAGs. Methods draw on Pearl (2009) <doi:10.1017/CBO9780511803161> and 
+    and Textor et al. (2016) <doi:10.1093/ije/dyw341>.
 License: GPL (>= 2)
 URL: https://github.com/grahamgoff/DAGassist,
     https://grahamgoff.github.io/DAGassist/

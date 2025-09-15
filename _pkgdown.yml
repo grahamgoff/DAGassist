@@ -11,6 +11,9 @@ navbar:
   structure:
     left:  [home, articles, reference]
     right: [news]
+  components:
+    news:
+      text: "News"
     
 articles:
   - title: "Tutorials"

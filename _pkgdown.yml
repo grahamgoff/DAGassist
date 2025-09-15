@@ -46,8 +46,6 @@ reference:
     desc: >
       Lower-level helpers and print methods, usually not called directly.
     contents:
-      - compare_specs
-      - print.DAGassist_compare
       - print.DAGassist_report
       - print.DAGassist_roles
       - print.DAGassist_validation

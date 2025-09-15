@@ -1,3 +1,11 @@
+# DAGassist 0.2.4
+
+## Highlights:
+- Removed `compare_specs()` and `print.compare_specs()`, which were unused and causing issues.
+- Updated `DESCRIPTION` to reference `dagitty` and Pearl(2009) under methods.
+
+This is for CRAN re-submission.
+
 # DAGassist 0.2.3
 
 ## Highlights:

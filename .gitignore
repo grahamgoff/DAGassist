@@ -34,3 +34,6 @@ inst/doc
 /doc/
 /Meta/
 revdep/
+
+#omit extended documentation
+vignettes/articles

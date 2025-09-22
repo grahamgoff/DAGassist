@@ -7,6 +7,9 @@
 
 [![R-CMD-check](https://github.com/grahamgoff/DAGassist/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/grahamgoff/DAGassist/actions/workflows/R-CMD-check.yaml)
 [![pages-build-deployment](https://github.com/grahamgoff/DAGassist/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/grahamgoff/DAGassist/actions/workflows/pages/pages-build-deployment)
+[![CRAN
+status](https://www.r-pkg.org/badges/version/DAGassist)](https://cran.r-project.org/package=DAGassist)
+
 <!-- badges: end -->
 
 **An all-in-one DAG-driven robustness check.** Classify variables by
@@ -33,19 +36,24 @@ vignette for documentation on what engines `DAGassist` supports.
 
 ## Installation
 
-You can install the development version of DAGassist from
-[GitHub](https://github.com/grahamgoff/DAGassist) with:
+You can install `DAGassist` with:
 
 ``` r
-install.packages("pak")
-pak::pak("grahamgoff/DAGassist")
+install.packages("DAGassist")
 ```
 
-## DAGassist example
+Or you can install the development version from GitHub with:
 
-Simply provide a `dagitty()` object and a regression call and DAGassist
-will create a report classifying variables by causal role, and compare
-the specified regression to minimal and canonical models.
+``` r
+# install.packages("devtools")
+devtools::install_github("grahamgoff/DAGassist")
+```
+
+## Example
+
+Simply provide a `dagitty()` object and a regression call and
+`DAGassist` will create a report classifying variables by causal role,
+and compare the specified regression to minimal and canonical models.
 
 ``` r
 library(DAGassist) 
@@ -55,14 +63,14 @@ DAGassist(dag = dag_model,
 #> DAGassist Report: 
 #> 
 #> Roles:
-#> variable  role        X  Y  conf  med  col  IO  dMed  dCol
-#> X         exposure    x                                   
-#> Y         outcome        x                      x         
-#> Z         confounder        x                             
-#> M         mediator                x                       
-#> C         collider                     x    x   x         
-#> A         other                                           
-#> B         other                                           
+#> variable  role        X  Y  conf  med  col  desc(Y)  desc(X)
+#> X         exposure    x                                     
+#> Y         outcome        x                           x      
+#> Z         confounder        x                               
+#> M         mediator                x                  x      
+#> C         collider                     x    x        x      
+#> A         other                                             
+#> B         other                                             
 #> 
 #>  (!) Bad controls in your formula: {M, C}
 #> Minimal controls 1: {Z}

@@ -9,11 +9,11 @@ development:
 
 navbar:
   structure:
-    left:  [home, articles, reference]
-    right: [news]
-  components:
-    news:
-      text: "News"
+    left:  [home, articles, reference, news]
+    right: []
+  #components:
+    #news:
+      #text: "News"   
     
 articles:
   - title: "Tutorials"
@@ -27,6 +27,7 @@ articles:
   - title: "Extended Documentation"
     contents:
       - articles/ecosystem
+      - articles/theoretical-scaffolding
       
 reference:
   - title: "Main function"

@@ -11,7 +11,7 @@ knitr::opts_chunk$set(
   fig.path = "man/figures/README-", out.width = "100%"
 )
 
-devtools::load_all(quiet = TRUE)
+#devtools::load_all(quiet = TRUE)
 
 library(fixest)
 ```
@@ -30,6 +30,8 @@ Sys.setenv(NO_COLOR = "1")
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/grahamgoff/DAGassist/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/grahamgoff/DAGassist/actions/workflows/R-CMD-check.yaml)
 [![pages-build-deployment](https://github.com/grahamgoff/DAGassist/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/grahamgoff/DAGassist/actions/workflows/pages/pages-build-deployment)
+[![CRAN status](https://www.r-pkg.org/badges/version/DAGassist)](https://cran.r-project.org/package=DAGassist)
+
 <!-- badges: end -->
 
 **An all-in-one DAG-driven robustness check.**
@@ -45,11 +47,16 @@ See the [Supported Models](https://grahamgoff.github.io/DAGassist/articles/compa
 
 ## Installation
 
-You can install the development version of DAGassist from [GitHub](https://github.com/grahamgoff/DAGassist) with:
+You can install `DAGassist` with:
+```{r cran, eval = FALSE}
+install.packages("DAGassist")
+```
+
+Or you can install the development version from GitHub with:
 
 ```{r install, eval = FALSE}
-install.packages("pak")
-pak::pak("grahamgoff/DAGassist")
+# install.packages("devtools")
+devtools::install_github("grahamgoff/DAGassist")
 ```
 
 ```{r ex-dag, include=FALSE}
@@ -93,9 +100,9 @@ C <- bXC*X + bYC*Y + rnorm(n, 0, 1)
 df <- data.frame(A, B, Z, X, M, Y, C)
 ```
 
-## DAGassist example
+## Example
 
-Simply provide a `dagitty()` object and a regression call and DAGassist will create a report classifying variables by causal role, and compare the specified regression to minimal and canonical models. 
+Simply provide a `dagitty()` object and a regression call and `DAGassist` will create a report classifying variables by causal role, and compare the specified regression to minimal and canonical models. 
 
 ```{r run}
 library(DAGassist) 

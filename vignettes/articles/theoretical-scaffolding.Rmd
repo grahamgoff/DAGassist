@@ -1,0 +1,48 @@
+---
+title: "Counterfactuals and Relevant Terms"
+bibliography: library.bib
+link-citations: true
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(DAGassist)
+```
+
+# Introduction
+Questions of causality predominate throughout the natural and social sciences [@PearlOverview2009]. However, observational data are limited in their ability to demonstrate causality because "...one can never observe the potential outcome under the treatment state for those observed in the control state, and one can never observe the potential outcome under the control state for those observed in the treatment state" [@MorganWinship2015, pp. 45].
+@Holland1986 describes this as the fundamental problem of causal inference. The counterfactual model provides approaches for inferring causal relationships from observational data. This article provides a concise explanation of its ideas and applications.
+
+# The Counterfactual Model
+(what is the counterfactual model? what are its basic principals? focused on the aspects which are encoded in DAGs)
+
+
+
+SUTVA: 
+"SUTVA is simply the a priori assumption that the value of Y for unit $u$ when exposed to treatment $t$ will be the same no matter what mechanism is used to assign treatment $t$ to unit $u$ and no matter what treatnebts the other units receive" [@MorganWinship2015, pp. 48]. 
+
+On ceteris paribus assumptions:
+"When a facile ceteris paribus assumption is invoked to relieve the analyst from having to discuss other contrasts that are nearly certain to occur at the same time, the posited causal states may be open to the charge that they are too improbable or ill-defined to justify the pursuit of a causal analysis based on a causal analysis based on them" [@MorganWinship2015, pp. 43]. 
+
+# Misapplications of Counterfactuals
+(look at kitchen sink regressions and table 2 fallacies)
+**Covariate adjustment** is a common method for inferring causality from observational data. Many empirical practitioners use covariate adjustment to reduce variance in the outcome of interest, under the assumption that larger adjustment sets will increase precision. An extensive and growing body of literature identifies the shortcomings of this approach. Indiscriminate adjustment may lead to *collider bias* and the improper representation and causal interpretation of multivariate models' control variables lead to the *table 2 fallacy*. The following subsection explains those pitfalls.
+
+
+# Causal Graphs
+(what are DAGs? define elements.)
+The Basic Elements of Causal Graphs:
+
+- "Causal effects are represented by directed edges → (i.e., single-headed arrows), such that an edge from one node to another signifies that the variable at the origin of the directed edge causes the variable at the terminus. These 'directed' edges are what give graphs composed of nodes and single-headed arrows the general label of 'directed graphs'" [@MorganWinship2015, pp. 79-80].
+- "A *path* in any sequence of edges pointing in any direction that connects one variable to another'' [@MorganWinship2015, pp. 80].
+- "A *directed path* is a path in which all edges point in the same direction" [@MorganWinship2015, pp. 80].
+- "A variable is a *descendant* of another variable if it can be reached by a direct path" [@MorganWinship2015, pp. 80].
+- "Most importantly, for directed paths of length one, as in A→B, the variable $A$ is the *parent* while the variable $B$ is the *child*" [@MorganWinship2015, pp. 80]. 
+
+#

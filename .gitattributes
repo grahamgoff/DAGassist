@@ -1,3 +1,5 @@
 # Ignore pkgdown HTML from language stats
 *.html linguist-vendored
 docs/* linguist-vendored
+# Omit the vignette bibtex 
+*.bib linguist-vendored

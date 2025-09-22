@@ -22,6 +22,12 @@ Questions of causality predominate throughout the natural and social sciences [@
 # The Counterfactual Model
 (what is the counterfactual model? what are its basic principals? focused on the aspects which are encoded in DAGs)
 
+The back-door adjustment criterion has two main components:
+
+- ``...conditioning on variables that lie on back-door paths can be an effective strategy to identify a causal effect'' [@MorganWinship2015, pp. 116].
+- ``...if a set of conditioning variables blocks all back-door paths, the analyst must then varify that no variables within the conditioning set block the causal effect of interest or otherwise mistakenly adjust it away'' [@MorganWinship2015, pp. 117].
+
+Essentially, researchers should condition on only the set of variables that enables them to close back-door paths. 
 
 
 SUTVA: 

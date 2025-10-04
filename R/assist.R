@@ -57,13 +57,13 @@
 #'
 #' **Roles grid.** The roles table displays short headers:
 #'   - `X` (exposure), `Y` (outcome), `CON` (confounder), `MED` (mediator),
-#'     `COL` (collider), `IO` (intermediate outcome = proper descendant of `Y`),
-#'     `DMed` (proper descendant of any mediator), `DCol` (proper descendant of any collider).
+#'     `COL` (collider), `dOut` (proper descendant of `Y`),
+#'     `dMed` (proper descendant of any mediator), `dCol` (proper descendant of any collider).
 #'   Descendants are **proper** (exclude the node itself) and can be any distance downstream.
 #'   The internal `is_descendant_of_exposure` is retained for logic but hidden in displays.
 #'
 #' **Bad controls.** For total-effect estimation, DAGassist flags as `bad controls`
-#' any variables that are `MED`, `COL`, `IO`, `DMed`, or `DCol`. These are warned in
+#' any variables that are `MED`, `COL`, `dOut`, `dMed`, or `dCol`. These are warned in
 #' the console and omitted from the model-comparison table. Valid confounders (pre-treatment)
 #' are eligible for minimal/canonical adjustment sets.
 #'
@@ -85,7 +85,7 @@
 #'   \item `validation` - result from `validate_spec(...)` which verifies acyclicity and X/Y declarations.
 #'   \item `roles` - raw roles data.frame from `classify_nodes(...)` (logic columns).
 #'   \item `roles_display` - roles grid after labeling/renaming for exporters.
-#'   \item `bad_in_user` - variables in the user's RHS that are `MED`/`COL`/`IO`/`DMed`/`DCol`.
+#'   \item `bad_in_user` - variables in the user's RHS that are `MED`/`COL`/`dOut`/`dMed`/`dCol`.
 #'   \item `controls_minimal` - (legacy) one minimal set (character vector).
 #'   \item `controls_minimal_all` - list of all minimal sets (character vectors).
 #'   \item `controls_canonical` - canonical set (character vector; may be empty).
@@ -102,9 +102,9 @@
 #'   \item `CON` - confounder (common cause of `X` and `Y`); adjust for these.
 #'   \item `MED` - mediator (on a path from `X` to `Y`); do **not** adjust when estimating total effects.
 #'   \item `COL` - collider (direct descendant of `X` and `Y`); adjusting opens a spurious path, so do **not** adjust.
-#'   \item `IO` - intermediate outcome (descendant of `Y`); do **not** adjust.
-#'   \item `DMed` - descendant of a mediator; do **not** adjust when estimating total effects.
-#'   \item `DCol` - descendant of a collider; adjusting opens a spurious path, so do **not** adjust.
+#'   \item `dOut` - descendant of outcome; do **not** adjust.
+#'   \item `dMed` - descendant of a mediator; do **not** adjust when estimating total effects.
+#'   \item `dCol` - descendant of a collider; adjusting opens a spurious path, so do **not** adjust.
 #'   \item `other` - safe, non-confounding predictors (e.g., affect `Y` only). Included in the canonical
 #'         model but omitted from the minimal set because they're not required for identification.
 #' }
@@ -114,7 +114,7 @@
 #'   \item **Minimal** - the smallest adjustment set that blocks all back-door paths
 #'         (confounders only).
 #'   \item **Canonical** - the largest permissible set: includes all controls that are not
-#'         `MED`, `COL`, `IO`, `DMed`, or `DCol`. `other` variables may appear here.
+#'         `MED`, `COL`, `dOut`, `dMed`, or `dCol`. `other` variables may appear here.
 #' }
 #'@section Errors and edge cases:
 #'  * If exposure/outcome cannot be inferred uniquely, the function stops with a clear message.

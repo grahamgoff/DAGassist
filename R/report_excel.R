@@ -10,6 +10,8 @@
   mods  <- tryCatch(res$models,    error = function(e) NULL)
   msets <- tryCatch(res$min_sets,  error = function(e) list())
   canon <- tryCatch(res$canon,     error = function(e) character(0))
+  show <- tryCatch(res$show, error = function(e) "all")
+  
   # from boolean + raw labels to x grid with standard column nmaes
   df_roles <- .roles_pretty(roles)
 
@@ -19,25 +21,22 @@
                                              coef_omit = res$coef_omit)
   df_models <- built$df
   
-  notes <- c(
-    "+ p < 0.1, * p < 0.05, ** p < 0.01, *** p < 0.001.",
-    paste0("Controls (minimal):   ", if (length(msets)) .set_brace_plain(msets[[1]]) else "{}"),
-    paste0("Controls (canonical): ", .set_brace_plain(canon), ".")
-  )
-  if (!is.null(res$unevaluated_str) && nzchar(res$unevaluated_str)) {
-    notes <- c(notes, paste0("Unevaluated regressors (not in DAG): {", res$unevaluated_str, "}"))
-  }
-  #make the df
-  df_notes <- data.frame(
-    Notes = notes,
-    stringsAsFactors = FALSE
-  )
+  if (identical(show, "models")) df_roles  <- df_roles[0, , drop = FALSE]
+  if (identical(show, "roles"))  df_models <- df_models[0, , drop = FALSE]
   
-  # Collect non-empty sheets (in a stable order)
+  notes <- c("+ p < 0.1, * p < 0.05, ** p < 0.01, *** p < 0.001.")
+  if (show != "roles") {
+    notes <- c(notes,
+               paste0("Controls (minimal):   ", if (length(msets)) .set_brace_plain(msets[[1]]) else "{}"),
+               paste0("Controls (canonical): ", .set_brace_plain(canon), "."))
+    if (!is.null(res$unevaluated_str) && nzchar(res$unevaluated_str))
+      notes <- c(notes, paste0("Unevaluated regressors (not in DAG): {", res$unevaluated_str, "}"))
+  }
+  
   sheets <- list()
   if (!is.null(df_roles)  && nrow(df_roles))  sheets$Roles  <- df_roles
   if (!is.null(df_models) && nrow(df_models)) sheets$Models <- df_models
-  sheets$Notes <- df_notes
+  sheets$Notes <- data.frame(Notes = notes, stringsAsFactors = FALSE)
   
   dir.create(dirname(out), recursive = TRUE, showWarnings = FALSE)
   writexl::write_xlsx(sheets, path = out)

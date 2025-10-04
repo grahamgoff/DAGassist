@@ -14,6 +14,7 @@ DAGassist(
   labels = NULL,
   verbose = TRUE,
   type = c("console", "latex", "word", "docx", "excel", "xlsx", "text", "txt"),
+  show = c("all", "roles", "models"),
   out = NULL,
   imply = FALSE,
   omit_intercept = TRUE,
@@ -50,6 +51,9 @@ printer (formulas + notes).}
 \code{"console"} (default), \code{"latex"}/\code{"docx"}/\code{"word"},
 \code{"excel"}/\code{"xlsx"}, \code{"text"}/\code{"txt"}.}
 
+\item{show}{Which sections to include in the output. One of \code{"all"} (default),
+\code{"roles"}, or \code{"models"}.}
+
 \item{out}{Output file path for the non-console types:
 \itemize{
 \item \code{type="latex"}: a \strong{LaTeX fragment} written to \code{out} (must end with \code{.tex}).
@@ -85,7 +89,7 @@ and printed for \code{type="console"}. The list contains:
 \item \code{validation} - result from \code{validate_spec(...)} which verifies acyclicity and X/Y declarations.
 \item \code{roles} - raw roles data.frame from \code{classify_nodes(...)} (logic columns).
 \item \code{roles_display} - roles grid after labeling/renaming for exporters.
-\item \code{bad_in_user} - variables in the user's RHS that are \code{MED}/\code{COL}/\code{IO}/\code{DMed}/\code{DCol}.
+\item \code{bad_in_user} - variables in the user's RHS that are \code{MED}/\code{COL}/\code{dOut}/\code{dMed}/\code{dCol}.
 \item \code{controls_minimal} - (legacy) one minimal set (character vector).
 \item \code{controls_minimal_all} - list of all minimal sets (character vectors).
 \item \code{controls_canonical} - canonical set (character vector; may be empty).
@@ -114,14 +118,14 @@ DAGassist preserves any \verb{| ...} tail when constructing minimal/canonical fo
 \strong{Roles grid.} The roles table displays short headers:
 \itemize{
 \item \code{X} (exposure), \code{Y} (outcome), \code{CON} (confounder), \code{MED} (mediator),
-\code{COL} (collider), \code{IO} (intermediate outcome = proper descendant of \code{Y}),
-\code{DMed} (proper descendant of any mediator), \code{DCol} (proper descendant of any collider).
+\code{COL} (collider), \code{dOut} (proper descendant of \code{Y}),
+\code{dMed} (proper descendant of any mediator), \code{dCol} (proper descendant of any collider).
 Descendants are \strong{proper} (exclude the node itself) and can be any distance downstream.
 The internal \code{is_descendant_of_exposure} is retained for logic but hidden in displays.
 }
 
 \strong{Bad controls.} For total-effect estimation, DAGassist flags as \verb{bad controls}
-any variables that are \code{MED}, \code{COL}, \code{IO}, \code{DMed}, or \code{DCol}. These are warned in
+any variables that are \code{MED}, \code{COL}, \code{dOut}, \code{dMed}, or \code{dCol}. These are warned in
 the console and omitted from the model-comparison table. Valid confounders (pre-treatment)
 are eligible for minimal/canonical adjustment sets.
 
@@ -148,9 +152,9 @@ with \code{{modelsummary}} if available (falls back gracefully otherwise).
 \item \code{CON} - confounder (common cause of \code{X} and \code{Y}); adjust for these.
 \item \code{MED} - mediator (on a path from \code{X} to \code{Y}); do \strong{not} adjust when estimating total effects.
 \item \code{COL} - collider (direct descendant of \code{X} and \code{Y}); adjusting opens a spurious path, so do \strong{not} adjust.
-\item \code{IO} - intermediate outcome (descendant of \code{Y}); do \strong{not} adjust.
-\item \code{DMed} - descendant of a mediator; do \strong{not} adjust when estimating total effects.
-\item \code{DCol} - descendant of a collider; adjusting opens a spurious path, so do \strong{not} adjust.
+\item \code{dOut} - descendant of outcome; do \strong{not} adjust.
+\item \code{dMed} - descendant of a mediator; do \strong{not} adjust when estimating total effects.
+\item \code{dCol} - descendant of a collider; adjusting opens a spurious path, so do \strong{not} adjust.
 \item \code{other} - safe, non-confounding predictors (e.g., affect \code{Y} only). Included in the canonical
 model but omitted from the minimal set because they're not required for identification.
 }
@@ -160,7 +164,7 @@ model but omitted from the minimal set because they're not required for identifi
 \item \strong{Minimal} - the smallest adjustment set that blocks all back-door paths
 (confounders only).
 \item \strong{Canonical} - the largest permissible set: includes all controls that are not
-\code{MED}, \code{COL}, \code{IO}, \code{DMed}, or \code{DCol}. \code{other} variables may appear here.
+\code{MED}, \code{COL}, \code{dOut}, \code{dMed}, or \code{dCol}. \code{other} variables may appear here.
 }
 }
 

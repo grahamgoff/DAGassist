@@ -164,7 +164,8 @@
   mods   <- tryCatch(res$models, error = function(e) NULL)
   msets  <- tryCatch(res$min_sets, error = function(e) list())
   canon  <- tryCatch(res$canon, error = function(e) character(0))
-
+  show <- tryCatch(res$show, error = function(e) "all")
+  
   # Build the single Notes line with p-value legend + controls summary
   ctrl_min <- if (length(msets)) .set_brace(msets[[1]]) else "{}"
   ctrl_can <- if (length(canon)) .set_brace(canon) else "{}"
@@ -174,43 +175,54 @@
     "% Requires: \\usepackage{tabularray} \\UseTblrLibrary{booktabs,siunitx,talltblr}",
     "\\begingroup\\footnotesize",
     {
-      if (is.data.frame(roles) && nrow(roles)) {
+      if (show != "models" && is.data.frame(roles) && nrow(roles)) {
         c(.df_to_longtable_centered(.roles_pretty(roles)),
           "% no vertical glue between tables",
           "\\nointerlineskip")
       } else character(0)
     },
     {
-      if (!is.null(mods)) .msummary_to_longtable_centered(mods, 
+      if (show != "roles" && !is.null(mods)) .msummary_to_longtable_centered(mods, 
                                                           coef_rename=res$coef_rename,
                                                           coef_omit = res$coef_omit) 
       else character(0)
     },
     "\\par\\endgroup",
-    # Notes: stars, then each controls line on its own, indented
+    #adtocounter reduces the table ref number by one because there are two 
+    #tabular objects in output, so the counter increments by 2 naturally.
+    #only do this if printing the whole report because that is the only case
+    #in which there will be two tabular objects in the report
+    if (show == "all"){
+      "\\addtocounter{table}{-1}"
+    }else character(0),
     {
-      msets <- tryCatch(res$min_sets, error = function(e) list())
-      canon <- tryCatch(res$canon,    error = function(e) character(0))
-      min_str   <- if (length(msets)) .set_brace(msets[[1]]) else "{}"
-      canon_str <- .set_brace(canon)
-      
       notes <- c(
         "\\vspace{1em}",
-        "\\footnotesize",
-        paste0("\\textit{Controls (minimal):} ",   min_str,   "\\\\"),
-        paste0("\\textit{Controls (canonical):} ", canon_str)
+        "\\footnotesize"
       )
       
-      if (!is.null(res$unevaluated_str) && nzchar(res$unevaluated_str)) {
-        # keep wording tight and consistent:
+      if (show != "roles") {
+        msets <- tryCatch(res$min_sets, error = function(e) list())
+        canon <- tryCatch(res$canon,    error = function(e) character(0))
+        min_str   <- if (length(msets)) .set_brace(msets[[1]]) else "{}"
+        canon_str <- .set_brace(canon)
+        
         notes <- c(
           notes,
-          sprintf("\\textit{Unevaluated regressors (not in DAG):} {%s}",
-                  .tex_escape(res$unevaluated_str))
+          paste0("\\textit{Controls (minimal):} ",   min_str,   "\\\\"),
+          paste0("\\textit{Controls (canonical):} ", canon_str)
         )
+        
+        if (!is.null(res$unevaluated_str) && nzchar(res$unevaluated_str)) {
+          notes <- c(
+            notes,
+            sprintf("\\textit{Unevaluated regressors (not in DAG):} {%s}",
+                    .tex_escape(res$unevaluated_str))
+          )
+        }
       }
-      #return a pure character vector from the block
-      notes 
+      
+      notes  # always return a character vector, irrespective of show param
     }
   )
   

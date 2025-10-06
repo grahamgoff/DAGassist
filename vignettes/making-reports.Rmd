@@ -14,6 +14,17 @@ knitr::opts_chunk$set(
 )
 ```
 
+```{r dev-load, include=FALSE}
+# Prefer the package source when building locally or for pkgdown
+if (requireNamespace("devtools", quietly = TRUE)) {
+  if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) {
+    devtools::load_all("..", quiet = TRUE)  # ".." = package root from vignettes/
+  }
+}
+# Helper flag for version-gated examples
+has_show <- "show" %in% names(formals(DAGassist::DAGassist))
+```
+
 # Introduction
 
 This vignette explains how to make publication-grade DAGassist reports in LaTeX,
@@ -168,5 +179,19 @@ DAGassist(dag = dag_model, #specify a dagitty or ggdag object
 cat(readLines(out_txt), sep = "\n") # show the output
 ```
 
+## Creating sub-reports (roles-only or models-only)
 
+Sometimes you only need one part of the report. Use the `show` argument to generate just the roles grid or just the model comparison:
+
+- `show = "roles"` – produce only the DAG-based roles table.  
+  No model is fitted, and **no `formula` or `data` is required**. This is ideal when your regression engine isn’t supported or you simply want to audit variable roles.
+
+- `show = "models"` – produce only the model comparison (Original / Minimal / Canonical).  
+  Requires a model specification (either a formula or a single engine call); no roles table is printed.
+  
+### Examples
+```{r roles-subreport, eval=has_show}
+DAGassist(dag = dag_model,
+          show = "roles")
+```
 

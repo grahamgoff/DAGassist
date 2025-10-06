@@ -472,6 +472,44 @@ variables in <code>original</code>.</p>
 <li>Controls (canonical): {A, B, C, F, G, H}.</li>
 </ul>
 </div>
+<div class="section level3">
+<h3 id="creating-sub-reports-roles-only-or-models-only">Creating sub-reports (roles-only or models-only)<a class="anchor" aria-label="anchor" href="#creating-sub-reports-roles-only-or-models-only"></a>
+</h3>
+<p>Sometimes you only need one part of the report. Use the
+<code>show</code> argument to generate just the roles grid or just the
+model comparison:</p>
+<ul>
+<li><p><code>show = "roles"</code> – produce only the DAG-based roles
+table.<br>
+No model is fitted, and <strong>no <code>formula</code> or
+<code>data</code> is required</strong>. This is ideal when your
+regression engine isn’t supported or you simply want to audit variable
+roles.</p></li>
+<li><p><code>show = "models"</code> – produce only the model comparison
+(Original / Minimal / Canonical).<br>
+Requires a model specification (either a formula or a single engine
+call); no roles table is printed.</p></li>
+</ul>
+<div class="section level4">
+<h4 id="examples">Examples<a class="anchor" aria-label="anchor" href="#examples"></a>
+</h4>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span>dag <span class="op">=</span> <span class="va">dag_model</span>,</span>
+<span>          show <span class="op">=</span> <span class="st">"roles"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; DAGassist Report: </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Roles:</span></span>
+<span><span class="co">#&gt; variable  role        X  Y  conf  med  col  dOut  dMed  dCol</span></span>
+<span><span class="co">#&gt; D         exposure    x                                     </span></span>
+<span><span class="co">#&gt; Y         outcome        x                                  </span></span>
+<span><span class="co">#&gt; A         confounder        x                               </span></span>
+<span><span class="co">#&gt; B         confounder        x                               </span></span>
+<span><span class="co">#&gt; C         confounder        x                               </span></span>
+<span><span class="co">#&gt; F         confounder        x                               </span></span>
+<span><span class="co">#&gt; G         other                                             </span></span>
+<span><span class="co">#&gt; H         other</span></span></code></pre></div>
+</div>
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

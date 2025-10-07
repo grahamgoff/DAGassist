@@ -152,18 +152,6 @@ classify_nodes <- function(dag, exposure, outcome) {
     }
   }
   
-  # ensure X and Y are only exposure/outcome. clear other flags for them 
-  xy <- df$is_exposure | df$is_outcome
-  flag_cols <- c(
-    "is_confounder",
-    "is_mediator",
-    "is_collider",
-    "is_descendant_of_outcome",
-    "is_descendant_of_mediator",
-    "is_descendant_of_collider"
-  )
-  df[xy, flag_cols] <- FALSE
-  
   # assign boolean flags by set
   df <- data.frame(
     variable = nodes,
@@ -178,6 +166,18 @@ classify_nodes <- function(dag, exposure, outcome) {
     is_descendant_of_collider = nodes %in% dcol_set,
     stringsAsFactors = FALSE
   )
+  
+  # ensure X and Y are only exposure/outcome. clear other flags for them 
+  xy <- df$is_exposure | df$is_outcome
+  flag_cols <- c(
+    "is_confounder",
+    "is_mediator",
+    "is_collider",
+    "is_descendant_of_outcome",
+    "is_descendant_of_mediator",
+    "is_descendant_of_collider"
+  )
+  df[xy, flag_cols] <- FALSE
   
   # choose primary flag by node
   # precedence is reverse-sequential

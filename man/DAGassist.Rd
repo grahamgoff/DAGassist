@@ -201,6 +201,8 @@ DAGassist(dag = g, formula = lm(Y ~ X + Z + C + M, data = df))
 DAGassist(dag = g, formula = lm(Y ~ X + Z + C + M, data = df),
           type = "latex", out = file.path(tempdir(), "frag.tex"))
 }
+# generate just the roles table in the console
+DAGassist(dag = g, show = "roles")
 \dontshow{\}) # examplesIf}
 }
 \seealso{

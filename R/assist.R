@@ -148,6 +148,8 @@
 #' DAGassist(dag = g, formula = lm(Y ~ X + Z + C + M, data = df),
 #'           type = "latex", out = file.path(tempdir(), "frag.tex"))
 #' }
+#' # generate just the roles table in the console
+#' DAGassist(dag = g, show = "roles")
 #' @export
 
 DAGassist <- function(dag, 
@@ -229,7 +231,7 @@ DAGassist <- function(dag,
       omit_factors   = isTRUE(omit_factors),
       show           = show
     )
-    report$.__data <- if (!missing(data)) data else NULL
+    report$.__data <- if (!is.null(data)) data else NULL
     report$settings$coef_omit <- .build_coef_omit(
       data = report$.__data,
       omit_intercept = report$settings$omit_intercept,

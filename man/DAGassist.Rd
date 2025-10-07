@@ -6,8 +6,8 @@
 \usage{
 DAGassist(
   dag,
-  formula,
-  data,
+  formula = NULL,
+  data = NULL,
   exposure,
   outcome,
   engine = stats::lm,

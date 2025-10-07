@@ -150,7 +150,11 @@
 #' }
 #' @export
 
-DAGassist <- function(dag, formula, data, exposure, outcome,
+DAGassist <- function(dag, 
+                      formula = NULL, 
+                      data = NULL, 
+                      exposure, 
+                      outcome,
                       engine = stats::lm, 
                       labels = NULL,
                       verbose = TRUE, 
@@ -166,6 +170,152 @@ DAGassist <- function(dag, formula, data, exposure, outcome,
   type <- match.arg(type)
   # set show type
   show <- match.arg(show)
+  
+  # fail quickly if show = models and no formula
+  if (show == "models" && (missing(formula) || is.null(formula))) {
+    stop("show='models' requires a model specification (formula or engine call).", call. = FALSE)
+  }
+  
+  ###### FAST-PATH FOR ROLES ONLY OUTPUT TO NOT REQUIRE FORMULA OR DATA ########
+  roles_only_no_formula <- identical(show, "roles") && (missing(formula) || is.null(formula))
+  if (roles_only_no_formula) {
+    # infer exposure/outcome if not provided
+    xy <- .infer_xy(dag, exposure, outcome)
+    exposure <- xy$exposure
+    outcome  <- xy$outcome
+    # compute roles directly from DAG 
+    roles <- classify_nodes(dag, exposure, outcome)
+    
+    #label normalization
+    labmap <- tryCatch(.normalize_labels(labels, vars = unique(roles$variable)),
+                       error = function(e) NULL)
+    if (length(labmap)) {
+      clean <- function(x) trimws(gsub("[\\r\\n]+", " ", x, perl = TRUE))
+      labmap <- vapply(labmap, clean, character(1))
+    }
+    roles_display <- tryCatch(.apply_labels_to_roles_df(roles, labmap),
+                              error = function(e) roles)
+    
+    # build a report object with same shape
+    v <- list(ok = TRUE, issues = new_issue_table())
+    report <- list(
+      validation = v,
+      roles = roles,
+      roles_display = roles_display,
+      labels_map = labmap,
+      bad_in_user = character(0),
+      controls_minimal = character(0),
+      controls_minimal_all = list(),
+      controls_canonical = character(0),
+      formulas = list(
+        original     = NULL,
+        minimal      = NULL,
+        minimal_list = list(),
+        canonical    = NULL
+      ),
+      models = list(
+        original     = NULL,
+        minimal      = NULL,
+        minimal_list = list(),
+        canonical    = NULL
+      ),
+      unevaluated     = character(0),
+      unevaluated_str = "",
+      verbose = isTRUE(verbose),
+      imply   = isTRUE(imply)
+    )
+    report$settings <- list(
+      omit_intercept = isTRUE(omit_intercept),
+      omit_factors   = isTRUE(omit_factors),
+      show           = show
+    )
+    report$.__data <- if (!missing(data)) data else NULL
+    report$settings$coef_omit <- .build_coef_omit(
+      data = report$.__data,
+      omit_intercept = report$settings$omit_intercept,
+      omit_factors   = report$settings$omit_factors
+    )
+    class(report) <- c("DAGassist_report", class(report))
+    
+    # build objects for exporters
+    mods_full      <- .build_named_mods(report)
+    models_df_full <- .build_models_df(report)
+    
+    # export to file or return to console
+    file_attr <- if (!is.null(out)) normalizePath(out, mustWork = FALSE) else NULL
+    
+    if (type == "latex") {
+      if (tolower(tools::file_ext(out)) == "docx")
+        stop("LaTeX fragment must not be written to a .docx path. Use a .tex filename.", call. = FALSE)
+      if (is.null(out)) stop("type='latex' requires `out=` file path.", call. = FALSE)
+      
+      res_min <- list(
+        validation     = list(status = "VALID", issues = character(0)),
+        coef_rename    = labmap,
+        coef_omit      = report$settings$coef_omit,
+        roles_df       = report$roles_display,
+        models_df      = models_df_full,
+        models         = mods_full,
+        min_sets       = report$controls_minimal_all,
+        canon          = report$controls_canonical,
+        unevaluated_str= report$unevaluated_str,
+        show           = show
+      )
+      .report_latex_fragment(res_min, out)
+      return(invisible(structure(report, file = file_attr)))
+    }
+    
+    if (type %in% c("docx","word")) {
+      res_min <- list(
+        roles_df       = report$roles_display,
+        coef_omit      = report$settings$coef_omit,
+        coef_rename    = labmap,
+        models         = mods_full,
+        min_sets       = report$controls_minimal_all,
+        canon          = report$controls_canonical,
+        unevaluated_str= report$unevaluated_str,
+        show           = show
+      )
+      .report_docx(res_min, out)
+      return(invisible(structure(report, file = file_attr)))
+    }
+    
+    if (type %in% c("excel","xlsx")) {
+      res_min <- list(
+        roles_df       = report$roles_display,
+        coef_omit      = report$settings$coef_omit,
+        coef_rename    = labmap,
+        models         = mods_full,
+        min_sets       = report$controls_minimal_all,
+        canon          = report$controls_canonical,
+        unevaluated_str= report$unevaluated_str,
+        show           = show
+      )
+      .report_xlsx(res_min, out)
+      return(invisible(structure(report, file = file_attr)))
+    }
+    
+    if (type %in% c("text","txt")) {
+      res_min <- list(
+        roles_df       = report$roles_display,
+        coef_omit      = report$settings$coef_omit,
+        coef_rename    = labmap,
+        models         = mods_full,
+        min_sets       = report$controls_minimal_all,
+        canon          = report$controls_canonical,
+        unevaluated_str= report$unevaluated_str,
+        show           = show
+      )
+      .report_txt(res_min, out)
+      return(invisible(structure(report, file = file_attr)))
+    }
+    
+    # return report for print function
+    return(report)
+  }
+
+  ### resume normal processing
+  
   ## allow formula to be either a formula or a single engine call
   spec_expr <- substitute(formula)  # capture unevaluated argument
   parsed <- NULL
@@ -492,10 +642,13 @@ print.DAGassist_report <- function(x, ...) {
     }
     print(r)  
     
-    if (length(x$bad_in_user)) {
-      cat(clr_red("\n (!) Bad controls in your formula: {", paste(x$bad_in_user, collapse = ", "), "}\n", sep = ""))
-    } else {
-      cat(clr_green("\nNo bad controls detected in your formula.\n"))
+    #only print if there is a formula
+    if (!is.null(x$formulas$original)) {
+      if (length(x$bad_in_user)) {
+        cat(clr_red("\n (!) Bad controls in your formula: {", paste(x$bad_in_user, collapse = ", "), "}\n", sep = ""))
+      } else {
+        cat(clr_green("\nNo bad controls detected in your formula.\n"))
+      }
     }
   }
   

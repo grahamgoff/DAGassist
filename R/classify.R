@@ -74,11 +74,11 @@ classify_nodes <- function(dag, exposure, outcome) {
   
   nodes <- names(dag)
   if (!exposure %in% nodes) stop("Exposure '", exposure, "' not found in DAG.", call. = FALSE)
-  if (!outcome  %in% nodes) stop("Outcome '",  outcome,  "' not found in DAG.", call. = FALSE)
+  if (!outcome  %in% nodes) stop("Outcome '", outcome, "' not found in DAG.", call. = FALSE)
   
   # ancestors and descendants of exposure and outcome, which will be useful later
-  ancX  <- dagitty::ancestors(dag, exposure)
-  ancY  <- dagitty::ancestors(dag, outcome)
+  ancX <- dagitty::ancestors(dag, exposure)
+  ancY <- dagitty::ancestors(dag, outcome)
   # without setdiff, it will set x and y as their own descendants
   descX <- setdiff(dagitty::descendants(dag, exposure), exposure)
   descY <- setdiff(dagitty::descendants(dag, outcome),  outcome)
@@ -152,18 +152,30 @@ classify_nodes <- function(dag, exposure, outcome) {
     }
   }
   
+  # ensure X and Y are only exposure/outcome. clear other flags for them 
+  xy <- df$is_exposure | df$is_outcome
+  flag_cols <- c(
+    "is_confounder",
+    "is_mediator",
+    "is_collider",
+    "is_descendant_of_outcome",
+    "is_descendant_of_mediator",
+    "is_descendant_of_collider"
+  )
+  df[xy, flag_cols] <- FALSE
+  
   # assign boolean flags by set
   df <- data.frame(
-    variable                   = nodes,
-    is_exposure                = nodes == exposure,
-    is_outcome                 = nodes == outcome,
-    is_confounder              = nodes %in% conf_set,
-    is_mediator                = nodes %in% med_set,
-    is_collider                = nodes %in% collider_set,
-    is_descendant_of_outcome   = nodes %in% doY_set,
+    variable = nodes,
+    is_exposure = nodes == exposure,
+    is_outcome = nodes == outcome,
+    is_confounder = nodes %in% conf_set,
+    is_mediator = nodes %in% med_set,
+    is_collider = nodes %in% collider_set,
+    is_descendant_of_outcome = nodes %in% doY_set,
     #is_descendant_of_exposure  = nodes %in% doX_set,
-    is_descendant_of_mediator  = nodes %in% dmed_set,
-    is_descendant_of_collider  = nodes %in% dcol_set,
+    is_descendant_of_mediator = nodes %in% dmed_set,
+    is_descendant_of_collider = nodes %in% dcol_set,
     stringsAsFactors = FALSE
   )
   
@@ -173,7 +185,7 @@ classify_nodes <- function(dag, exposure, outcome) {
   role[df$is_confounder] <- "confounder"
   role[df$is_descendant_of_mediator] <- "Dmediator"
   role[df$is_descendant_of_collider] <- "Dcollider"
-  role[df$is_mediator]<- "mediator"
+  role[df$is_mediator] <- "mediator"
   role[df$is_descendant_of_outcome] <- "intOut"
   role[df$is_collider] <- "collider"
   role[df$is_outcome] <- "outcome"

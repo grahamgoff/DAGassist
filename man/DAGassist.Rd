@@ -13,7 +13,8 @@ DAGassist(
   engine = stats::lm,
   labels = NULL,
   verbose = TRUE,
-  type = c("console", "latex", "word", "docx", "excel", "xlsx", "text", "txt"),
+  type = c("console", "latex", "word", "docx", "excel", "xlsx", "text", "txt", "dwplot",
+    "dotwhisker"),
   show = c("all", "roles", "models"),
   out = NULL,
   imply = FALSE,
@@ -68,10 +69,10 @@ Ignored for \code{type="console"}.
 \item If \code{FALSE} (default): restrict DAG evaluation to variables \strong{named in the formula}
 (prune the DAG to exposure, outcome, and RHS terms). Roles/sets/bad-controls are
 computed on this pruned graph, and the roles table \strong{only} shows those variables.
-This is most useful if you want to refine your specific call.
+Essentially, it fits the DAG to the formula.
 \item If \code{TRUE}: evaluate on the \strong{full DAG} and allow DAG-implied controls in the
-minimal/canonical sets; roles table shows all nodes. This is most useful if you
-want to refine your overall control variable selection.
+minimal/canonical sets. The roles table shows all DAG nodes, and the printout
+notes any variables added beyond your RHS. Essentially, it fits the formula to the DAG.
 }}
 
 \item{omit_intercept}{Logical; drop intercept rows from the model comparison (default \code{TRUE}).}

@@ -37,10 +37,10 @@
 #'   - If `FALSE` (default): restrict DAG evaluation to variables **named in the formula**
 #'     (prune the DAG to exposure, outcome, and RHS terms). Roles/sets/bad-controls are
 #'     computed on this pruned graph, and the roles table **only** shows those variables.
-#'     This is most useful if you want to refine your specific call. 
+#'     Essentially, it fits the DAG to the formula. 
 #'   - If `TRUE`: evaluate on the **full DAG** and allow DAG-implied controls in the
-#'     minimal/canonical sets; roles table shows all nodes. This is most useful if you
-#'     want to refine your overall control variable selection.
+#'     minimal/canonical sets. The roles table shows all DAG nodes, and the printout 
+#'     notes any variables added beyond your RHS. Essentially, it fits the formula to the DAG.
 #' @param labels Optional variable labels (named character vector or data.frame).
 #' @param omit_intercept Logical; drop intercept rows from the model comparison (default `TRUE`).
 #' @param omit_factors Logical; drop factor-level rows from the model comparison (default `TRUE`).
@@ -161,7 +161,8 @@ DAGassist <- function(dag,
                       labels = NULL,
                       verbose = TRUE, 
                       type = c("console", "latex", "word", "docx", 
-                                "excel", "xlsx", "text", "txt"), 
+                                "excel", "xlsx", "text", "txt", 
+                               "dwplot", "dotwhisker"), 
                       show = c("all", "roles", "models"),
                       out = NULL,
                       imply = FALSE,
@@ -595,6 +596,13 @@ DAGassist <- function(dag,
     )
     .report_txt(res_min, out)
     return(invisible(structure(report, file = normalizePath(out, mustWork = FALSE))))
+  }
+  
+  ##### DOTWHISKER OUT BRANCH #####
+  if (type %in% c("dwplot", "dotwhisker")) {
+    file_attr <- if (!is.null(out)) normalizePath(out, mustWork = FALSE) else NULL
+    .report_dotwhisker(report, out = out)
+    return(invisible(structure(report, file = file_attr)))
   }
   
   report

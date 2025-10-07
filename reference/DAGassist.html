@@ -58,7 +58,8 @@ XLSX, plain text). It also supports passing a <strong>single engine call</strong
 <span>  engine <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"console"</span>, <span class="st">"latex"</span>, <span class="st">"word"</span>, <span class="st">"docx"</span>, <span class="st">"excel"</span>, <span class="st">"xlsx"</span>, <span class="st">"text"</span>, <span class="st">"txt"</span><span class="op">)</span>,</span>
+<span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"console"</span>, <span class="st">"latex"</span>, <span class="st">"word"</span>, <span class="st">"docx"</span>, <span class="st">"excel"</span>, <span class="st">"xlsx"</span>, <span class="st">"text"</span>, <span class="st">"txt"</span>, <span class="st">"dwplot"</span>,</span>
+<span>    <span class="st">"dotwhisker"</span><span class="op">)</span>,</span>
 <span>  show <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"all"</span>, <span class="st">"roles"</span>, <span class="st">"models"</span><span class="op">)</span>,</span>
 <span>  out <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  imply <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -136,10 +137,10 @@ Ignored for <code>type="console"</code>.</p></li>
 <dd><p>Logical; default <code>FALSE</code>. <strong>Evaluation scope.</strong></p><ul><li><p>If <code>FALSE</code> (default): restrict DAG evaluation to variables <strong>named in the formula</strong>
 (prune the DAG to exposure, outcome, and RHS terms). Roles/sets/bad-controls are
 computed on this pruned graph, and the roles table <strong>only</strong> shows those variables.
-This is most useful if you want to refine your specific call.</p></li>
+Essentially, it fits the DAG to the formula.</p></li>
 <li><p>If <code>TRUE</code>: evaluate on the <strong>full DAG</strong> and allow DAG-implied controls in the
-minimal/canonical sets; roles table shows all nodes. This is most useful if you
-want to refine your overall control variable selection.</p></li>
+minimal/canonical sets. The roles table shows all DAG nodes, and the printout
+notes any variables added beyond your RHS. Essentially, it fits the formula to the DAG.</p></li>
 </ul></dd>
 
 
@@ -241,7 +242,7 @@ exporters in <code>report_*</code> modules.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Roles:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> variable  role        X  Y  conf  med  col  dOut  dMed  dCol</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> X         exposure    x                                     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Y         outcome        x                        x         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Y         outcome        x                                  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Z         confounder        x                               </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> M         mediator                x                         </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> C         collider                     x    x     x         </span>
@@ -283,6 +284,19 @@ exporters in <code>report_*</code> modules.</p></div>
 <span class="r-in"><span><span class="fu">DAGassist</span><span class="op">(</span>dag <span class="op">=</span> <span class="va">g</span>, formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">Z</span> <span class="op">+</span> <span class="va">C</span> <span class="op">+</span> <span class="va">M</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>          type <span class="op">=</span> <span class="st">"latex"</span>, out <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"frag.tex"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
+<span class="r-in"><span><span class="co"># generate just the roles table in the console</span></span></span>
+<span class="r-in"><span><span class="fu">DAGassist</span><span class="op">(</span>dag <span class="op">=</span> <span class="va">g</span>, show <span class="op">=</span> <span class="st">"roles"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> DAGassist Report: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Roles:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> variable  role        X  Y  conf  med  col  dOut  dMed  dCol</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> X         exposure    x                                     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Y         outcome        x                                  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Z         confounder        x                               </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> M         mediator                x                         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> C         collider                     x    x     x         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> A         other                                             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> B         other                                             </span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

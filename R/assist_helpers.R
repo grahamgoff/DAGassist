@@ -405,8 +405,9 @@
       #match any coefficient term beginning with one of the factor vars
       #followed by typical separators or word boundary
       fac_escaped <- vapply(fac_names, .escape_regex, "", USE.NAMES = FALSE)
-      fac_pat <- paste0("^(", paste(fac_escaped, collapse = "|"),
-                        ")(::|:|=|\\b).*$")
+      alt <- paste(fac_escaped, collapse = "|")
+      #match all factor indicators
+      fac_pat <- paste0("^((?:factor|as\\.factor)\\s*\\()?(", alt, ")(\\))?(::|:|=|\\b).*$")
       pats <- c(pats, fac_pat)
     }
   }

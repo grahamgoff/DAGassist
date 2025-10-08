@@ -35,7 +35,10 @@ Imports:
     stats,
     tools,
     utils,
-    writexl
+    writexl,
+    dplyr,
+    ggplot2,
+    dotwhisker
 Suggests: 
     fixest,
     ggdag,

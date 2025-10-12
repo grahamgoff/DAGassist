@@ -39,7 +39,7 @@
     vline = ggplot2::geom_vline(xintercept = 0, colour = "grey60", linetype = 2),
     #include colour=model on both layers so they share one legend. otherwise, 
     #there will be distinct legends for both color and shape
-    dot_args     = list(ggplot2::aes(shape = model,  colour = model)),
+    dot_args = list(ggplot2::aes(shape = model,  colour = model)),
     whisker_args = list(ggplot2::aes(linetype = model, colour = model))
   ) +
     ggplot2::theme_bw() +

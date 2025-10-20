@@ -63,6 +63,7 @@ XLSX, plain text). It also supports passing a <strong>single engine call</strong
 <span>  show <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"all"</span>, <span class="st">"roles"</span>, <span class="st">"models"</span><span class="op">)</span>,</span>
 <span>  out <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  imply <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  eval_all <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  omit_intercept <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  omit_factors <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  engine_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -144,12 +145,21 @@ notes any variables added beyond your RHS. Essentially, it fits the formula to t
 </ul></dd>
 
 
+<dt id="arg-eval-all">eval_all<a class="anchor" aria-label="anchor" href="#arg-eval-all"></a></dt>
+<dd><p>Logical; default <code>FALSE</code>.  When <code>TRUE</code>, keep <strong>all original RHS terms</strong>
+that are not in the DAG (e.g., fixed effects, interactions, splines,
+convenience covariates) in the minimal and canonical formulas.
+When <code>FALSE</code> (default), RHS terms not present as DAG nodes are dropped
+from those derived formulas.</p></dd>
+
+
 <dt id="arg-omit-intercept">omit_intercept<a class="anchor" aria-label="anchor" href="#arg-omit-intercept"></a></dt>
-<dd><p>Logical; drop intercept rows from the model comparison (default <code>TRUE</code>).</p></dd>
+<dd><p>Logical; drop intercept rows from the model comparison display (default <code>TRUE</code>).</p></dd>
 
 
 <dt id="arg-omit-factors">omit_factors<a class="anchor" aria-label="anchor" href="#arg-omit-factors"></a></dt>
-<dd><p>Logical; drop factor-level rows from the model comparison (default <code>TRUE</code>).</p></dd>
+<dd><p>Logical; drop factor-level rows from the model comparison display (default <code>TRUE</code>).
+This parameter only suppresses factor <strong>output</strong>–they are still included in the regression.</p></dd>
 
 
 <dt id="arg-engine-args">engine_args<a class="anchor" aria-label="anchor" href="#arg-engine-args"></a></dt>

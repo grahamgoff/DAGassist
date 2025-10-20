@@ -42,8 +42,9 @@
 #'     minimal/canonical sets. The roles table shows all DAG nodes, and the printout 
 #'     notes any variables added beyond your RHS. Essentially, it fits the formula to the DAG.
 #' @param labels Optional variable labels (named character vector or data.frame).
-#' @param omit_intercept Logical; drop intercept rows from the model comparison (default `TRUE`).
-#' @param omit_factors Logical; drop factor-level rows from the model comparison (default `TRUE`).
+#' @param omit_intercept Logical; drop intercept rows from the model comparison display (default `TRUE`).
+#' @param omit_factors Logical; drop factor-level rows from the model comparison display (default `TRUE`).
+#'    This parameter only suppresses factor **output**--they are still included in the regression. 
 #' @param show Which sections to include in the output. One of `"all"` (default),
 #'    `"roles"`, or `"models"`.
 #' @details

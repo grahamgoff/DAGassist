@@ -14,6 +14,14 @@
     m <- mods[[nm]]
     out <- tryCatch(broom::tidy(m, conf.int = TRUE), error = function(e) NULL)
     if (is.null(out)) return(NULL)
+    
+    #keep only the treatment (exposure) coefficient
+    exp <- get_by_role(report$roles, "exposure")
+    if (!is.na(exp) && nzchar(exp)) {
+      out <- dplyr::filter(out, .data$term == exp)
+    }
+    if (nrow(out) == 0) return(NULL)
+    
     out$model <- nm
     out
   })

@@ -40,6 +40,7 @@ Imports:
     ggplot2,
     dotwhisker
 Suggests: 
+    devtools,
     fixest,
     ggdag,
     knitr,

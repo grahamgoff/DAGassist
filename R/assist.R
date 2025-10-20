@@ -42,10 +42,16 @@
 #'     minimal/canonical sets. The roles table shows all DAG nodes, and the printout 
 #'     notes any variables added beyond your RHS. Essentially, it fits the formula to the DAG.
 #' @param labels Optional variable labels (named character vector or data.frame).
-#' @param omit_intercept Logical; drop intercept rows from the model comparison (default `TRUE`).
-#' @param omit_factors Logical; drop factor-level rows from the model comparison (default `TRUE`).
+#' @param omit_intercept Logical; drop intercept rows from the model comparison display (default `TRUE`).
+#' @param omit_factors Logical; drop factor-level rows from the model comparison display (default `TRUE`).
+#'    This parameter only suppresses factor **output**--they are still included in the regression. 
 #' @param show Which sections to include in the output. One of `"all"` (default),
 #'    `"roles"`, or `"models"`.
+#' @param eval_all Logical; default `FALSE`.  When `TRUE`, keep **all original RHS terms** 
+#'    that are not in the DAG (e.g., fixed effects, interactions, splines, 
+#'    convenience covariates) in the minimal and canonical formulas. 
+#'    When `FALSE` (default), RHS terms not present as DAG nodes are dropped 
+#'    from those derived formulas.
 #' @details
 #' **Engine-call parsing.** If `formula` is a call (e.g., `feols(Y ~ X | fe, data=df)`),
 #' DAGassist extracts the engine function, formula, data argument, and any additional
@@ -166,6 +172,7 @@ DAGassist <- function(dag,
                       show = c("all", "roles", "models"),
                       out = NULL,
                       imply = FALSE,
+                      eval_all = FALSE,
                       omit_intercept = TRUE,
                       omit_factors = TRUE,
                       engine_args = list()) {
@@ -371,6 +378,8 @@ DAGassist <- function(dag,
                             error = function(e) roles)
   # what controls did the user use? (only from the pre-| part if present)
   rhs_terms <- .rhs_terms_safe(formula)
+  # extras from user RHS that are NOT in the DAG (unevaluated by roles)
+  rhs_extras <- setdiff(rhs_terms, roles$variable)
   # only DAG nodes can be bad controls; ignore nuisance (eg fe, did, transforms)
   user_controls <- intersect(setdiff(rhs_terms, c(exposure)), roles$variable)
   
@@ -425,11 +434,17 @@ DAGassist <- function(dag,
   
   # formulas for all minimal sets---preserve fixest tails
   f_mins <- lapply(
-    sets_min_for_use, 
-    function(s) .build_formula_with_controls(formula, exposure, outcome, s)
-    )
-
-  f_canon <- .build_formula_with_controls(formula, exposure, outcome, canon_for_use)  
+    sets_min_for_use,
+    function(s) {
+      s2 <- if (isTRUE(eval_all)) unique(c(s, rhs_extras)) else s
+      .build_formula_with_controls(formula, exposure, outcome, s2)
+    }
+  )
+  #changed to accomodate eval_all
+  f_canon <- {
+    c2 <- if (isTRUE(eval_all)) unique(c(canon_for_use, rhs_extras)) else canon_for_use
+    .build_formula_with_controls(formula, exposure, outcome, c2)
+  }
   #fits: always show Original, every Minimal, and Canonical at the end 
   #if there are multiple min, push canonical to the end
   m_orig <- .safe_fit(engine, formula, data, engine_args)

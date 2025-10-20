@@ -15,14 +15,28 @@ knitr::opts_chunk$set(
 ```
 
 ```{r dev-load, include=FALSE}
-# Prefer the package source when building locally or for pkgdown
-if (requireNamespace("devtools", quietly = TRUE)) {
-  if (interactive() || identical(Sys.getenv("IN_PKGDOWN"), "true")) {
-    devtools::load_all("..", quiet = TRUE)  # ".." = package root from vignettes/
-  }
+# Prefer source build when available (works in RStudio, pkgdown, or local render)
+if (requireNamespace("devtools", quietly = TRUE) && file.exists(file.path("..","DESCRIPTION"))) {
+  # Don't error on CRAN/build machines that don't have devtools or the source path
+  try(devtools::load_all("..", quiet = TRUE), silent = TRUE)
 }
-# Helper flag for version-gated examples
-has_show <- "show" %in% names(formals(DAGassist::DAGassist))
+
+# If we've already loaded from source, avoid re-attaching a different installed build later
+from_source <- try({
+  "DAGassist" %in% loadedNamespaces() &&
+    grepl(normalizePath(".."), getNamespaceInfo(asNamespace("DAGassist"), "path"), fixed = TRUE)
+}, silent = TRUE)
+from_source <- isTRUE(from_source)
+
+# Feature gates (computed *after* attempting load_all)
+has_show <- tryCatch({
+  "show" %in% names(formals(DAGassist::DAGassist))
+}, error = function(e) FALSE)
+
+# Robust check: dev build defines a private .report_dotwhisker helper
+has_dotwhisker <- tryCatch({
+  exists(".report_dotwhisker", envir = asNamespace("DAGassist"), inherits = FALSE)
+}, error = function(e) FALSE)
 ```
 
 # Introduction
@@ -32,10 +46,17 @@ Word, Excel, and plaintext. Since this package's primary utility is as a robustn
 check for observational studies, most of its functionality revolves around
 creating reports.
 
-## Install
+## Install and load `DAGassist`
 ```{r install, eval=FALSE}
+# install development release from github
 install.packages("pak")
 pak::pak("grahamgoff/DAGassist")
+
+# or, install stable release from CRAN
+install.packages("DAGassist")
+
+#load DAGassist
+library(DAGassist) 
 ```
 ## Setup
 
@@ -55,8 +76,6 @@ Essentially, to export:
 - **Word** needs `modelsummary`, `knitr`, and `rmarkdown`
  
 ```{r helpers}
-#load DAGassist
-library(DAGassist) 
 #load libraries to help export
 library(modelsummary)
 library(writexl)
@@ -193,5 +212,17 @@ Sometimes you only need one part of the report. Use the `show` argument to gener
 ```{r roles-subreport, eval=has_show}
 DAGassist(dag = dag_model,
           show = "roles")
+```
+
+## Dotwhisker output
+
+Report tables can be space-intensive and difficult to interpret for non-technical 
+audiences. `DAGassist` supports dotwhisker output.
+
+### Examples
+```{r dotwhisker, eval=has_dotwhisker, warning=FALSE, fig.width=7}
+DAGassist(dag = dag_model,
+          formula = lm(Y ~ D + G + H + F + A + B + C, data = df),
+          type = "dotwhisker")
 ```
 

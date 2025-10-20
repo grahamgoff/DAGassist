@@ -14,6 +14,14 @@
     m <- mods[[nm]]
     out <- tryCatch(broom::tidy(m, conf.int = TRUE), error = function(e) NULL)
     if (is.null(out)) return(NULL)
+    
+    #keep only the treatment (exposure) coefficient
+    exp <- get_by_role(report$roles, "exposure")
+    if (!is.na(exp) && nzchar(exp)) {
+      out <- dplyr::filter(out, .data$term == exp)
+    }
+    if (nrow(out) == 0) return(NULL)
+    
     out$model <- nm
     out
   })
@@ -39,7 +47,7 @@
     vline = ggplot2::geom_vline(xintercept = 0, colour = "grey60", linetype = 2),
     #include colour=model on both layers so they share one legend. otherwise, 
     #there will be distinct legends for both color and shape
-    dot_args     = list(ggplot2::aes(shape = model,  colour = model)),
+    dot_args = list(ggplot2::aes(shape = model,  colour = model)),
     whisker_args = list(ggplot2::aes(linetype = model, colour = model))
   ) +
     ggplot2::theme_bw() +

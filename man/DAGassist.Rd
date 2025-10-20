@@ -18,6 +18,7 @@ DAGassist(
   show = c("all", "roles", "models"),
   out = NULL,
   imply = FALSE,
+  eval_all = FALSE,
   omit_intercept = TRUE,
   omit_factors = TRUE,
   engine_args = list()
@@ -74,6 +75,12 @@ Essentially, it fits the DAG to the formula.
 minimal/canonical sets. The roles table shows all DAG nodes, and the printout
 notes any variables added beyond your RHS. Essentially, it fits the formula to the DAG.
 }}
+
+\item{eval_all}{Logical; default \code{FALSE}.  When \code{TRUE}, keep \strong{all original RHS terms}
+that are not in the DAG (e.g., fixed effects, interactions, splines,
+convenience covariates) in the minimal and canonical formulas.
+When \code{FALSE} (default), RHS terms not present as DAG nodes are dropped
+from those derived formulas.}
 
 \item{omit_intercept}{Logical; drop intercept rows from the model comparison display (default \code{TRUE}).}
 

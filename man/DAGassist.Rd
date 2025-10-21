@@ -21,6 +21,7 @@ DAGassist(
   eval_all = FALSE,
   omit_intercept = TRUE,
   omit_factors = TRUE,
+  bivariate = FALSE,
   engine_args = list()
 )
 }
@@ -86,6 +87,9 @@ from those derived formulas.}
 
 \item{omit_factors}{Logical; drop factor-level rows from the model comparison display (default \code{TRUE}).
 This parameter only suppresses factor \strong{output}--they are still included in the regression.}
+
+\item{bivariate}{if TRUE, include a bivariate (no covariate) model in the comparison
+table. Default FALSE.}
 
 \item{engine_args}{Named list of extra arguments forwarded to \code{engine(...)}.
 If \code{formula} is an engine call, arguments from the call are merged with

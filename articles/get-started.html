@@ -62,57 +62,75 @@
 most of its features can be enjoyed via a simple two-parameter
 argument:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/grahamgoff/DAGassist" class="external-link">DAGassist</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://www.dagitty.net" class="external-link">dagitty</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span></span>
 <span>  dag <span class="op">=</span> <span class="va">your_dag_model</span>,</span>
 <span>  formula <span class="op">=</span> <span class="va">your_regression_call</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>However, <code><a href="../reference/DAGassist.html">DAGassist()</a></code> includes several parameters for
-more specific applications. This vignette explains how to use those
-parameters to <strong>get the most out of
-<code><a href="../reference/DAGassist.html">DAGassist()</a></code></strong>.</p>
-<div class="section level3">
-<h3 id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a>
-</h3>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/grahamgoff/DAGassist" class="external-link">DAGassist</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://www.dagitty.net" class="external-link">dagitty</a></span><span class="op">)</span></span></code></pre></div>
+<p>But it also offers several parameters for more specific applications.
+They control how the DAG is evaluated (<code>imply</code>,
+<code>eval_all</code>), how results print (<code>show</code>,
+<code>labels</code>, <code>omit_factors</code>,
+<code>omit_intercept</code>, <code>verbose</code>), which modeling
+engine to use (<code>engine</code>, <code>engine_args</code>), and which
+output format to write (<code>type</code>, <code>out</code>). This
+vignette walks through each with small examples.</p>
 </div>
+<div class="section level2">
+<h2 id="core-arguments">Core Arguments<a class="anchor" aria-label="anchor" href="#core-arguments"></a>
+</h2>
 <div class="section level3">
-<h3 id="formula-arguments">
-<code>formula</code> arguments<a class="anchor" aria-label="anchor" href="#formula-arguments"></a>
+<h3 id="dag-and-formula">
+<code>dag</code> and <code>formula</code><a class="anchor" aria-label="anchor" href="#dag-and-formula"></a>
 </h3>
-<p><code>DAGassist</code> supports formulaic and regression-based
-<code>formula</code> arguments.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co">#formulaic formula</span></span>
+<p><code>formula</code> can be a standard <code>formula + data</code>
+regression call, from which <code>DAGassist</code> will impute the
+necessary information, or three separate <code>formula</code>,
+<code>data</code>, and <code>engine</code> arguments.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">#imputed formula</span></span>
+<span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span></span>
+<span>  <span class="co">#implies the exposure and outcome from the dagitty object</span></span>
+<span>  dag <span class="op">=</span> <span class="va">dag_model</span>, </span>
+<span>  <span class="co">#implies the engine, formula, and data from the regression call</span></span>
+<span>  formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">C</span>, data<span class="op">=</span><span class="va">df</span><span class="op">)</span> </span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">#plain formula</span></span>
 <span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span></span>
 <span>  dag <span class="op">=</span> <span class="va">dag_model</span>,</span>
+<span>  engine <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span>, <span class="co">#stats::lm is the default engine arg</span></span>
 <span>  formula <span class="op">=</span> <span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">C</span>,</span>
 <span>  data <span class="op">=</span> <span class="va">df</span>,</span>
 <span>  exposure <span class="op">=</span> <span class="st">"X"</span>,</span>
 <span>  outcome <span class="op">=</span> <span class="st">"Y"</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co">#imputed formula</span></span>
-<span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span></span>
-<span>  dag <span class="op">=</span> <span class="va">dag_model</span>,</span>
-<span>  formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">C</span>, data<span class="op">=</span><span class="va">df</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>The two formulas above will print identical output.</p>
 </div>
+</div>
+<div class="section level2">
+<h2 id="scope-flags">Scope Flags<a class="anchor" aria-label="anchor" href="#scope-flags"></a>
+</h2>
 <div class="section level3">
-<h3 id="imply-arguments">
-<code>imply</code> arguments<a class="anchor" aria-label="anchor" href="#imply-arguments"></a>
+<h3 id="imply-evaluate-on-only-mentioned-variables-vs-the-full-dag">
+<code>imply</code>: evaluate on only mentioned variables vs the full
+DAG<a class="anchor" aria-label="anchor" href="#imply-evaluate-on-only-mentioned-variables-vs-the-full-dag"></a>
 </h3>
-<p>In cases where you only want <code>DAGassist</code> to use the
-variables explicitly called in your formula, use
-<code>imply = FALSE</code>.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span></span>
-<span>  dag <span class="op">=</span> <span class="va">dag_model</span>,</span>
-<span>  formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">Y</span><span class="op">~</span><span class="va">X</span><span class="op">+</span><span class="va">C</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span>,</span>
-<span>  imply <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span><span class="op">)</span></span>
+<ul>
+<li>
+<code>imply = FALSE</code> (default): prune the DAG to just
+exposure, outcome, and your RHS variables; roles/sets are computed on
+this pruned graph.</li>
+<li>
+<code>imply = TRUE</code>: evaluate on the full DAG and allow
+DAG-implied controls to enter minimal/canonical sets (you’ll be told
+what’s added).</li>
+</ul>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">#pruned-to-formula DAG</span></span>
+<span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span>dag <span class="op">=</span> <span class="va">dag_model</span>, formula <span class="op">=</span> <span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">C</span>, data <span class="op">=</span> <span class="va">df</span>, imply <span class="op">=</span> <span class="cn">FALSE</span>, show <span class="op">=</span> <span class="st">"roles"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; DAGassist Report: </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Roles:</span></span>
@@ -122,37 +140,9 @@ variables explicitly called in your formula, use
 <span><span class="co">#&gt; C         collider                    x    x               </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  (!) Bad controls in your formula: {C}</span></span>
-<span><span class="co">#&gt; Minimal controls 1: {}</span></span>
-<span><span class="co">#&gt; Canonical controls: {}</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Formulas:</span></span>
-<span><span class="co">#&gt;   original:  Y ~ X + C</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Model comparison:</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; +---+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |   | Original | Minimal 1 | Canonical |</span></span>
-<span><span class="co">#&gt; +===+==========+===========+===========+</span></span>
-<span><span class="co">#&gt; | X | 0.908*** | 1.415***  | 1.415***  |</span></span>
-<span><span class="co">#&gt; +---+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |   | (0.030)  | (0.021)   | (0.021)   |</span></span>
-<span><span class="co">#&gt; +---+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; | C | 0.475*** |           |           |</span></span>
-<span><span class="co">#&gt; +---+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |   | (0.022)  |           |           |</span></span>
-<span><span class="co">#&gt; +===+==========+===========+===========+</span></span>
-<span><span class="co">#&gt; | + p &lt; 0.1, * p &lt; 0.05, ** p &lt; 0.01,  |</span></span>
-<span><span class="co">#&gt; | *** p &lt; 0.001                        |</span></span>
-<span><span class="co">#&gt; +===+==========+===========+===========+</span></span></code></pre></div>
-<p>In cases where you want <code>DAGassist</code> to explore all of the
-causal relationships explicated in your DAG, use
-<code>imply = TRUE</code>.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span></span>
-<span>  dag <span class="op">=</span> <span class="va">dag_model</span>,</span>
-<span>  formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">Y</span><span class="op">~</span><span class="va">X</span><span class="op">+</span><span class="va">C</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span>,</span>
-<span>  imply <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">#full-DAG evaluation</span></span>
+<span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span>dag <span class="op">=</span> <span class="va">dag_model</span>, formula <span class="op">=</span> <span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">C</span>, data <span class="op">=</span> <span class="va">df</span>, imply <span class="op">=</span> <span class="cn">TRUE</span>,  show <span class="op">=</span> <span class="st">"roles"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; DAGassist Report: </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Roles:</span></span>
@@ -165,235 +155,214 @@ causal relationships explicated in your DAG, use
 <span><span class="co">#&gt; A         other                                             </span></span>
 <span><span class="co">#&gt; B         other                                             </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  (!) Bad controls in your formula: {C}</span></span>
-<span><span class="co">#&gt; Minimal controls 1: {Z}</span></span>
-<span><span class="co">#&gt; Canonical controls: {A, B, Z}</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Formulas:</span></span>
-<span><span class="co">#&gt;   original:  Y ~ X + C</span></span>
-<span><span class="co">#&gt;   minimal 1 : Y ~ X + Z</span></span>
-<span><span class="co">#&gt;   canonical: Y ~ X + A + B + Z</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Note: DAGassist added variables not in your formula, based on the</span></span>
-<span><span class="co">#&gt; relationships in your DAG, to block back-door paths</span></span>
-<span><span class="co">#&gt; between X and Y.</span></span>
-<span><span class="co">#&gt;   - Minimal 1 added: {Z}</span></span>
-<span><span class="co">#&gt;   - Canonical added: {A, B, Z}</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Model comparison:</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; +---+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |   | Original | Minimal 1 | Canonical |</span></span>
-<span><span class="co">#&gt; +===+==========+===========+===========+</span></span>
-<span><span class="co">#&gt; | X | 0.908*** | 1.256***  | 1.256***  |</span></span>
-<span><span class="co">#&gt; +---+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |   | (0.030)  | (0.027)   | (0.026)   |</span></span>
-<span><span class="co">#&gt; +---+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; | C | 0.475*** |           |           |</span></span>
-<span><span class="co">#&gt; +---+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |   | (0.022)  |           |           |</span></span>
-<span><span class="co">#&gt; +---+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; | Z |          | 0.311***  | 0.309***  |</span></span>
-<span><span class="co">#&gt; +---+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |   |          | (0.034)   | (0.033)   |</span></span>
-<span><span class="co">#&gt; +---+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; | A |          |           | 0.187***  |</span></span>
-<span><span class="co">#&gt; +---+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |   |          |           | (0.026)   |</span></span>
-<span><span class="co">#&gt; +---+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; | B |          |           | -0.057*   |</span></span>
-<span><span class="co">#&gt; +---+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |   |          |           | (0.026)   |</span></span>
-<span><span class="co">#&gt; +===+==========+===========+===========+</span></span>
-<span><span class="co">#&gt; | + p &lt; 0.1, * p &lt; 0.05, ** p &lt; 0.01,  |</span></span>
-<span><span class="co">#&gt; | *** p &lt; 0.001                        |</span></span>
-<span><span class="co">#&gt; +===+==========+===========+===========+</span></span></code></pre></div>
-<p><code>DAGassist</code> will notify you of which variables it added.
-<code>imply</code> = FALSE by default.</p>
+<span><span class="co">#&gt;  (!) Bad controls in your formula: {C}</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="omit_factors-and-omit_intercept-arguments">
-<code>omit_factors</code> and <code>omit_intercept</code>
-arguments<a class="anchor" aria-label="anchor" href="#omit_factors-and-omit_intercept-arguments"></a>
+<h3 id="eval_all-keep-non-dag-rhs-terms-in-derived-models">
+<code>eval_all</code>: keep non-DAG RHS terms in derived models<a class="anchor" aria-label="anchor" href="#eval_all-keep-non-dag-rhs-terms-in-derived-models"></a>
 </h3>
-<p><code>DAGassist</code> omits factor and intercept rows by default,
-but you can explicitly include them. However, if they are not included
-in your DAG, <code>DAGassist</code> will not evaluate them, and will not
-include them in the minimal or canonical models.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<p>Sometimes your RHS has terms that aren’t DAG nodes (e.g., fixed
+effects via <code>i(region)</code>, factor expansions, interactions,
+splines). <code>eval_all</code> decides whether these non-DAG terms are
+kept in minimal/canonical formulas. - eval_all = FALSE (default): drop
+RHS terms not present as DAG nodes from the derived formulas. - eval_all
+= TRUE: keep all original RHS terms that aren’t DAG nodes (e.g., fixed
+effects), in addition to the DAG-based controls.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span></span>
-<span>  dag <span class="op">=</span> <span class="va">dag_model</span>,</span>
-<span>  formula <span class="op">=</span> <span class="fu">fixest</span><span class="fu">::</span><span class="fu"><a href="https://lrberge.github.io/fixest/reference/feols.html" class="external-link">feols</a></span><span class="op">(</span></span>
-<span>    <span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">C</span> <span class="op">+</span> <span class="fu">i</span><span class="op">(</span><span class="va">region</span><span class="op">)</span>,  </span>
-<span>    data <span class="op">=</span> <span class="va">df</span><span class="op">)</span>,</span>
-<span>  omit_factors <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  omit_intercept <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span><span class="op">)</span></span>
-<span><span class="co">#&gt; DAGassist Report: </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Roles:</span></span>
-<span><span class="co">#&gt; variable  role       X  Y  conf  med  col  dOut  dMed  dCol</span></span>
-<span><span class="co">#&gt; X         exposure   x                                     </span></span>
-<span><span class="co">#&gt; Y         outcome       x                                  </span></span>
-<span><span class="co">#&gt; C         collider                    x    x               </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  (!) Bad controls in your formula: {C}</span></span>
-<span><span class="co">#&gt; Minimal controls 1: {}</span></span>
-<span><span class="co">#&gt; Canonical controls: {}</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Note: The following regressors, which are included in the below models, were not evaluated by DAGassist because they are not nodes in the DAG:</span></span>
-<span><span class="co">#&gt;   {i(region)}</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Formulas:</span></span>
-<span><span class="co">#&gt;   original:  Y ~ X + C + i(region)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Model comparison:</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; +----------------+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |                | Original | Minimal 1 | Canonical |</span></span>
-<span><span class="co">#&gt; +================+==========+===========+===========+</span></span>
-<span><span class="co">#&gt; | (Intercept)    | 0.060    | -0.011    | -0.011    |</span></span>
-<span><span class="co">#&gt; +----------------+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |                | (0.049)  | (0.027)   | (0.027)   |</span></span>
-<span><span class="co">#&gt; +----------------+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; | X              | 0.908*** | 1.415***  | 1.415***  |</span></span>
-<span><span class="co">#&gt; +----------------+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |                | (0.030)  | (0.021)   | (0.021)   |</span></span>
-<span><span class="co">#&gt; +----------------+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; | C              | 0.474*** |           |           |</span></span>
-<span><span class="co">#&gt; +----------------+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |                | (0.022)  |           |           |</span></span>
-<span><span class="co">#&gt; +----------------+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; | region = North | -0.030   |           |           |</span></span>
-<span><span class="co">#&gt; +----------------+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |                | (0.069)  |           |           |</span></span>
-<span><span class="co">#&gt; +----------------+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; | region = South | -0.085   |           |           |</span></span>
-<span><span class="co">#&gt; +----------------+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |                | (0.069)  |           |           |</span></span>
-<span><span class="co">#&gt; +----------------+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; | region = West  | -0.167*  |           |           |</span></span>
-<span><span class="co">#&gt; +----------------+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |                | (0.069)  |           |           |</span></span>
-<span><span class="co">#&gt; +================+==========+===========+===========+</span></span>
-<span><span class="co">#&gt; | + p &lt; 0.1, * p &lt; 0.05, ** p &lt; 0.01, *** p &lt; 0.001 |</span></span>
-<span><span class="co">#&gt; +================+==========+===========+===========+</span></span></code></pre></div>
+<span>    dag <span class="op">=</span> <span class="va">dag_model</span>,</span>
+<span>    formula <span class="op">=</span> <span class="fu">fixest</span><span class="fu">::</span><span class="fu"><a href="https://lrberge.github.io/fixest/reference/feols.html" class="external-link">feols</a></span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">C</span> <span class="op">+</span> <span class="fu">fixest</span><span class="fu">::</span><span class="fu"><a href="https://lrberge.github.io/fixest/reference/i.html" class="external-link">i</a></span><span class="op">(</span><span class="va">region</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span>,</span>
+<span>    imply <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>    eval_all <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>    <span class="op">)</span></span></code></pre></div>
+</div>
+</div>
+<div class="section level2">
+<h2 id="display-and-labeling">Display and Labeling<a class="anchor" aria-label="anchor" href="#display-and-labeling"></a>
+</h2>
+<div class="section level3">
+<h3 id="show-sub-reports">
+<code>show</code>: sub-reports<a class="anchor" aria-label="anchor" href="#show-sub-reports"></a>
+</h3>
+<ul>
+<li>“all” (default): roles grid + model comparison</li>
+<li>“roles”: just the roles/flags table</li>
+<li>“models”: just the model comparison</li>
+</ul>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># just the roles table</span></span>
+<span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span>dag <span class="op">=</span> <span class="va">dag_model</span>, formula <span class="op">=</span> <span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">Z</span> <span class="op">+</span> <span class="va">C</span>, data <span class="op">=</span> <span class="va">df</span>, show <span class="op">=</span> <span class="st">"roles"</span><span class="op">)</span></span>
+<span><span class="co">#just the model comparison</span></span>
+<span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span>dag <span class="op">=</span> <span class="va">dag_model</span>, formula <span class="op">=</span> <span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">Z</span> <span class="op">+</span> <span class="va">C</span>, data <span class="op">=</span> <span class="va">df</span>, show <span class="op">=</span> <span class="st">"models"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="labels-arguments">
-<code>labels</code> arguments<a class="anchor" aria-label="anchor" href="#labels-arguments"></a>
+<h3 id="labels-human-readable-names">
+<code>labels</code>: human-readable names<a class="anchor" aria-label="anchor" href="#labels-human-readable-names"></a>
 </h3>
-<p>You can include a label list.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<p>Provide a named character vector or a small data frame. Note that the
+<code>label</code> parameter uses <code>modelsummary()</code>
+<code>coef_rename</code> logic, so an incomplete label list will not
+throw any errors.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">labs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  X <span class="op">=</span> <span class="st">"Exposure"</span>,</span>
+<span>  Y <span class="op">=</span> <span class="st">"Outcome"</span>,</span>
 <span>  C <span class="op">=</span> <span class="st">"Collider"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span></span>
-<span>  dag <span class="op">=</span> <span class="va">dag_model</span>,</span>
-<span>  formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span></span>
-<span>    <span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">C</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span>,</span>
-<span>  labels <span class="op">=</span> <span class="va">labs</span></span>
+<span>  dag <span class="op">=</span> <span class="va">dag_model</span>, formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">C</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span>,</span>
+<span>  show <span class="op">=</span> <span class="st">"roles"</span>, labels <span class="op">=</span> <span class="va">labs</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; DAGassist Report: </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Roles:</span></span>
 <span><span class="co">#&gt; variable  role       X  Y  conf  med  col  dOut  dMed  dCol</span></span>
 <span><span class="co">#&gt; Exposure  exposure   x                                     </span></span>
-<span><span class="co">#&gt; Y         outcome       x                                  </span></span>
+<span><span class="co">#&gt; Outcome   outcome       x                                  </span></span>
 <span><span class="co">#&gt; Collider  collider                    x    x               </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  (!) Bad controls in your formula: {C}</span></span>
-<span><span class="co">#&gt; Minimal controls 1: {}</span></span>
-<span><span class="co">#&gt; Canonical controls: {}</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Formulas:</span></span>
-<span><span class="co">#&gt;   original:  Y ~ X + C</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Model comparison:</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; +----------+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |          | Original | Minimal 1 | Canonical |</span></span>
-<span><span class="co">#&gt; +==========+==========+===========+===========+</span></span>
-<span><span class="co">#&gt; | Exposure | 0.908*** | 1.415***  | 1.415***  |</span></span>
-<span><span class="co">#&gt; +----------+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |          | (0.030)  | (0.021)   | (0.021)   |</span></span>
-<span><span class="co">#&gt; +----------+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; | Collider | 0.475*** |           |           |</span></span>
-<span><span class="co">#&gt; +----------+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |          | (0.022)  |           |           |</span></span>
-<span><span class="co">#&gt; +==========+==========+===========+===========+</span></span>
-<span><span class="co">#&gt; | + p &lt; 0.1, * p &lt; 0.05, ** p &lt; 0.01, *** p   |</span></span>
-<span><span class="co">#&gt; | &lt; 0.001                                     |</span></span>
-<span><span class="co">#&gt; +==========+==========+===========+===========+</span></span></code></pre></div>
-<p>Note that the <code>label</code> parameter uses
-<code>modelsummary()</code> <code>coef_rename</code> logic, so an
-incomplete label list will not throw any errors.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span></span>
-<span>  dag <span class="op">=</span> <span class="va">dag_model</span>,</span>
-<span>  formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span></span>
-<span>    <span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">C</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span>,</span>
-<span>  labels <span class="op">=</span> <span class="va">labs</span>,</span>
-<span>  imply <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span>
-<span><span class="co">#&gt; DAGassist Report: </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Roles:</span></span>
-<span><span class="co">#&gt; variable  role        X  Y  conf  med  col  dOut  dMed  dCol</span></span>
-<span><span class="co">#&gt; Exposure  exposure    x                                     </span></span>
-<span><span class="co">#&gt; Y         outcome        x                                  </span></span>
-<span><span class="co">#&gt; Z         confounder        x                               </span></span>
-<span><span class="co">#&gt; M         mediator                x                         </span></span>
-<span><span class="co">#&gt; Collider  collider                     x    x     x         </span></span>
-<span><span class="co">#&gt; A         other                                             </span></span>
-<span><span class="co">#&gt; B         other                                             </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  (!) Bad controls in your formula: {C}</span></span>
-<span><span class="co">#&gt; Minimal controls 1: {Z}</span></span>
-<span><span class="co">#&gt; Canonical controls: {A, B, Z}</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Formulas:</span></span>
-<span><span class="co">#&gt;   original:  Y ~ X + C</span></span>
-<span><span class="co">#&gt;   minimal 1 : Y ~ X + Z</span></span>
-<span><span class="co">#&gt;   canonical: Y ~ X + A + B + Z</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Note: DAGassist added variables not in your formula, based on the</span></span>
-<span><span class="co">#&gt; relationships in your DAG, to block back-door paths</span></span>
-<span><span class="co">#&gt; between X and Y.</span></span>
-<span><span class="co">#&gt;   - Minimal 1 added: {Z}</span></span>
-<span><span class="co">#&gt;   - Canonical added: {A, B, Z}</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Model comparison:</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; +----------+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |          | Original | Minimal 1 | Canonical |</span></span>
-<span><span class="co">#&gt; +==========+==========+===========+===========+</span></span>
-<span><span class="co">#&gt; | Exposure | 0.908*** | 1.256***  | 1.256***  |</span></span>
-<span><span class="co">#&gt; +----------+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |          | (0.030)  | (0.027)   | (0.026)   |</span></span>
-<span><span class="co">#&gt; +----------+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; | Collider | 0.475*** |           |           |</span></span>
-<span><span class="co">#&gt; +----------+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |          | (0.022)  |           |           |</span></span>
-<span><span class="co">#&gt; +----------+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; | Z        |          | 0.311***  | 0.309***  |</span></span>
-<span><span class="co">#&gt; +----------+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |          |          | (0.034)   | (0.033)   |</span></span>
-<span><span class="co">#&gt; +----------+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; | A        |          |           | 0.187***  |</span></span>
-<span><span class="co">#&gt; +----------+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |          |          |           | (0.026)   |</span></span>
-<span><span class="co">#&gt; +----------+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; | B        |          |           | -0.057*   |</span></span>
-<span><span class="co">#&gt; +----------+----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |          |          |           | (0.026)   |</span></span>
-<span><span class="co">#&gt; +==========+==========+===========+===========+</span></span>
-<span><span class="co">#&gt; | + p &lt; 0.1, * p &lt; 0.05, ** p &lt; 0.01, *** p   |</span></span>
-<span><span class="co">#&gt; | &lt; 0.001                                     |</span></span>
-<span><span class="co">#&gt; +==========+==========+===========+===========+</span></span></code></pre></div>
+<span><span class="co">#&gt;  (!) Bad controls in your formula: {C}</span></span></code></pre></div>
 </div>
+<div class="section level3">
+<h3 id="omit_intercept-and-omit_factors-output-only-filters">
+<code>omit_intercept</code> and <code>omit_factors</code>:
+output-only filters<a class="anchor" aria-label="anchor" href="#omit_intercept-and-omit_factors-output-only-filters"></a>
+</h3>
+<p>These flags only suppress rows in the printed model comparison. They
+do not remove terms from estimation. <code>omit_factors</code> in
+particular is useful for conserving space in your report, as reports
+with factors included can be hundreds of rows.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span></span>
+<span>    dag <span class="op">=</span> <span class="va">dag_model</span>,</span>
+<span>    formula <span class="op">=</span> <span class="fu">fixest</span><span class="fu">::</span><span class="fu"><a href="https://lrberge.github.io/fixest/reference/feols.html" class="external-link">feols</a></span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">Z</span> <span class="op">+</span> <span class="fu">i</span><span class="op">(</span><span class="va">region</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span>,</span>
+<span>    omit_intercept <span class="op">=</span> <span class="cn">TRUE</span>, omit_factors <span class="op">=</span> <span class="cn">TRUE</span> <span class="co"># both TRUE by default</span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="verbose-printing-formulas-notes">
+<code>verbose</code>: printing formulas &amp; notes<a class="anchor" aria-label="anchor" href="#verbose-printing-formulas-notes"></a>
+</h3>
+<p><code>verbose</code> = TRUE (default) prints helpful notes (what was
+added/dropped, derived formulas). Set to FALSE for a quieter
+console.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span>dag <span class="op">=</span> <span class="va">dag_model</span>, formula <span class="op">=</span> <span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">Z</span> <span class="op">+</span> <span class="va">C</span>, data <span class="op">=</span> <span class="va">df</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+</div>
+</div>
+<div class="section level2">
+<h2 id="parameter-reference-table">Parameter Reference Table<a class="anchor" aria-label="anchor" href="#parameter-reference-table"></a>
+</h2>
+<table class="table">
+<colgroup>
+<col width="25%">
+<col width="38%">
+<col width="15%">
+<col width="21%">
+</colgroup>
+<thead><tr class="header">
+<th align="center">Parameter</th>
+<th align="center">Type</th>
+<th align="center">Default</th>
+<th align="left">What it does</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="center"><code>dag</code></td>
+<td align="center">dagitty object</td>
+<td align="center">—</td>
+<td align="left">The DAG to validate and evaluate.</td>
+</tr>
+<tr class="even">
+<td align="center"><code>formula</code></td>
+<td align="center">formula or single call</td>
+<td align="center">—</td>
+<td align="left">Either <code>Y ~ X + ...</code> or a single engine call
+like <code>feols(...)</code>.</td>
+</tr>
+<tr class="odd">
+<td align="center"><code>data</code></td>
+<td align="center">data.frame</td>
+<td align="center">—</td>
+<td align="left">Required unless supplied in engine call.</td>
+</tr>
+<tr class="even">
+<td align="center"><code>engine</code></td>
+<td align="center">function</td>
+<td align="center"><code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">stats::lm</a></code></td>
+<td align="left">Modeling function (ignored if <code>formula</code> is a
+call).</td>
+</tr>
+<tr class="odd">
+<td align="center"><code>engine_args</code></td>
+<td align="center">named list</td>
+<td align="center"><code><a href="https://rdrr.io/r/base/list.html" class="external-link">list()</a></code></td>
+<td align="left">Extra args for <code>engine(...)</code>; merged with
+call args (call wins).</td>
+</tr>
+<tr class="even">
+<td align="center"><code>verbose</code></td>
+<td align="center">logical</td>
+<td align="center"><code>TRUE</code></td>
+<td align="left">Print formulas &amp; notes in console.</td>
+</tr>
+<tr class="odd">
+<td align="center"><code>type</code></td>
+<td align="center">string</td>
+<td align="center"><code>"console"</code></td>
+<td align="left">One of <code>"console"</code>, <code>"latex"</code>,
+<code>"docx"/"word"</code>, <code>"xlsx"/"excel"</code>,
+<code>"text"/"txt"</code>.</td>
+</tr>
+<tr class="even">
+<td align="center"><code>out</code></td>
+<td align="center">path</td>
+<td align="center">—</td>
+<td align="left">Output path for non-console types.</td>
+</tr>
+<tr class="odd">
+<td align="center"><code>imply</code></td>
+<td align="center">logical</td>
+<td align="center"><code>FALSE</code></td>
+<td align="left">Scope: pruned-to-formula vs full-DAG evaluation.</td>
+</tr>
+<tr class="even">
+<td align="center"><code>labels</code></td>
+<td align="center">named chr / data.frame</td>
+<td align="center"><code>NULL</code></td>
+<td align="left">Rename coefficients (modelsummary
+<code>coef_rename</code> logic).</td>
+</tr>
+<tr class="odd">
+<td align="center"><code>omit_intercept</code></td>
+<td align="center">logical</td>
+<td align="center"><code>TRUE</code></td>
+<td align="left">Hide intercept in printed comparison.</td>
+</tr>
+<tr class="even">
+<td align="center"><code>omit_factors</code></td>
+<td align="center">logical</td>
+<td align="center"><code>TRUE</code></td>
+<td align="left">Hide factor levels in printed comparison.</td>
+</tr>
+<tr class="odd">
+<td align="center"><code>show</code></td>
+<td align="center">string</td>
+<td align="center"><code>"all"</code></td>
+<td align="left">
+<code>"all"</code>, <code>"roles"</code>, or
+<code>"models"</code>.</td>
+</tr>
+<tr class="even">
+<td align="center"><code>eval_all</code></td>
+<td align="center">logical</td>
+<td align="center"><code>FALSE</code></td>
+<td align="left">Keep non-DAG RHS terms (FEs, splines, interactions) in
+derived models.</td>
+</tr>
+</tbody>
+</table>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

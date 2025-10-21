@@ -14,6 +14,31 @@ knitr::opts_chunk$set(
 
 ```
 
+```{r dev-load, include=FALSE}
+# Prefer source build when available (works in RStudio, pkgdown, or local render)
+if (requireNamespace("devtools", quietly = TRUE) && file.exists(file.path("..","DESCRIPTION"))) {
+  # Don't error on CRAN/build machines that don't have devtools or the source path
+  try(devtools::load_all("..", quiet = TRUE), silent = TRUE)
+}
+
+# If we've already loaded from source, avoid re-attaching a different installed build later
+from_source <- try({
+  "DAGassist" %in% loadedNamespaces() &&
+    grepl(normalizePath(".."), getNamespaceInfo(asNamespace("DAGassist"), "path"), fixed = TRUE)
+}, silent = TRUE)
+from_source <- isTRUE(from_source)
+
+# Feature gates (computed *after* attempting load_all)
+has_show <- tryCatch({
+  "show" %in% names(formals(DAGassist::DAGassist))
+}, error = function(e) FALSE)
+
+# Robust check: dev build defines a private .report_dotwhisker helper
+has_dotwhisker <- tryCatch({
+  exists(".report_dotwhisker", envir = asNamespace("DAGassist"), inherits = FALSE)
+}, error = function(e) FALSE)
+```
+
 ```{r ex-dag, include=FALSE}
 library(dagitty)
 library(ggdag)
@@ -62,103 +87,140 @@ df <- data.frame(A, B, Z, X, M, Y, C, region)
 
 `DAGassist()` is meant to be simple and easy to use, and most of its features can be enjoyed via a simple two-parameter argument:
 ```{r example, eval=FALSE}
+library(DAGassist)
+library(dagitty)
+
 DAGassist(
   dag = your_dag_model,
   formula = your_regression_call
 )
 ```
 
-However, `DAGassist()` includes several parameters for more specific applications. This vignette explains how to use those parameters to **get the most out of `DAGassist()`**.
+But it also offers several parameters for more specific applications. They control how the DAG is evaluated (`imply`, `eval_all`), how results print (`show`, `labels`, `omit_factors`, `omit_intercept`, `verbose`), which modeling engine to use (`engine`, `engine_args`), and which output format to write (`type`, `out`). This vignette walks through each with small examples.
 
-## Setup
-```{r setup}
-library(DAGassist)
-library(dagitty)
-```
+# Core Arguments
+## `dag` and `formula`
 
-## `formula` arguments
-
-`DAGassist` supports formulaic and regression-based `formula` arguments. 
+`formula` can be a standard `formula + data` regression call, from which `DAGassist` will impute the necessary information, or three separate `formula`, `data`, and `engine` arguments. 
 
 ```{r formula, eval=FALSE}
-#formulaic formula
+#imputed formula
+DAGassist(
+  #implies the exposure and outcome from the dagitty object
+  dag = dag_model, 
+  #implies the engine, formula, and data from the regression call
+  formula = lm(Y ~ X + C, data=df) 
+)
+
+#plain formula
 DAGassist(
   dag = dag_model,
+  engine = stats::lm, #stats::lm is the default engine arg
   formula = Y ~ X + C,
   data = df,
   exposure = "X",
   outcome = "Y"
 )
-
-#imputed formula
-DAGassist(
-  dag = dag_model,
-  formula = lm(Y ~ X + C, data=df)
-)
 ```
 The two formulas above will print identical output. 
 
-## `imply` arguments
+# Scope Flags
 
-In cases where you only want `DAGassist` to use the variables explicitly called in your formula, use `imply = FALSE`. 
-```{r imply-false}
-DAGassist(
-  dag = dag_model,
-  formula = lm(Y~X+C, data = df),
-  imply = FALSE
-)
-```
-In cases where you want `DAGassist` to explore all of the causal relationships explicated in your DAG, use    `imply = TRUE`. 
-```{r imply-true}
-DAGassist(
-  dag = dag_model,
-  formula = lm(Y~X+C, data = df),
-  imply = TRUE
-)
-```
-`DAGassist` will notify you of which variables it added. `imply` = FALSE by default.
+## `imply`: evaluate on only mentioned variables vs the full DAG
 
-## `omit_factors` and `omit_intercept` arguments
+ - `imply = FALSE` (default): prune the DAG to just exposure, outcome, and your RHS variables; roles/sets are computed on this pruned graph.
+ - `imply = TRUE`: evaluate on the full DAG and allow DAG-implied controls to enter minimal/canonical sets (you’ll be told what’s added).
 
-`DAGassist` omits factor and intercept rows by default, but you can explicitly include them. However, if they are not included in your DAG, `DAGassist` will not evaluate them, and will not include them in the minimal or canonical models.
-```{r omit}
-DAGassist(
-  dag = dag_model,
-  formula = fixest::feols(
-    Y ~ X + C + i(region),  
-    data = df),
-  omit_factors = FALSE,
-  omit_intercept = FALSE
-)
+```{r imply-demo}
+#pruned-to-formula DAG
+DAGassist(dag = dag_model, formula = Y ~ X + C, data = df, imply = FALSE, show = "roles")
+
+#full-DAG evaluation
+DAGassist(dag = dag_model, formula = Y ~ X + C, data = df, imply = TRUE,  show = "roles")
 ```
 
-## `labels` arguments
+## `eval_all`: keep non-DAG RHS terms in derived models
 
-You can include a label list.
+Sometimes your RHS has terms that aren’t DAG nodes (e.g., fixed effects via `i(region)`, factor expansions, interactions, splines). `eval_all` decides whether these non-DAG terms are kept in minimal/canonical formulas.
+ - eval_all = FALSE (default): drop RHS terms not present as DAG nodes from the derived formulas.
+ - eval_all = TRUE: keep all original RHS terms that aren’t DAG nodes (e.g., fixed effects), in addition to the DAG-based controls.
+ 
+```{r omit, eval=FALSE}
+DAGassist(
+    dag = dag_model,
+    formula = fixest::feols(Y ~ X + C + fixest::i(region), data = df),
+    imply = TRUE,
+    eval_all = TRUE
+    )
+```
+
+# Display and Labeling
+
+## `show`: sub-reports
+ - "all" (default): roles grid + model comparison
+ - "roles": just the roles/flags table
+ - "models": just the model comparison
+
+```{r show-demo, eval=FALSE}
+# just the roles table
+DAGassist(dag = dag_model, formula = Y ~ X + Z + C, data = df, show = "roles")
+#just the model comparison
+DAGassist(dag = dag_model, formula = Y ~ X + Z + C, data = df, show = "models")
+```
+
+## `labels`: human-readable names
+
+Provide a named character vector or a small data frame. Note that the `label` parameter uses `modelsummary()` `coef_rename` logic, so an incomplete label list will not throw any errors. 
+
 ```{r labels}
 labs <- list(
   X = "Exposure",
+  Y = "Outcome",
   C = "Collider"
 )
 
 DAGassist(
-  dag = dag_model,
-  formula = lm(
-    Y ~ X + C, data = df),
-  labels = labs
+  dag = dag_model, formula = lm(Y ~ X + C, data = df),
+  show = "roles", labels = labs
 )
 ```
-Note that the `label` parameter uses `modelsummary()` `coef_rename` logic, so an incomplete label list will not throw any errors. 
 
-```{r rename}
+## `omit_intercept` and `omit_factors`: output-only filters
+
+These flags only suppress rows in the printed model comparison. They do not remove terms from estimation. `omit_factors` in particular is useful for conserving space in your report, as 
+reports with factors included can be hundreds of rows. 
+
+```{r omit-demo, eval=FALSE}
 DAGassist(
-  dag = dag_model,
-  formula = lm(
-    Y ~ X + C, data = df),
-  labels = labs,
-  imply = TRUE
-)
+    dag = dag_model,
+    formula = fixest::feols(Y ~ X + Z + i(region), data = df),
+    omit_intercept = TRUE, omit_factors = TRUE # both TRUE by default
+  )
 ```
 
+## `verbose`: printing formulas & notes
 
+`verbose` = TRUE (default) prints helpful notes (what was added/dropped, derived formulas). Set to FALSE for a quieter console.
 
+```{r verbose-demo, eval=FALSE}
+DAGassist(dag = dag_model, formula = Y ~ X + Z + C, data = df, verbose = FALSE)
+```
+
+# Parameter Reference Table
+
+| Parameter        | Type                     | Default   | What it does |
+|:----------------:|:-------------------------:|:---------:|:--------------|
+| `dag`            | dagitty object           | —         | The DAG to validate and evaluate. |
+| `formula`        | formula or single call   | —         | Either `Y ~ X + ...` or a single engine call like `feols(...)`. |
+| `data`           | data.frame               | —         | Required unless supplied in engine call. |
+| `engine`         | function                 | `stats::lm` | Modeling function (ignored if `formula` is a call). |
+| `engine_args`    | named list               | `list()`  | Extra args for `engine(...)`; merged with call args (call wins). |
+| `verbose`        | logical                  | `TRUE`    | Print formulas & notes in console. |
+| `type`           | string                   | `"console"` | One of `"console"`, `"latex"`, `"docx"/"word"`, `"xlsx"/"excel"`, `"text"/"txt"`. |
+| `out`            | path                     | —         | Output path for non-console types. |
+| `imply`          | logical                  | `FALSE`   | Scope: pruned-to-formula vs full-DAG evaluation. |
+| `labels`         | named chr / data.frame   | `NULL`    | Rename coefficients (modelsummary `coef_rename` logic). |
+| `omit_intercept` | logical                  | `TRUE`    | Hide intercept in printed comparison. |
+| `omit_factors`   | logical                  | `TRUE`    | Hide factor levels in printed comparison. |
+| `show`           | string                   | `"all"`   | `"all"`, `"roles"`, or `"models"`. |
+| `eval_all`       | logical                  | `FALSE`   | Keep non-DAG RHS terms (FEs, splines, interactions) in derived models. |

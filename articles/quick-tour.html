@@ -258,6 +258,13 @@ checks, this is an example of how to output a report in
 <span><span class="co">#&gt; Y &amp; outcome &amp;  &amp; x &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  \\</span></span>
 <span><span class="co">#&gt; Z &amp; confounder &amp;  &amp;  &amp; x &amp;  &amp;  &amp;  &amp;  &amp;  \\</span></span>
 <span><span class="co">#&gt; \bottomrule</span></span></code></pre></div>
+<p>Optionally, users can generate visual output via dotwhisker
+plots:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span>dag <span class="op">=</span> <span class="va">dag_model</span>,</span>
+<span>          formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">M</span> <span class="op">+</span> <span class="va">Z</span> <span class="op">+</span> <span class="va">A</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span>,</span>
+<span>          type <span class="op">=</span> <span class="st">"dotwhisker"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="quick-tour_files/figure-html/dotwhisker-1.png" width="672"></p>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

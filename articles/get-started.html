@@ -241,13 +241,46 @@ with factors included can be hundreds of rows.</p>
 <span>  <span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
+<h3 id="bivariate-include-a-no-covariate-comparison-column">
+<code>bivariate</code>: include a no-covariate comparison
+column<a class="anchor" aria-label="anchor" href="#bivariate-include-a-no-covariate-comparison-column"></a>
+</h3>
+<p>Include a <code>Y ~ X</code> column for readers who want the raw
+association. <code>bivariate = FALSE</code> by default.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span></span>
+<span>  dag <span class="op">=</span> <span class="va">dag_model</span>, </span>
+<span>  formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">C</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span>,</span>
+<span>  show <span class="op">=</span> <span class="st">"models"</span>,</span>
+<span>  bivariate <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; DAGassist Report: </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Model comparison:</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+</span></span>
+<span><span class="co">#&gt; |   | Original | Bivariate | Minimal 1 | Canonical |</span></span>
+<span><span class="co">#&gt; +===+==========+===========+===========+===========+</span></span>
+<span><span class="co">#&gt; | X | 0.908*** | 1.415***  | 1.415***  | 1.415***  |</span></span>
+<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+</span></span>
+<span><span class="co">#&gt; |   | (0.030)  | (0.021)   | (0.021)   | (0.021)   |</span></span>
+<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+</span></span>
+<span><span class="co">#&gt; | C | 0.475*** |           |           |           |</span></span>
+<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+</span></span>
+<span><span class="co">#&gt; |   | (0.022)  |           |           |           |</span></span>
+<span><span class="co">#&gt; +===+==========+===========+===========+===========+</span></span>
+<span><span class="co">#&gt; | + p &lt; 0.1, * p &lt; 0.05, ** p &lt; 0.01, *** p &lt;      |</span></span>
+<span><span class="co">#&gt; | 0.001                                            |</span></span>
+<span><span class="co">#&gt; +===+==========+===========+===========+===========+</span></span></code></pre></div>
+</div>
+<div class="section level3">
 <h3 id="verbose-printing-formulas-notes">
 <code>verbose</code>: printing formulas &amp; notes<a class="anchor" aria-label="anchor" href="#verbose-printing-formulas-notes"></a>
 </h3>
 <p><code>verbose</code> = TRUE (default) prints helpful notes (what was
 added/dropped, derived formulas). Set to FALSE for a quieter
 console.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span>dag <span class="op">=</span> <span class="va">dag_model</span>, formula <span class="op">=</span> <span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">Z</span> <span class="op">+</span> <span class="va">C</span>, data <span class="op">=</span> <span class="va">df</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>

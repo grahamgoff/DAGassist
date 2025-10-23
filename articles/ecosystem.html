@@ -58,14 +58,38 @@
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
-<p>Several R packages deal with DAGs and causal inference. Perhaps most
-notable are <code>ggdag</code>, <code>dagitty</code>, <code>dagR</code>,
-and <code>causaleffect</code>. This article explains the ecosystem of R
-DAG packages, and positions <code>DAGassist</code> within it.</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/grahamgoff/DAGassist" class="external-link">DAGassist</a></span><span class="op">)</span></span></code></pre></div>
+<p>This article shows how <strong>DAGassist</strong> plays nicely with
+the wider R causal &amp; reporting ecosystem:</p>
+<ul>
+<li>
+<strong><code>dagitty</code></strong> for DAG specification and
+reasoning</li>
+<li>
+<strong><code>ggdag</code></strong> to visualize DAGs</li>
+<li>
+<strong><code>modelsummary</code></strong> to format regression
+tables</li>
+<li>
+<strong><code>broom</code></strong> to tidy models (coefs &amp;
+goodness-of-fit)</li>
+<li>
+<strong><code>writexl</code></strong> to export multi‑sheet Excel
+workbooks</li>
+<li>
+<strong><code>rmarkdown</code></strong> to render shareable docs
+(HTML/Word/PDF) that embed DAGassist outputs</li>
+</ul>
+<p>We’ll build a small, <strong>reproducible</strong> example you can
+copy‑paste. Heavy chunks are guarded with
+<code><a href="https://rlang.r-lib.org/reference/is_installed.html" class="external-link">rlang::is_installed()</a></code> so CRAN/builds don’t choke on
+optional deps.</p>
+<div class="section level3">
+<h3 id="the-r-dag-ecosystem-at-a-glance">The R DAG Ecosystem at a Glance<a class="anchor" aria-label="anchor" href="#the-r-dag-ecosystem-at-a-glance"></a>
+</h3>
 </div>
-  </main>
+</div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside>
 </div>
 
 

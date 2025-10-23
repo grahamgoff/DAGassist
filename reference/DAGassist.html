@@ -66,6 +66,7 @@ XLSX, plain text). It also supports passing a <strong>single engine call</strong
 <span>  eval_all <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  omit_intercept <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  omit_factors <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  bivariate <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  engine_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -160,6 +161,11 @@ from those derived formulas.</p></dd>
 <dt id="arg-omit-factors">omit_factors<a class="anchor" aria-label="anchor" href="#arg-omit-factors"></a></dt>
 <dd><p>Logical; drop factor-level rows from the model comparison display (default <code>TRUE</code>).
 This parameter only suppresses factor <strong>output</strong>–they are still included in the regression.</p></dd>
+
+
+<dt id="arg-bivariate">bivariate<a class="anchor" aria-label="anchor" href="#arg-bivariate"></a></dt>
+<dd><p>if TRUE, include a bivariate (no covariate) model in the comparison
+table. Default FALSE.</p></dd>
 
 
 <dt id="arg-engine-args">engine_args<a class="anchor" aria-label="anchor" href="#arg-engine-args"></a></dt>

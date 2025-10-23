@@ -11,8 +11,28 @@ knitr::opts_chunk$set(
 
 # Introduction
 
-Several R packages deal with DAGs and causal inference. Perhaps most notable are `ggdag`, `dagitty`, `dagR`, and `causaleffect`. This article explains the ecosystem of R DAG packages, and positions `DAGassist` within it.
+This article shows how **DAGassist** plays nicely with the wider R causal & reporting ecosystem:
 
-```{r setup}
-library(DAGassist)
+- **`dagitty`** for DAG specification and reasoning
+- **`ggdag`** to visualize DAGs
+- **`modelsummary`** to format regression tables
+- **`broom`** to tidy models (coefs & goodness-of-fit)
+- **`writexl`** to export multi‑sheet Excel workbooks
+- **`rmarkdown`** to render shareable docs (HTML/Word/PDF) that embed DAGassist outputs
+
+We’ll build a small, **reproducible** example you can copy‑paste. Heavy chunks are guarded with `rlang::is_installed()` so CRAN/builds don’t choke on optional deps.
+
+## The R DAG Ecosystem at a Glance
+
+```{mermaid, echo=FALSE}
+flowchart LR
+  A[dagitty::dagitty\n(DAG spec)] --> B[ggdag\n(DAG viz)]
+  A --> C[DAGassist\n(classify roles,\nselect adj sets)]
+  C --> D[Engine\n(lm / fixest / glm / ...)]
+  D --> E[broom::tidy & glance]
+  E --> F[modelsummary\n(tables)]
+  C --> G[report_*\nlatex/word/excel/text]
+  F --> H[writexl\n(xlsx)]
+  G --> I[rmarkdown\n(render doc)]
+  C --> J[dotwhisker\n(ggplot)]
 ```

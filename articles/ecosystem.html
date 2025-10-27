@@ -42,8 +42,9 @@
 
 
 
-
-<div class="row">
+<link href="ecosystem_files/htmltools-fill-0.5.8.1/fill.css" rel="stylesheet">
+<script src="ecosystem_files/htmlwidgets-1.6.4/htmlwidgets.js"></script><script src="ecosystem_files/viz-1.8.2/viz.js"></script><link href="ecosystem_files/DiagrammeR-styles-0.2/styles.css" rel="stylesheet">
+<script src="ecosystem_files/grViz-binding-1.0.11/grViz.js"></script><div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>DAGassist in the R DAG Ecosystem</h1>
@@ -58,8 +59,9 @@
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
-<p>This article shows how <strong>DAGassist</strong> plays nicely with
-the wider R causal &amp; reporting ecosystem:</p>
+<p>This article explains the broader R DAG ecosystem and positions
+<strong>DAGassist</strong> within it. It also explains the dependencies
+necessary to maximize <strong>DAGassist</strong>’s functionality.</p>
 <ul>
 <li>
 <strong><code>dagitty</code></strong> for DAG specification and
@@ -79,13 +81,174 @@ workbooks</li>
 <strong><code>rmarkdown</code></strong> to render shareable docs
 (HTML/Word/PDF) that embed DAGassist outputs</li>
 </ul>
-<p>We’ll build a small, <strong>reproducible</strong> example you can
-copy‑paste. Heavy chunks are guarded with
-<code><a href="https://rlang.r-lib.org/reference/is_installed.html" class="external-link">rlang::is_installed()</a></code> so CRAN/builds don’t choke on
-optional deps.</p>
 <div class="section level3">
 <h3 id="the-r-dag-ecosystem-at-a-glance">The R DAG Ecosystem at a Glance<a class="anchor" aria-label="anchor" href="#the-r-dag-ecosystem-at-a-glance"></a>
 </h3>
+<div class="grViz html-widget html-fill-item" id="htmlwidget-ac96cb3ee4656e2e9ec3" style="width:700px;height:432.632880098888px;"></div>
+<script type="application/json" data-for="htmlwidget-ac96cb3ee4656e2e9ec3">{"x":{"diagram":"\ndigraph dag_ecosystem {\n  graph [rankdir=TB, bgcolor=white, pad=0.15,\n         ranksep=0.28, nodesep=0.18, splines=true, concentrate=true]\n  node  [shape=box, style=rounded, fontname=Helvetica,\n         fontsize=10, penwidth=1.1, color=\"#455A64\"]\n  edge  [color=\"#8A8A8A\", arrowsize=0.7, fontsize=9]\n  \n  subgraph cluster_tidyverse {\n    label = \"Graphics Dependencies\";\n    color = \"#7E57C2\"; fillcolor=\"#EDE7F6\"; style=filled;\n    T [label=\"ggplot2\", fillcolor=white, style=\"rounded,filled\"]\n    J [label=\"dotwhisker::dotwhisker()\", fillcolor=white, style=\"rounded,filled\"]\n  }\n  \n  // clusters (no HTML labels)\n  subgraph cluster_dagitty {\n    label = \"dagitty (DAG Model & Reasoning)\";\n    color = \"#7E57C2\"; fillcolor=\"#EDE7F6\"; style=filled;\n    A [label=\"dagitty::dagitty\", fillcolor=white, style=\"rounded,filled\"]\n  }\n\n  subgraph cluster_ggdag {\n    label = \"Graphical Visualization\";\n    color = \"#FB8C00\"; fillcolor=\"#FFE0B2\"; style=filled;\n    B [label=\"ggdag\\n(Visualize DAG)\", fillcolor=white, style=\"rounded,filled\"]\n    A2 [label=\"DAGassist::DAGassist(type=dotwhisker)\", fillcolor=white, style=\"rounded,filled\"]\n  }\n\n  subgraph cluster_assist {\n    label = \"DAGassist (Roles, Comparison, Reporting)\";\n    color = \"#1E88E5\"; fillcolor=\"#E3F2FD\"; style=filled;\n    C  [label=\"DAGassist\\n(Classify & Compare)\", fillcolor=white, style=\"rounded,filled\"]\n  }\n\n  subgraph cluster_engines {\n    label = \"Model Engines\";\n    color = \"#607D8B\"; fillcolor=\"#ECEFF1\"; style=filled;\n    D1 [label=\"stats::lm\", fillcolor=white, style=\"rounded,filled\"]\n    D2 [label=\"fixest::feols\\n(FE/IV)\", fillcolor=white, style=\"rounded,filled\"]\n    D3 [label=\"glm / other\", fillcolor=white, style=\"rounded,filled\"]\n  }\n\n  subgraph cluster_modelsummary {\n    label = \"Roles and Comparison Tables\";\n    color = \"#0097A7\"; fillcolor=\"#E0F7FA\"; style=filled;\n    E [label=\"broom::tidy / glance\", fillcolor=white, style=\"rounded,filled\"]\n    F [label=\" modelsummary::modelsummary\", fillcolor=white, style=\"rounded,filled\"]\n  }\n\n  subgraph cluster_output {\n    label = \"Output Files\";\n    color = \"#FB8C00\"; fillcolor=\"#EFEBE9\"; style=filled;\n    H [label=\"LaTeX Report\", fillcolor=white, style=\"rounded,filled\"]\n    WO [label=\"Word Report\", fillcolor=white, style=\"rounded,filled\"]\n    PT [label=\"Plain Text /\n Markup Report\", fillcolor=white, style=\"rounded,filled\"]\n    EO [label=\"Excel Report\", fillcolor=white, style=\"rounded,filled\"]\n  }\n\n  subgraph cluster_output_depend {\n    label = \"Output Dependencies\";\n    color = \"#8D6E63\"; fillcolor=\"#EFEBE9\"; style=filled;\n    K [label=\"knitr\", fillcolor=white, style=\"rounded,filled\"]\n    W [label=\"writexl\", fillcolor=white, style=\"rounded,filled\"]\n    R [label=\"rmarkdown\", fillcolor=white, style=\"rounded,filled\"]\n  }\n  \n  subgraph cluster_console {\n    color = \"#D81B60\"; fillcolor=\"#FCE4EC\"; style=filled;\n    L [label=\"Console Output\", fillcolor=white, style=\"rounded,filled\"]\n  }\n\n  subgraph cluster_plot {\n    label = \"dotwhisker\";\n    color = \"#455A64\"; fillcolor=\"#ECEFF1\"; style=filled;\n   \n  }\n\n  // flow\n  T -> B\n  A -> T\n  J -> A2\n  F -> L\n  F -> K\n  F -> W\n  K -> PT\n  K -> R\n  R -> WO\n  W -> EO\n  A -> C [label=\"roles/sets\", fontcolor=\"#666666\"]\n  C -> D1\n  C -> D2\n  C -> D3\n  D1 -> A2\n  D2 -> A2\n  D3 -> A2\n  D1 -> E\n  D2 -> E\n  D3 -> E\n  E  -> F [label=\"table\", fontcolor=\"#666666\"]\n  F  -> H [label=\".tex\", fontcolor=\"#666666\"]\n  C  -> J [label=\"plot\", fontcolor=\"#666666\"]\n}\n","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
+</div>
+<div class="section level3">
+<h3 id="the-differences-between-dagitty-ggdag-and-dagassist">The Differences Between <code>dagitty</code>, <code>ggdag</code>,
+and <code>DAGassist</code><a class="anchor" aria-label="anchor" href="#the-differences-between-dagitty-ggdag-and-dagassist"></a>
+</h3>
+<div class="section level4">
+<h4 id="dagitty">
+<code>dagitty</code><a class="anchor" aria-label="anchor" href="#dagitty"></a>
+</h4>
+<ul>
+<li>The core DAG toolkit for R. Creates the actual DAG object that
+<code>ggdag</code> and <code>DAGassist</code> use.</li>
+<li>Supports causal queries:
+<ul>
+<li>
+<code><a href="https://rdrr.io/pkg/dagitty/man/adjustmentSets.html" class="external-link">dagitty::adjustmentSets()</a></code> scans a <code>dagitty</code>
+object to identify adjustment sets.</li>
+<li>
+<code><a href="https://rdrr.io/pkg/dagitty/man/isAcyclic.html" class="external-link">dagitty::isAcyclic()</a></code> verifies acyclicity.</li>
+<li>
+<code><a href="https://rdrr.io/pkg/dagitty/man/isAcyclic.html" class="external-link">dagitty::findCycle()</a></code> identifies cyclical variable
+relationships.</li>
+</ul>
+</li>
+</ul>
+<p><strong>Making a DAG with <code>dagitty</code>:</strong></p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">#via dagitty</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://www.dagitty.net" class="external-link">dagitty</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">dag_model</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/dagitty/man/dagitty.html" class="external-link">dagitty</a></span><span class="op">(</span><span class="st">'dag {</span></span>
+<span><span class="st">    EffectiveN_electoral</span></span>
+<span><span class="st">    Gov_effectiveness_0_5</span></span>
+<span><span class="st">    LR_Polarization_perceived</span></span>
+<span><span class="st">    PID_noleaners [exposure]</span></span>
+<span><span class="st">    Presidentialsystem</span></span>
+<span><span class="st">    VoterAPI_Party [outcome]</span></span>
+<span><span class="st">    Year_0</span></span>
+<span><span class="st">    EffectiveN_electoral -&gt; VoterAPI_Party</span></span>
+<span><span class="st">    Gov_effectiveness_0_5 -&gt; VoterAPI_Party</span></span>
+<span><span class="st">    LR_Polarization_perceived -&gt; VoterAPI_Party</span></span>
+<span><span class="st">    PID_noleaners -&gt; LR_Polarization_perceived</span></span>
+<span><span class="st">    PID_noleaners -&gt; VoterAPI_Party</span></span>
+<span><span class="st">    Presidentialsystem -&gt; EffectiveN_electoral</span></span>
+<span><span class="st">    Presidentialsystem -&gt; VoterAPI_Party</span></span>
+<span><span class="st">    Year_0 -&gt; PID_noleaners</span></span>
+<span><span class="st">    Year_0 -&gt; VoterAPI_Party</span></span>
+<span><span class="st">}'</span><span class="op">)</span>  </span></code></pre></div>
+</div>
+<div class="section level4">
+<h4 id="ggdag">
+<code>ggdag</code><a class="anchor" aria-label="anchor" href="#ggdag"></a>
+</h4>
+<ul>
+<li>A visualization layer for DAGs.</li>
+<li>Also provides a more intuitive way to make <code>dagitty</code>
+objects.</li>
+</ul>
+<p><strong>Making an identical DAG with <code>ggdag</code>:</strong></p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">#via ggdag</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/r-causal/ggdag" class="external-link">ggdag</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">dag_model</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-causal.github.io/ggdag/reference/dagify.html" class="external-link">dagify</a></span><span class="op">(</span></span>
+<span>  <span class="va">VoterAPI_Party</span>  <span class="op">~</span> <span class="va">PID_noleaners</span> <span class="op">+</span> <span class="va">LR_Polarization_perceived</span> <span class="op">+</span></span>
+<span>    <span class="va">Gov_effectiveness_0_5</span> <span class="op">+</span> <span class="va">EffectiveN_electoral</span> <span class="op">+</span> <span class="va">Presidentialsystem</span>,</span>
+<span>    </span>
+<span>  <span class="va">LR_Polarization_perceived</span> <span class="op">~</span>  <span class="va">PID_noleaners</span>,</span>
+<span>  </span>
+<span>  <span class="va">EffectiveN_electoral</span> <span class="op">~</span> <span class="va">Presidentialsystem</span>,</span>
+<span>    </span>
+<span>  exposure <span class="op">=</span> <span class="st">"PID_noleaners"</span>,</span>
+<span>  outcome <span class="op">=</span> <span class="st">"VoterAPI_Party"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level4">
+<h4 id="dagassist">
+<code>DAGassist</code><a class="anchor" aria-label="anchor" href="#dagassist"></a>
+</h4>
+<ul>
+<li>The glue between your DAG models and regressions</li>
+<li>Uses <code>dagitty</code> logic to classify the causal relationships
+embedded in a DAG</li>
+<li>Identifies those relationships and their implications for your
+covariate selection in a concise, publication-grade report</li>
+</ul>
+<table class="table">
+<colgroup>
+<col width="77%">
+<col width="10%">
+<col width="12%">
+</colgroup>
+<thead><tr class="header">
+<th>Path / Node Type</th>
+<th align="center">Minimal</th>
+<th align="center">Canonical</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>Fork/Common–Cause Confounder (Z)</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+</tr>
+<tr class="even">
+<td>Chain/Mediator (M)</td>
+<td align="center">✗</td>
+<td align="center">✗</td>
+</tr>
+<tr class="odd">
+<td>Collider (C)</td>
+<td align="center">✗</td>
+<td align="center">✗</td>
+</tr>
+<tr class="even">
+<td>Descendant of Mediator (N)</td>
+<td align="center">✗</td>
+<td align="center">✗</td>
+</tr>
+<tr class="odd">
+<td>Descendant of Collider (Q)</td>
+<td align="center">✗</td>
+<td align="center">✗</td>
+</tr>
+<tr class="even">
+<td>Descendant of Outcome (I)</td>
+<td align="center">✗</td>
+<td align="center">✗</td>
+</tr>
+<tr class="odd">
+<td>M-Bias</td>
+<td align="center">✗</td>
+<td align="center">✗</td>
+</tr>
+<tr class="even">
+<td>Butterfly Bias</td>
+<td align="center">✗</td>
+<td align="center">✗</td>
+</tr>
+<tr class="odd">
+<td>Neutral Control on Treatment (E → X)</td>
+<td align="center">✗</td>
+<td align="center">✓</td>
+</tr>
+<tr class="even">
+<td>Neutral Control on Outcome (F → Y)</td>
+<td align="center">✗</td>
+<td align="center">✓</td>
+</tr>
+<tr class="odd">
+<td>Descendant of Confounder <em>off</em> Backdoor Path (W)</td>
+<td align="center">✗</td>
+<td align="center">✗</td>
+</tr>
+<tr class="even">
+<td>Descendant of Confounder <em>on</em> Backdoor Path (V)</td>
+<td align="center">Z or V</td>
+<td align="center">Z and V</td>
+</tr>
+</tbody>
+</table>
+<p><em>Note:</em> ✓ = adjust; ✗ = do not adjust. There may be multiple
+minimal sets; the canonical set is unique.</p>
+</div>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -11,7 +11,7 @@ knitr::opts_chunk$set(
 
 # Introduction
 
-This article shows how **DAGassist** plays nicely with the wider R causal & reporting ecosystem:
+This article explains the broader R DAG ecosystem and positions **DAGassist** within it. It also explains the dependencies necessary to maximize **DAGassist**'s functionality. 
 
 - **`dagitty`** for DAG specification and reasoning
 - **`ggdag`** to visualize DAGs
@@ -20,20 +20,19 @@ This article shows how **DAGassist** plays nicely with the wider R causal & repo
 - **`writexl`** to export multi‑sheet Excel workbooks
 - **`rmarkdown`** to render shareable docs (HTML/Word/PDF) that embed DAGassist outputs
 
-We’ll build a small, **reproducible** example you can copy‑paste. Heavy chunks are guarded with `rlang::is_installed()` so CRAN/builds don’t choke on optional deps.
-
 ## The R DAG Ecosystem at a Glance
-
 
 ```{r ecosystem-flow, echo=FALSE, message=FALSE, warning=FALSE}
 library(DiagrammeR)
 
 dot <- "
 digraph dag_ecosystem {
-  graph [rankdir=LR, bgcolor=white, pad=0.3]
-  node  [shape=box, style=rounded, fontname=Helvetica, penwidth=1.2, color=\"#455A64\"]
-  edge  [color=\"#8A8A8A\", arrowsize=0.8]
-
+  graph [rankdir=TB, bgcolor=white, pad=0.15,
+         ranksep=0.28, nodesep=0.18, splines=true, concentrate=true]
+  node  [shape=box, style=rounded, fontname=Helvetica,
+         fontsize=10, penwidth=1.1, color=\"#455A64\"]
+  edge  [color=\"#8A8A8A\", arrowsize=0.7, fontsize=9]
+  
   subgraph cluster_tidyverse {
     label = \"Graphics Dependencies\";
     color = \"#7E57C2\"; fillcolor=\"#EDE7F6\"; style=filled;
@@ -69,21 +68,16 @@ digraph dag_ecosystem {
     D3 [label=\"glm / other\", fillcolor=white, style=\"rounded,filled\"]
   }
 
-  subgraph cluster_broom {
-    label = \"broom (Clean and Tidy Models)\";
-    color = \"#43A047\"; fillcolor=\"#E8F5E9\"; style=filled;
-    E [label=\"broom::tidy / glance\", fillcolor=white, style=\"rounded,filled\"]
-  }
-
   subgraph cluster_modelsummary {
     label = \"Roles and Comparison Tables\";
     color = \"#0097A7\"; fillcolor=\"#E0F7FA\"; style=filled;
+    E [label=\"broom::tidy / glance\", fillcolor=white, style=\"rounded,filled\"]
     F [label=\" modelsummary::modelsummary\", fillcolor=white, style=\"rounded,filled\"]
   }
 
   subgraph cluster_output {
     label = \"Output Files\";
-    color = \"#8D6E63\"; fillcolor=\"#EFEBE9\"; style=filled;
+    color = \"#FB8C00\"; fillcolor=\"#EFEBE9\"; style=filled;
     H [label=\"LaTeX Report\", fillcolor=white, style=\"rounded,filled\"]
     WO [label=\"Word Report\", fillcolor=white, style=\"rounded,filled\"]
     PT [label=\"Plain Text /\n Markup Report\", fillcolor=white, style=\"rounded,filled\"]
@@ -110,10 +104,9 @@ digraph dag_ecosystem {
   }
 
   // flow
-  A -> B 
+  T -> B
   A -> T
   J -> A2
-  T -> B
   F -> L
   F -> K
   F -> W
@@ -140,3 +133,81 @@ digraph dag_ecosystem {
 DiagrammeR::grViz(dot)
 ```
 
+## The Differences Between `dagitty`, `ggdag`, and `DAGassist`
+
+### `dagitty`
+ - The core DAG toolkit for R. Creates the actual DAG object that `ggdag` and `DAGassist` use.
+ - Supports causal queries: 
+    - `dagitty::adjustmentSets()` scans a `dagitty` object to identify adjustment sets. 
+    - `dagitty::isAcyclic()` verifies acyclicity.
+    - `dagitty::findCycle()` identifies cyclical variable relationships.
+    
+**Making a DAG with `dagitty`:**
+```{r dagitty-eg, eval=FALSE}
+#via dagitty
+library(dagitty)
+
+dag_model <- dagitty('dag {
+    EffectiveN_electoral
+    Gov_effectiveness_0_5
+    LR_Polarization_perceived
+    PID_noleaners [exposure]
+    Presidentialsystem
+    VoterAPI_Party [outcome]
+    Year_0
+    EffectiveN_electoral -> VoterAPI_Party
+    Gov_effectiveness_0_5 -> VoterAPI_Party
+    LR_Polarization_perceived -> VoterAPI_Party
+    PID_noleaners -> LR_Polarization_perceived
+    PID_noleaners -> VoterAPI_Party
+    Presidentialsystem -> EffectiveN_electoral
+    Presidentialsystem -> VoterAPI_Party
+    Year_0 -> PID_noleaners
+    Year_0 -> VoterAPI_Party
+}')  
+
+```
+
+### `ggdag`
+ - A visualization layer for DAGs.
+ - Also provides a more intuitive way to make `dagitty` objects.
+ 
+**Making an identical DAG with `ggdag`:**
+```{r ggdag-eg, eval=FALSE}
+#via ggdag
+library(ggdag)
+
+dag_model <- dagify(
+  VoterAPI_Party  ~ PID_noleaners + LR_Polarization_perceived +
+    Gov_effectiveness_0_5 + EffectiveN_electoral + Presidentialsystem,
+    
+  LR_Polarization_perceived ~  PID_noleaners,
+  
+  EffectiveN_electoral ~ Presidentialsystem,
+    
+  exposure = "PID_noleaners",
+  outcome = "VoterAPI_Party"
+)
+```
+
+### `DAGassist`
+ - The glue between your DAG models and regressions
+ - Uses `dagitty` logic to classify the causal relationships embedded in a DAG
+ - Identifies those relationships and their implications for your covariate selection in a concise, publication-grade report
+ 
+| Path / Node Type                                                     | Minimal | Canonical |
+|----------------------------------------------------------------------|:-------:|:---------:|
+| Fork/Common–Cause Confounder (Z)                                     |    ✓    |     ✓     |
+| Chain/Mediator (M)                                                   |    ✗    |     ✗     |
+| Collider (C)                                                         |    ✗    |     ✗     |
+| Descendant of Mediator (N)                                           |    ✗    |     ✗     |
+| Descendant of Collider (Q)                                           |    ✗    |     ✗     |
+| Descendant of Outcome (I)                                            |    ✗    |     ✗     |
+| M-Bias                                                               |    ✗    |     ✗     |
+| Butterfly Bias                                                       |    ✗    |     ✗     |
+| Neutral Control on Treatment (E → X)                                 |    ✗    |     ✓     |
+| Neutral Control on Outcome (F → Y)                                   |    ✗    |     ✓     |
+| Descendant of Confounder *off* Backdoor Path (W)                     |    ✗    |     ✗     |
+| Descendant of Confounder *on* Backdoor Path (V)                      |  Z or V |   Z and V |
+
+*Note:* ✓ = adjust; ✗ = do not adjust. There may be multiple minimal sets; the canonical set is unique.

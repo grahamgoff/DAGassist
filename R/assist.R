@@ -1,4 +1,4 @@
-#' Produce a compact `DAGassist` report (console/LaTeX/Word/Excel/Text)
+#' Generate a (console/LaTeX/word/excel/txt) report classifying nodes and comparing models
 #'
 #' `DAGassist()` validates a DAG + model specification, classifies node roles,
 #' builds minimal and canonical adjustment sets, fits comparable models, and
@@ -104,7 +104,7 @@
 #'} 
 #'
 #'@section Interpreting the output:
-#' **ROLES.** Variables in your formula are classified by DAG-based causal role:
+#' **Roles:** Variables in your formula are classified by DAG-based causal role:
 #' \itemize{
 #'   \item `X` - treatment / exposure.
 #'   \item `Y` - outcome / dependent variable.
@@ -118,7 +118,7 @@
 #'         model but omitted from the minimal set because they're not required for identification.
 #' }
 #' 
-#' **MODEL COMPARISON.**
+#' **Model Comparison:**
 #' \itemize{
 #'   \item **Minimal** - the smallest adjustment set that blocks all back-door paths
 #'         (confounders only).

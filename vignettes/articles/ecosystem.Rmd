@@ -24,15 +24,119 @@ We’ll build a small, **reproducible** example you can copy‑paste. Heavy chun
 
 ## The R DAG Ecosystem at a Glance
 
-```{mermaid, echo=FALSE}
-flowchart LR
-  A[dagitty::dagitty\n(DAG spec)] --> B[ggdag\n(DAG viz)]
-  A --> C[DAGassist\n(classify roles,\nselect adj sets)]
-  C --> D[Engine\n(lm / fixest / glm / ...)]
-  D --> E[broom::tidy & glance]
-  E --> F[modelsummary\n(tables)]
-  C --> G[report_*\nlatex/word/excel/text]
-  F --> H[writexl\n(xlsx)]
-  G --> I[rmarkdown\n(render doc)]
-  C --> J[dotwhisker\n(ggplot)]
+
+```{r ecosystem-flow, echo=FALSE, message=FALSE, warning=FALSE}
+library(DiagrammeR)
+
+dot <- "
+digraph dag_ecosystem {
+  graph [rankdir=LR, bgcolor=white, pad=0.3]
+  node  [shape=box, style=rounded, fontname=Helvetica, penwidth=1.2, color=\"#455A64\"]
+  edge  [color=\"#8A8A8A\", arrowsize=0.8]
+
+  subgraph cluster_tidyverse {
+    label = \"Graphics Dependencies\";
+    color = \"#7E57C2\"; fillcolor=\"#EDE7F6\"; style=filled;
+    T [label=\"ggplot2\", fillcolor=white, style=\"rounded,filled\"]
+    J [label=\"dotwhisker::dotwhisker()\", fillcolor=white, style=\"rounded,filled\"]
+  }
+  
+  // clusters (no HTML labels)
+  subgraph cluster_dagitty {
+    label = \"dagitty (DAG Model & Reasoning)\";
+    color = \"#7E57C2\"; fillcolor=\"#EDE7F6\"; style=filled;
+    A [label=\"dagitty::dagitty\", fillcolor=white, style=\"rounded,filled\"]
+  }
+
+  subgraph cluster_ggdag {
+    label = \"Graphical Visualization\";
+    color = \"#FB8C00\"; fillcolor=\"#FFE0B2\"; style=filled;
+    B [label=\"ggdag\\n(Visualize DAG)\", fillcolor=white, style=\"rounded,filled\"]
+    A2 [label=\"DAGassist::DAGassist(type=dotwhisker)\", fillcolor=white, style=\"rounded,filled\"]
+  }
+
+  subgraph cluster_assist {
+    label = \"DAGassist (Roles, Comparison, Reporting)\";
+    color = \"#1E88E5\"; fillcolor=\"#E3F2FD\"; style=filled;
+    C  [label=\"DAGassist\\n(Classify & Compare)\", fillcolor=white, style=\"rounded,filled\"]
+  }
+
+  subgraph cluster_engines {
+    label = \"Model Engines\";
+    color = \"#607D8B\"; fillcolor=\"#ECEFF1\"; style=filled;
+    D1 [label=\"stats::lm\", fillcolor=white, style=\"rounded,filled\"]
+    D2 [label=\"fixest::feols\\n(FE/IV)\", fillcolor=white, style=\"rounded,filled\"]
+    D3 [label=\"glm / other\", fillcolor=white, style=\"rounded,filled\"]
+  }
+
+  subgraph cluster_broom {
+    label = \"broom (Clean and Tidy Models)\";
+    color = \"#43A047\"; fillcolor=\"#E8F5E9\"; style=filled;
+    E [label=\"broom::tidy / glance\", fillcolor=white, style=\"rounded,filled\"]
+  }
+
+  subgraph cluster_modelsummary {
+    label = \"Roles and Comparison Tables\";
+    color = \"#0097A7\"; fillcolor=\"#E0F7FA\"; style=filled;
+    F [label=\" modelsummary::modelsummary\", fillcolor=white, style=\"rounded,filled\"]
+  }
+
+  subgraph cluster_output {
+    label = \"Output Files\";
+    color = \"#8D6E63\"; fillcolor=\"#EFEBE9\"; style=filled;
+    H [label=\"LaTeX Report\", fillcolor=white, style=\"rounded,filled\"]
+    WO [label=\"Word Report\", fillcolor=white, style=\"rounded,filled\"]
+    PT [label=\"Plain Text /\n Markup Report\", fillcolor=white, style=\"rounded,filled\"]
+    EO [label=\"Excel Report\", fillcolor=white, style=\"rounded,filled\"]
+  }
+
+  subgraph cluster_output_depend {
+    label = \"Output Dependencies\";
+    color = \"#8D6E63\"; fillcolor=\"#EFEBE9\"; style=filled;
+    K [label=\"knitr\", fillcolor=white, style=\"rounded,filled\"]
+    W [label=\"writexl\", fillcolor=white, style=\"rounded,filled\"]
+    R [label=\"rmarkdown\", fillcolor=white, style=\"rounded,filled\"]
+  }
+  
+  subgraph cluster_console {
+    color = \"#D81B60\"; fillcolor=\"#FCE4EC\"; style=filled;
+    L [label=\"Console Output\", fillcolor=white, style=\"rounded,filled\"]
+  }
+
+  subgraph cluster_plot {
+    label = \"dotwhisker\";
+    color = \"#455A64\"; fillcolor=\"#ECEFF1\"; style=filled;
+   
+  }
+
+  // flow
+  A -> B 
+  A -> T
+  J -> A2
+  T -> B
+  F -> L
+  F -> K
+  F -> W
+  K -> PT
+  K -> R
+  R -> WO
+  W -> EO
+  A -> C [label=\"roles/sets\", fontcolor=\"#666666\"]
+  C -> D1
+  C -> D2
+  C -> D3
+  D1 -> A2
+  D2 -> A2
+  D3 -> A2
+  D1 -> E
+  D2 -> E
+  D3 -> E
+  E  -> F [label=\"table\", fontcolor=\"#666666\"]
+  F  -> H [label=\".tex\", fontcolor=\"#666666\"]
+  C  -> J [label=\"plot\", fontcolor=\"#666666\"]
+}
+"
+
+DiagrammeR::grViz(dot)
 ```
+

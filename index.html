@@ -53,12 +53,14 @@
 <p>See the <a href="https://grahamgoff.github.io/DAGassist/articles/making-reports.html">Making Reports</a> vignette for details on producing publication-quality <code>DAGassist</code> reports in <code>LaTex</code>, <code>Word</code>, <code>Excel</code>, and <code>plain text</code>.</p>
 <p>See the <a href="https://grahamgoff.github.io/DAGassist/articles/get-started.html">Parameter Guide</a> vignette for examples of how to get the most out of <code>DAGassist</code>.</p>
 <p>See the <a href="https://grahamgoff.github.io/DAGassist/articles/compatability.html">Supported Models</a> vignette for documentation on what engines <code>DAGassist</code> supports.</p>
+<p>See the <a href="%22https://grahamgoff.github.io/DAGassist/articles/ecosystem.html%22">Ecosystem Guide</a> for how <code>DAGassist</code> fits in the R DAG ecosystem—and a diagram of the packages it integrates with.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <p>You can install <code>DAGassist</code> with:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"DAGassist"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"DAGassist"</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/grahamgoff/DAGassist" class="external-link">DAGassist</a></span><span class="op">)</span> </span></code></pre></div>
 <p>Or you can install the development version from GitHub with:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("devtools")</span></span>
@@ -69,19 +71,17 @@
 </h2>
 <p>Simply provide a <code>dagitty()</code> object and a regression call and <code>DAGassist</code> will create a report classifying variables by causal role, and compare the specified regression to minimal and canonical models.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/grahamgoff/DAGassist" class="external-link">DAGassist</a></span><span class="op">)</span> </span>
-<span></span>
-<span><span class="fu"><a href="reference/DAGassist.html">DAGassist</a></span><span class="op">(</span>dag <span class="op">=</span> <span class="va">dag_model</span>, </span>
+<code class="sourceCode R"><span><span class="fu">DAGassist</span><span class="fu">::</span><span class="fu"><a href="reference/DAGassist.html">DAGassist</a></span><span class="op">(</span>dag <span class="op">=</span> <span class="va">dag_model</span>, </span>
 <span>          formula <span class="op">=</span> <span class="fu">feols</span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">M</span> <span class="op">+</span> <span class="va">C</span> <span class="op">+</span> <span class="va">Z</span> <span class="op">+</span> <span class="va">A</span> <span class="op">+</span> <span class="va">B</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; DAGassist Report: </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Roles:</span></span>
-<span><span class="co">#&gt; variable  role        X  Y  conf  med  col  desc(Y)  desc(X)</span></span>
+<span><span class="co">#&gt; variable  role        X  Y  conf  med  col  dOut  dMed  dCol</span></span>
 <span><span class="co">#&gt; X         exposure    x                                     </span></span>
-<span><span class="co">#&gt; Y         outcome        x                           x      </span></span>
+<span><span class="co">#&gt; Y         outcome        x                                  </span></span>
 <span><span class="co">#&gt; Z         confounder        x                               </span></span>
-<span><span class="co">#&gt; M         mediator                x                  x      </span></span>
-<span><span class="co">#&gt; C         collider                     x    x        x      </span></span>
+<span><span class="co">#&gt; M         mediator                x                         </span></span>
+<span><span class="co">#&gt; C         collider                     x    x     x         </span></span>
 <span><span class="co">#&gt; A         other                                             </span></span>
 <span><span class="co">#&gt; B         other                                             </span></span>
 <span><span class="co">#&gt; </span></span>
@@ -126,7 +126,20 @@
 <span><span class="co">#&gt; +===+===========+===========+===========+</span></span>
 <span></span>
 <span><span class="co"># note: this example uses a test DAG and dataset, which was created</span></span>
-<span><span class="co"># silently to avoid confusion. </span></span></code></pre></div>
+<span><span class="co"># silently for the sake of brevity.</span></span></code></pre></div>
+<p>Optionally, users can generate visual output via dotwhisker plots:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">DAGassist</span><span class="fu">::</span><span class="fu"><a href="reference/DAGassist.html">DAGassist</a></span><span class="op">(</span>dag <span class="op">=</span> <span class="va">dag_model</span>,</span>
+<span>          formula <span class="op">=</span> <span class="fu">feols</span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">M</span> <span class="op">+</span> <span class="va">C</span> <span class="op">+</span> <span class="va">Z</span> <span class="op">+</span> <span class="va">A</span> <span class="op">+</span> <span class="va">B</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span>,</span>
+<span>          type <span class="op">=</span> <span class="st">"dotwhisker"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: Using the `size` aesthetic with geom_segment was deprecated in ggplot2 3.4.0.</span></span>
+<span><span class="co">#&gt; ℹ Please use the `linewidth` aesthetic instead.</span></span>
+<span><span class="co">#&gt; ℹ The deprecated feature was likely used in the dotwhisker package.</span></span>
+<span><span class="co">#&gt;   Please report the issue at &lt;https://github.com/fsolt/dotwhisker/issues&gt;.</span></span>
+<span><span class="co">#&gt; This warning is displayed once every 8 hours.</span></span>
+<span><span class="co">#&gt; Call `lifecycle::last_lifecycle_warnings()` to see where this warning was</span></span>
+<span><span class="co">#&gt; generated.</span></span></code></pre></div>
+<p><img src="reference/figures/README-dotwhisker-1.png" width="100%"></p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">

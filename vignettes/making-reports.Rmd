@@ -214,13 +214,10 @@ DAGassist(dag = dag_model,
           show = "roles")
 ```
 
-## Dotwhisker output
+## Optional: a dot‑whisker plot of the key coefficient
 
-Report tables can be space-intensive and difficult to interpret for non-technical 
-audiences. `DAGassist` supports dotwhisker output.
-
-### Examples
 ```{r dotwhisker, eval=has_dotwhisker, warning=FALSE, fig.width=7}
+# Returns a ggplot object (prints if out = NULL; saves if out is a file path)
 DAGassist(dag = dag_model,
           formula = lm(Y ~ D + G + H + F + A + B + C, data = df),
           type = "dotwhisker")

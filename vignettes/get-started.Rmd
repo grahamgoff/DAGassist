@@ -198,6 +198,20 @@ DAGassist(
   )
 ```
 
+## `bivariate`: include a no-covariate comparison column
+
+Include a `Y ~ X` column for readers who want the raw association. `bivariate = FALSE` by default.
+
+```{r bivariate}
+DAGassist(
+  dag = dag_model, 
+  formula = lm(Y ~ X + C, data = df),
+  show = "models",
+  bivariate = TRUE
+)
+```
+
+
 ## `verbose`: printing formulas & notes
 
 `verbose` = TRUE (default) prints helpful notes (what was added/dropped, derived formulas). Set to FALSE for a quieter console.

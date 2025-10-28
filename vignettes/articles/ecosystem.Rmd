@@ -27,7 +27,7 @@ library(DiagrammeR)
 
 dot <- "
 digraph dag_ecosystem {
-  graph [rankdir=TB, bgcolor=white, pad=0.15,
+  graph [rankdir=TB, bgcolor=black, pad=0.15, size=8,
          ranksep=0.28, nodesep=0.18, splines=true, concentrate=true]
   node  [shape=box, style=rounded, fontname=Helvetica,
          fontsize=10, penwidth=1.1, color=\"#455A64\"]

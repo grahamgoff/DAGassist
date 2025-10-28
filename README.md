@@ -34,12 +34,18 @@ See the [Supported
 Models](https://grahamgoff.github.io/DAGassist/articles/compatability.html)
 vignette for documentation on what engines `DAGassist` supports.
 
+See the [Ecosystem
+Guide]( "https://grahamgoff.github.io/DAGassist/articles/ecosystem.html")
+for how `DAGassist` fits in the R DAG ecosystem—and a diagram of the
+packages it integrates with.
+
 ## Installation
 
 You can install `DAGassist` with:
 
 ``` r
 install.packages("DAGassist")
+library(DAGassist) 
 ```
 
 Or you can install the development version from GitHub with:
@@ -56,19 +62,17 @@ Simply provide a `dagitty()` object and a regression call and
 and compare the specified regression to minimal and canonical models.
 
 ``` r
-library(DAGassist) 
-
-DAGassist(dag = dag_model, 
+DAGassist::DAGassist(dag = dag_model, 
           formula = feols(Y ~ X + M + C + Z + A + B, data = df))
 #> DAGassist Report: 
 #> 
 #> Roles:
-#> variable  role        X  Y  conf  med  col  desc(Y)  desc(X)
+#> variable  role        X  Y  conf  med  col  dOut  dMed  dCol
 #> X         exposure    x                                     
-#> Y         outcome        x                           x      
+#> Y         outcome        x                                  
 #> Z         confounder        x                               
-#> M         mediator                x                  x      
-#> C         collider                     x    x        x      
+#> M         mediator                x                         
+#> C         collider                     x    x     x         
 #> A         other                                             
 #> B         other                                             
 #> 
@@ -113,5 +117,22 @@ DAGassist(dag = dag_model,
 #> +===+===========+===========+===========+
 
 # note: this example uses a test DAG and dataset, which was created
-# silently to avoid confusion. 
+# silently for the sake of brevity.
 ```
+
+Optionally, users can generate visual output via dotwhisker plots:
+
+``` r
+DAGassist::DAGassist(dag = dag_model,
+          formula = feols(Y ~ X + M + C + Z + A + B, data = df),
+          type = "dotwhisker")
+#> Warning: Using the `size` aesthetic with geom_segment was deprecated in ggplot2 3.4.0.
+#> ℹ Please use the `linewidth` aesthetic instead.
+#> ℹ The deprecated feature was likely used in the dotwhisker package.
+#>   Please report the issue at <https://github.com/fsolt/dotwhisker/issues>.
+#> This warning is displayed once every 8 hours.
+#> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+#> generated.
+```
+
+<img src="man/figures/README-dotwhisker-1.png" width="100%" />

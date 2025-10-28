@@ -27,11 +27,11 @@ library(DiagrammeR)
 
 dot <- "
 digraph dag_ecosystem {
-  graph [rankdir=TB, bgcolor=black, pad=0.15, size=8,
-         ranksep=0.28, nodesep=0.18, splines=true, concentrate=true]
+  graph [rankdir=TB, bgcolor=transparent, pad=0.05, size=30, fontsize=28,
+         ranksep=0.28, nodesep=0.18, splines=true]
   node  [shape=box, style=rounded, fontname=Helvetica,
-         fontsize=10, penwidth=1.1, color=\"#455A64\"]
-  edge  [color=\"#8A8A8A\", arrowsize=0.7, fontsize=9]
+         fontsize=30, penwidth=1.1, color=\"#455A64\"]
+  edge  [color=\"red\", arrowsize=0.9, fontsize=22, fontcolor=\"red\"]
   
   subgraph cluster_tidyverse {
     label = \"Graphics Dependencies\";
@@ -114,7 +114,7 @@ digraph dag_ecosystem {
   K -> R
   R -> WO
   W -> EO
-  A -> C [label=\"roles/sets\", fontcolor=\"#666666\"]
+  A -> C [label=\"roles/sets\"]
   C -> D1
   C -> D2
   C -> D3
@@ -124,13 +124,13 @@ digraph dag_ecosystem {
   D1 -> E
   D2 -> E
   D3 -> E
-  E  -> F [label=\"table\", fontcolor=\"#666666\"]
-  F  -> H [label=\".tex\", fontcolor=\"#666666\"]
-  C  -> J [label=\"plot\", fontcolor=\"#666666\"]
+  E  -> F [label=\"table\"]
+  F  -> H [label=\".tex\"]
+  C  -> J [label=\"plot\"]
 }
 "
 
-DiagrammeR::grViz(dot)
+DiagrammeR::grViz(dot, width="85%")
 ```
 
 ## The Differences Between `dagitty`, `ggdag`, and `DAGassist`
@@ -191,9 +191,11 @@ dag_model <- dagify(
 ```
 
 ### `DAGassist`
- - The glue between your DAG models and regressions
- - Uses `dagitty` logic to classify the causal relationships embedded in a DAG
- - Identifies those relationships and their implications for your covariate selection in a concise, publication-grade report
+ - The glue between your DAG models and regressions.
+ - Uses `dagitty` logic to classify the causal relationships embedded in a DAG.
+ - Identifies those relationships and their implications for your covariate selection in a concise, publication-grade report.
+ 
+It uses `dagitty` logic to derive minimal and canonical adjustment sets, according to these criteria:
  
 | Path / Node Type                                                     | Minimal | Canonical |
 |----------------------------------------------------------------------|:-------:|:---------:|
@@ -211,3 +213,6 @@ dag_model <- dagify(
 | Descendant of Confounder *on* Backdoor Path (V)                      |  Z or V |   Z and V |
 
 *Note:* ✓ = adjust; ✗ = do not adjust. There may be multiple minimal sets; the canonical set is unique.
+
+
+

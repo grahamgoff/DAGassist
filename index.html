@@ -13,6 +13,7 @@
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Test Robustness with Directed Acyclic Graphs">
 <meta name="description" content="Provides robustness checks driven by directed acyclic graphs (DAGs). Given a dagitty DAG object and a model specification, DAGassist classifies variables by causal roles, flags problematic controls, and generates a report comparing the original model with minimal and canonical adjustment sets. Exports publication-grade reports in LaTeX, Word, Excel, or plain text. DAGassist is built on dagitty, an R package that uses the DAGitty web tool (&lt;https://dagitty.net/&gt;) for creating and analyzing DAGs. Methods draw on Pearl (2009) &lt;doi:10.1017/CBO9780511803161&gt; and Textor et al. (2016) &lt;doi:10.1093/ije/dyw341&gt;.">
 <meta property="og:description" content="Provides robustness checks driven by directed acyclic graphs (DAGs). Given a dagitty DAG object and a model specification, DAGassist classifies variables by causal roles, flags problematic controls, and generates a report comparing the original model with minimal and canonical adjustment sets. Exports publication-grade reports in LaTeX, Word, Excel, or plain text. DAGassist is built on dagitty, an R package that uses the DAGitty web tool (&lt;https://dagitty.net/&gt;) for creating and analyzing DAGs. Methods draw on Pearl (2009) &lt;doi:10.1017/CBO9780511803161&gt; and Textor et al. (2016) &lt;doi:10.1093/ije/dyw341&gt;.">
+<meta property="og:image" content="https://grahamgoff.github.io/DAGassist/logo.png">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -43,8 +44,10 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="dagassist">DAGassist<a class="anchor" aria-label="anchor" href="#dagassist"></a>
-</h1></div>
+<div class="page-header">
+<img src="logo.png" class="logo" alt=""><h1 id="dagassist">DAGassist<a class="anchor" aria-label="anchor" href="#dagassist"></a>
+</h1>
+</div>
 <!-- badges: start -->
 
 <!-- badges: end -->
@@ -131,14 +134,7 @@
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">DAGassist</span><span class="fu">::</span><span class="fu"><a href="reference/DAGassist.html">DAGassist</a></span><span class="op">(</span>dag <span class="op">=</span> <span class="va">dag_model</span>,</span>
 <span>          formula <span class="op">=</span> <span class="fu">feols</span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">M</span> <span class="op">+</span> <span class="va">C</span> <span class="op">+</span> <span class="va">Z</span> <span class="op">+</span> <span class="va">A</span> <span class="op">+</span> <span class="va">B</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span>,</span>
-<span>          type <span class="op">=</span> <span class="st">"dotwhisker"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning: Using the `size` aesthetic with geom_segment was deprecated in ggplot2 3.4.0.</span></span>
-<span><span class="co">#&gt; ℹ Please use the `linewidth` aesthetic instead.</span></span>
-<span><span class="co">#&gt; ℹ The deprecated feature was likely used in the dotwhisker package.</span></span>
-<span><span class="co">#&gt;   Please report the issue at &lt;https://github.com/fsolt/dotwhisker/issues&gt;.</span></span>
-<span><span class="co">#&gt; This warning is displayed once every 8 hours.</span></span>
-<span><span class="co">#&gt; Call `lifecycle::last_lifecycle_warnings()` to see where this warning was</span></span>
-<span><span class="co">#&gt; generated.</span></span></code></pre></div>
+<span>          type <span class="op">=</span> <span class="st">"dotwhisker"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-dotwhisker-1.png" width="100%"></p>
 </div>
 </div>

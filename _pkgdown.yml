@@ -3,6 +3,7 @@ template:
   bootstrap: 5
   bslib:
     bootswatch: darkly
+favicon: man/figures/logo.png
 
 development:
   mode: auto

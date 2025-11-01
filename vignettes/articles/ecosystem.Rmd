@@ -114,7 +114,7 @@ digraph dag_ecosystem {
   K -> R
   R -> WO
   W -> EO
-  A -> C [label=\"roles/sets\"]
+  A -> C 
   C -> D1
   C -> D2
   C -> D3
@@ -124,9 +124,9 @@ digraph dag_ecosystem {
   D1 -> E
   D2 -> E
   D3 -> E
-  E  -> F [label=\"table\"]
-  F  -> H [label=\".tex\"]
-  C  -> J [label=\"plot\"]
+  E  -> F 
+  F  -> H
+  C  -> J 
 }
 "
 

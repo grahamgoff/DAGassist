@@ -135,7 +135,7 @@ DAGassist::DAGassist(dag = dag_model,
 
 Optionally, users can generate visual output via dotwhisker plots:
 
-```{r dotwhisker, eval=has_dotwhisker}
+```{r dotwhisker, eval=has_dotwhisker, warning=FALSE}
 DAGassist::DAGassist(dag = dag_model,
           formula = feols(Y ~ X + M + C + Z + A + B, data = df),
           type = "dotwhisker")

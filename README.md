@@ -126,13 +126,6 @@ Optionally, users can generate visual output via dotwhisker plots:
 DAGassist::DAGassist(dag = dag_model,
           formula = feols(Y ~ X + M + C + Z + A + B, data = df),
           type = "dotwhisker")
-#> Warning: Using the `size` aesthetic with geom_segment was deprecated in ggplot2 3.4.0.
-#> ℹ Please use the `linewidth` aesthetic instead.
-#> ℹ The deprecated feature was likely used in the dotwhisker package.
-#>   Please report the issue at <https://github.com/fsolt/dotwhisker/issues>.
-#> This warning is displayed once every 8 hours.
-#> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
-#> generated.
 ```
 
 <img src="man/figures/README-dotwhisker-1.png" width="100%" />

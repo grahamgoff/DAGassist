@@ -1,27 +1,23 @@
-/* --- Homepage polish --- */
-
-/* 1) Hide pkgdown's small header logo on the home page */
-#pkgdown-home .logo { display: none !important; }
-
-/* 2) Tighten space under the H1 (page title) */
-#pkgdown-home .page-header { 
-  margin-bottom: .6rem;          /* was ~1.5rem */
-  padding-bottom: .2rem;
-  border-bottom: 1px solid #39424e;  /* darken the line under the title */
-}
-#pkgdown-home h1 { margin-bottom: .2rem; }
-
-/* 3) Make all HRs on the home page match that dark tone */
-#pkgdown-home hr { 
-  border: 0; 
-  border-top: 1px solid #39424e; 
-  margin: .6rem 0;
+/* Bigger right-floated README logo on the homepage */
+#pkgdown-home img.home-logo {
+  width: 260px !important;
+  margin-left: 1rem;
 }
 
-/* 4) Keep your big logo on the right, geomander-sized */
-.home-logo {
-  float: right;
-  width: 250px;       /* tweak to match geomander */
-  margin: 0 0 .6rem 1rem;
-  filter: drop-shadow(0 2px 6px rgba(0,0,0,.25));
+/* Hide the tiny navbar hex on the homepage to avoid a double logo */
+#pkgdown-home .navbar-brand img.logo { 
+  display: none !important; 
+}
+
+/* Thin rule under the H1, geomander-style */
+#pkgdown-home .page-header {
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid #e6e6e6;
+}
+
+/* Make the first paragraph normal-sized (pkgdown adds .lead by default) */
+#pkgdown-home .lead { 
+  font-size: 1rem; 
+  line-height: 1.6; 
 }

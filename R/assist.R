@@ -1,4 +1,4 @@
-#' Produce a compact `DAGassist` report (console/LaTeX/Word/Excel/Text)
+#' Generate a (console/LaTeX/word/excel/txt) report classifying nodes and comparing models
 #'
 #' `DAGassist()` validates a DAG + model specification, classifies node roles,
 #' builds minimal and canonical adjustment sets, fits comparable models, and
@@ -52,6 +52,8 @@
 #'    convenience covariates) in the minimal and canonical formulas. 
 #'    When `FALSE` (default), RHS terms not present as DAG nodes are dropped 
 #'    from those derived formulas.
+#' @param bivariate if TRUE, include a bivariate (no covariate) model in the comparison
+#'    table. Default FALSE.
 #' @details
 #' **Engine-call parsing.** If `formula` is a call (e.g., `feols(Y ~ X | fe, data=df)`),
 #' DAGassist extracts the engine function, formula, data argument, and any additional
@@ -102,7 +104,7 @@
 #'} 
 #'
 #'@section Interpreting the output:
-#' **ROLES.** Variables in your formula are classified by DAG-based causal role:
+#' **Roles:** Variables in your formula are classified by DAG-based causal role:
 #' \itemize{
 #'   \item `X` - treatment / exposure.
 #'   \item `Y` - outcome / dependent variable.
@@ -116,7 +118,7 @@
 #'         model but omitted from the minimal set because they're not required for identification.
 #' }
 #' 
-#' **MODEL COMPARISON.**
+#' **Model Comparison:**
 #' \itemize{
 #'   \item **Minimal** - the smallest adjustment set that blocks all back-door paths
 #'         (confounders only).
@@ -175,6 +177,7 @@ DAGassist <- function(dag,
                       eval_all = FALSE,
                       omit_intercept = TRUE,
                       omit_factors = TRUE,
+                      bivariate = FALSE,
                       engine_args = list()) {
   # set output type
   type <- match.arg(type)
@@ -448,8 +451,16 @@ DAGassist <- function(dag,
   #fits: always show Original, every Minimal, and Canonical at the end 
   #if there are multiple min, push canonical to the end
   m_orig <- .safe_fit(engine, formula, data, engine_args)
-
-  
+  # optional bivariate: Y ~ X (+ any fixest | tail), no DAG controls
+  f_bivar <- if (isTRUE(bivariate)) {
+    .build_formula_with_controls(formula, exposure, outcome, controls = character(0))
+  } else NULL
+  # fit the bivariate model if requested and not identical to Original
+  m_bivar <- if (isTRUE(bivariate) && !.same_formula(f_bivar, formula)) {
+    .safe_fit(engine, f_bivar, data, engine_args)
+  } else {
+    NULL
+  }
   ## if auto add is true, imply the sets based on dag relationships,
   ## otherwise, keep lists empty and specify in the report list
   if (isTRUE(imply)) {
@@ -478,7 +489,8 @@ DAGassist <- function(dag,
   rhs_all <- unique(unlist(c(
     list(.collect_rhs(formula)),
     lapply(f_mins, .collect_rhs),
-    list(.collect_rhs(f_canon))
+    list(.collect_rhs(f_canon)),
+    if (isTRUE(bivariate) && !.same_formula(f_bivar, formula)) list(.collect_rhs(f_bivar)) else NULL
   )))
   #compare to DAG node names via roles$variable
   dag_nodes <- roles$variable
@@ -501,6 +513,7 @@ DAGassist <- function(dag,
     
     formulas = list(
       original = formula,
+      bivariate  = if (isTRUE(bivariate) && !.same_formula(f_bivar, formula)) f_bivar else NULL,
       # so it prints multiple formulas if there are multiple minimal sets
       minimal = if (length(f_mins)) f_mins[[1]] else if (isTRUE(imply)) .build_minimal_formula(formula, exposure, outcome, minimal) else formula,
       minimal_list = f_mins, #  all minimal formulas
@@ -508,6 +521,7 @@ DAGassist <- function(dag,
     ),
     models = list(
       original= m_orig,
+      bivariate  = m_bivar,  # may be NULL when not requested or identical to Original
       minimal = if (length(m_mins)) m_mins[[1]] else if (isTRUE(imply)) .safe_fit(engine, .build_minimal_formula(formula, exposure, outcome, minimal), data, engine_args) else m_orig,
       minimal_list = m_mins, # all minimal fits
       canonical = m_canon
@@ -699,6 +713,10 @@ print.DAGassist_report <- function(x, ...) {
         # compare formulas
         cat(clr_bold("\nFormulas:\n", sep = ""))
         cat("  original:  ",  deparse(x$formulas$original),  "\n", sep = "")
+        # bivariate line if present and distinct from Original
+        if (!is.null(x$formulas$bivariate)) {
+          cat("  bivariate: ", deparse(x$formulas$bivariate), "\n", sep = "")
+        }
         if (isTRUE(x$imply)) {
           
           if (length(x$formulas$minimal_list)) {
@@ -785,6 +803,10 @@ print.DAGassist_report <- function(x, ...) {
     }
     ## build the model list for modelsummary/broom
     mods <- list("Original" = x$models$original)
+    # include Bivariate if present
+    if (!is.null(x$models$bivariate)) {
+      mods[["Bivariate"]] <- x$models$bivariate
+    }
     if (length(x$models$minimal_list)) {
       for (i in seq_along(x$models$minimal_list)) {
         mods[[sprintf("Minimal %d", i)]] <- x$models$minimal_list[[i]]

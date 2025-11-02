@@ -11,8 +11,208 @@ knitr::opts_chunk$set(
 
 # Introduction
 
-Several R packages deal with DAGs and causal inference. Perhaps most notable are `ggdag`, `dagitty`, `dagR`, and `causaleffect`. This article explains the ecosystem of R DAG packages, and positions `DAGassist` within it.
+This article explains the broader R DAG ecosystem and positions **DAGassist** within it. It also explains the dependencies necessary to maximize **DAGassist**'s functionality. 
 
-```{r setup}
-library(DAGassist)
+- **`dagitty`** for DAG specification and reasoning
+- **`ggdag`** to visualize DAGs
+- **`modelsummary`** to format regression tables
+- **`broom`** to tidy models (coefs & goodness-of-fit)
+- **`writexl`** to export multi‑sheet Excel workbooks
+- **`rmarkdown`** to render shareable docs (HTML/Word/PDF) that embed DAGassist outputs
+
+## The R DAG Ecosystem at a Glance
+
+```{r ecosystem-flow, echo=FALSE, message=FALSE, warning=FALSE}
+library(DiagrammeR)
+
+dot <- "
+digraph dag_ecosystem {
+  graph [rankdir=TB, bgcolor=transparent, pad=0.05, size=30, fontsize=28,
+         ranksep=0.28, nodesep=0.18, splines=true]
+  node  [shape=box, style=rounded, fontname=Helvetica,
+         fontsize=30, penwidth=1.1, color=\"#455A64\"]
+  edge  [color=\"red\", arrowsize=0.9, fontsize=22, fontcolor=\"red\"]
+  
+  subgraph cluster_tidyverse {
+    label = \"Graphics Dependencies\";
+    color = \"#7E57C2\"; fillcolor=\"#EDE7F6\"; style=filled;
+    T [label=\"ggplot2\", fillcolor=white, style=\"rounded,filled\"]
+    J [label=\"dotwhisker::dotwhisker()\", fillcolor=white, style=\"rounded,filled\"]
+  }
+  
+  // clusters (no HTML labels)
+  subgraph cluster_dagitty {
+    label = \"dagitty (DAG Model & Reasoning)\";
+    color = \"#7E57C2\"; fillcolor=\"#EDE7F6\"; style=filled;
+    A [label=\"dagitty::dagitty\", fillcolor=white, style=\"rounded,filled\"]
+  }
+
+  subgraph cluster_ggdag {
+    label = \"Graphical Visualization\";
+    color = \"#FB8C00\"; fillcolor=\"#FFE0B2\"; style=filled;
+    B [label=\"ggdag\\n(Visualize DAG)\", fillcolor=white, style=\"rounded,filled\"]
+    A2 [label=\"DAGassist::DAGassist(type=dotwhisker)\", fillcolor=white, style=\"rounded,filled\"]
+  }
+
+  subgraph cluster_assist {
+    label = \"DAGassist (Roles, Comparison, Reporting)\";
+    color = \"#1E88E5\"; fillcolor=\"#E3F2FD\"; style=filled;
+    C  [label=\"DAGassist\\n(Classify & Compare)\", fillcolor=white, style=\"rounded,filled\"]
+  }
+
+  subgraph cluster_engines {
+    label = \"Model Engines\";
+    color = \"#607D8B\"; fillcolor=\"#ECEFF1\"; style=filled;
+    D1 [label=\"stats::lm\", fillcolor=white, style=\"rounded,filled\"]
+    D2 [label=\"fixest::feols\\n(FE/IV)\", fillcolor=white, style=\"rounded,filled\"]
+    D3 [label=\"glm / other\", fillcolor=white, style=\"rounded,filled\"]
+  }
+
+  subgraph cluster_modelsummary {
+    label = \"Roles and Comparison Tables\";
+    color = \"#0097A7\"; fillcolor=\"#E0F7FA\"; style=filled;
+    E [label=\"broom::tidy / glance\", fillcolor=white, style=\"rounded,filled\"]
+    F [label=\" modelsummary::modelsummary\", fillcolor=white, style=\"rounded,filled\"]
+  }
+
+  subgraph cluster_output {
+    label = \"Output Files\";
+    color = \"#FB8C00\"; fillcolor=\"#EFEBE9\"; style=filled;
+    H [label=\"LaTeX Report\", fillcolor=white, style=\"rounded,filled\"]
+    WO [label=\"Word Report\", fillcolor=white, style=\"rounded,filled\"]
+    PT [label=\"Plain Text /\n Markup Report\", fillcolor=white, style=\"rounded,filled\"]
+    EO [label=\"Excel Report\", fillcolor=white, style=\"rounded,filled\"]
+  }
+
+  subgraph cluster_output_depend {
+    label = \"Output Dependencies\";
+    color = \"#8D6E63\"; fillcolor=\"#EFEBE9\"; style=filled;
+    K [label=\"knitr\", fillcolor=white, style=\"rounded,filled\"]
+    W [label=\"writexl\", fillcolor=white, style=\"rounded,filled\"]
+    R [label=\"rmarkdown\", fillcolor=white, style=\"rounded,filled\"]
+  }
+  
+  subgraph cluster_console {
+    color = \"#D81B60\"; fillcolor=\"#FCE4EC\"; style=filled;
+    L [label=\"Console Output\", fillcolor=white, style=\"rounded,filled\"]
+  }
+
+  subgraph cluster_plot {
+    label = \"dotwhisker\";
+    color = \"#455A64\"; fillcolor=\"#ECEFF1\"; style=filled;
+   
+  }
+
+  // flow
+  T -> B
+  A -> T
+  J -> A2
+  F -> L
+  F -> K
+  F -> W
+  K -> PT
+  K -> R
+  R -> WO
+  W -> EO
+  A -> C 
+  C -> D1
+  C -> D2
+  C -> D3
+  D1 -> A2
+  D2 -> A2
+  D3 -> A2
+  D1 -> E
+  D2 -> E
+  D3 -> E
+  E  -> F 
+  F  -> H
+  C  -> J 
+}
+"
+
+DiagrammeR::grViz(dot, width="85%")
 ```
+
+## The Differences Between `dagitty`, `ggdag`, and `DAGassist`
+
+### `dagitty`
+ - The core DAG toolkit for R. Creates the actual DAG object that `ggdag` and `DAGassist` use.
+ - Supports causal queries: 
+    - `dagitty::adjustmentSets()` scans a `dagitty` object to identify adjustment sets. 
+    - `dagitty::isAcyclic()` verifies acyclicity.
+    - `dagitty::findCycle()` identifies cyclical variable relationships.
+    
+**Making a DAG with `dagitty`:**
+```{r dagitty-eg, eval=FALSE}
+#via dagitty
+library(dagitty)
+
+dag_model <- dagitty('dag {
+    EffectiveN_electoral
+    Gov_effectiveness_0_5
+    LR_Polarization_perceived
+    PID_noleaners [exposure]
+    Presidentialsystem
+    VoterAPI_Party [outcome]
+    Year_0
+    EffectiveN_electoral -> VoterAPI_Party
+    Gov_effectiveness_0_5 -> VoterAPI_Party
+    LR_Polarization_perceived -> VoterAPI_Party
+    PID_noleaners -> LR_Polarization_perceived
+    PID_noleaners -> VoterAPI_Party
+    Presidentialsystem -> EffectiveN_electoral
+    Presidentialsystem -> VoterAPI_Party
+    Year_0 -> PID_noleaners
+    Year_0 -> VoterAPI_Party
+}')  
+
+```
+
+### `ggdag`
+ - A visualization layer for DAGs.
+ - Also provides a more intuitive way to make `dagitty` objects.
+ 
+**Making an identical DAG with `ggdag`:**
+```{r ggdag-eg, eval=FALSE}
+#via ggdag
+library(ggdag)
+
+dag_model <- dagify(
+  VoterAPI_Party  ~ PID_noleaners + LR_Polarization_perceived +
+    Gov_effectiveness_0_5 + EffectiveN_electoral + Presidentialsystem,
+    
+  LR_Polarization_perceived ~  PID_noleaners,
+  
+  EffectiveN_electoral ~ Presidentialsystem,
+    
+  exposure = "PID_noleaners",
+  outcome = "VoterAPI_Party"
+)
+```
+
+### `DAGassist`
+ - The glue between your DAG models and regressions.
+ - Uses `dagitty` logic to classify the causal relationships embedded in a DAG.
+ - Identifies those relationships and their implications for your covariate selection in a concise, publication-grade report.
+ 
+It uses `dagitty` logic to derive minimal and canonical adjustment sets, according to these criteria:
+ 
+| Path / Node Type                                                     | Minimal | Canonical |
+|----------------------------------------------------------------------|:-------:|:---------:|
+| Fork/Common–Cause Confounder (Z)                                     |    ✓    |     ✓     |
+| Chain/Mediator (M)                                                   |    ✗    |     ✗     |
+| Collider (C)                                                         |    ✗    |     ✗     |
+| Descendant of Mediator (N)                                           |    ✗    |     ✗     |
+| Descendant of Collider (Q)                                           |    ✗    |     ✗     |
+| Descendant of Outcome (I)                                            |    ✗    |     ✗     |
+| M-Bias                                                               |    ✗    |     ✗     |
+| Butterfly Bias                                                       |    ✗    |     ✗     |
+| Neutral Control on Treatment (E → X)                                 |    ✗    |     ✓     |
+| Neutral Control on Outcome (F → Y)                                   |    ✗    |     ✓     |
+| Descendant of Confounder *off* Backdoor Path (W)                     |    ✗    |     ✗     |
+| Descendant of Confounder *on* Backdoor Path (V)                      |  Z or V |   Z and V |
+
+*Note:* ✓ = adjust; ✗ = do not adjust. There may be multiple minimal sets; the canonical set is unique.
+
+
+

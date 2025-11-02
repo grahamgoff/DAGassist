@@ -2,7 +2,7 @@
 % Please edit documentation in R/assist.R
 \name{DAGassist}
 \alias{DAGassist}
-\title{Produce a compact \code{DAGassist} report (console/LaTeX/Word/Excel/Text)}
+\title{Generate a (console/LaTeX/word/excel/txt) report classifying nodes and comparing models}
 \usage{
 DAGassist(
   dag,
@@ -21,6 +21,7 @@ DAGassist(
   eval_all = FALSE,
   omit_intercept = TRUE,
   omit_factors = TRUE,
+  bivariate = FALSE,
   engine_args = list()
 )
 }
@@ -86,6 +87,9 @@ from those derived formulas.}
 
 \item{omit_factors}{Logical; drop factor-level rows from the model comparison display (default \code{TRUE}).
 This parameter only suppresses factor \strong{output}--they are still included in the regression.}
+
+\item{bivariate}{if TRUE, include a bivariate (no covariate) model in the comparison
+table. Default FALSE.}
 
 \item{engine_args}{Named list of extra arguments forwarded to \code{engine(...)}.
 If \code{formula} is an engine call, arguments from the call are merged with
@@ -154,7 +158,7 @@ with \code{{modelsummary}} if available (falls back gracefully otherwise).
 }
 \section{Interpreting the output}{
 
-\strong{ROLES.} Variables in your formula are classified by DAG-based causal role:
+\strong{Roles:} Variables in your formula are classified by DAG-based causal role:
 \itemize{
 \item \code{X} - treatment / exposure.
 \item \code{Y} - outcome / dependent variable.
@@ -168,7 +172,7 @@ with \code{{modelsummary}} if available (falls back gracefully otherwise).
 model but omitted from the minimal set because they're not required for identification.
 }
 
-\strong{MODEL COMPARISON.}
+\strong{Model Comparison:}
 \itemize{
 \item \strong{Minimal} - the smallest adjustment set that blocks all back-door paths
 (confounders only).

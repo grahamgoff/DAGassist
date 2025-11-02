@@ -14,6 +14,31 @@ knitr::opts_chunk$set(
 )
 ```
 
+```{r dev-load, include=FALSE}
+# Prefer source build when available (works in RStudio, pkgdown, or local render)
+if (requireNamespace("devtools", quietly = TRUE) && file.exists(file.path("..","DESCRIPTION"))) {
+  # Don't error on CRAN/build machines that don't have devtools or the source path
+  try(devtools::load_all("..", quiet = TRUE), silent = TRUE)
+}
+
+# If we've already loaded from source, avoid re-attaching a different installed build later
+from_source <- try({
+  "DAGassist" %in% loadedNamespaces() &&
+    grepl(normalizePath(".."), getNamespaceInfo(asNamespace("DAGassist"), "path"), fixed = TRUE)
+}, silent = TRUE)
+from_source <- isTRUE(from_source)
+
+# Feature gates (computed *after* attempting load_all)
+has_show <- tryCatch({
+  "show" %in% names(formals(DAGassist::DAGassist))
+}, error = function(e) FALSE)
+
+# Robust check: dev build defines a private .report_dotwhisker helper
+has_dotwhisker <- tryCatch({
+  exists(".report_dotwhisker", envir = asNamespace("DAGassist"), inherits = FALSE)
+}, error = function(e) FALSE)
+```
+
 # What you'll learn
 - How to go from a `dagitty` DAG + formula to a compact report
 - How to interpret the report, and what the variable categories and comparison models mean
@@ -103,3 +128,10 @@ DAGassist(
 cat(readLines(out_tex, n = 15), sep = "\n") # briefly show the output
 ```
 
+Optionally, users can generate visual output via dotwhisker plots:
+
+```{r dotwhisker, eval=has_dotwhisker, warning=FALSE, fig.width=7}
+DAGassist(dag = dag_model,
+          formula = lm(Y ~ X + M + Z + A, data = df),
+          type = "dotwhisker")
+```

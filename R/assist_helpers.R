@@ -24,6 +24,12 @@
 .build_named_mods <- function(report) {
   #start with base
   mods <- list("Original" = report$models$original)
+  # optional bivariate (distinct from Original)
+  if (!is.null(report$models$bivariate) &&
+      !is.null(report$formulas$bivariate) &&
+      !.same_formula(report$formulas$bivariate, report$formulas$original)) {
+    mods[["Bivariate"]] <- report$models$bivariate
+  }
   #number and label minimal sets
   if (length(report$models$minimal_list)) {
     for (i in seq_along(report$models$minimal_list)) {
@@ -71,6 +77,10 @@
   #label in specific order. subsequent table making has to work with this 
   labs <- c(
     "Original",
+    if (!is.null(report$formulas$bivariate) &&
+        !.same_formula(report$formulas$bivariate, report$formulas$original))
+      "Bivariate"
+    else character(0),
     if (length(report$formulas$minimal_list))
       paste0("Minimal ", seq_along(report$formulas$minimal_list))
     else if (length(report$controls_minimal))
@@ -83,11 +93,12 @@
   #deparse each formula to single line so it is easy to print
   forms <- c(
     paste(deparse(report$formulas$original), collapse = " "),
+    if (!is.null(report$formulas$bivariate) &&
+        !.same_formula(report$formulas$bivariate, report$formulas$original))
+      paste(deparse(report$formulas$bivariate), collapse = " ")
+    else character(0),
     if (length(report$formulas$minimal_list))
-      vapply(
-        report$formulas$minimal_list, 
-        function(f) paste(deparse(f), collapse = " "), 
-        character(1))
+      vapply(report$formulas$minimal_list, function(f) paste(deparse(f), collapse = " "), character(1))
     else if (length(report$controls_minimal))
       paste(deparse(report$formulas$minimal), collapse = " ")
     else character(0),

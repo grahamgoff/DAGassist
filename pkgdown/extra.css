@@ -1,0 +1,23 @@
+/* Bigger right-floated README logo on the homepage */
+#pkgdown-home img.home-logo {
+  width: 260px !important;
+  margin-left: 1rem;
+}
+
+/* Hide the tiny navbar hex on the homepage to avoid a double logo */
+#pkgdown-home .navbar-brand img.logo { 
+  display: none !important; 
+}
+
+/* Thin rule under the H1, geomander-style */
+#pkgdown-home .page-header {
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid #e6e6e6;
+}
+
+/* Make the first paragraph normal-sized (pkgdown adds .lead by default) */
+#pkgdown-home .lead { 
+  font-size: 1rem; 
+  line-height: 1.6; 
+}

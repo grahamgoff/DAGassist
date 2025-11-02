@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# DAGassist
+# DAGassist <a href='https://grahamgoff.github.io/DAGassist/'><img src='man/figures/logo.png' class='home-logo' align="right" height="137" alt='DAGassist hex logo'/></a>
 
 <!-- badges: start -->
 
@@ -9,16 +9,11 @@
 [![pages-build-deployment](https://github.com/grahamgoff/DAGassist/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/grahamgoff/DAGassist/actions/workflows/pages/pages-build-deployment)
 [![CRAN
 status](https://www.r-pkg.org/badges/version/DAGassist)](https://cran.r-project.org/package=DAGassist)
-
 <!-- badges: end -->
 
-<div class="lead">
-
-An all-in-one DAG-driven robustness check. Classify variables by causal
-role, compute the smallest and largest permissible back-door adjustment
-sets, and compare the significance of models.
-
-</div>
+**An all-in-one DAG-driven robustness check.** Classify variables by
+causal role, compute the smallest and largest permissible back-door
+adjustment sets, and compare the significance of models.
 
 ------------------------------------------------------------------------
 

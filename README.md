@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# DAGassist <a href='https://grahamgoff.github.io/DAGassist/'><img src='man/figures/logo.png' class='home-logo' align="right" height="137" alt='DAGassist hex logo'/></a>
+# DAGassist <a href='https://grahamgoff.github.io/DAGassist/'><img src='man/figures/logo.png' class='home-logo' align="right" height="200" alt='DAGassist hex logo'/></a>
 
 <!-- badges: start -->
 

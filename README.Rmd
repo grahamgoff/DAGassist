@@ -52,8 +52,12 @@ has_dotwhisker <- tryCatch({
 
 <!-- badges: end -->
 
-**An all-in-one DAG-driven robustness check.**
-Classify variables by causal role, compute the smallest and largest permissible back-door adjustment sets, and compare the significance of models.
+<div class="lead">
+An all-in-one DAG-driven robustness check. Classify variables by causal role, compute
+the smallest and largest permissible back-door adjustment sets, and compare the significance of models.
+</div>
+
+---
 
 See the [Quick Tour](https://grahamgoff.github.io/DAGassist/articles/quick-tour.html) vignette for a 10 minute start-to-finish guide on how to use `DAGassist` to identify causal roles, create reports, and interpret the results.
 

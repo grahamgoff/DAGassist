@@ -12,9 +12,15 @@ status](https://www.r-pkg.org/badges/version/DAGassist)](https://cran.r-project.
 
 <!-- badges: end -->
 
-**An all-in-one DAG-driven robustness check.** Classify variables by
-causal role, compute the smallest and largest permissible back-door
-adjustment sets, and compare the significance of models.
+<div class="lead">
+
+An all-in-one DAG-driven robustness check. Classify variables by causal
+role, compute the smallest and largest permissible back-door adjustment
+sets, and compare the significance of models.
+
+</div>
+
+------------------------------------------------------------------------
 
 See the [Quick
 Tour](https://grahamgoff.github.io/DAGassist/articles/quick-tour.html)

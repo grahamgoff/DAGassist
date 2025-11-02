@@ -34,7 +34,7 @@ feols(Y ~ X + Z | fe, data = df)) instead of a plain formula."><meta property="o
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Generate a (console/LaTeX/word/excel/txt) report classifying nodes and comparing models</h1>
-      <small class="dont-index">Source: <a href="https://github.com/grahamgoff/DAGassist/blob/HEAD/R/assist.R" class="external-link"><code>R/assist.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/grahamgoff/DAGassist/blob/dev/R/assist.R" class="external-link"><code>R/assist.R</code></a></small>
       <div class="d-none name"><code>DAGassist.Rd</code></div>
     </div>
 
@@ -252,7 +252,7 @@ exporters in <code>report_*</code> modules.</p></div>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># generate a console DAGassist report</span></span></span>
 <span class="r-in"><span><span class="fu">DAGassist</span><span class="op">(</span>dag <span class="op">=</span> <span class="va">g</span>, formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">Z</span> <span class="op">+</span> <span class="va">C</span> <span class="op">+</span> <span class="va">M</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB; font-weight: bold;">DAGassist Report:</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> DAGassist Report: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Roles:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> variable  role        X  Y  conf  med  col  dOut  dMed  dCol</span>
@@ -262,11 +262,11 @@ exporters in <code>report_*</code> modules.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> M         mediator                x                         </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> C         collider                     x    x     x         </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;"> (!) Bad controls in your formula: {C, M}</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  (!) Bad controls in your formula: {C, M}</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Minimal controls 1: {Z}</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Canonical controls: {Z}</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="font-weight: bold;">Formulas:</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Formulas:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   original:  Y ~ X + Z + C + M</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Model comparison:</span>
@@ -301,7 +301,7 @@ exporters in <code>report_*</code> modules.</p></div>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span><span class="co"># generate just the roles table in the console</span></span></span>
 <span class="r-in"><span><span class="fu">DAGassist</span><span class="op">(</span>dag <span class="op">=</span> <span class="va">g</span>, show <span class="op">=</span> <span class="st">"roles"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB; font-weight: bold;">DAGassist Report:</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> DAGassist Report: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Roles:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> variable  role        X  Y  conf  med  col  dOut  dMed  dCol</span>

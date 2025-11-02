@@ -35,7 +35,7 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
-<li class="nav-item"><a class="nav-link" href="../articles/index.html">Articles</a></li>
+<li class="active nav-item"><a class="nav-link" href="../articles/index.html">Articles</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
@@ -54,7 +54,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Supported Models</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/grahamgoff/DAGassist/blob/HEAD/vignettes/compatibility.Rmd" class="external-link"><code>vignettes/compatibility.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/grahamgoff/DAGassist/blob/dev/vignettes/compatibility.Rmd" class="external-link"><code>vignettes/compatibility.Rmd</code></a></small>
       <div class="d-none name"><code>compatibility.Rmd</code></div>
     </div>
 
@@ -139,7 +139,7 @@ breaks if the exposure is missing or mismatched.</li>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span></span>
 <span>    dag <span class="op">=</span> <span class="va">dag_model</span>,</span>
-<span>    formula <span class="op">=</span> <span class="fu">estimatr</span><span class="fu">::</span><span class="fu"><a href="https://declaredesign.org/r/estimatr/reference/lm_robust.html" class="external-link">lm_robust</a></span><span class="op">(</span></span>
+<span>    formula <span class="op">=</span> <span class="fu">estimatr</span><span class="fu">::</span><span class="fu">lm_robust</span><span class="op">(</span></span>
 <span>        <span class="va">ancvs_change_1116</span> <span class="op">~</span> <span class="va">western_belt</span> <span class="op">+</span></span>
 <span>            <span class="va">unemploy_broad</span> <span class="op">+</span> <span class="va">black_popshare</span> <span class="op">+</span> <span class="va">col_popshare</span> <span class="op">+</span></span>
 <span>            <span class="va">indasian_popshare</span> <span class="op">+</span> <span class="va">other_popshare</span> <span class="op">+</span> <span class="va">share_formal</span> <span class="op">+</span></span>
@@ -164,7 +164,7 @@ breaks if the exposure is missing or mismatched.</li>
 <span>            <span class="va">WINGOImputed_fill</span> <span class="op">+</span> <span class="va">UNintervention</span> <span class="op">+</span> <span class="va">majpowintervention</span> <span class="op">+</span> <span class="va">UNwomen</span> <span class="op">+</span> </span>
 <span>            <span class="va">religious</span> <span class="op">+</span> <span class="va">ideolleft</span> <span class="op">+</span> <span class="va">lgt</span> <span class="op">+</span> <span class="va">substantive</span> <span class="op">+</span> <span class="va">v2x_gencl</span> <span class="op">+</span> </span>
 <span>            <span class="va">Krause_wpm_neg</span> <span class="op">+</span> <span class="va">eqgen_binary</span>,</span>
-<span>        data <span class="op">=</span> <span class="va">df</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">interstateonly</span><span class="op">==</span><span class="fl">0</span>, <span class="va">inter_intrastate</span><span class="op">==</span><span class="fl">0</span><span class="op">)</span>,</span>
+<span>        data <span class="op">=</span> <span class="va">df</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/stats/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">interstateonly</span><span class="op">==</span><span class="fl">0</span>, <span class="va">inter_intrastate</span><span class="op">==</span><span class="fl">0</span><span class="op">)</span>,</span>
 <span>        family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="st">"logit"</span><span class="op">)</span>,</span>
 <span>        cluster <span class="op">=</span> <span class="op">~</span><span class="va">cowcode</span></span>
 <span>    <span class="op">)</span></span>
@@ -189,7 +189,7 @@ breaks if the exposure is missing or mismatched.</li>
 </h3>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span>dag<span class="op">=</span><span class="va">dag_model</span>,</span>
-<span>          formula <span class="op">=</span> <span class="fu">lfe</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/lfe/man/felm.html" class="external-link">felm</a></span><span class="op">(</span></span>
+<span>          formula <span class="op">=</span> <span class="fu">lfe</span><span class="fu">::</span><span class="fu">felm</span><span class="op">(</span></span>
 <span>              <span class="va">share_female</span> <span class="op">~</span> <span class="va">lag_democracy_stock_poly_95</span> <span class="op">+</span> <span class="va">lag_v2xcl_rol</span> <span class="op">+</span> </span>
 <span>                  <span class="va">lag_v2xcl_prpty</span> <span class="op">+</span> <span class="va">lag_v2x_rule</span> <span class="op">+</span> <span class="va">lag_v2x_jucon</span> <span class="op">+</span></span>
 <span>                  <span class="va">lag_v2xlg_legcon</span> <span class="op">+</span> <span class="va">lag_v2x_corr</span> <span class="op">+</span> <span class="va">lag_v2clstown</span> <span class="op">+</span> </span>
@@ -205,7 +205,7 @@ breaks if the exposure is missing or mismatched.</li>
 <code class="sourceCode R"><span></span>
 <span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span></span>
 <span>    dag <span class="op">=</span> <span class="va">dag_model</span>,</span>
-<span>    formula <span class="op">=</span> <span class="fu">lme4</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/lme4/man/glmer.html" class="external-link">glmer</a></span><span class="op">(</span></span>
+<span>    formula <span class="op">=</span> <span class="fu">lme4</span><span class="fu">::</span><span class="fu">glmer</span><span class="op">(</span></span>
 <span>        <span class="va">dsu_file</span> <span class="op">~</span> <span class="va">specific</span> <span class="op">+</span> <span class="va">lnearnings</span> <span class="op">+</span> <span class="va">distortion</span> <span class="op">+</span> <span class="va">progress</span> <span class="op">+</span> <span class="va">duration</span> <span class="op">+</span></span>
 <span>            <span class="va">eu</span> <span class="op">+</span> <span class="va">japan</span> <span class="op">+</span> <span class="va">mexico</span> <span class="op">+</span> <span class="va">korea</span> <span class="op">+</span> <span class="va">nonoecd</span> <span class="op">+</span> </span>
 <span>            <span class="va">lntotdirx</span> <span class="op">+</span> <span class="va">lnprod</span> <span class="op">+</span> <span class="va">lnpolcon</span> <span class="op">+</span> <span class="va">active301</span> <span class="op">+</span></span>
@@ -222,7 +222,7 @@ breaks if the exposure is missing or mismatched.</li>
 <code class="sourceCode R"><span></span>
 <span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span></span>
 <span>    dag <span class="op">=</span> <span class="va">dag_model</span>,</span>
-<span>    formula <span class="op">=</span> <span class="fu">lmerTest</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/lmerTest/man/lmer.html" class="external-link">lmer</a></span><span class="op">(</span></span>
+<span>    formula <span class="op">=</span> <span class="fu">lmerTest</span><span class="fu">::</span><span class="fu">lmer</span><span class="op">(</span></span>
 <span>        <span class="va">ekloges_PERCENTAGE_May_2012_GD</span> <span class="op">~</span> <span class="va">ekloges_PERCENTAGE_2009_GD</span> <span class="op">+</span></span>
 <span>            <span class="va">N_AntifaEvent_notzero2_Oc09_May12</span> <span class="op">+</span> <span class="va">avg_age</span> <span class="op">+</span> <span class="va">log_population</span>  <span class="op">+</span></span>
 <span>            <span class="va">prop_ksenoi</span> <span class="op">+</span> <span class="op">(</span><span class="fl">1</span><span class="op">|</span><span class="va">code_perif</span><span class="op">)</span>, </span>

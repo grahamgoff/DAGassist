@@ -43,7 +43,7 @@ has_dotwhisker <- tryCatch({
 }, error = function(e) FALSE)
 ```
 
-# DAGassist <a href='https://grahamgoff.github.io/DAGassist/'><img src='man/figures/logo.png' class='home-logo' align="right" height="137" alt='DAGassist hex logo'/></a>
+# DAGassist <a href='https://grahamgoff.github.io/DAGassist/'><img src='man/figures/logo.png' class='home-logo' align="right" height="200" alt='DAGassist hex logo'/></a>
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/grahamgoff/DAGassist/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/grahamgoff/DAGassist/actions/workflows/R-CMD-check.yaml)

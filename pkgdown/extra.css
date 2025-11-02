@@ -1,23 +1,32 @@
-/* Bigger right-floated README logo on the homepage */
-#pkgdown-home img.home-logo {
-  width: 260px !important;
-  margin-left: 1rem;
+/* --- Homepage tweaks (work with pkgdown 2.1.x) --- */
+
+/* 1) Make the README badge bigger and keep aspect ratio */
+img.home-logo {
+  float: right;
+  width: 340px !important;         /* adjust to taste */
+  max-width: min(45vw, 420px);     /* keep it responsive */
+  height: auto !important;         /* override HTML height=157 */
+  margin: 0 0 .6rem 1rem;          /* space from the text */
 }
 
-/* Hide the tiny navbar hex on the homepage to avoid a double logo */
-#pkgdown-home .navbar-brand img.logo { 
+/* 2) Tighten the gap under the H1 and before the first paragraph */
+.contents h1:first-of-type {
+  margin-bottom: .35rem !important;
+}
+.contents h1:first-of-type + p,
+.contents .lead {                   /* pkgdown usually adds .lead to the first p */
+  margin-top: 0 !important;
+  font-size: 1rem !important;
+  line-height: 1.6 !important;
+}
+
+/* 3) (Optional) Hide tiny navbar hex everywhere to avoid a double logo */
+.navbar-brand img.logo { 
   display: none !important; 
 }
 
-/* Thin rule under the H1, geomander-style */
-#pkgdown-home .page-header {
-  margin-bottom: 0.9rem;
-  padding-bottom: 0.3rem;
-  border-bottom: 1px solid #e6e6e6;
-}
-
-/* Make the first paragraph normal-sized (pkgdown adds .lead by default) */
-#pkgdown-home .lead { 
-  font-size: 1rem; 
-  line-height: 1.6; 
+/* 4) (Optional) Subtle underline under the H1, “geomander” vibe */
+.contents h1:first-of-type {
+  padding-bottom: .25rem;
+  border-bottom: 1px solid #39424e;
 }

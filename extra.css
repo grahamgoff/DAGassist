@@ -1,26 +1,23 @@
-/* Scope to homepage in pkgdown 2.x */
-.template-home img.home-logo{
-  width: 340px !important;   /* make it big */
-  height: auto !important;   /* override the inline height=157 */
-  margin-left: 1rem;
+/* Default: hide header logo everywhere */
+.page-header img.logo { 
+  display: none !important;
 }
 
-/* Tighten title spacing */
-.template-home .page-header{ 
-  margin-bottom: .5rem !important;
-  padding-bottom: .25rem !important;
-  border-bottom: 1px solid #e6e6e6; /* optional */
+/* Homepage only: show it and size it up */
+.container.template-home .page-header img.logo {
+  display: inline-block !important;
+  width: 310px !important;   /* adjust to taste */
+  height: auto !important;
+  margin: 0 .5rem .2rem 0;
 }
-.template-home h1{ margin-bottom: .2rem !important; }
 
-/* Make the first paragraph normal-sized & closer to the title */
-.template-home .lead{ 
+/* (Optional) homepage typography tweaks */
+.container.template-home .page-header { 
+  margin-bottom: .9rem !important;
+  padding-bottom: .3rem !important;
+  border-bottom: 1px solid #e6e6e6;
+}
+.container.template-home .lead { 
   font-size: 1rem !important;
   line-height: 1.6 !important;
-  margin-top: .25rem !important;
-}
-
-/* If the badges still render inline on the homepage, hide that row */
-.template-home .contents p:has(img[src*="badge"]){
-  display: none;
 }

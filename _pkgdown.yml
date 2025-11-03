@@ -1,10 +1,9 @@
 url: https://grahamgoff.github.io/DAGassist/
 template:
   bootstrap: 5
-  assets:
-    - pkgdown/extra.css
   bslib:
     bootswatch: darkly
+
 favicon: man/figures/logo.png
 
 development:

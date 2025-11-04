@@ -198,7 +198,8 @@ DAGassist <- function(dag,
     outcome  <- xy$outcome
     # compute roles directly from DAG 
     roles <- classify_nodes(dag, exposure, outcome)
-    
+    #detect m bias/butterfly bias
+    conditions <- tryCatch(.detect_dag_conditions(roles), error = function(e) list())
     #label normalization
     labmap <- tryCatch(.normalize_labels(labels, vars = unique(roles$variable)),
                        error = function(e) NULL)
@@ -220,6 +221,7 @@ DAGassist <- function(dag,
       controls_minimal = character(0),
       controls_minimal_all = list(),
       controls_canonical = character(0),
+      conditions = conditions,  
       formulas = list(
         original     = NULL,
         minimal      = NULL,
@@ -687,6 +689,15 @@ print.DAGassist_report <- function(x, ...) {
         cat(clr_red("\n (!) Bad controls in your formula: {", paste(x$bad_in_user, collapse = ", "), "}\n", sep = ""))
       } else {
         cat(clr_green("\nNo bad controls detected in your formula.\n"))
+      }
+    }
+    #butterfly or m bias
+    if (!is.null(x$conditions) && length(x$conditions)) {
+      on <- names(Filter(isTRUE, x$conditions))
+      if (length(on)) {
+        cat(clr_yellow("\nDAG conditions detected: ",
+                       paste(on, collapse = ", "),
+                       "\n", sep = ""))
       }
     }
   }

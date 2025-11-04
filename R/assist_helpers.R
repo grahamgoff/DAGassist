@@ -120,17 +120,21 @@
 #if multiple, tell user to pick one
 .infer_xy <- function(dag, exposure, outcome) {
   # If either exposure or outcome is missing/empty, infer from dagitty
-  if (missing(exposure) || is.null(exposure) || !nzchar(exposure)) {
+  # exposure: accept vector
+  if (missing(exposure) || is.null(exposure) ||
+      (is.character(exposure) && !length(exposure)) ||
+      !nzchar(paste(exposure, collapse = ""))) {
+    
     ex <- tryCatch(dagitty::exposures(dag), error = function(e) character(0))
-    if (length(ex) == 1) {
-      exposure <- ex
-    } else {
-      stop(
-        "Please supply `exposure=`; DAG has ", length(ex), " exposure(s).",
-        call. = FALSE
-      )
+    if (length(ex) == 0L) {
+      stop("Please supply `exposure=`; DAG has 0 exposures.", call. = FALSE)
     }
+    # <- this is the key change: just take all of them
+    exposure <- ex
+  } else {
+    exposure <- as.character(exposure)
   }
+  
   # same approach for outcome
   if (missing(outcome) || is.null(outcome) || !nzchar(outcome)) {
     out <- tryCatch(dagitty::outcomes(dag), error = function(e) character(0))
@@ -387,7 +391,11 @@
   if (is.null(sets) || length(sets) == 0) return(character(0))
   
   # Normalize to sorted character vectors and defensively drop X/Y if present to be safe
-  sets <- lapply(sets, function(s) sort(setdiff(as.character(s), c(exposure, outcome))))
+  # accomodate full vector; don't force down to one 
+  sets <- lapply(sets, function(s) {
+    drop_me <- c(as.character(exposure), outcome)
+    sort(setdiff(as.character(s), drop_me))
+  })
   
   #early exit if one canonical set
   if (length(sets) == 1L) return(sets[[1L]])
@@ -486,7 +494,66 @@
   )
   if (is.null(sets) || length(sets) == 0) return(list())
   #normalize as char, drop x/y, sort
-  lapply(sets, function(s) sort(setdiff(as.character(s), c(exposure, outcome))))
+  # accomodate vector; don't chop down to single treatment
+  lapply(sets, function(s) {
+    drop_me <- c(as.character(exposure), outcome)
+    sort(setdiff(as.character(s), drop_me))
+  })
+}
+
+# detect composite DAG conditions from the roles table
+# this detects m bias and butterfly bias
+.detect_dag_conditions <- function(roles, dag, exposure, outcome) {
+  res <- list(m_bias = FALSE, butterfly_bias = FALSE)
+  
+  if (is.null(dag) || is.null(exposure) || is.null(outcome)) {
+    return(res)
+  }
+  
+  # build ancestor sets
+  ancX <- unique(unlist(lapply(exposure, function(x) dagitty::ancestors(dag, x))))
+  ancY <- dagitty::ancestors(dag, outcome)
+  descY <- setdiff(dagitty::descendants(dag, outcome), outcome)
+  
+  # X-only and Y-only ancestors (the classic M-bias parents)
+  x_only <- setdiff(ancX, c(ancY, exposure, outcome))
+  y_only <- setdiff(ancY, c(ancX, exposure, outcome, descY))
+  
+  colliders <- roles$variable[roles$is_collider]
+  
+  ## M-bias: collider with one parent from X-only and one from Y-only
+  if (length(colliders)) {
+    for (m in colliders) {
+      parents_m <- dagitty::parents(dag, m)
+      if (length(parents_m) < 2L) next
+      if (any(parents_m %in% x_only) && any(parents_m %in% y_only)) {
+        res$m_bias <- TRUE
+        break
+      }
+    }
+  }
+  
+  ## Butterfly bias: collider m that is ALSO an ancestor of both X and Y,
+  ## and whose two parents feed into X and Y sides
+  if (length(colliders)) {
+    for (m in colliders) {
+      parents_m <- dagitty::parents(dag, m)
+      if (length(parents_m) != 2L) next
+      a <- parents_m[1]; b <- parents_m[2]
+      
+      m_anc_X <- m %in% ancX
+      m_anc_Y <- m %in% ancY
+      a_anc_X <- a %in% ancX
+      b_anc_Y <- b %in% ancY
+      
+      if (m_anc_X && m_anc_Y && a_anc_X && b_anc_Y) {
+        res$butterfly_bias <- TRUE
+        break
+      }
+    }
+  }
+  
+  res
 }
 
 #pretty formatter for multiple adjustment sets: c("A","B") -> "{A, B}"

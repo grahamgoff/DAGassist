@@ -41,7 +41,7 @@
     #alignment vector: "l" for first column, else "c"
     align <- rep("c", ncol(df)); align[1] <- "l"
     #make short headers unbreakable in DOCX via inline code spans
-    tokens <- c("X","Y","CON","MED","COL","dOut","dMed", "dCol")
+    tokens <- c("X","Y","CON","MED","COL","dOut","dMed", "dCol", "NCT", "NCO")
     nn <- names(df)
     nn[nn %in% tokens] <- sprintf("`%s`", nn[nn %in% tokens])
     
@@ -57,7 +57,7 @@
   #escape | for easy cell splitting
   esc <- function(x) gsub("\\|", "\\\\|", x, perl = TRUE)
   # unbreakable headers for the manual header path
-  tokens <- c("X","Y","CON","MED","COL","dOut","dMed", "dCol")
+  tokens <- c("X","Y","CON","MED","COL","dOut","dMed", "dCol", "NCT", "NCO")
   nn <- names(df)
   nn[nn %in% tokens] <- sprintf("`%s`", nn[nn %in% tokens])
   
@@ -204,6 +204,8 @@
     is_descendant_of_outcome = "dOut",
     is_descendant_of_mediator = "dMed", 
     is_descendant_of_collider = "dCol",
+    is_neutral_on_treatment = "NCT",
+    is_neutral_on_outcome   = "NCO",
     canon = "Canon"
   )
   #set fallback labels and order

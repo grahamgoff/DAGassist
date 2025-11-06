@@ -204,6 +204,8 @@
     is_descendant_of_outcome = "dOut",
     is_descendant_of_mediator = "dMed", 
     is_descendant_of_collider = "dCol",
+    is_descendant_of_confounder_on_bdp  = "dConfOn",
+    is_descendant_of_confounder_off_bdp = "dConfOff",
     is_neutral_on_treatment = "NCT",
     is_neutral_on_outcome   = "NCO",
     canon = "Canon"
@@ -211,7 +213,9 @@
   #set fallback labels and order
   prefer <- c("variable","role","is_exposure","is_outcome","is_confounder",
               "is_mediator","is_collider","is_descendant_of_outcome",
-              "is_descendant_of_mediator","is_descendant_of_collider","canon")
+              "is_descendant_of_mediator","is_descendant_of_collider",
+              "is_descendant_of_confounder_on_bdp","is_descendant_of_confounder_off_bdp",
+              "canon")
   #only keep labs that exist
   keep <- intersect(prefer, names(r))
   r <- r[, c(keep, setdiff(names(r), keep)), drop = FALSE]

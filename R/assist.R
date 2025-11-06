@@ -394,7 +394,7 @@ DAGassist <- function(dag,
       roles$is_collider |
       roles$is_descendant_of_outcome |
       roles$is_descendant_of_mediator |   
-      roles$is_descendant_of_collider     
+      roles$is_descendant_of_collider 
   ]
   bad_in_user <- intersect(user_controls, bad)
   # all the minimal sets

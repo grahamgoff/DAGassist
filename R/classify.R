@@ -137,6 +137,26 @@ classify_nodes <- function(dag, exposure, outcome) {
     c(ancX, descX, descY, exposure, outcome, core_block)
   )
   
+  dconf_on_set  <- character(0)
+  dconf_off_set <- character(0)
+  if (length(conf_set)) {
+    for (cz in conf_set) {
+      # every directed descendant of the confounder
+      desc_cz <- setdiff(dagitty::descendants(dag, cz), cz)
+      if (!length(desc_cz)) next
+      
+      # drop exposure side / mediator side / Y itself so we don’t overwrite
+      # existing roles (mediator, outcome, etc.)
+      desc_cz <- setdiff(desc_cz, c(exposure, descX, outcome))
+      
+      # “on backdoor path” = still an ancestor of Y
+      on_path  <- intersect(desc_cz, ancY)
+      off_path <- setdiff(desc_cz, on_path)
+      
+      dconf_on_set  <- union(dconf_on_set,  on_path)
+      dconf_off_set <- union(dconf_off_set, off_path)
+    }
+  }
   ## build df
   df <- data.frame(
     variable = nodes_vec,
@@ -150,6 +170,8 @@ classify_nodes <- function(dag, exposure, outcome) {
     is_descendant_of_outcome = nodes_vec %in% doY_set,
     is_descendant_of_mediator = nodes_vec %in% dmed_set,
     is_descendant_of_collider = nodes_vec %in% dcol_set,
+    is_descendant_of_confounder_on_bdp  = nodes_vec %in% dconf_on_set,
+    is_descendant_of_confounder_off_bdp = nodes_vec %in% dconf_off_set,
     stringsAsFactors = FALSE
   )
   
@@ -163,12 +185,16 @@ classify_nodes <- function(dag, exposure, outcome) {
     "is_neutral_on_outcome",
     "is_descendant_of_outcome",
     "is_descendant_of_mediator",
-    "is_descendant_of_collider"
+    "is_descendant_of_collider",
+    "is_descendant_of_confounder_on_bdp",
+    "is_descendant_of_confounder_off_bdp"
   )
   df[xy, flag_cols] <- FALSE
   
   ## role precedence (later = higher)
   role <- rep("other", nrow(df))
+  role[df$is_descendant_of_confounder_off_bdp] <- "Dconf_off"
+  role[df$is_descendant_of_confounder_on_bdp]  <- "Dconf_on"
   role[df$is_neutral_on_treatment] <- "nct"
   role[df$is_neutral_on_outcome] <- "nco"
   role[df$is_confounder] <- "confounder"
@@ -197,8 +223,8 @@ print.DAGassist_roles <- function(x, n = Inf, ...) {
   # order exposure and outcome at the top every time, then everything else
   role_order <- c("confounder","mediator","collider",
                   "descendant_of_outcome","descendant_of_collider",
-                  "descendant_of_mediator", "neutral_on_treatment",
-                  "neutral_on_outcome", "other")
+                  "descendant_of_mediator", "Dconf_on","Dconf_off",
+                  "neutral_on_treatment","neutral_on_outcome", "other")
   ord <- order(
     !df$is_exposure,  # exposures first
     !df$is_outcome,   # outcomes next
@@ -222,6 +248,8 @@ print.DAGassist_roles <- function(x, n = Inf, ...) {
     dOut = tick(df$is_descendant_of_outcome),
     dMed = tick(df$is_descendant_of_mediator),
     dCol = tick(df$is_descendant_of_collider),
+    dConfOn  = tick(df$is_descendant_of_confounder_on_bdp),
+    dConfOff = tick(df$is_descendant_of_confounder_off_bdp),
     NCT = tick(df$is_neutral_on_treatment),
     NCO = tick(df$is_neutral_on_outcome),
     check.names = FALSE,

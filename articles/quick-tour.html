@@ -248,21 +248,21 @@ checks, this is an example of how to output a report in
 <span>  out <span class="op">=</span> <span class="va">out_tex</span><span class="op">)</span> <span class="co">#put your output directory and file name here</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="va">out_tex</span>, n <span class="op">=</span> <span class="fl">15</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span> <span class="co"># briefly show the output</span></span>
-<span><span class="co">#&gt; % ---- DAGassist LaTeX fragment (no preamble) ----</span></span>
+<span><span class="co">#&gt; % --------------------- DAGassist LaTeX fragment ---------------------</span></span>
 <span><span class="co">#&gt; % Requires: \usepackage{tabularray} \UseTblrLibrary{booktabs,siunitx,talltblr}</span></span>
 <span><span class="co">#&gt; \begingroup\footnotesize</span></span>
 <span><span class="co">#&gt; \begingroup\setlength{\emergencystretch}{3em}</span></span>
+<span><span class="co">#&gt; % needs \usepackage{graphicx} for \rotatebox</span></span>
 <span><span class="co">#&gt; \begin{longtblr}[presep=0pt, postsep=0pt, caption={DAGassist Report:}, label={tab:dagassist}]%</span></span>
-<span><span class="co">#&gt; {width=\textwidth,colsep=1.5pt,rowsep=0pt,abovesep=0pt,belowsep=0pt,colspec={X[35,l]X[15,l]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]}}</span></span>
+<span><span class="co">#&gt; {width=\textwidth,colsep=1.5pt,rowsep=0pt,abovesep=0pt,belowsep=0pt,column{3}={colsep=6pt},colspec={X[35,l]X[15,l]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]}}</span></span>
 <span><span class="co">#&gt; \toprule</span></span>
-<span><span class="co">#&gt; Variable &amp; Role &amp; X &amp; Y &amp; CON &amp; MED &amp; COL &amp; dOut &amp; dMed &amp; dCol &amp; dConfOn &amp; dConfOff &amp; NCT &amp; NCO \\</span></span>
+<span><span class="co">#&gt; Variable &amp; Role &amp; \rotatebox[origin=c]{60}{X} &amp; \rotatebox[origin=c]{60}{Y} &amp; \rotatebox[origin=c]{60}{CON} &amp; \rotatebox[origin=c]{60}{MED} &amp; \rotatebox[origin=c]{60}{COL} &amp; \rotatebox[origin=c]{60}{dOut} &amp; \rotatebox[origin=c]{60}{dMed} &amp; \rotatebox[origin=c]{60}{dCol} &amp; \rotatebox[origin=c]{60}{dConfOn} &amp; \rotatebox[origin=c]{60}{dConfOff} &amp; \rotatebox[origin=c]{60}{NCT} &amp; \rotatebox[origin=c]{60}{NCO} \\</span></span>
 <span><span class="co">#&gt; \midrule</span></span>
 <span><span class="co">#&gt; A &amp; nco &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp; x \\</span></span>
 <span><span class="co">#&gt; M &amp; mediator &amp;  &amp;  &amp;  &amp; x &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  \\</span></span>
 <span><span class="co">#&gt; X &amp; exposure &amp; x &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  \\</span></span>
 <span><span class="co">#&gt; Y &amp; outcome &amp;  &amp; x &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  \\</span></span>
-<span><span class="co">#&gt; Z &amp; confounder &amp;  &amp;  &amp; x &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  \\</span></span>
-<span><span class="co">#&gt; \bottomrule</span></span></code></pre></div>
+<span><span class="co">#&gt; Z &amp; confounder &amp;  &amp;  &amp; x &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  \\</span></span></code></pre></div>
 <p>Optionally, users can generate visual output via dotwhisker
 plots:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">

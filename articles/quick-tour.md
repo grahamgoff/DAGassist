@@ -163,21 +163,21 @@ DAGassist(
   out = out_tex) #put your output directory and file name here
 
 cat(readLines(out_tex, n = 15), sep = "\n") # briefly show the output
-#> % ---- DAGassist LaTeX fragment (no preamble) ----
+#> % --------------------- DAGassist LaTeX fragment ---------------------
 #> % Requires: \usepackage{tabularray} \UseTblrLibrary{booktabs,siunitx,talltblr}
 #> \begingroup\footnotesize
 #> \begingroup\setlength{\emergencystretch}{3em}
+#> % needs \usepackage{graphicx} for \rotatebox
 #> \begin{longtblr}[presep=0pt, postsep=0pt, caption={DAGassist Report:}, label={tab:dagassist}]%
-#> {width=\textwidth,colsep=1.5pt,rowsep=0pt,abovesep=0pt,belowsep=0pt,colspec={X[35,l]X[15,l]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]}}
+#> {width=\textwidth,colsep=1.5pt,rowsep=0pt,abovesep=0pt,belowsep=0pt,column{3}={colsep=6pt},colspec={X[35,l]X[15,l]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]}}
 #> \toprule
-#> Variable & Role & X & Y & CON & MED & COL & dOut & dMed & dCol & dConfOn & dConfOff & NCT & NCO \\
+#> Variable & Role & \rotatebox[origin=c]{60}{X} & \rotatebox[origin=c]{60}{Y} & \rotatebox[origin=c]{60}{CON} & \rotatebox[origin=c]{60}{MED} & \rotatebox[origin=c]{60}{COL} & \rotatebox[origin=c]{60}{dOut} & \rotatebox[origin=c]{60}{dMed} & \rotatebox[origin=c]{60}{dCol} & \rotatebox[origin=c]{60}{dConfOn} & \rotatebox[origin=c]{60}{dConfOff} & \rotatebox[origin=c]{60}{NCT} & \rotatebox[origin=c]{60}{NCO} \\
 #> \midrule
 #> A & nco &  &  &  &  &  &  &  &  &  &  &  & x \\
 #> M & mediator &  &  &  & x &  &  &  &  &  &  &  &  \\
 #> X & exposure & x &  &  &  &  &  &  &  &  &  &  &  \\
 #> Y & outcome &  & x &  &  &  &  &  &  &  &  &  &  \\
 #> Z & confounder &  &  & x &  &  &  &  &  &  &  &  &  \\
-#> \bottomrule
 ```
 
 Optionally, users can generate visual output via dotwhisker plots:

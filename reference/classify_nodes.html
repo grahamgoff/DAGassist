@@ -28,7 +28,7 @@ mediator, collider, descendant_of_outcome, or other."><meta property="og:image" 
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Classify DAG nodes</h1>
-      <small class="dont-index">Source: <a href="https://github.com/grahamgoff/DAGassist/blob/v0.2.5/R/classify.R" class="external-link"><code>R/classify.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/grahamgoff/DAGassist/blob/dev/R/classify.R" class="external-link"><code>R/classify.R</code></a></small>
       <div class="d-none name"><code>classify_nodes.Rd</code></div>
     </div>
 
@@ -86,24 +86,24 @@ using the precedence defined below.</p></li>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span>  <span class="va">d1</span> <span class="op">&lt;-</span> <span class="fu">dagitty</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/dagitty/man/dagitty.html" class="external-link">dagitty</a></span><span class="op">(</span><span class="st">"dag { Z -&gt; X; Z -&gt; Y; X -&gt; Y }"</span><span class="op">)</span> <span class="co"># confounder Z</span></span></span>
 <span class="r-in"><span>  <span class="fu">classify_nodes</span><span class="op">(</span><span class="va">d1</span>, exposure <span class="op">=</span> <span class="st">"X"</span>, outcome <span class="op">=</span> <span class="st">"Y"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> variable  role        X  Y  conf  med  col  dOut  dMed  dCol</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> X         exposure    x                                     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Y         outcome        x                                  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Z         confounder        x                               </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> variable  role        X  Y  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> X         exposure    x                                                                  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Y         outcome        x                                                               </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Z         confounder        x                                                            </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span>  <span class="va">d2</span> <span class="op">&lt;-</span> <span class="fu">dagitty</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/dagitty/man/dagitty.html" class="external-link">dagitty</a></span><span class="op">(</span><span class="st">"dag { X -&gt; M -&gt; Y }"</span><span class="op">)</span> <span class="co"># mediator M</span></span></span>
 <span class="r-in"><span>  <span class="fu">classify_nodes</span><span class="op">(</span><span class="va">d2</span>, <span class="st">"X"</span>, <span class="st">"Y"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> variable  role       X  Y  conf  med  col  dOut  dMed  dCol</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> X         exposure   x                                     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Y         outcome       x                                  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> M         mediator               x                         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> variable  role       X  Y  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> X         exposure   x                                                                  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Y         outcome       x                                                               </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> M         mediator               x                                                      </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span>  <span class="va">d3</span> <span class="op">&lt;-</span> <span class="fu">dagitty</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/dagitty/man/dagitty.html" class="external-link">dagitty</a></span><span class="op">(</span><span class="st">"dag { X -&gt; C &lt;- Y }"</span><span class="op">)</span> <span class="co"># collider C</span></span></span>
 <span class="r-in"><span>  <span class="fu">classify_nodes</span><span class="op">(</span><span class="va">d3</span>, <span class="st">"X"</span>, <span class="st">"Y"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> variable  role       X  Y  conf  med  col  dOut  dMed  dCol</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> X         exposure   x                                     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Y         outcome       x                                  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> C         collider                    x    x               </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> variable  role       X  Y  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> X         exposure   x                                                                  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Y         outcome       x                                                               </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> C         collider                    x    x                                            </span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
@@ -112,11 +112,11 @@ using the precedence defined below.</p></li>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Graham Goff.</p>
+  <p>Developed by Graham Goff, Michael Denly.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

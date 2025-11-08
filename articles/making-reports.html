@@ -54,7 +54,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Getting Started with Report Creation</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/grahamgoff/DAGassist/blob/v0.2.5/vignettes/making-reports.Rmd" class="external-link"><code>vignettes/making-reports.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/grahamgoff/DAGassist/blob/dev/vignettes/making-reports.Rmd" class="external-link"><code>vignettes/making-reports.Rmd</code></a></small>
       <div class="d-none name"><code>making-reports.Rmd</code></div>
     </div>
 
@@ -135,7 +135,7 @@ generation.</li>
 <div class="section level3">
 <h3 id="example-dag">Example DAG<a class="anchor" aria-label="anchor" href="#example-dag"></a>
 </h3>
-<p><img src="making-reports_files/figure-html/dag-1.png" alt="Example DAG" width="100%"></p>
+<p><img src="making-reports_files/figure-html/dag-1.png" class="r-plt" alt="Example DAG" width="100%"></p>
 <p>The data, which simulates the DAG relationships:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span>
@@ -177,18 +177,22 @@ variables in <code>original</code>.</p>
 <div class="section level3">
 <h3 id="roles">Roles<a class="anchor" aria-label="anchor" href="#roles"></a>
 </h3>
-<table style="width:100%;" class="table">
+<table class="table">
 <colgroup>
+<col width="8%">
 <col width="11%">
-<col width="15%">
+<col width="4%">
+<col width="4%">
 <col width="6%">
 <col width="6%">
+<col width="6%">
+<col width="7%">
+<col width="7%">
+<col width="7%">
+<col width="8%">
 <col width="9%">
-<col width="9%">
-<col width="9%">
-<col width="10%">
-<col width="10%">
-<col width="10%">
+<col width="6%">
+<col width="6%">
 </colgroup>
 <thead><tr class="header">
 <th align="left">Variable</th>
@@ -201,6 +205,10 @@ variables in <code>original</code>.</p>
 <th align="center"><code>dOut</code></th>
 <th align="center"><code>dMed</code></th>
 <th align="center"><code>dCol</code></th>
+<th align="center">dConfOn</th>
+<th align="center">dConfOff</th>
+<th align="center"><code>NCT</code></th>
+<th align="center"><code>NCO</code></th>
 </tr></thead>
 <tbody>
 <tr class="odd">
@@ -214,6 +222,10 @@ variables in <code>original</code>.</p>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
+<td align="center">x</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
 </tr>
 <tr class="even">
 <td align="left">B</td>
@@ -221,6 +233,10 @@ variables in <code>original</code>.</p>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center">x</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
@@ -238,11 +254,19 @@ variables in <code>original</code>.</p>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
 </tr>
 <tr class="even">
 <td align="left">D</td>
 <td align="center">exposure</td>
 <td align="center">x</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
@@ -262,10 +286,14 @@ variables in <code>original</code>.</p>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
 </tr>
 <tr class="even">
 <td align="left">G</td>
-<td align="center">other</td>
+<td align="center">nco</td>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
@@ -274,10 +302,14 @@ variables in <code>original</code>.</p>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">x</td>
 </tr>
 <tr class="odd">
 <td align="left">H</td>
-<td align="center">other</td>
+<td align="center">nco</td>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
@@ -286,12 +318,20 @@ variables in <code>original</code>.</p>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
+<td align="center">x</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">x</td>
 </tr>
 <tr class="even">
 <td align="left">Y</td>
 <td align="center">outcome</td>
 <td align="center"></td>
 <td align="center">x</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
@@ -509,26 +549,92 @@ call); no roles table is printed.</p></li>
 <span><span class="co">#&gt; DAGassist Report: </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Roles:</span></span>
-<span><span class="co">#&gt; variable  role        X  Y  conf  med  col  dOut  dMed  dCol</span></span>
-<span><span class="co">#&gt; D         exposure    x                                     </span></span>
-<span><span class="co">#&gt; Y         outcome        x                                  </span></span>
-<span><span class="co">#&gt; A         confounder        x                               </span></span>
-<span><span class="co">#&gt; B         confounder        x                               </span></span>
-<span><span class="co">#&gt; C         confounder        x                               </span></span>
-<span><span class="co">#&gt; F         confounder        x                               </span></span>
-<span><span class="co">#&gt; G         other                                             </span></span>
-<span><span class="co">#&gt; H         other</span></span></code></pre></div>
+<span><span class="co">#&gt; variable  role        X  Y  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO</span></span>
+<span><span class="co">#&gt; D         exposure    x                                                                  </span></span>
+<span><span class="co">#&gt; Y         outcome        x                                                               </span></span>
+<span><span class="co">#&gt; A         confounder        x                                 x                          </span></span>
+<span><span class="co">#&gt; B         confounder        x                                                            </span></span>
+<span><span class="co">#&gt; C         confounder        x                                                            </span></span>
+<span><span class="co">#&gt; F         confounder        x                                                            </span></span>
+<span><span class="co">#&gt; G         nco                                                                         x  </span></span>
+<span><span class="co">#&gt; H         nco                                                 x                       x</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level3">
-<h3 id="optional-a-dotwhisker-plot-of-the-key-coefficient">Optional: a dot‑whisker plot of the key coefficient<a class="anchor" aria-label="anchor" href="#optional-a-dotwhisker-plot-of-the-key-coefficient"></a>
+<h3 id="making-a-dotwhisker-plot-of-the-key-coefficient">Making a dot‑whisker plot of the key coefficient<a class="anchor" aria-label="anchor" href="#making-a-dotwhisker-plot-of-the-key-coefficient"></a>
 </h3>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Returns a ggplot object (prints if out = NULL; saves if out is a file path)</span></span>
 <span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span>dag <span class="op">=</span> <span class="va">dag_model</span>,</span>
 <span>          formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">D</span> <span class="op">+</span> <span class="va">G</span> <span class="op">+</span> <span class="va">H</span> <span class="op">+</span> <span class="cn">F</span> <span class="op">+</span> <span class="va">A</span> <span class="op">+</span> <span class="va">B</span> <span class="op">+</span> <span class="va">C</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span>,</span>
 <span>          type <span class="op">=</span> <span class="st">"dotwhisker"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="making-reports_files/figure-html/dotwhisker-1.png" width="672"></p>
+<p><img src="making-reports_files/figure-html/dotwhisker-1.png" class="r-plt" width="672"></p>
+</div>
+<div class="section level3">
+<h3 id="using-special-canonical-sets">Using special canonical sets<a class="anchor" aria-label="anchor" href="#using-special-canonical-sets"></a>
+</h3>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span>dag <span class="op">=</span> <span class="va">dag_model</span>,</span>
+<span>          formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">D</span> <span class="op">+</span> <span class="va">G</span> <span class="op">+</span> <span class="va">H</span> <span class="op">+</span> <span class="cn">F</span> <span class="op">+</span> <span class="va">A</span> <span class="op">+</span> <span class="va">B</span> <span class="op">+</span> <span class="va">C</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span>,</span>
+<span>          exclude <span class="op">=</span> <span class="st">"nct"</span><span class="op">)</span> </span>
+<span><span class="co">#&gt; DAGassist Report: </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Roles:</span></span>
+<span><span class="co">#&gt; variable  role        X  Y  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO</span></span>
+<span><span class="co">#&gt; D         exposure    x                                                                  </span></span>
+<span><span class="co">#&gt; Y         outcome        x                                                               </span></span>
+<span><span class="co">#&gt; A         confounder        x                                 x                          </span></span>
+<span><span class="co">#&gt; B         confounder        x                                                            </span></span>
+<span><span class="co">#&gt; C         confounder        x                                                            </span></span>
+<span><span class="co">#&gt; F         confounder        x                                                            </span></span>
+<span><span class="co">#&gt; G         nco                                                                         x  </span></span>
+<span><span class="co">#&gt; H         nco                                                 x                       x  </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; No bad controls detected in your formula.</span></span>
+<span><span class="co">#&gt; Minimal controls 1: {F, H}</span></span>
+<span><span class="co">#&gt; Minimal controls 2: {C, F}</span></span>
+<span><span class="co">#&gt; Minimal controls 3: {A, B, H}</span></span>
+<span><span class="co">#&gt; Minimal controls 4: {A, B, C}</span></span>
+<span><span class="co">#&gt; Canonical controls: {A, B, C, F, G, H}</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Formulas:</span></span>
+<span><span class="co">#&gt;   original:  Y ~ D + G + H + F + A + B + C</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Model comparison:</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+-----------+-----------+---------------+</span></span>
+<span><span class="co">#&gt; |   | Original | Minimal 1 | Minimal 2 | Minimal 3 | Minimal 4 | Canonical | Canon. (-NCT) |</span></span>
+<span><span class="co">#&gt; +===+==========+===========+===========+===========+===========+===========+===============+</span></span>
+<span><span class="co">#&gt; | D | 1.034*** | 0.977***  | 0.969***  | 1.038***  | 1.024***  | 1.034***  | 1.034***      |</span></span>
+<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+-----------+-----------+---------------+</span></span>
+<span><span class="co">#&gt; |   | (0.032)  | (0.020)   | (0.023)   | (0.036)   | (0.041)   | (0.032)   | (0.032)       |</span></span>
+<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+-----------+-----------+---------------+</span></span>
+<span><span class="co">#&gt; | G | 0.397*** |           |           |           |           | 0.397***  | 0.397***      |</span></span>
+<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+-----------+-----------+---------------+</span></span>
+<span><span class="co">#&gt; |   | (0.032)  |           |           |           |           | (0.032)   | (0.032)       |</span></span>
+<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+-----------+-----------+---------------+</span></span>
+<span><span class="co">#&gt; | H | 0.486*** | 0.522***  |           | 0.495***  |           | 0.486***  | 0.486***      |</span></span>
+<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+-----------+-----------+---------------+</span></span>
+<span><span class="co">#&gt; |   | (0.032)  | (0.028)   |           | (0.031)   |           | (0.032)   | (0.032)       |</span></span>
+<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+-----------+-----------+---------------+</span></span>
+<span><span class="co">#&gt; | F | 0.618*** | 0.606***  | 0.593***  |           |           | 0.618***  | 0.618***      |</span></span>
+<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+-----------+-----------+---------------+</span></span>
+<span><span class="co">#&gt; |   | (0.037)  | (0.036)   | (0.040)   |           |           | (0.037)   | (0.037)       |</span></span>
+<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+-----------+-----------+---------------+</span></span>
+<span><span class="co">#&gt; | A | -0.111** |           |           | 0.158***  | 0.169***  | -0.111**  | -0.111**      |</span></span>
+<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+-----------+-----------+---------------+</span></span>
+<span><span class="co">#&gt; |   | (0.043)  |           |           | (0.047)   | (0.051)   | (0.043)   | (0.043)       |</span></span>
+<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+-----------+-----------+---------------+</span></span>
+<span><span class="co">#&gt; | B | -0.008   |           |           | -0.161*** | -0.162*** | -0.008    | -0.008        |</span></span>
+<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+-----------+-----------+---------------+</span></span>
+<span><span class="co">#&gt; |   | (0.039)  |           |           | (0.045)   | (0.049)   | (0.039)   | (0.039)       |</span></span>
+<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+-----------+-----------+---------------+</span></span>
+<span><span class="co">#&gt; | C | 0.037    |           | 0.420***  |           | 0.391***  | 0.037     | 0.037         |</span></span>
+<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+-----------+-----------+---------------+</span></span>
+<span><span class="co">#&gt; |   | (0.042)  |           | (0.040)   |           | (0.045)   | (0.042)   | (0.042)       |</span></span>
+<span><span class="co">#&gt; +===+==========+===========+===========+===========+===========+===========+===============+</span></span>
+<span><span class="co">#&gt; | + p &lt; 0.1, * p &lt; 0.05, ** p &lt; 0.01, *** p &lt; 0.001                                        |</span></span>
+<span><span class="co">#&gt; +===+==========+===========+===========+===========+===========+===========+===============+</span></span></code></pre></div>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -538,11 +644,11 @@ call); no roles table is printed.</p></li>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Graham Goff.</p>
+  <p>Developed by Graham Goff, Michael Denly.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>

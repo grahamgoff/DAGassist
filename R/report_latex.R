@@ -157,9 +157,6 @@
 ## Pretty LaTeX fragment: centered longtables, tidy headers, adj sets, modelsummary
 
 .report_latex_fragment <- function(res, out) {
-  stopifnot(is.character(out), length(out) == 1L)
-  dir.create(dirname(out), recursive = TRUE, showWarnings = FALSE)
-  
   roles  <- tryCatch(res$roles_df, error = function(e) NULL)
   mods   <- tryCatch(res$models, error = function(e) NULL)
   msets  <- tryCatch(res$min_sets, error = function(e) list())
@@ -226,6 +223,13 @@
     }
   )
   
-  writeLines(unlist(lines), out, useBytes = TRUE)
-  invisible(out)
+  #write to file if out supplied, else print to console
+  if (is.null(out)) {
+    cat(paste(unlist(lines), collapse = "\n"), "\n")
+    invisible(NULL)
+  } else {
+    dir.create(dirname(out), recursive = TRUE, showWarnings = FALSE)
+    writeLines(unlist(lines), out, useBytes = TRUE)
+    invisible(out)
+  }
 }

@@ -264,24 +264,31 @@ DAGassist <- function(dag,
     file_attr <- if (!is.null(out)) normalizePath(out, mustWork = FALSE) else NULL
     
     if (type == "latex") {
-      if (tolower(tools::file_ext(out)) == "docx")
-        stop("LaTeX fragment must not be written to a .docx path. Use a .tex filename.", call. = FALSE)
-      if (is.null(out)) stop("type='latex' requires `out=` file path.", call. = FALSE)
-      
       res_min <- list(
-        validation     = list(status = "VALID", issues = character(0)),
-        coef_rename    = labmap,
-        coef_omit      = report$settings$coef_omit,
-        roles_df       = report$roles_display,
-        models_df      = models_df_full,
-        models         = mods_full,
-        min_sets       = report$controls_minimal_all,
-        canon          = report$controls_canonical,
+        validation = list(status = "VALID", issues = character(0)),
+        coef_rename = labmap,
+        coef_omit = report$settings$coef_omit,
+        roles_df = report$roles_display,
+        models_df = models_df_full,
+        models = mods_full,
+        min_sets = report$controls_minimal_all,
+        canon = report$controls_canonical,
         unevaluated_str= report$unevaluated_str,
-        show           = show
+        show = show
       )
-      .report_latex_fragment(res_min, out)
-      return(invisible(structure(report, file = file_attr)))
+      
+      if (!is.null(out)) {
+        # safety check when path is specified
+        if (tolower(tools::file_ext(out)) == "docx")
+          stop("LaTeX fragment must not be written to a .docx path. Use a .tex filename.", call. = FALSE)
+        
+        .report_latex_fragment(res_min, out)
+        return(invisible(structure(report, file = normalizePath(out, mustWork = FALSE))))
+      } else {
+        # no path -> print to console
+        .report_latex_fragment(res_min, out = NULL)
+        return(invisible(report))
+      }
     }
     
     if (type %in% c("docx","word")) {
@@ -610,11 +617,6 @@ DAGassist <- function(dag,
   
   ##### LATEX OUT BRANCH #####
   if (type == "latex") {
-    if (tolower(tools::file_ext(out)) == "docx") {
-      stop("LaTeX fragment must not be written to a .docx path. Use a .tex filename.", call. = FALSE)
-    }
-    if (is.null(out)) stop("type='latex' requires `out=` file path.", call. = FALSE)
-    
     res_min <- list(
       validation = list(
         status = if (isTRUE(v$ok)) "VALID" else "INVALID",
@@ -623,15 +625,26 @@ DAGassist <- function(dag,
       coef_rename = labmap,
       coef_omit  = report$settings$coef_omit,
       roles_df = report$roles_display,
-      models_df = models_df_full,     
-      models = mods_full,        
+      models_df = models_df_full,
+      models = mods_full,
       min_sets = report$controls_minimal_all,
       canon = report$controls_canonical,
       unevaluated_str = report$unevaluated_str,
       show = show
     )
-    .report_latex_fragment(res_min, out)
-    return(invisible(structure(report, file = normalizePath(out, mustWork = FALSE))))
+    
+    if (!is.null(out)) {
+      # only check extension if we actually have a path
+      if (tolower(tools::file_ext(out)) == "docx") {
+        stop("LaTeX fragment must not be written to a .docx path. Use a .tex filename.", call. = FALSE)
+      }
+      .report_latex_fragment(res_min, out)
+      return(invisible(structure(report, file = normalizePath(out, mustWork = FALSE))))
+    } else {
+      # print to console instead of erroring
+      .report_latex_fragment(res_min, out = NULL)
+      return(invisible(report))
+    }
   }
   
   ##### WORD OUT BRANCH #####

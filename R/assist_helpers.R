@@ -42,6 +42,21 @@
   if (!.same_formula(report$formulas$canonical, report$formulas$original)) {
     mods[["Canonical"]] <- report$models$canonical
   }
+  #for exclude neutral controls param
+  if (!is.null(report$models$canonical_excl)) {
+    # prefer the setting in the report object if present
+    excl <- NULL
+    if (!is.null(report$settings) && !is.null(report$settings$exclude)) {
+      excl <- report$settings$exclude
+    }
+    lbl <- switch(
+      excl,
+      "nco" = "Canon. (-NCO)",
+      "nct" = "Canon. (-NCT)",
+      "Canonical (filtered)"  # fallback
+    )
+    mods[[lbl]] <- report$models$canonical_excl
+  }
   
   mods
 }

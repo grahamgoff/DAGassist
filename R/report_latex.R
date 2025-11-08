@@ -86,16 +86,30 @@
   # build column width spec
   weights <- c(var_w, role_w, rep(flag_w, k))
   aligns  <- c("l", "l", rep("c", k))
-  colspec <- paste0(mapply(function(w, a) sprintf("X[%d,%s]", w, a), weights, aligns), collapse = "")
+  colspec <- paste0(
+    mapply(function(w, a) sprintf("X[%d,%s]", w, a), weights, aligns),
+    collapse = ""
+  )
   
-  header <- paste(colnames(df2), collapse = " & ")
-  rows   <- apply(df2, 1L, function(r) paste(r, collapse = " & "))
+  # rotate columns 3+ so they don't overlap
+  hdr <- colnames(df2)
+  if (length(hdr) > 2L) {
+    for (i in 3:length(hdr)) {
+      hdr[i] <- sprintf("\\rotatebox[origin=c]{60}{%s}", hdr[i])
+    }
+  }
+  header <- paste(hdr, collapse = " & ")
   
-  c(# tighten spacing + give TeX a little elasticity to avoid overfull boxes
+  rows <- apply(df2, 1L, function(r) paste(r, collapse = " & "))
+  
+  c(
+    # tighten spacing + give TeX a little elasticity to avoid overfull boxes
     "\\begingroup\\setlength{\\emergencystretch}{3em}",
     # small colsep so center columns "touch" visually
+    "% needs \\usepackage{graphicx} for \\rotatebox",
     "\\begin{longtblr}[presep=0pt, postsep=0pt, caption={DAGassist Report:}, label={tab:dagassist}]%",
-    sprintf("{width=\\textwidth,colsep=1.5pt,rowsep=0pt,abovesep=0pt,belowsep=0pt,colspec={%s}}", colspec),
+    #modified to prevent x overlap
+    sprintf("{width=\\textwidth,colsep=1.5pt,rowsep=0pt,abovesep=0pt,belowsep=0pt,column{3}={colsep=6pt},colspec={%s}}", colspec),
     "\\toprule",
     paste0(header, " \\\\"),
     "\\midrule",
@@ -168,7 +182,7 @@
   ctrl_can <- if (length(canon)) .set_brace(canon) else "{}"
   
   lines <- c(
-    "% ---- DAGassist LaTeX fragment (no preamble) ----",
+    "% --------------------- DAGassist LaTeX fragment ---------------------",
     "% Requires: \\usepackage{tabularray} \\UseTblrLibrary{booktabs,siunitx,talltblr}",
     "\\begingroup\\footnotesize",
     {

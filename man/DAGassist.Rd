@@ -19,6 +19,7 @@ DAGassist(
   out = NULL,
   imply = FALSE,
   eval_all = FALSE,
+  exclude = NULL,
   omit_intercept = TRUE,
   omit_factors = TRUE,
   bivariate = FALSE,

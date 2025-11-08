@@ -8,9 +8,10 @@ Authors@R: c(
       comment = c(ORCID = "0000-0002-0717-6995")),
     person("Michael", "Denly", 
       email = "mdenly@tamu.edu", 
-      role = "ctb",
+      role = "aut",
       comment = c(ORCID = "0000-0002-7074-5011"))
   )
+Maintainer: Graham Goff <goffgrahamc@gmail.com>
 Description: Provides robustness checks driven by directed acyclic graphs (DAGs).
     Given a 'dagitty' DAG object and a model specification, 'DAGassist' classifies
     variables by causal roles, flags problematic controls, and generates a

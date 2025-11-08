@@ -98,6 +98,9 @@ validate_spec <- function(dag, formula, data, exposure, outcome){
   formula_vars <- all.vars(base_fml) #only look at pre- | in fixest/iv formulas
   data_vars <- names(data)
   
+  #dfine rhs first
+  formula_rhs  <- attr(stats::terms(base_fml), "term.labels")
+  
   #add entries to issue table if outcome is incorrect
   if (!outcome  %in% dag_vars)  add_issue("error", "missing_in_dag",  outcome,  "Outcome not found in DAG.")
   if (!outcome  %in% data_vars) add_issue("error", "missing_in_data", outcome,  "Outcome not found in data.")

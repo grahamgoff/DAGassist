@@ -175,6 +175,7 @@ DAGassist <- function(dag,
                       out = NULL,
                       imply = FALSE,
                       eval_all = FALSE,
+                      exclude = NULL,
                       omit_intercept = TRUE,
                       omit_factors = TRUE,
                       bivariate = FALSE,
@@ -221,18 +222,21 @@ DAGassist <- function(dag,
       controls_minimal = character(0),
       controls_minimal_all = list(),
       controls_canonical = character(0),
+      controls_canonical_excl = character(0),
       conditions = conditions,  
       formulas = list(
         original     = NULL,
         minimal      = NULL,
         minimal_list = list(),
-        canonical    = NULL
+        canonical    = NULL,
+        canonical_excl = NULL
       ),
       models = list(
         original     = NULL,
         minimal      = NULL,
         minimal_list = list(),
-        canonical    = NULL
+        canonical    = NULL,
+        canonical_excl = NULL
       ),
       unevaluated     = character(0),
       unevaluated_str = "",
@@ -399,11 +403,21 @@ DAGassist <- function(dag,
   bad_in_user <- intersect(user_controls, bad)
   # all the minimal sets
   minimal_sets_all <- .minimal_sets_all(dag_eval, exposure, outcome)
-  # keep a single minimal for reference
-  #minimal <- if (length(minimal_sets_all)) minimal_sets_all[[1]] else character(0)
   # canonical set and formula
   canonical <- .pick_canonical_controls(dag_eval, exposure, outcome)
-  
+  # exclusion set for the exclude parameter
+  canon_excl <- character(0)
+  if (!is.null(exclude)) {
+    if (identical(exclude, "nct")) {
+      drop_vars <- roles$variable[roles$is_neutral_on_treatment]
+      canon_excl <- setdiff(canonical, drop_vars)
+    } else if (identical(exclude, "nco")) {
+      drop_vars <- roles$variable[roles$is_neutral_on_outcome]
+      canon_excl <- setdiff(canonical, drop_vars)
+    } else {
+      warning("`exclude` must be NULL, 'nct', or 'nco'. Ignoring.", call. = FALSE)
+    }
+  }
   ## respect the formula (only use variables in the formula) when imply=FALSE
   # identify variables actually in user formula
   vars_in_formula <- unique(c(exposure, outcome, user_controls))
@@ -419,6 +433,12 @@ DAGassist <- function(dag,
     canonical
   } else {
     intersect(canonical, user_controls)
+  }
+  #for the exclude param
+  canon_excl_for_use <- if (isTRUE(imply)) {
+    canon_excl
+  } else {
+    intersect(canon_excl, user_controls)
   }
   # limit roles table to vars in the formula 
   #with labels
@@ -450,6 +470,12 @@ DAGassist <- function(dag,
     c2 <- if (isTRUE(eval_all)) unique(c(canon_for_use, rhs_extras)) else canon_for_use
     .build_formula_with_controls(formula, exposure, outcome, c2)
   }
+  #canonical with some (on treatment/outcome) neutral controls removed
+  f_canon_excl <- NULL
+  if (length(canon_excl_for_use)) {
+    c3 <- if (isTRUE(eval_all)) unique(c(canon_excl_for_use, rhs_extras)) else canon_excl_for_use
+    f_canon_excl <- .build_formula_with_controls(formula, exposure, outcome, c3)
+  }
   #fits: always show Original, every Minimal, and Canonical at the end 
   #if there are multiple min, push canonical to the end
   m_orig <- .safe_fit(engine, formula, data, engine_args)
@@ -465,12 +491,25 @@ DAGassist <- function(dag,
   }
   ## if auto add is true, imply the sets based on dag relationships,
   ## otherwise, keep lists empty and specify in the report list
+  # modified to handle exclude params
   if (isTRUE(imply)) {
     if (is.data.frame(roles) && "variable" %in% names(roles)) {
+      # existing canonical col
       roles$canon <- ifelse(roles$variable %in% canonical, "x", "")
+      
+      # new, conditional column
+      if (!is.null(exclude)) {
+        if (identical(exclude, "nct")) {
+          roles$canon_no_nct <- ifelse(roles$variable %in% canon_excl, "x", "")
+        } else if (identical(exclude, "nco")) {
+          roles$canon_no_nco <- ifelse(roles$variable %in% canon_excl, "x", "")
+        }
+      }
     }
   } else {
     if (is.data.frame(roles) && "canon" %in% names(roles)) roles$canon <- ""
+    if (is.data.frame(roles) && "canon_no_nct" %in% names(roles)) roles$canon_no_nct <- ""
+    if (is.data.frame(roles) && "canon_no_nco" %in% names(roles)) roles$canon_no_nco <- ""
   }
   
   # always fit alternates so display isn't tied to imply
@@ -485,7 +524,21 @@ DAGassist <- function(dag,
     same_idx <- which(vapply(f_mins, function(fm) .same_formula(fm, f_canon), logical(1)))
     if (length(same_idx)) m_mins[[same_idx[1]]] else .safe_fit(engine, f_canon, data, engine_args)
   }
-
+  #fit models for exclude neutral param
+  m_canon_excl <- NULL
+  if (!is.null(f_canon_excl)) {
+    if (.same_formula(f_canon_excl, formula)) {
+      m_canon_excl <- m_orig
+    } else {
+      # if it coincides with one of the minimal formulas, reuse that fit
+      same_idx2 <- which(vapply(f_mins, function(fm) .same_formula(fm, f_canon_excl), logical(1)))
+      if (length(same_idx2)) {
+        m_canon_excl <- m_mins[[same_idx2[1]]]
+      } else {
+        m_canon_excl <- .safe_fit(engine, f_canon_excl, data, engine_args)
+      }
+    }
+  }
   ###list unevaluated nuisance vars
   .collect_rhs <- function(fml) .rhs_terms_safe(fml)
   rhs_all <- unique(unlist(c(
@@ -519,14 +572,16 @@ DAGassist <- function(dag,
       # so it prints multiple formulas if there are multiple minimal sets
       minimal = if (length(f_mins)) f_mins[[1]] else if (isTRUE(imply)) .build_minimal_formula(formula, exposure, outcome, minimal) else formula,
       minimal_list = f_mins, #  all minimal formulas
-      canonical = f_canon
+      canonical = f_canon,
+      canonical_excl = f_canon_excl 
     ),
     models = list(
       original= m_orig,
       bivariate  = m_bivar,  # may be NULL when not requested or identical to Original
       minimal = if (length(m_mins)) m_mins[[1]] else if (isTRUE(imply)) .safe_fit(engine, .build_minimal_formula(formula, exposure, outcome, minimal), data, engine_args) else m_orig,
       minimal_list = m_mins, # all minimal fits
-      canonical = m_canon
+      canonical = m_canon,
+      canonical_excl = m_canon_excl
     ),
     unevaluated = unevaluated,
     unevaluated_str = unevaluated_str,
@@ -538,7 +593,8 @@ DAGassist <- function(dag,
   report$settings <- list(
     omit_intercept = isTRUE(omit_intercept),
     omit_factors = isTRUE(omit_factors),
-    show = show
+    show = show,
+    exclude=exclude
   )
   report$.__data <- data
   report$settings$coef_omit <- .build_coef_omit(
@@ -827,7 +883,17 @@ print.DAGassist_report <- function(x, ...) {
     }
     mods[["Canonical"]] <- x$models$canonical
     
-    #spec intercept and factor row omit
+    if (!is.null(x$models$canonical_excl)) {
+      if (identical(x$settings$exclude, "nct")) {
+        lbl <- "Canon. (-NCT)"
+      } else if (identical(x$settings$exclude, "nco")) {
+        lbl <- "Canon. (-NCO)"
+      } else {
+        lbl <- "Canonical (filtered)"
+      }
+      mods[[lbl]] <- x$models$canonical_excl
+    }
+    
     coef_omit <- x$settings$coef_omit
     .print_model_comparison_list(mods, coef_rename = x$labels_map, coef_omit = coef_omit)
   }

@@ -21,3 +21,10 @@
   font-size: 1rem !important;
   line-height: 1.6 !important;
 }
+
+/* force citation blocks to be readable */
+pre,
+pre code {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}

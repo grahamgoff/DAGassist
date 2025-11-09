@@ -81,26 +81,31 @@ DAGassist(
 - type:
 
   Output type. One of `"console"` (default),
-  `"latex"`/`"docx"`/`"word"`, `"excel"`/`"xlsx"`, `"text"`/`"txt"`.
+  `"latex"`/`"docx"`/`"word"`, `"excel"`/`"xlsx"`, `"text"`/`"txt"`, or
+  the plotting types `"dwplot"`/`"dotwhisker"`. For `type = "latex"`, if
+  no `out=` is supplied, a LaTeX fragment is printed to the console
+  instead of being written to disk.
 
 - show:
 
   Which sections to include in the output. One of `"all"` (default),
-  `"roles"`, or `"models"`.
+  `"roles"` (only the roles grid), or `"models"` (only the model
+  comparison table/plot). This makes it possible to generate and export
+  just roles or just comparisons.
 
 - out:
 
   Output file path for the non-console types:
 
-  - `type="latex"`: a **LaTeX fragment** written to `out` (must end with
-    `.tex`).
+  - `type="latex"`: a **LaTeX fragment** written to `out` (usually
+    `.tex`); when omitted, the fragment is printed to the console.
 
   - `type="docx"`/`"word"`: a **Word (.docx)** file written to `out`.
 
   - `type="excel"`/`"xlsx"`: an **Excel (.xlsx)** file written to `out`.
 
   - `type="text"`/`"txt"`: a **plain-text** file written to `out`.
-    Ignored for `type="console"`.
+    Ignored for `type="console"` and for the plotting types.
 
 - imply:
 
@@ -125,6 +130,16 @@ DAGassist(
   `FALSE` (default), RHS terms not present as DAG nodes are dropped from
   those derived formulas.
 
+- exclude:
+
+  Optional character vector to remove neutral controls from the
+  canonical set. Recognized values are `"nct"` (drop
+  *neutral-on-treatment* controls) and `"nco"` (drop
+  *neutral-on-outcome* controls). You can supply one or both, e.g.
+  `exclude = c("nco", "nct")`; each requested variant is fitted and
+  shown as a separate "Canon. (-...)" column in the console/model
+  exports.
+
 - omit_intercept:
 
   Logical; drop intercept rows from the model comparison display
@@ -138,8 +153,9 @@ DAGassist(
 
 - bivariate:
 
-  if TRUE, include a bivariate (no covariate) model in the comparison
-  table. Default FALSE.
+  Logical; if `TRUE`, include a bivariate (exposure-only) specification
+  in the comparison table **in addition** to the user's original and
+  DAG-derived models.
 
 - engine_args:
 
@@ -149,8 +165,8 @@ DAGassist(
 
 ## Value
 
-An object of class `"DAGassist_report"`, invisibly for file outputs, and
-printed for `type="console"`. The list contains:
+An object of class `"DAGassist_report"`, invisibly for file and plot
+outputs, and printed for `type="console"`. The list contains:
 
 - `validation` - result from `validate_spec(...)` which verifies
   acyclicity and X/Y declarations.
@@ -169,15 +185,22 @@ printed for `type="console"`. The list contains:
 
 - `controls_canonical` - canonical set (character vector; may be empty).
 
+- `controls_canonical_excl` - named list of filtered canonical sets
+  (e.g. `$nco`, `$nct`) when `exclude` is used.
+
 - `formulas` - list with `original`, `minimal`, `minimal_list`,
-  `canonical`.
+  `canonical`, and any filtered canonical formulas.
 
 - `models` - list with fitted models `original`, `minimal`,
-  `minimal_list`, `canonical`.
+  `minimal_list`, `canonical`, and any filtered canonical models.
 
 - `verbose`, `imply` - flags as provided.
 
 ## Details
+
+In addition to tabular export formats, you can create a dot-whisker plot
+(via `type = "dwplot"` or `type = "dotwhisker"`) for the model
+comparison.
 
 **Engine-call parsing.** If `formula` is a call (e.g.,
 `feols(Y ~ X | fe, data=df)`), DAGassist extracts the engine function,
@@ -191,13 +214,29 @@ minimal/canonical formulas (e.g., `Y ~ X + controls | fe | iv(...)`).
 
 **Roles grid.** The roles table displays short headers:
 
-- `X` (exposure), `Y` (outcome), `CON` (confounder), `MED` (mediator),
-  `COL` (collider), `dOut` (proper descendant of `Y`), `dMed` (proper
-  descendant of any mediator), `dCol` (proper descendant of any
-  collider). Descendants are **proper** (exclude the node itself) and
-  can be any distance downstream. The internal
-  `is_descendant_of_exposure` is retained for logic but hidden in
-  displays.
+- `X` (exposure), `Y` (outcome),
+
+- `CON` (confounder),
+
+- `MED` (mediator),
+
+- `COL` (collider),
+
+- `dOut` (proper descendant of `Y`),
+
+- `dMed` (proper descendant of any mediator),
+
+- `dCol` (proper descendant of any collider),
+
+- `dConfOn` (descendant of a confounder **on** a back-door path),
+
+- `dConfOff` (descendant of a confounder **off** a back-door path),
+
+- `NCT` (neutral control on treatment),
+
+- `NCO` (neutral control on outcome). These extra flags are used to (i)
+  warn about bad controls, and (ii) build filtered canonical sets such
+  as “Canonical (–NCO)” for export.
 
 **Bad controls.** For total-effect estimation, DAGassist flags as
 `bad controls` any variables that are `MED`, `COL`, `dOut`, `dMed`, or
@@ -207,51 +246,33 @@ for minimal/canonical adjustment sets.
 
 **Output types.**
 
-- `console` prints roles, sets, formulas (if `verbose`), and a compact
-  model comparison with `{modelsummary}` if available (falls back
-  gracefully otherwise).
+- `console` prints roles, adjustment sets, formulas (if `verbose`), and
+  a compact model comparison (using `{modelsummary}` if available,
+  falling back gracefully otherwise).
 
-- `latex` writes a **LaTeX fragment** you can `\\input{}` into a paper.
+- `latex` writes or prints a **LaTeX fragment** you can `\\input{}` into
+  a paper — it uses `tabularray` long tables and will include any
+  requested Canon. (-NCO / -NCT) variants.
 
-- `docx`/`word` writes a **Word** doc (uses
+- `docx`/`word` writes a **Word** doc (respects
   `options(DAGassist.ref_docx=...)` if set).
 
 - `excel`/`xlsx` writes an **Excel** workbook with tidy tables.
 
 - `text`/`txt` writes a **plain-text** report for logs/notes.
 
+- `dwplot`/`dotwhisker` produces a dot-whisker visualization of the
+  fitted models.
+
 **Dependencies.** Core requires `{dagitty}`. Optional enhancements:
 `{modelsummary}` (pretty tables), `{broom}` (fallback tidying),
-`{rmarkdown}` + **Pandoc** (DOCX), `{writexl}` (XLSX).
+`{rmarkdown}` + **Pandoc** (DOCX), `{writexl}` (XLSX),
+`{dotwhisker}`/`{ggplot2}` for plotting.
 
 ## Interpreting the output
 
-**Roles:** Variables in your formula are classified by DAG-based causal
-role:
-
-- `X` - treatment / exposure.
-
-- `Y` - outcome / dependent variable.
-
-- `CON` - confounder (common cause of `X` and `Y`); adjust for these.
-
-- `MED` - mediator (on a path from `X` to `Y`); do **not** adjust when
-  estimating total effects.
-
-- `COL` - collider (direct descendant of `X` and `Y`); adjusting opens a
-  spurious path, so do **not** adjust.
-
-- `dOut` - descendant of outcome; do **not** adjust.
-
-- `dMed` - descendant of a mediator; do **not** adjust when estimating
-  total effects.
-
-- `dCol` - descendant of a collider; adjusting opens a spurious path, so
-  do **not** adjust.
-
-- `other` - safe, non-confounding predictors (e.g., affect `Y` only).
-  Included in the canonical model but omitted from the minimal set
-  because they're not required for identification.
+See the vignette articles for worked examples on generating roles-only,
+models-only, and LaTeX/Word/Excel reports.
 
 **Model Comparison:**
 

@@ -118,20 +118,25 @@ printer (formulas + notes).</p></dd>
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
 <dd><p>Output type. One of
 <code>"console"</code> (default), <code>"latex"</code>/<code>"docx"</code>/<code>"word"</code>,
-<code>"excel"</code>/<code>"xlsx"</code>, <code>"text"</code>/<code>"txt"</code>.</p></dd>
+<code>"excel"</code>/<code>"xlsx"</code>, <code>"text"</code>/<code>"txt"</code>,
+or the plotting types <code>"dwplot"</code>/<code>"dotwhisker"</code>.
+For <code>type = "latex"</code>, if no <code>out=</code> is supplied, a LaTeX fragment is printed
+to the console instead of being written to disk.</p></dd>
 
 
 <dt id="arg-show">show<a class="anchor" aria-label="anchor" href="#arg-show"></a></dt>
 <dd><p>Which sections to include in the output. One of <code>"all"</code> (default),
-<code>"roles"</code>, or <code>"models"</code>.</p></dd>
+<code>"roles"</code> (only the roles grid), or <code>"models"</code> (only the model comparison table/plot).
+This makes it possible to generate and export just roles or just comparisons.</p></dd>
 
 
 <dt id="arg-out">out<a class="anchor" aria-label="anchor" href="#arg-out"></a></dt>
-<dd><p>Output file path for the non-console types:</p><ul><li><p><code>type="latex"</code>: a <strong>LaTeX fragment</strong> written to <code>out</code> (must end with <code>.tex</code>).</p></li>
+<dd><p>Output file path for the non-console types:</p><ul><li><p><code>type="latex"</code>: a <strong>LaTeX fragment</strong> written to <code>out</code> (usually <code>.tex</code>);
+when omitted, the fragment is printed to the console.</p></li>
 <li><p><code>type="docx"</code>/<code>"word"</code>: a <strong>Word (.docx)</strong> file written to <code>out</code>.</p></li>
 <li><p><code>type="excel"</code>/<code>"xlsx"</code>: an <strong>Excel (.xlsx)</strong> file written to <code>out</code>.</p></li>
 <li><p><code>type="text"</code>/<code>"txt"</code>: a <strong>plain-text</strong> file written to <code>out</code>.
-Ignored for <code>type="console"</code>.</p></li>
+Ignored for <code>type="console"</code> and for the plotting types.</p></li>
 </ul></dd>
 
 
@@ -154,6 +159,14 @@ When <code>FALSE</code> (default), RHS terms not present as DAG nodes are droppe
 from those derived formulas.</p></dd>
 
 
+<dt id="arg-exclude">exclude<a class="anchor" aria-label="anchor" href="#arg-exclude"></a></dt>
+<dd><p>Optional character vector to remove neutral controls from the canonical set.
+Recognized values are <code>"nct"</code> (drop <em>neutral-on-treatment</em> controls) and
+<code>"nco"</code> (drop <em>neutral-on-outcome</em> controls). You can supply one or both,
+e.g. <code>exclude = c("nco", "nct")</code>; each requested variant is fitted and shown
+as a separate "Canon. (-...)" column in the console/model exports.</p></dd>
+
+
 <dt id="arg-omit-intercept">omit_intercept<a class="anchor" aria-label="anchor" href="#arg-omit-intercept"></a></dt>
 <dd><p>Logical; drop intercept rows from the model comparison display (default <code>TRUE</code>).</p></dd>
 
@@ -164,8 +177,8 @@ This parameter only suppresses factor <strong>output</strong>–they are still i
 
 
 <dt id="arg-bivariate">bivariate<a class="anchor" aria-label="anchor" href="#arg-bivariate"></a></dt>
-<dd><p>if TRUE, include a bivariate (no covariate) model in the comparison
-table. Default FALSE.</p></dd>
+<dd><p>Logical; if <code>TRUE</code>, include a bivariate (exposure-only) specification
+in the comparison table <strong>in addition</strong> to the user's original and DAG-derived models.</p></dd>
 
 
 <dt id="arg-engine-args">engine_args<a class="anchor" aria-label="anchor" href="#arg-engine-args"></a></dt>
@@ -176,61 +189,69 @@ If <code>formula</code> is an engine call, arguments from the call are merged wi
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>An object of class <code>"DAGassist_report"</code>, invisibly for file outputs,
-and printed for <code>type="console"</code>. The list contains:</p><ul><li><p><code>validation</code> - result from <code>validate_spec(...)</code> which verifies acyclicity and X/Y declarations.</p></li>
+    <p>An object of class <code>"DAGassist_report"</code>, invisibly for file and plot
+outputs, and printed for <code>type="console"</code>. The list contains:</p><ul><li><p><code>validation</code> - result from <code>validate_spec(...)</code> which verifies acyclicity and X/Y declarations.</p></li>
 <li><p><code>roles</code> - raw roles data.frame from <code>classify_nodes(...)</code> (logic columns).</p></li>
 <li><p><code>roles_display</code> - roles grid after labeling/renaming for exporters.</p></li>
 <li><p><code>bad_in_user</code> - variables in the user's RHS that are <code>MED</code>/<code>COL</code>/<code>dOut</code>/<code>dMed</code>/<code>dCol</code>.</p></li>
 <li><p><code>controls_minimal</code> - (legacy) one minimal set (character vector).</p></li>
 <li><p><code>controls_minimal_all</code> - list of all minimal sets (character vectors).</p></li>
 <li><p><code>controls_canonical</code> - canonical set (character vector; may be empty).</p></li>
-<li><p><code>formulas</code> - list with <code>original</code>, <code>minimal</code>, <code>minimal_list</code>, <code>canonical</code>.</p></li>
-<li><p><code>models</code> - list with fitted models <code>original</code>, <code>minimal</code>, <code>minimal_list</code>, <code>canonical</code>.</p></li>
+<li><p><code>controls_canonical_excl</code> - named list of filtered canonical sets
+(e.g. <code>$nco</code>, <code>$nct</code>) when <code>exclude</code> is used.</p></li>
+<li><p><code>formulas</code> - list with <code>original</code>, <code>minimal</code>, <code>minimal_list</code>, <code>canonical</code>,
+and any filtered canonical formulas.</p></li>
+<li><p><code>models</code> - list with fitted models <code>original</code>, <code>minimal</code>, <code>minimal_list</code>,
+<code>canonical</code>, and any filtered canonical models.</p></li>
 <li><p><code>verbose</code>, <code>imply</code> - flags as provided.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><strong>Engine-call parsing.</strong> If <code>formula</code> is a call (e.g., <code>feols(Y ~ X | fe, data=df)</code>),
+    <p>In addition to tabular export formats, you can create a dot-whisker plot
+(via <code>type = "dwplot"</code> or <code>type = "dotwhisker"</code>) for the model comparison.</p>
+<p><strong>Engine-call parsing.</strong> If <code>formula</code> is a call (e.g., <code>feols(Y ~ X | fe, data=df)</code>),
 DAGassist extracts the engine function, formula, data argument, and any additional
 engine arguments directly from that call; these are merged with <code>engine</code>/<code>engine_args</code>
 you pass explicitly (call arguments win).</p>
 <p><strong>Fixest tails.</strong> For engines like <strong>fixest</strong> that use <code>|</code> to denote FE/IV parts,
 DAGassist preserves any <code>| ...</code> tail when constructing minimal/canonical formulas
 (e.g., <code>Y ~ X + controls | fe | iv(...)</code>).</p>
-<p><strong>Roles grid.</strong> The roles table displays short headers:</p><ul><li><p><code>X</code> (exposure), <code>Y</code> (outcome), <code>CON</code> (confounder), <code>MED</code> (mediator),
-<code>COL</code> (collider), <code>dOut</code> (proper descendant of <code>Y</code>),
-<code>dMed</code> (proper descendant of any mediator), <code>dCol</code> (proper descendant of any collider).
-Descendants are <strong>proper</strong> (exclude the node itself) and can be any distance downstream.
-The internal <code>is_descendant_of_exposure</code> is retained for logic but hidden in displays.</p></li>
+<p><strong>Roles grid.</strong> The roles table displays short headers:</p><ul><li><p><code>X</code> (exposure), <code>Y</code> (outcome),</p></li>
+<li><p><code>CON</code> (confounder),</p></li>
+<li><p><code>MED</code> (mediator),</p></li>
+<li><p><code>COL</code> (collider),</p></li>
+<li><p><code>dOut</code> (proper descendant of <code>Y</code>),</p></li>
+<li><p><code>dMed</code> (proper descendant of any mediator),</p></li>
+<li><p><code>dCol</code> (proper descendant of any collider),</p></li>
+<li><p><code>dConfOn</code> (descendant of a confounder <strong>on</strong> a back-door path),</p></li>
+<li><p><code>dConfOff</code> (descendant of a confounder <strong>off</strong> a back-door path),</p></li>
+<li><p><code>NCT</code> (neutral control on treatment),</p></li>
+<li><p><code>NCO</code> (neutral control on outcome).
+These extra flags are used to (i) warn about bad controls, and (ii) build
+filtered canonical sets such as “Canonical (–NCO)” for export.</p></li>
 </ul><p><strong>Bad controls.</strong> For total-effect estimation, DAGassist flags as <code>bad controls</code>
 any variables that are <code>MED</code>, <code>COL</code>, <code>dOut</code>, <code>dMed</code>, or <code>dCol</code>. These are warned in
 the console and omitted from the model-comparison table. Valid confounders (pre-treatment)
 are eligible for minimal/canonical adjustment sets.</p>
-<p><strong>Output types.</strong></p><ul><li><p><code>console</code> prints roles, sets, formulas (if <code>verbose</code>), and a compact model comparison
-with <code>{modelsummary}</code> if available (falls back gracefully otherwise).</p></li>
-<li><p><code>latex</code> writes a <strong>LaTeX fragment</strong> you can <code>\\input{}</code> into a paper.</p></li>
-<li><p><code>docx</code>/<code>word</code> writes a <strong>Word</strong> doc (uses <code>options(DAGassist.ref_docx=...)</code> if set).</p></li>
+<p><strong>Output types.</strong></p><ul><li><p><code>console</code> prints roles, adjustment sets, formulas (if <code>verbose</code>), and a compact model comparison
+(using <code>{modelsummary}</code> if available, falling back gracefully otherwise).</p></li>
+<li><p><code>latex</code> writes or prints a <strong>LaTeX fragment</strong> you can <code>\\input{}</code> into a paper —
+it uses <code>tabularray</code> long tables and will include any requested Canon. (-NCO / -NCT) variants.</p></li>
+<li><p><code>docx</code>/<code>word</code> writes a <strong>Word</strong> doc (respects <code>options(DAGassist.ref_docx=...)</code> if set).</p></li>
 <li><p><code>excel</code>/<code>xlsx</code> writes an <strong>Excel</strong> workbook with tidy tables.</p></li>
 <li><p><code>text</code>/<code>txt</code> writes a <strong>plain-text</strong> report for logs/notes.</p></li>
+<li><p><code>dwplot</code>/<code>dotwhisker</code> produces a dot-whisker visualization of the fitted models.</p></li>
 </ul><p><strong>Dependencies.</strong> Core requires <code>{dagitty}</code>. Optional enhancements: <code>{modelsummary}</code>
 (pretty tables), <code>{broom}</code> (fallback tidying), <code>{rmarkdown}</code> + <strong>Pandoc</strong> (DOCX),
-<code>{writexl}</code> (XLSX).</p>
+<code>{writexl}</code> (XLSX), <code>{dotwhisker}</code>/<code>{ggplot2}</code> for plotting.</p>
     </div>
     <div class="section level2">
     <h2 id="interpreting-the-output">Interpreting the output<a class="anchor" aria-label="anchor" href="#interpreting-the-output"></a></h2>
 
 
-<p><strong>Roles:</strong> Variables in your formula are classified by DAG-based causal role:</p><ul><li><p><code>X</code> - treatment / exposure.</p></li>
-<li><p><code>Y</code> - outcome / dependent variable.</p></li>
-<li><p><code>CON</code> - confounder (common cause of <code>X</code> and <code>Y</code>); adjust for these.</p></li>
-<li><p><code>MED</code> - mediator (on a path from <code>X</code> to <code>Y</code>); do <strong>not</strong> adjust when estimating total effects.</p></li>
-<li><p><code>COL</code> - collider (direct descendant of <code>X</code> and <code>Y</code>); adjusting opens a spurious path, so do <strong>not</strong> adjust.</p></li>
-<li><p><code>dOut</code> - descendant of outcome; do <strong>not</strong> adjust.</p></li>
-<li><p><code>dMed</code> - descendant of a mediator; do <strong>not</strong> adjust when estimating total effects.</p></li>
-<li><p><code>dCol</code> - descendant of a collider; adjusting opens a spurious path, so do <strong>not</strong> adjust.</p></li>
-<li><p><code>other</code> - safe, non-confounding predictors (e.g., affect <code>Y</code> only). Included in the canonical
-model but omitted from the minimal set because they're not required for identification.</p></li>
-</ul><p><strong>Model Comparison:</strong></p><ul><li><p><strong>Minimal</strong> - the smallest adjustment set that blocks all back-door paths
+<p>See the vignette articles for worked examples on generating roles-only, models-only,
+and LaTeX/Word/Excel reports.</p>
+<p><strong>Model Comparison:</strong></p><ul><li><p><strong>Minimal</strong> - the smallest adjustment set that blocks all back-door paths
 (confounders only).</p></li>
 <li><p><strong>Canonical</strong> - the largest permissible set: includes all controls that are not
 <code>MED</code>, <code>COL</code>, <code>dOut</code>, <code>dMed</code>, or <code>dCol</code>. <code>other</code> variables may appear here.</p></li>

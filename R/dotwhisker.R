@@ -1,5 +1,8 @@
 # dotwhisker.R
 # Internal helpers to render a dot-and-whisker plot for DAGassist outputs
+#' @keywords internal
+#' @importFrom stats setNames
+utils::globalVariables(c(".data", "model"))
 
 .report_dotwhisker <- function(report, out = NULL, width = 8, height = 6, dpi = 300) {
   .dw_require(c("dotwhisker", "broom", "dplyr", "ggplot2"))

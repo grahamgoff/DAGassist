@@ -53,18 +53,23 @@ printer (formulas + notes).}
 
 \item{type}{Output type. One of
 \code{"console"} (default), \code{"latex"}/\code{"docx"}/\code{"word"},
-\code{"excel"}/\code{"xlsx"}, \code{"text"}/\code{"txt"}.}
+\code{"excel"}/\code{"xlsx"}, \code{"text"}/\code{"txt"},
+or the plotting types \code{"dwplot"}/\code{"dotwhisker"}.
+For \code{type = "latex"}, if no \verb{out=} is supplied, a LaTeX fragment is printed
+to the console instead of being written to disk.}
 
 \item{show}{Which sections to include in the output. One of \code{"all"} (default),
-\code{"roles"}, or \code{"models"}.}
+\code{"roles"} (only the roles grid), or \code{"models"} (only the model comparison table/plot).
+This makes it possible to generate and export just roles or just comparisons.}
 
 \item{out}{Output file path for the non-console types:
 \itemize{
-\item \code{type="latex"}: a \strong{LaTeX fragment} written to \code{out} (must end with \code{.tex}).
+\item \code{type="latex"}: a \strong{LaTeX fragment} written to \code{out} (usually \code{.tex});
+when omitted, the fragment is printed to the console.
 \item \code{type="docx"}/\code{"word"}: a \strong{Word (.docx)} file written to \code{out}.
 \item \code{type="excel"}/\code{"xlsx"}: an \strong{Excel (.xlsx)} file written to \code{out}.
 \item \code{type="text"}/\code{"txt"}: a \strong{plain-text} file written to \code{out}.
-Ignored for \code{type="console"}.
+Ignored for \code{type="console"} and for the plotting types.
 }}
 
 \item{imply}{Logical; default \code{FALSE}. \strong{Evaluation scope.}
@@ -84,21 +89,27 @@ convenience covariates) in the minimal and canonical formulas.
 When \code{FALSE} (default), RHS terms not present as DAG nodes are dropped
 from those derived formulas.}
 
+\item{exclude}{Optional character vector to remove neutral controls from the canonical set.
+Recognized values are \code{"nct"} (drop \emph{neutral-on-treatment} controls) and
+\code{"nco"} (drop \emph{neutral-on-outcome} controls). You can supply one or both,
+e.g. \code{exclude = c("nco", "nct")}; each requested variant is fitted and shown
+as a separate "Canon. (-...)" column in the console/model exports.}
+
 \item{omit_intercept}{Logical; drop intercept rows from the model comparison display (default \code{TRUE}).}
 
 \item{omit_factors}{Logical; drop factor-level rows from the model comparison display (default \code{TRUE}).
 This parameter only suppresses factor \strong{output}--they are still included in the regression.}
 
-\item{bivariate}{if TRUE, include a bivariate (no covariate) model in the comparison
-table. Default FALSE.}
+\item{bivariate}{Logical; if \code{TRUE}, include a bivariate (exposure-only) specification
+in the comparison table \strong{in addition} to the user's original and DAG-derived models.}
 
 \item{engine_args}{Named list of extra arguments forwarded to \code{engine(...)}.
 If \code{formula} is an engine call, arguments from the call are merged with
 \code{engine_args} (call values take precedence).}
 }
 \value{
-An object of class \code{"DAGassist_report"}, invisibly for file outputs,
-and printed for \code{type="console"}. The list contains:
+An object of class \code{"DAGassist_report"}, invisibly for file and plot
+outputs, and printed for \code{type="console"}. The list contains:
 \itemize{
 \item \code{validation} - result from \code{validate_spec(...)} which verifies acyclicity and X/Y declarations.
 \item \code{roles} - raw roles data.frame from \code{classify_nodes(...)} (logic columns).
@@ -107,8 +118,12 @@ and printed for \code{type="console"}. The list contains:
 \item \code{controls_minimal} - (legacy) one minimal set (character vector).
 \item \code{controls_minimal_all} - list of all minimal sets (character vectors).
 \item \code{controls_canonical} - canonical set (character vector; may be empty).
-\item \code{formulas} - list with \code{original}, \code{minimal}, \code{minimal_list}, \code{canonical}.
-\item \code{models} - list with fitted models \code{original}, \code{minimal}, \code{minimal_list}, \code{canonical}.
+\item \code{controls_canonical_excl} - named list of filtered canonical sets
+(e.g. \verb{$nco}, \verb{$nct}) when \code{exclude} is used.
+\item \code{formulas} - list with \code{original}, \code{minimal}, \code{minimal_list}, \code{canonical},
+and any filtered canonical formulas.
+\item \code{models} - list with fitted models \code{original}, \code{minimal}, \code{minimal_list},
+\code{canonical}, and any filtered canonical models.
 \item \code{verbose}, \code{imply} - flags as provided.
 }
 }
@@ -120,6 +135,9 @@ XLSX, plain text). It also supports passing a \strong{single engine call} (e.g.
 \code{feols(Y ~ X + Z | fe, data = df)}) instead of a plain formula.
 }
 \details{
+In addition to tabular export formats, you can create a dot-whisker plot
+(via \code{type = "dwplot"} or \code{type = "dotwhisker"}) for the model comparison.
+
 \strong{Engine-call parsing.} If \code{formula} is a call (e.g., \code{feols(Y ~ X | fe, data=df)}),
 DAGassist extracts the engine function, formula, data argument, and any additional
 engine arguments directly from that call; these are merged with \code{engine}/\code{engine_args}
@@ -131,11 +149,19 @@ DAGassist preserves any \verb{| ...} tail when constructing minimal/canonical fo
 
 \strong{Roles grid.} The roles table displays short headers:
 \itemize{
-\item \code{X} (exposure), \code{Y} (outcome), \code{CON} (confounder), \code{MED} (mediator),
-\code{COL} (collider), \code{dOut} (proper descendant of \code{Y}),
-\code{dMed} (proper descendant of any mediator), \code{dCol} (proper descendant of any collider).
-Descendants are \strong{proper} (exclude the node itself) and can be any distance downstream.
-The internal \code{is_descendant_of_exposure} is retained for logic but hidden in displays.
+\item \code{X} (exposure), \code{Y} (outcome),
+\item \code{CON} (confounder),
+\item \code{MED} (mediator),
+\item \code{COL} (collider),
+\item \code{dOut} (proper descendant of \code{Y}),
+\item \code{dMed} (proper descendant of any mediator),
+\item \code{dCol} (proper descendant of any collider),
+\item \code{dConfOn} (descendant of a confounder \strong{on} a back-door path),
+\item \code{dConfOff} (descendant of a confounder \strong{off} a back-door path),
+\item \code{NCT} (neutral control on treatment),
+\item \code{NCO} (neutral control on outcome).
+These extra flags are used to (i) warn about bad controls, and (ii) build
+filtered canonical sets such as “Canonical (–NCO)” for export.
 }
 
 \strong{Bad controls.} For total-effect estimation, DAGassist flags as \verb{bad controls}
@@ -145,33 +171,24 @@ are eligible for minimal/canonical adjustment sets.
 
 \strong{Output types.}
 \itemize{
-\item \code{console} prints roles, sets, formulas (if \code{verbose}), and a compact model comparison
-with \code{{modelsummary}} if available (falls back gracefully otherwise).
-\item \code{latex} writes a \strong{LaTeX fragment} you can \verb{\\\\input\{\}} into a paper.
-\item \code{docx}/\code{word} writes a \strong{Word} doc (uses \code{options(DAGassist.ref_docx=...)} if set).
+\item \code{console} prints roles, adjustment sets, formulas (if \code{verbose}), and a compact model comparison
+(using \code{{modelsummary}} if available, falling back gracefully otherwise).
+\item \code{latex} writes or prints a \strong{LaTeX fragment} you can \verb{\\\\input\{\}} into a paper —
+it uses \code{tabularray} long tables and will include any requested Canon. (-NCO / -NCT) variants.
+\item \code{docx}/\code{word} writes a \strong{Word} doc (respects \code{options(DAGassist.ref_docx=...)} if set).
 \item \code{excel}/\code{xlsx} writes an \strong{Excel} workbook with tidy tables.
 \item \code{text}/\code{txt} writes a \strong{plain-text} report for logs/notes.
+\item \code{dwplot}/\code{dotwhisker} produces a dot-whisker visualization of the fitted models.
 }
 
 \strong{Dependencies.} Core requires \code{{dagitty}}. Optional enhancements: \code{{modelsummary}}
 (pretty tables), \code{{broom}} (fallback tidying), \code{{rmarkdown}} + \strong{Pandoc} (DOCX),
-\code{{writexl}} (XLSX).
+\code{{writexl}} (XLSX), \code{{dotwhisker}}/\code{{ggplot2}} for plotting.
 }
 \section{Interpreting the output}{
 
-\strong{Roles:} Variables in your formula are classified by DAG-based causal role:
-\itemize{
-\item \code{X} - treatment / exposure.
-\item \code{Y} - outcome / dependent variable.
-\item \code{CON} - confounder (common cause of \code{X} and \code{Y}); adjust for these.
-\item \code{MED} - mediator (on a path from \code{X} to \code{Y}); do \strong{not} adjust when estimating total effects.
-\item \code{COL} - collider (direct descendant of \code{X} and \code{Y}); adjusting opens a spurious path, so do \strong{not} adjust.
-\item \code{dOut} - descendant of outcome; do \strong{not} adjust.
-\item \code{dMed} - descendant of a mediator; do \strong{not} adjust when estimating total effects.
-\item \code{dCol} - descendant of a collider; adjusting opens a spurious path, so do \strong{not} adjust.
-\item \code{other} - safe, non-confounding predictors (e.g., affect \code{Y} only). Included in the canonical
-model but omitted from the minimal set because they're not required for identification.
-}
+See the vignette articles for worked examples on generating roles-only, models-only,
+and LaTeX/Word/Excel reports.
 
 \strong{Model Comparison:}
 \itemize{

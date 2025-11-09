@@ -172,7 +172,10 @@ variables in <code>original</code>.</p>
 <span>          out <span class="op">=</span> <span class="va">out_txt</span><span class="op">)</span> <span class="co">#a temporary directory, for the purpose of this vignette</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="va">out_txt</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span> <span class="co"># show the output</span></span></code></pre></div>
-<p>DAGassist Report:</p>
+</div>
+<div class="section level3">
+<h3 id="dagassist-report">DAGassist Report:<a class="anchor" aria-label="anchor" href="#dagassist-report"></a>
+</h3>
 </div>
 <div class="section level3">
 <h3 id="roles">Roles<a class="anchor" aria-label="anchor" href="#roles"></a>
@@ -341,10 +344,9 @@ variables in <code>original</code>.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="section level3">
-<h3 id="models">Models<a class="anchor" aria-label="anchor" href="#models"></a>
-</h3>
+<div class="section level4">
+<h4 id="models">Models<a class="anchor" aria-label="anchor" href="#models"></a>
+</h4>
 <table class="table">
 <colgroup>
 <col width="12%">
@@ -511,15 +513,16 @@ variables in <code>original</code>.</p>
 </tr>
 </tbody>
 </table>
-<div class="section level4">
-<h4 id="notes">Notes<a class="anchor" aria-label="anchor" href="#notes"></a>
-</h4>
+<div class="section level5">
+<h5 id="notes">Notes<a class="anchor" aria-label="anchor" href="#notes"></a>
+</h5>
 <ul>
 <li>p-value legend: + &lt; 0.1, * &lt; 0.05, ** &lt; 0.01, *** &lt;
 0.001.</li>
 <li>Controls (minimal): {F, H}.</li>
 <li>Controls (canonical): {A, B, C, F, G, H}.</li>
 </ul>
+</div>
 </div>
 </div>
 <div class="section level3">
@@ -578,44 +581,241 @@ set, which only excludes non-admissible adjustments (colliders,
 mediators, and their descendants). Sometimes, users may want to see the
 canonical set minus certain classes of “neutral” controls, per
 Hunermund, Louw and Ronkko (2025). The <code>exclude =</code> argument
-enables selective exclusion of neutral controls. -
-<code>exclude = "nct"</code> drops neutral controls on the treatment -
-<code>exclude = "nco"</code> drops neutral controls on the outcome</p>
+enables selective exclusion of neutral controls.</p>
+<ul>
+<li>
+<code>exclude = "nct"</code> drops neutral controls on the
+treatment</li>
+<li>
+<code>exclude = "nco"</code> drops neutral controls on the
+outcome</li>
+</ul>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span>dag <span class="op">=</span> <span class="va">dag_model</span>,</span>
 <span>          formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">D</span> <span class="op">+</span> <span class="va">G</span> <span class="op">+</span> <span class="va">H</span> <span class="op">+</span> <span class="cn">F</span> <span class="op">+</span> <span class="va">A</span> <span class="op">+</span> <span class="va">B</span> <span class="op">+</span> <span class="va">C</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span>,</span>
 <span>          exclude <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"nct"</span>, <span class="st">"nco"</span><span class="op">)</span>,</span>
 <span>          show <span class="op">=</span> <span class="st">"models"</span>,</span>
-<span>          type <span class="op">=</span> <span class="st">"text"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; DAGassist Report:</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ## Models</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; |Term     | Original | Minimal 1 | Minimal 2 | Minimal 3 | Minimal 4 | Canonical | Canon. (-NCT) | Canon. (-NCO) |</span></span>
-<span><span class="co">#&gt; |:--------|:--------:|:---------:|:---------:|:---------:|:---------:|:---------:|:-------------:|:-------------:|</span></span>
-<span><span class="co">#&gt; |D        | 1.034*** | 0.977***  | 0.969***  | 1.038***  | 1.024***  | 1.034***  |   1.034***    |   1.019***    |</span></span>
-<span><span class="co">#&gt; |         | (0.032)  |  (0.020)  |  (0.023)  |  (0.036)  |  (0.041)  |  (0.032)  |    (0.032)    |    (0.038)    |</span></span>
-<span><span class="co">#&gt; |G        | 0.397*** |           |           |           |           | 0.397***  |   0.397***    |               |</span></span>
-<span><span class="co">#&gt; |         | (0.032)  |           |           |           |           |  (0.032)  |    (0.032)    |               |</span></span>
-<span><span class="co">#&gt; |H        | 0.486*** | 0.522***  |           | 0.495***  |           | 0.486***  |   0.486***    |               |</span></span>
-<span><span class="co">#&gt; |         | (0.032)  |  (0.028)  |           |  (0.031)  |           |  (0.032)  |    (0.032)    |               |</span></span>
-<span><span class="co">#&gt; |F        | 0.618*** | 0.606***  | 0.593***  |           |           | 0.618***  |   0.618***    |   0.618***    |</span></span>
-<span><span class="co">#&gt; |         | (0.037)  |  (0.036)  |  (0.040)  |           |           |  (0.037)  |    (0.037)    |    (0.044)    |</span></span>
-<span><span class="co">#&gt; |A        | -0.111** |           |           | 0.158***  | 0.169***  | -0.111**  |   -0.111**    |    -0.088+    |</span></span>
-<span><span class="co">#&gt; |         | (0.043)  |           |           |  (0.047)  |  (0.051)  |  (0.043)  |    (0.043)    |    (0.050)    |</span></span>
-<span><span class="co">#&gt; |B        |  -0.008  |           |           | -0.161*** | -0.162*** |  -0.008   |    -0.008     |    -0.013     |</span></span>
-<span><span class="co">#&gt; |         | (0.039)  |           |           |  (0.045)  |  (0.049)  |  (0.039)  |    (0.039)    |    (0.046)    |</span></span>
-<span><span class="co">#&gt; |C        |  0.037   |           | 0.420***  |           | 0.391***  |   0.037   |     0.037     |   0.403***    |</span></span>
-<span><span class="co">#&gt; |         | (0.042)  |           |  (0.040)  |           |  (0.045)  |  (0.042)  |    (0.042)    |    (0.041)    |</span></span>
-<span><span class="co">#&gt; |Num.Obs. |   1000   |   1000    |   1000    |   1000    |   1000    |   1000    |     1000      |     1000      |</span></span>
-<span><span class="co">#&gt; |R2       |  0.836   |   0.809   |   0.769   |   0.762   |   0.724   |   0.836   |     0.836     |     0.770     |</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ### Notes</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; - p-value legend: + &lt; 0.1, * &lt; 0.05, ** &lt; 0.01, *** &lt; 0.001.</span></span>
-<span><span class="co">#&gt; - Controls (minimal): {F, H}.</span></span>
-<span><span class="co">#&gt; - Controls (canonical): {A, B, C, F, G, H}.</span></span>
-<span><span class="co">#&gt; </span></span></code></pre></div>
+<span>          type <span class="op">=</span> <span class="st">"text"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="dagassist-report-1">DAGassist Report:<a class="anchor" aria-label="anchor" href="#dagassist-report-1"></a>
+</h3>
+<div class="section level4">
+<h4 id="models-1">Models<a class="anchor" aria-label="anchor" href="#models-1"></a>
+</h4>
+<table style="width:100%;" class="table">
+<colgroup>
+<col width="8%">
+<col width="9%">
+<col width="10%">
+<col width="10%">
+<col width="10%">
+<col width="10%">
+<col width="10%">
+<col width="14%">
+<col width="14%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Term</th>
+<th align="center">Original</th>
+<th align="center">Minimal 1</th>
+<th align="center">Minimal 2</th>
+<th align="center">Minimal 3</th>
+<th align="center">Minimal 4</th>
+<th align="center">Canonical</th>
+<th align="center">Canon. (-NCT)</th>
+<th align="center">Canon. (-NCO)</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">D</td>
+<td align="center">1.034***</td>
+<td align="center">0.977***</td>
+<td align="center">0.969***</td>
+<td align="center">1.038***</td>
+<td align="center">1.024***</td>
+<td align="center">1.034***</td>
+<td align="center">1.034***</td>
+<td align="center">1.019***</td>
+</tr>
+<tr class="even">
+<td align="left"> </td>
+<td align="center">(0.032)</td>
+<td align="center">(0.020)</td>
+<td align="center">(0.023)</td>
+<td align="center">(0.036)</td>
+<td align="center">(0.041)</td>
+<td align="center">(0.032)</td>
+<td align="center">(0.032)</td>
+<td align="center">(0.038)</td>
+</tr>
+<tr class="odd">
+<td align="left">G</td>
+<td align="center">0.397***</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">0.397***</td>
+<td align="center">0.397***</td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left"> </td>
+<td align="center">(0.032)</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">(0.032)</td>
+<td align="center">(0.032)</td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">H</td>
+<td align="center">0.486***</td>
+<td align="center">0.522***</td>
+<td align="center"></td>
+<td align="center">0.495***</td>
+<td align="center"></td>
+<td align="center">0.486***</td>
+<td align="center">0.486***</td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left"> </td>
+<td align="center">(0.032)</td>
+<td align="center">(0.028)</td>
+<td align="center"></td>
+<td align="center">(0.031)</td>
+<td align="center"></td>
+<td align="center">(0.032)</td>
+<td align="center">(0.032)</td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">F</td>
+<td align="center">0.618***</td>
+<td align="center">0.606***</td>
+<td align="center">0.593***</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">0.618***</td>
+<td align="center">0.618***</td>
+<td align="center">0.618***</td>
+</tr>
+<tr class="even">
+<td align="left"> </td>
+<td align="center">(0.037)</td>
+<td align="center">(0.036)</td>
+<td align="center">(0.040)</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">(0.037)</td>
+<td align="center">(0.037)</td>
+<td align="center">(0.044)</td>
+</tr>
+<tr class="odd">
+<td align="left">A</td>
+<td align="center">-0.111**</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">0.158***</td>
+<td align="center">0.169***</td>
+<td align="center">-0.111**</td>
+<td align="center">-0.111**</td>
+<td align="center">-0.088+</td>
+</tr>
+<tr class="even">
+<td align="left"> </td>
+<td align="center">(0.043)</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">(0.047)</td>
+<td align="center">(0.051)</td>
+<td align="center">(0.043)</td>
+<td align="center">(0.043)</td>
+<td align="center">(0.050)</td>
+</tr>
+<tr class="odd">
+<td align="left">B</td>
+<td align="center">-0.008</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">-0.161***</td>
+<td align="center">-0.162***</td>
+<td align="center">-0.008</td>
+<td align="center">-0.008</td>
+<td align="center">-0.013</td>
+</tr>
+<tr class="even">
+<td align="left"> </td>
+<td align="center">(0.039)</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">(0.045)</td>
+<td align="center">(0.049)</td>
+<td align="center">(0.039)</td>
+<td align="center">(0.039)</td>
+<td align="center">(0.046)</td>
+</tr>
+<tr class="odd">
+<td align="left">C</td>
+<td align="center">0.037</td>
+<td align="center"></td>
+<td align="center">0.420***</td>
+<td align="center"></td>
+<td align="center">0.391***</td>
+<td align="center">0.037</td>
+<td align="center">0.037</td>
+<td align="center">0.403***</td>
+</tr>
+<tr class="even">
+<td align="left"> </td>
+<td align="center">(0.042)</td>
+<td align="center"></td>
+<td align="center">(0.040)</td>
+<td align="center"></td>
+<td align="center">(0.045)</td>
+<td align="center">(0.042)</td>
+<td align="center">(0.042)</td>
+<td align="center">(0.041)</td>
+</tr>
+<tr class="odd">
+<td align="left">Num.Obs.</td>
+<td align="center">1000</td>
+<td align="center">1000</td>
+<td align="center">1000</td>
+<td align="center">1000</td>
+<td align="center">1000</td>
+<td align="center">1000</td>
+<td align="center">1000</td>
+<td align="center">1000</td>
+</tr>
+<tr class="even">
+<td align="left">R2</td>
+<td align="center">0.836</td>
+<td align="center">0.809</td>
+<td align="center">0.769</td>
+<td align="center">0.762</td>
+<td align="center">0.724</td>
+<td align="center">0.836</td>
+<td align="center">0.836</td>
+<td align="center">0.770</td>
+</tr>
+</tbody>
+</table>
+<div class="section level5">
+<h5 id="notes-1">Notes<a class="anchor" aria-label="anchor" href="#notes-1"></a>
+</h5>
+<ul>
+<li>p-value legend: + &lt; 0.1, * &lt; 0.05, ** &lt; 0.01, *** &lt;
+0.001.</li>
+<li>Controls (minimal): {F, H}.</li>
+<li>Controls (canonical): {A, B, C, F, G, H}.</li>
+</ul>
+</div>
+</div>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -214,12 +214,20 @@ DAGassist(dag = dag_model,
           show = "roles")
 ```
 
-## Optional: a dot‑whisker plot of the key coefficient
+## Making a dot‑whisker plot of the key coefficient
 
 ```{r dotwhisker, eval=has_dotwhisker, warning=FALSE, fig.width=7}
 # Returns a ggplot object (prints if out = NULL; saves if out is a file path)
 DAGassist(dag = dag_model,
           formula = lm(Y ~ D + G + H + F + A + B + C, data = df),
           type = "dotwhisker")
+```
+
+## Using special canonical sets
+
+```{r spec-canon}
+DAGassist(dag = dag_model,
+          formula = lm(Y ~ D + G + H + F + A + B + C, data = df),
+          exclude = "nct") 
 ```
 

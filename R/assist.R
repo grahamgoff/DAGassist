@@ -5,6 +5,9 @@
 #' renders a compact report in several formats (console, LaTeX fragment, DOCX,
 #' XLSX, plain text). It also supports passing a **single engine call** (e.g.
 #' `feols(Y ~ X + Z | fe, data = df)`) instead of a plain formula.
+#' 
+#' In addition to tabular export formats, you can create a dot-whisker plot
+#' (via `type = "dwplot"` or `type = "dotwhisker"`) for the model comparison.
 #'
 #' @param dag A **dagitty** object (see [dagitty::dagitty()]).
 #' @param formula Either (a) a standard model formula `Y ~ X + ...`, or
@@ -27,12 +30,19 @@
 #' @param type Output type. One of
 #'   `"console"` (default), `"latex"`/`"docx"`/`"word"`,
 #'   `"excel"`/`"xlsx"`, `"text"`/`"txt"`.
+#' @param type Output type. One of
+#'   `"console"` (default), `"latex"`/`"docx"`/`"word"`,
+#'   `"excel"`/`"xlsx"`, `"text"`/`"txt"`,
+#'   or the plotting types `"dwplot"`/`"dotwhisker"`.
+#'   For `type = "latex"`, if no `out=` is supplied, a LaTeX fragment is printed
+#'   to the console instead of being written to disk.
 #' @param out Output file path for the non-console types:
-#'   * `type="latex"`: a **LaTeX fragment** written to `out` (must end with `.tex`).
+#'   * `type="latex"`: a **LaTeX fragment** written to `out` (usually `.tex`);
+#'     when omitted, the fragment is printed to the console.
 #'   * `type="docx"`/`"word"`: a **Word (.docx)** file written to `out`.
 #'   * `type="excel"`/`"xlsx"`: an **Excel (.xlsx)** file written to `out`.
 #'   * `type="text"`/`"txt"`: a **plain-text** file written to `out`.
-#'   Ignored for `type="console"`.
+#'   Ignored for `type="console"` and for the plotting types.
 #' @param imply Logical; default `FALSE`. **Evaluation scope.**
 #'   - If `FALSE` (default): restrict DAG evaluation to variables **named in the formula**
 #'     (prune the DAG to exposure, outcome, and RHS terms). Roles/sets/bad-controls are
@@ -46,14 +56,21 @@
 #' @param omit_factors Logical; drop factor-level rows from the model comparison display (default `TRUE`).
 #'    This parameter only suppresses factor **output**--they are still included in the regression. 
 #' @param show Which sections to include in the output. One of `"all"` (default),
-#'    `"roles"`, or `"models"`.
+#'    `"roles"` (only the roles grid), or `"models"` (only the model comparison table/plot).
+#'    This makes it possible to generate and export just roles or just comparisons.
 #' @param eval_all Logical; default `FALSE`.  When `TRUE`, keep **all original RHS terms** 
 #'    that are not in the DAG (e.g., fixed effects, interactions, splines, 
 #'    convenience covariates) in the minimal and canonical formulas. 
 #'    When `FALSE` (default), RHS terms not present as DAG nodes are dropped 
 #'    from those derived formulas.
-#' @param bivariate if TRUE, include a bivariate (no covariate) model in the comparison
-#'    table. Default FALSE.
+#' @param bivariate Logical; if `TRUE`, include a bivariate (exposure-only) specification
+#'    in the comparison table **in addition** to the user's original and DAG-derived models.
+#' @param exclude Optional character vector to remove neutral controls from the canonical set.
+#'    Recognized values are `"nct"` (drop *neutral-on-treatment* controls) and
+#'    `"nco"` (drop *neutral-on-outcome* controls). You can supply one or both,
+#'    e.g. `exclude = c("nco", "nct")`; each requested variant is fitted and shown
+#'    as a separate "Canon. (-...)" column in the console/model exports.
+#'    
 #' @details
 #' **Engine-call parsing.** If `formula` is a call (e.g., `feols(Y ~ X | fe, data=df)`),
 #' DAGassist extracts the engine function, formula, data argument, and any additional
@@ -65,11 +82,19 @@
 #' (e.g., `Y ~ X + controls | fe | iv(...)`).
 #'
 #' **Roles grid.** The roles table displays short headers:
-#'   - `X` (exposure), `Y` (outcome), `CON` (confounder), `MED` (mediator),
-#'     `COL` (collider), `dOut` (proper descendant of `Y`),
-#'     `dMed` (proper descendant of any mediator), `dCol` (proper descendant of any collider).
-#'   Descendants are **proper** (exclude the node itself) and can be any distance downstream.
-#'   The internal `is_descendant_of_exposure` is retained for logic but hidden in displays.
+#'   - `X` (exposure), `Y` (outcome),
+#'   - `CON` (confounder),
+#'   - `MED` (mediator),
+#'   - `COL` (collider),
+#'   - `dOut` (proper descendant of `Y`),
+#'   - `dMed` (proper descendant of any mediator),
+#'   - `dCol` (proper descendant of any collider),
+#'   - `dConfOn` (descendant of a confounder **on** a back-door path),
+#'   - `dConfOff` (descendant of a confounder **off** a back-door path),
+#'   - `NCT` (neutral control on treatment),
+#'   - `NCO` (neutral control on outcome).
+#'   These extra flags are used to (i) warn about bad controls, and (ii) build
+#'   filtered canonical sets such as “Canonical (–NCO)” for export.
 #'
 #' **Bad controls.** For total-effect estimation, DAGassist flags as `bad controls`
 #' any variables that are `MED`, `COL`, `dOut`, `dMed`, or `dCol`. These are warned in
@@ -77,19 +102,21 @@
 #' are eligible for minimal/canonical adjustment sets.
 #'
 #' **Output types.**
-#' * `console` prints roles, sets, formulas (if `verbose`), and a compact model comparison
-#'   with `{modelsummary}` if available (falls back gracefully otherwise).
-#' * `latex` writes a **LaTeX fragment** you can `\\input{}` into a paper.
-#' * `docx`/`word` writes a **Word** doc (uses `options(DAGassist.ref_docx=...)` if set).
+#' * `console` prints roles, adjustment sets, formulas (if `verbose`), and a compact model comparison
+#'   (using `{modelsummary}` if available, falling back gracefully otherwise).
+#' * `latex` writes or prints a **LaTeX fragment** you can `\\input{}` into a paper —
+#'   it uses `tabularray` long tables and will include any requested Canon. (-NCO / -NCT) variants.
+#' * `docx`/`word` writes a **Word** doc (respects `options(DAGassist.ref_docx=...)` if set).
 #' * `excel`/`xlsx` writes an **Excel** workbook with tidy tables.
 #' * `text`/`txt` writes a **plain-text** report for logs/notes.
+#' * `dwplot`/`dotwhisker` produces a dot-whisker visualization of the fitted models.
 #'
 #' **Dependencies.** Core requires `{dagitty}`. Optional enhancements: `{modelsummary}`
 #' (pretty tables), `{broom}` (fallback tidying), `{rmarkdown}` + **Pandoc** (DOCX),
-#' `{writexl}` (XLSX).
+#' `{writexl}` (XLSX), `{dotwhisker}`/`{ggplot2}` for plotting.
 #'
-#' @return An object of class `"DAGassist_report"`, invisibly for file outputs,
-#' and printed for `type="console"`. The list contains:
+#' @return An object of class `"DAGassist_report"`, invisibly for file and plot
+#' outputs, and printed for `type="console"`. The list contains:
 #' \itemize{
 #'   \item `validation` - result from `validate_spec(...)` which verifies acyclicity and X/Y declarations.
 #'   \item `roles` - raw roles data.frame from `classify_nodes(...)` (logic columns).
@@ -98,25 +125,18 @@
 #'   \item `controls_minimal` - (legacy) one minimal set (character vector).
 #'   \item `controls_minimal_all` - list of all minimal sets (character vectors).
 #'   \item `controls_canonical` - canonical set (character vector; may be empty).
-#'   \item `formulas` - list with `original`, `minimal`, `minimal_list`, `canonical`.
-#'   \item `models` - list with fitted models `original`, `minimal`, `minimal_list`, `canonical`.
+#'   \item `controls_canonical_excl` - named list of filtered canonical sets
+#'     (e.g. `$nco`, `$nct`) when `exclude` is used.
+#'   \item `formulas` - list with `original`, `minimal`, `minimal_list`, `canonical`,
+#'     and any filtered canonical formulas.
+#'   \item `models` - list with fitted models `original`, `minimal`, `minimal_list`,
+#'     `canonical`, and any filtered canonical models.
 #'   \item `verbose`, `imply` - flags as provided.
-#'} 
-#'
-#'@section Interpreting the output:
-#' **Roles:** Variables in your formula are classified by DAG-based causal role:
-#' \itemize{
-#'   \item `X` - treatment / exposure.
-#'   \item `Y` - outcome / dependent variable.
-#'   \item `CON` - confounder (common cause of `X` and `Y`); adjust for these.
-#'   \item `MED` - mediator (on a path from `X` to `Y`); do **not** adjust when estimating total effects.
-#'   \item `COL` - collider (direct descendant of `X` and `Y`); adjusting opens a spurious path, so do **not** adjust.
-#'   \item `dOut` - descendant of outcome; do **not** adjust.
-#'   \item `dMed` - descendant of a mediator; do **not** adjust when estimating total effects.
-#'   \item `dCol` - descendant of a collider; adjusting opens a spurious path, so do **not** adjust.
-#'   \item `other` - safe, non-confounding predictors (e.g., affect `Y` only). Included in the canonical
-#'         model but omitted from the minimal set because they're not required for identification.
 #' }
+#'
+#' @section Interpreting the output:
+#' See the vignette articles for worked examples on generating roles-only, models-only,
+#' and LaTeX/Word/Excel reports.
 #' 
 #' **Model Comparison:**
 #' \itemize{
@@ -175,6 +195,7 @@ DAGassist <- function(dag,
                       out = NULL,
                       imply = FALSE,
                       eval_all = FALSE,
+                      exclude = NULL,
                       omit_intercept = TRUE,
                       omit_factors = TRUE,
                       bivariate = FALSE,
@@ -198,7 +219,8 @@ DAGassist <- function(dag,
     outcome  <- xy$outcome
     # compute roles directly from DAG 
     roles <- classify_nodes(dag, exposure, outcome)
-    
+    #detect m bias/butterfly bias
+    conditions <- tryCatch(.detect_dag_conditions(roles), error = function(e) list())
     #label normalization
     labmap <- tryCatch(.normalize_labels(labels, vars = unique(roles$variable)),
                        error = function(e) NULL)
@@ -220,17 +242,21 @@ DAGassist <- function(dag,
       controls_minimal = character(0),
       controls_minimal_all = list(),
       controls_canonical = character(0),
+      controls_canonical_excl = character(0),
+      conditions = conditions,  
       formulas = list(
         original     = NULL,
         minimal      = NULL,
         minimal_list = list(),
-        canonical    = NULL
+        canonical    = NULL,
+        canonical_excl = NULL
       ),
       models = list(
         original     = NULL,
         minimal      = NULL,
         minimal_list = list(),
-        canonical    = NULL
+        canonical    = NULL,
+        canonical_excl = NULL
       ),
       unevaluated     = character(0),
       unevaluated_str = "",
@@ -258,24 +284,31 @@ DAGassist <- function(dag,
     file_attr <- if (!is.null(out)) normalizePath(out, mustWork = FALSE) else NULL
     
     if (type == "latex") {
-      if (tolower(tools::file_ext(out)) == "docx")
-        stop("LaTeX fragment must not be written to a .docx path. Use a .tex filename.", call. = FALSE)
-      if (is.null(out)) stop("type='latex' requires `out=` file path.", call. = FALSE)
-      
       res_min <- list(
-        validation     = list(status = "VALID", issues = character(0)),
-        coef_rename    = labmap,
-        coef_omit      = report$settings$coef_omit,
-        roles_df       = report$roles_display,
-        models_df      = models_df_full,
-        models         = mods_full,
-        min_sets       = report$controls_minimal_all,
-        canon          = report$controls_canonical,
+        validation = list(status = "VALID", issues = character(0)),
+        coef_rename = labmap,
+        coef_omit = report$settings$coef_omit,
+        roles_df = report$roles_display,
+        models_df = models_df_full,
+        models = mods_full,
+        min_sets = report$controls_minimal_all,
+        canon = report$controls_canonical,
         unevaluated_str= report$unevaluated_str,
-        show           = show
+        show = show
       )
-      .report_latex_fragment(res_min, out)
-      return(invisible(structure(report, file = file_attr)))
+      
+      if (!is.null(out)) {
+        # safety check when path is specified
+        if (tolower(tools::file_ext(out)) == "docx")
+          stop("LaTeX fragment must not be written to a .docx path. Use a .tex filename.", call. = FALSE)
+        
+        .report_latex_fragment(res_min, out)
+        return(invisible(structure(report, file = normalizePath(out, mustWork = FALSE))))
+      } else {
+        # no path -> print to console
+        .report_latex_fragment(res_min, out = NULL)
+        return(invisible(report))
+      }
     }
     
     if (type %in% c("docx","word")) {
@@ -392,16 +425,31 @@ DAGassist <- function(dag,
       roles$is_collider |
       roles$is_descendant_of_outcome |
       roles$is_descendant_of_mediator |   
-      roles$is_descendant_of_collider     
+      roles$is_descendant_of_collider 
   ]
   bad_in_user <- intersect(user_controls, bad)
   # all the minimal sets
   minimal_sets_all <- .minimal_sets_all(dag_eval, exposure, outcome)
-  # keep a single minimal for reference
-  #minimal <- if (length(minimal_sets_all)) minimal_sets_all[[1]] else character(0)
   # canonical set and formula
   canonical <- .pick_canonical_controls(dag_eval, exposure, outcome)
-  
+  # possibly several exclusion variants, e.g. c("nco","nct")
+  canon_excl_list <- list()
+  if (!is.null(exclude)) {
+    exc <- unique(as.character(exclude))
+    valid <- exc[exc %in% c("nct", "nco")]
+    if (length(valid)) {
+      for (excl in valid) {
+        if (identical(excl, "nct")) {
+          drop_vars <- roles$variable[roles$is_neutral_on_treatment]
+        } else { # "nco"
+          drop_vars <- roles$variable[roles$is_neutral_on_outcome]
+        }
+        canon_excl_list[[excl]] <- setdiff(canonical, drop_vars)
+      }
+    } else {
+      warning("`exclude` must be NULL, 'nct', or 'nco'. Ignoring.", call. = FALSE)
+    }
+  }
   ## respect the formula (only use variables in the formula) when imply=FALSE
   # identify variables actually in user formula
   vars_in_formula <- unique(c(exposure, outcome, user_controls))
@@ -417,6 +465,17 @@ DAGassist <- function(dag,
     canonical
   } else {
     intersect(canonical, user_controls)
+  }
+  #for the exclude param
+  canon_excl_for_use <- list()
+  if (length(canon_excl_list)) {
+    for (nm in names(canon_excl_list)) {
+      canon_excl_for_use[[nm]] <- if (isTRUE(imply)) {
+        canon_excl_list[[nm]]
+      } else {
+        intersect(canon_excl_list[[nm]], user_controls)
+      }
+    }
   }
   # limit roles table to vars in the formula 
   #with labels
@@ -448,6 +507,16 @@ DAGassist <- function(dag,
     c2 <- if (isTRUE(eval_all)) unique(c(canon_for_use, rhs_extras)) else canon_for_use
     .build_formula_with_controls(formula, exposure, outcome, c2)
   }
+  #canonical with some (on treatment/outcome) neutral controls removed
+  f_canon_excl <- list()
+  if (length(canon_excl_for_use)) {
+    for (nm in names(canon_excl_for_use)) {
+      c3 <- canon_excl_for_use[[nm]]
+      c3 <- if (isTRUE(eval_all)) unique(c(c3, rhs_extras)) else c3
+      f_canon_excl[[nm]] <- .build_formula_with_controls(formula, exposure, outcome, c3)
+    }
+  }
+  if (!length(f_canon_excl)) f_canon_excl <- NULL
   #fits: always show Original, every Minimal, and Canonical at the end 
   #if there are multiple min, push canonical to the end
   m_orig <- .safe_fit(engine, formula, data, engine_args)
@@ -463,12 +532,23 @@ DAGassist <- function(dag,
   }
   ## if auto add is true, imply the sets based on dag relationships,
   ## otherwise, keep lists empty and specify in the report list
+  # modified to handle exclude params
   if (isTRUE(imply)) {
     if (is.data.frame(roles) && "variable" %in% names(roles)) {
       roles$canon <- ifelse(roles$variable %in% canonical, "x", "")
+      if (length(canon_excl_list)) {
+        if ("nct" %in% names(canon_excl_list)) {
+          roles$canon_no_nct <- ifelse(roles$variable %in% canon_excl_list[["nct"]], "x", "")
+        }
+        if ("nco" %in% names(canon_excl_list)) {
+          roles$canon_no_nco <- ifelse(roles$variable %in% canon_excl_list[["nco"]], "x", "")
+        }
+      }
     }
   } else {
     if (is.data.frame(roles) && "canon" %in% names(roles)) roles$canon <- ""
+    if (is.data.frame(roles) && "canon_no_nct" %in% names(roles)) roles$canon_no_nct <- ""
+    if (is.data.frame(roles) && "canon_no_nco" %in% names(roles)) roles$canon_no_nco <- ""
   }
   
   # always fit alternates so display isn't tied to imply
@@ -483,7 +563,27 @@ DAGassist <- function(dag,
     same_idx <- which(vapply(f_mins, function(fm) .same_formula(fm, f_canon), logical(1)))
     if (length(same_idx)) m_mins[[same_idx[1]]] else .safe_fit(engine, f_canon, data, engine_args)
   }
-
+  #fit models for exclude neutral param
+  m_canon_excl <- NULL
+  if (length(f_canon_excl)) {
+    m_canon_excl <- list()
+    for (nm in names(f_canon_excl)) {
+      fce <- f_canon_excl[[nm]]
+      fit_nm <- NULL
+      if (.same_formula(fce, formula)) {
+        fit_nm <- m_orig
+      } else {
+        # reuse a minimal fit if identical
+        same_idx2 <- which(vapply(f_mins, function(fm) .same_formula(fm, fce), logical(1)))
+        if (length(same_idx2)) {
+          fit_nm <- m_mins[[same_idx2[1]]]
+        } else {
+          fit_nm <- .safe_fit(engine, fce, data, engine_args)
+        }
+      }
+      m_canon_excl[[nm]] <- fit_nm
+    }
+  }
   ###list unevaluated nuisance vars
   .collect_rhs <- function(fml) .rhs_terms_safe(fml)
   rhs_all <- unique(unlist(c(
@@ -510,6 +610,7 @@ DAGassist <- function(dag,
     controls_minimal = minimal, # keeps legacy single-min key
     controls_minimal_all = sets_min_for_use, # all minimal sets
     controls_canonical = canon_for_use,
+    controls_canonical_excl = canon_excl_for_use,
     
     formulas = list(
       original = formula,
@@ -517,14 +618,16 @@ DAGassist <- function(dag,
       # so it prints multiple formulas if there are multiple minimal sets
       minimal = if (length(f_mins)) f_mins[[1]] else if (isTRUE(imply)) .build_minimal_formula(formula, exposure, outcome, minimal) else formula,
       minimal_list = f_mins, #  all minimal formulas
-      canonical = f_canon
+      canonical = f_canon,
+      canonical_excl = f_canon_excl 
     ),
     models = list(
       original= m_orig,
       bivariate  = m_bivar,  # may be NULL when not requested or identical to Original
       minimal = if (length(m_mins)) m_mins[[1]] else if (isTRUE(imply)) .safe_fit(engine, .build_minimal_formula(formula, exposure, outcome, minimal), data, engine_args) else m_orig,
       minimal_list = m_mins, # all minimal fits
-      canonical = m_canon
+      canonical = m_canon,
+      canonical_excl = m_canon_excl
     ),
     unevaluated = unevaluated,
     unevaluated_str = unevaluated_str,
@@ -536,7 +639,8 @@ DAGassist <- function(dag,
   report$settings <- list(
     omit_intercept = isTRUE(omit_intercept),
     omit_factors = isTRUE(omit_factors),
-    show = show
+    show = show,
+    exclude=exclude
   )
   report$.__data <- data
   report$settings$coef_omit <- .build_coef_omit(
@@ -552,11 +656,6 @@ DAGassist <- function(dag,
   
   ##### LATEX OUT BRANCH #####
   if (type == "latex") {
-    if (tolower(tools::file_ext(out)) == "docx") {
-      stop("LaTeX fragment must not be written to a .docx path. Use a .tex filename.", call. = FALSE)
-    }
-    if (is.null(out)) stop("type='latex' requires `out=` file path.", call. = FALSE)
-    
     res_min <- list(
       validation = list(
         status = if (isTRUE(v$ok)) "VALID" else "INVALID",
@@ -565,15 +664,26 @@ DAGassist <- function(dag,
       coef_rename = labmap,
       coef_omit  = report$settings$coef_omit,
       roles_df = report$roles_display,
-      models_df = models_df_full,     
-      models = mods_full,        
+      models_df = models_df_full,
+      models = mods_full,
       min_sets = report$controls_minimal_all,
       canon = report$controls_canonical,
       unevaluated_str = report$unevaluated_str,
       show = show
     )
-    .report_latex_fragment(res_min, out)
-    return(invisible(structure(report, file = normalizePath(out, mustWork = FALSE))))
+    
+    if (!is.null(out)) {
+      # only check extension if we actually have a path
+      if (tolower(tools::file_ext(out)) == "docx") {
+        stop("LaTeX fragment must not be written to a .docx path. Use a .tex filename.", call. = FALSE)
+      }
+      .report_latex_fragment(res_min, out)
+      return(invisible(structure(report, file = normalizePath(out, mustWork = FALSE))))
+    } else {
+      # print to console instead of erroring
+      .report_latex_fragment(res_min, out = NULL)
+      return(invisible(report))
+    }
   }
   
   ##### WORD OUT BRANCH #####
@@ -687,6 +797,15 @@ print.DAGassist_report <- function(x, ...) {
         cat(clr_red("\n (!) Bad controls in your formula: {", paste(x$bad_in_user, collapse = ", "), "}\n", sep = ""))
       } else {
         cat(clr_green("\nNo bad controls detected in your formula.\n"))
+      }
+    }
+    #butterfly or m bias
+    if (!is.null(x$conditions) && length(x$conditions)) {
+      on <- names(Filter(isTRUE, x$conditions))
+      if (length(on)) {
+        cat(clr_yellow("\nDAG conditions detected: ",
+                       paste(on, collapse = ", "),
+                       "\n", sep = ""))
       }
     }
   }
@@ -816,7 +935,27 @@ print.DAGassist_report <- function(x, ...) {
     }
     mods[["Canonical"]] <- x$models$canonical
     
-    #spec intercept and factor row omit
+    if (!is.null(x$models$canonical_excl)) {
+      if (is.list(x$models$canonical_excl)) {
+        for (nm in names(x$models$canonical_excl)) {
+          lbl <- switch(
+            nm,
+            nct = "Canon. (-NCT)",
+            nco = "Canon. (-NCO)",
+            paste0("Canonical (", nm, ")")
+          )
+          mods[[lbl]] <- x$models$canonical_excl[[nm]]
+        }
+      } else {
+        # old single-model behavior
+        exc <- x$settings$exclude
+        lbl <- "Canonical (filtered)"
+        if (identical(exc, "nct")) lbl <- "Canon. (-NCT)"
+        if (identical(exc, "nco")) lbl <- "Canon. (-NCO)"
+        mods[[lbl]] <- x$models$canonical_excl
+      }
+    }
+    
     coef_omit <- x$settings$coef_omit
     .print_model_comparison_list(mods, coef_rename = x$labels_map, coef_omit = coef_omit)
   }

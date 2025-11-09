@@ -42,6 +42,36 @@
   if (!.same_formula(report$formulas$canonical, report$formulas$original)) {
     mods[["Canonical"]] <- report$models$canonical
   }
+  if (!is.null(report$models$canonical_excl)) {
+    # new style: list of filtered canonicals, e.g. list(nco = <mod>, nct = <mod>)
+    if (is.list(report$models$canonical_excl)) {
+      for (nm in names(report$models$canonical_excl)) {
+        lbl <- switch(
+          nm,
+          nco = "Canon. (-NCO)",
+          nct = "Canon. (-NCT)",
+          paste0("Canon. (-", toupper(nm), ")")
+        )
+        mods[[lbl]] <- report$models$canonical_excl[[nm]]
+      }
+    } else {
+      # backwards-compat: single model
+      exc <- character(0)
+      if (!is.null(report$settings) && !is.null(report$settings$exclude)) {
+        exc <- as.character(report$settings$exclude)
+      }
+      lbl <- "Canonical (filtered)"
+      if (length(exc)) {
+        lbl <- switch(
+          exc,
+          nco = "Canon. (-NCO)",
+          nct = "Canon. (-NCT)",
+          "Canonical (filtered)"
+        )
+      }
+      mods[[lbl]] <- report$models$canonical_excl
+    }
+  }
   
   mods
 }
@@ -74,7 +104,7 @@
 ##OUT: df with cols `Model` and `Formula`
 ##NOTES from .build_named_mods apply here too
 .build_models_df <- function(report) {
-  #label in specific order. subsequent table making has to work with this 
+  # labels in print order 
   labs <- c(
     "Original",
     if (!is.null(report$formulas$bivariate) &&
@@ -88,9 +118,21 @@
     else character(0),
     if (!.same_formula(report$formulas$canonical, report$formulas$original))
       "Canonical"
-    else character(0)
+    else character(0),
+    # one label per filtered canonical
+    {
+      if (is.list(report$formulas$canonical_excl) && length(report$formulas$canonical_excl)) {
+        vapply(names(report$formulas$canonical_excl), function(nm) {
+          if (nm == "nct") "Canon. (-NCT)"
+          else if (nm == "nco") "Canon. (-NCO)"
+          else paste0("Canon. (-", toupper(nm), ")")
+        }, character(1))
+      } else if (!is.null(report$formulas$canonical_excl)) {
+        "Canonical (filtered)"
+      } else character(0)
+    }
   )
-  #deparse each formula to single line so it is easy to print
+  
   forms <- c(
     paste(deparse(report$formulas$original), collapse = " "),
     if (!is.null(report$formulas$bivariate) &&
@@ -104,9 +146,19 @@
     else character(0),
     if (!.same_formula(report$formulas$canonical, report$formulas$original))
       paste(deparse(report$formulas$canonical), collapse = " ")
-    else character(0)
+    else character(0),
+    # one formula per filtered canonical
+    {
+      if (is.list(report$formulas$canonical_excl) && length(report$formulas$canonical_excl)) {
+        vapply(report$formulas$canonical_excl,
+               function(f) paste(deparse(f), collapse = " "),
+               character(1))
+      } else if (!is.null(report$formulas$canonical_excl)) {
+        paste(deparse(report$formulas$canonical_excl), collapse = " ")
+      } else character(0)
+    }
   )
-  #OUT
+  
   data.frame(Model = labs, Formula = forms, stringsAsFactors = FALSE)
 }
 
@@ -120,17 +172,21 @@
 #if multiple, tell user to pick one
 .infer_xy <- function(dag, exposure, outcome) {
   # If either exposure or outcome is missing/empty, infer from dagitty
-  if (missing(exposure) || is.null(exposure) || !nzchar(exposure)) {
+  # exposure: accept vector
+  if (missing(exposure) || is.null(exposure) ||
+      (is.character(exposure) && !length(exposure)) ||
+      !nzchar(paste(exposure, collapse = ""))) {
+    
     ex <- tryCatch(dagitty::exposures(dag), error = function(e) character(0))
-    if (length(ex) == 1) {
-      exposure <- ex
-    } else {
-      stop(
-        "Please supply `exposure=`; DAG has ", length(ex), " exposure(s).",
-        call. = FALSE
-      )
+    if (length(ex) == 0L) {
+      stop("Please supply `exposure=`; DAG has 0 exposures.", call. = FALSE)
     }
+    # <- this is the key change: just take all of them
+    exposure <- ex
+  } else {
+    exposure <- as.character(exposure)
   }
+  
   # same approach for outcome
   if (missing(outcome) || is.null(outcome) || !nzchar(outcome)) {
     out <- tryCatch(dagitty::outcomes(dag), error = function(e) character(0))
@@ -387,7 +443,11 @@
   if (is.null(sets) || length(sets) == 0) return(character(0))
   
   # Normalize to sorted character vectors and defensively drop X/Y if present to be safe
-  sets <- lapply(sets, function(s) sort(setdiff(as.character(s), c(exposure, outcome))))
+  # accomodate full vector; don't force down to one 
+  sets <- lapply(sets, function(s) {
+    drop_me <- c(as.character(exposure), outcome)
+    sort(setdiff(as.character(s), drop_me))
+  })
   
   #early exit if one canonical set
   if (length(sets) == 1L) return(sets[[1L]])
@@ -486,7 +546,66 @@
   )
   if (is.null(sets) || length(sets) == 0) return(list())
   #normalize as char, drop x/y, sort
-  lapply(sets, function(s) sort(setdiff(as.character(s), c(exposure, outcome))))
+  # accomodate vector; don't chop down to single treatment
+  lapply(sets, function(s) {
+    drop_me <- c(as.character(exposure), outcome)
+    sort(setdiff(as.character(s), drop_me))
+  })
+}
+
+# detect composite DAG conditions from the roles table
+# this detects m bias and butterfly bias
+.detect_dag_conditions <- function(roles, dag, exposure, outcome) {
+  res <- list(m_bias = FALSE, butterfly_bias = FALSE)
+  
+  if (is.null(dag) || is.null(exposure) || is.null(outcome)) {
+    return(res)
+  }
+  
+  # build ancestor sets
+  ancX <- unique(unlist(lapply(exposure, function(x) dagitty::ancestors(dag, x))))
+  ancY <- dagitty::ancestors(dag, outcome)
+  descY <- setdiff(dagitty::descendants(dag, outcome), outcome)
+  
+  # X-only and Y-only ancestors (the classic M-bias parents)
+  x_only <- setdiff(ancX, c(ancY, exposure, outcome))
+  y_only <- setdiff(ancY, c(ancX, exposure, outcome, descY))
+  
+  colliders <- roles$variable[roles$is_collider]
+  
+  ## M-bias: collider with one parent from X-only and one from Y-only
+  if (length(colliders)) {
+    for (m in colliders) {
+      parents_m <- dagitty::parents(dag, m)
+      if (length(parents_m) < 2L) next
+      if (any(parents_m %in% x_only) && any(parents_m %in% y_only)) {
+        res$m_bias <- TRUE
+        break
+      }
+    }
+  }
+  
+  ## Butterfly bias: collider m that is ALSO an ancestor of both X and Y,
+  ## and whose two parents feed into X and Y sides
+  if (length(colliders)) {
+    for (m in colliders) {
+      parents_m <- dagitty::parents(dag, m)
+      if (length(parents_m) != 2L) next
+      a <- parents_m[1]; b <- parents_m[2]
+      
+      m_anc_X <- m %in% ancX
+      m_anc_Y <- m %in% ancY
+      a_anc_X <- a %in% ancX
+      b_anc_Y <- b %in% ancY
+      
+      if (m_anc_X && m_anc_Y && a_anc_X && b_anc_Y) {
+        res$butterfly_bias <- TRUE
+        break
+      }
+    }
+  }
+  
+  res
 }
 
 #pretty formatter for multiple adjustment sets: c("A","B") -> "{A, B}"

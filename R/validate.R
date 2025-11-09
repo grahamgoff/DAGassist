@@ -98,11 +98,22 @@ validate_spec <- function(dag, formula, data, exposure, outcome){
   formula_vars <- all.vars(base_fml) #only look at pre- | in fixest/iv formulas
   data_vars <- names(data)
   
-  #add entries to issue table if the exposure or outcome are incorrect
-  if (!exposure %in% dag_vars)  add_issue("error", "missing_in_dag",  exposure, "Exposure not found in DAG.")
+  #dfine rhs first
+  formula_rhs  <- attr(stats::terms(base_fml), "term.labels")
+  
+  #add entries to issue table if outcome is incorrect
   if (!outcome  %in% dag_vars)  add_issue("error", "missing_in_dag",  outcome,  "Outcome not found in DAG.")
-  if (!exposure %in% data_vars) add_issue("error", "missing_in_data", exposure, "Exposure not found in data.")
   if (!outcome  %in% data_vars) add_issue("error", "missing_in_data", outcome,  "Outcome not found in data.")
+  
+  for (x in exposure) {
+    if (!x %in% dag_vars)
+      add_issue("error", "missing_in_dag",  x, "Exposure not found in DAG.")
+    if (!x %in% data_vars)
+      add_issue("error", "missing_in_data", x, "Exposure not found in data.")
+    if (!x %in% formula_rhs)
+      add_issue("warn", "formula_exposure_missing", x,
+                "Exposure is not on the right-hand side of the formula.")
+  }
   
   # treat model vars not in DAG as nuisance except exposure/outcome 
   missing_in_dag <- setdiff(setdiff(formula_vars, c(exposure, outcome)), dag_vars)
@@ -126,10 +137,6 @@ validate_spec <- function(dag, formula, data, exposure, outcome){
       "warn", "formula_outcome_mismatch", outcome,
       sprintf("Formula outcome is '%s', but `outcome` argument is '%s'.", formula_response, outcome)
     )
-  }
-  # warn if the exposure isn't explicitly on the RHS
-  if (!exposure %in% formula_rhs) {
-    add_issue("warn", "formula_exposure_missing", exposure, "Exposure is not on the right-hand side of the formula.")
   }
   
   # make result object

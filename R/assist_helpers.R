@@ -42,20 +42,35 @@
   if (!.same_formula(report$formulas$canonical, report$formulas$original)) {
     mods[["Canonical"]] <- report$models$canonical
   }
-  #for exclude neutral controls param
   if (!is.null(report$models$canonical_excl)) {
-    # prefer the setting in the report object if present
-    excl <- NULL
-    if (!is.null(report$settings) && !is.null(report$settings$exclude)) {
-      excl <- report$settings$exclude
+    # new style: list of filtered canonicals, e.g. list(nco = <mod>, nct = <mod>)
+    if (is.list(report$models$canonical_excl)) {
+      for (nm in names(report$models$canonical_excl)) {
+        lbl <- switch(
+          nm,
+          nco = "Canon. (-NCO)",
+          nct = "Canon. (-NCT)",
+          paste0("Canon. (-", toupper(nm), ")")
+        )
+        mods[[lbl]] <- report$models$canonical_excl[[nm]]
+      }
+    } else {
+      # backwards-compat: single model
+      exc <- character(0)
+      if (!is.null(report$settings) && !is.null(report$settings$exclude)) {
+        exc <- as.character(report$settings$exclude)
+      }
+      lbl <- "Canonical (filtered)"
+      if (length(exc)) {
+        lbl <- switch(
+          exc,
+          nco = "Canon. (-NCO)",
+          nct = "Canon. (-NCT)",
+          "Canonical (filtered)"
+        )
+      }
+      mods[[lbl]] <- report$models$canonical_excl
     }
-    lbl <- switch(
-      excl,
-      "nco" = "Canon. (-NCO)",
-      "nct" = "Canon. (-NCT)",
-      "Canonical (filtered)"  # fallback
-    )
-    mods[[lbl]] <- report$models$canonical_excl
   }
   
   mods
@@ -89,7 +104,7 @@
 ##OUT: df with cols `Model` and `Formula`
 ##NOTES from .build_named_mods apply here too
 .build_models_df <- function(report) {
-  #label in specific order. subsequent table making has to work with this 
+  # labels in print order 
   labs <- c(
     "Original",
     if (!is.null(report$formulas$bivariate) &&
@@ -103,9 +118,21 @@
     else character(0),
     if (!.same_formula(report$formulas$canonical, report$formulas$original))
       "Canonical"
-    else character(0)
+    else character(0),
+    # one label per filtered canonical
+    {
+      if (is.list(report$formulas$canonical_excl) && length(report$formulas$canonical_excl)) {
+        vapply(names(report$formulas$canonical_excl), function(nm) {
+          if (nm == "nct") "Canon. (-NCT)"
+          else if (nm == "nco") "Canon. (-NCO)"
+          else paste0("Canon. (-", toupper(nm), ")")
+        }, character(1))
+      } else if (!is.null(report$formulas$canonical_excl)) {
+        "Canonical (filtered)"
+      } else character(0)
+    }
   )
-  #deparse each formula to single line so it is easy to print
+  
   forms <- c(
     paste(deparse(report$formulas$original), collapse = " "),
     if (!is.null(report$formulas$bivariate) &&
@@ -119,9 +146,19 @@
     else character(0),
     if (!.same_formula(report$formulas$canonical, report$formulas$original))
       paste(deparse(report$formulas$canonical), collapse = " ")
-    else character(0)
+    else character(0),
+    # one formula per filtered canonical
+    {
+      if (is.list(report$formulas$canonical_excl) && length(report$formulas$canonical_excl)) {
+        vapply(report$formulas$canonical_excl,
+               function(f) paste(deparse(f), collapse = " "),
+               character(1))
+      } else if (!is.null(report$formulas$canonical_excl)) {
+        paste(deparse(report$formulas$canonical_excl), collapse = " ")
+      } else character(0)
+    }
   )
-  #OUT
+  
   data.frame(Model = labs, Formula = forms, stringsAsFactors = FALSE)
 }
 

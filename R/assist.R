@@ -412,15 +412,20 @@ DAGassist <- function(dag,
   minimal_sets_all <- .minimal_sets_all(dag_eval, exposure, outcome)
   # canonical set and formula
   canonical <- .pick_canonical_controls(dag_eval, exposure, outcome)
-  # exclusion set for the exclude parameter
-  canon_excl <- character(0)
+  # possibly several exclusion variants, e.g. c("nco","nct")
+  canon_excl_list <- list()
   if (!is.null(exclude)) {
-    if (identical(exclude, "nct")) {
-      drop_vars <- roles$variable[roles$is_neutral_on_treatment]
-      canon_excl <- setdiff(canonical, drop_vars)
-    } else if (identical(exclude, "nco")) {
-      drop_vars <- roles$variable[roles$is_neutral_on_outcome]
-      canon_excl <- setdiff(canonical, drop_vars)
+    exc <- unique(as.character(exclude))
+    valid <- exc[exc %in% c("nct", "nco")]
+    if (length(valid)) {
+      for (excl in valid) {
+        if (identical(excl, "nct")) {
+          drop_vars <- roles$variable[roles$is_neutral_on_treatment]
+        } else { # "nco"
+          drop_vars <- roles$variable[roles$is_neutral_on_outcome]
+        }
+        canon_excl_list[[excl]] <- setdiff(canonical, drop_vars)
+      }
     } else {
       warning("`exclude` must be NULL, 'nct', or 'nco'. Ignoring.", call. = FALSE)
     }
@@ -442,10 +447,15 @@ DAGassist <- function(dag,
     intersect(canonical, user_controls)
   }
   #for the exclude param
-  canon_excl_for_use <- if (isTRUE(imply)) {
-    canon_excl
-  } else {
-    intersect(canon_excl, user_controls)
+  canon_excl_for_use <- list()
+  if (length(canon_excl_list)) {
+    for (nm in names(canon_excl_list)) {
+      canon_excl_for_use[[nm]] <- if (isTRUE(imply)) {
+        canon_excl_list[[nm]]
+      } else {
+        intersect(canon_excl_list[[nm]], user_controls)
+      }
+    }
   }
   # limit roles table to vars in the formula 
   #with labels
@@ -478,11 +488,15 @@ DAGassist <- function(dag,
     .build_formula_with_controls(formula, exposure, outcome, c2)
   }
   #canonical with some (on treatment/outcome) neutral controls removed
-  f_canon_excl <- NULL
+  f_canon_excl <- list()
   if (length(canon_excl_for_use)) {
-    c3 <- if (isTRUE(eval_all)) unique(c(canon_excl_for_use, rhs_extras)) else canon_excl_for_use
-    f_canon_excl <- .build_formula_with_controls(formula, exposure, outcome, c3)
+    for (nm in names(canon_excl_for_use)) {
+      c3 <- canon_excl_for_use[[nm]]
+      c3 <- if (isTRUE(eval_all)) unique(c(c3, rhs_extras)) else c3
+      f_canon_excl[[nm]] <- .build_formula_with_controls(formula, exposure, outcome, c3)
+    }
   }
+  if (!length(f_canon_excl)) f_canon_excl <- NULL
   #fits: always show Original, every Minimal, and Canonical at the end 
   #if there are multiple min, push canonical to the end
   m_orig <- .safe_fit(engine, formula, data, engine_args)
@@ -501,15 +515,13 @@ DAGassist <- function(dag,
   # modified to handle exclude params
   if (isTRUE(imply)) {
     if (is.data.frame(roles) && "variable" %in% names(roles)) {
-      # existing canonical col
       roles$canon <- ifelse(roles$variable %in% canonical, "x", "")
-      
-      # new, conditional column
-      if (!is.null(exclude)) {
-        if (identical(exclude, "nct")) {
-          roles$canon_no_nct <- ifelse(roles$variable %in% canon_excl, "x", "")
-        } else if (identical(exclude, "nco")) {
-          roles$canon_no_nco <- ifelse(roles$variable %in% canon_excl, "x", "")
+      if (length(canon_excl_list)) {
+        if ("nct" %in% names(canon_excl_list)) {
+          roles$canon_no_nct <- ifelse(roles$variable %in% canon_excl_list[["nct"]], "x", "")
+        }
+        if ("nco" %in% names(canon_excl_list)) {
+          roles$canon_no_nco <- ifelse(roles$variable %in% canon_excl_list[["nco"]], "x", "")
         }
       }
     }
@@ -533,17 +545,23 @@ DAGassist <- function(dag,
   }
   #fit models for exclude neutral param
   m_canon_excl <- NULL
-  if (!is.null(f_canon_excl)) {
-    if (.same_formula(f_canon_excl, formula)) {
-      m_canon_excl <- m_orig
-    } else {
-      # if it coincides with one of the minimal formulas, reuse that fit
-      same_idx2 <- which(vapply(f_mins, function(fm) .same_formula(fm, f_canon_excl), logical(1)))
-      if (length(same_idx2)) {
-        m_canon_excl <- m_mins[[same_idx2[1]]]
+  if (length(f_canon_excl)) {
+    m_canon_excl <- list()
+    for (nm in names(f_canon_excl)) {
+      fce <- f_canon_excl[[nm]]
+      fit_nm <- NULL
+      if (.same_formula(fce, formula)) {
+        fit_nm <- m_orig
       } else {
-        m_canon_excl <- .safe_fit(engine, f_canon_excl, data, engine_args)
+        # reuse a minimal fit if identical
+        same_idx2 <- which(vapply(f_mins, function(fm) .same_formula(fm, fce), logical(1)))
+        if (length(same_idx2)) {
+          fit_nm <- m_mins[[same_idx2[1]]]
+        } else {
+          fit_nm <- .safe_fit(engine, fce, data, engine_args)
+        }
       }
+      m_canon_excl[[nm]] <- fit_nm
     }
   }
   ###list unevaluated nuisance vars
@@ -572,6 +590,7 @@ DAGassist <- function(dag,
     controls_minimal = minimal, # keeps legacy single-min key
     controls_minimal_all = sets_min_for_use, # all minimal sets
     controls_canonical = canon_for_use,
+    controls_canonical_excl = canon_excl_for_use,
     
     formulas = list(
       original = formula,
@@ -897,14 +916,24 @@ print.DAGassist_report <- function(x, ...) {
     mods[["Canonical"]] <- x$models$canonical
     
     if (!is.null(x$models$canonical_excl)) {
-      if (identical(x$settings$exclude, "nct")) {
-        lbl <- "Canon. (-NCT)"
-      } else if (identical(x$settings$exclude, "nco")) {
-        lbl <- "Canon. (-NCO)"
+      if (is.list(x$models$canonical_excl)) {
+        for (nm in names(x$models$canonical_excl)) {
+          lbl <- switch(
+            nm,
+            nct = "Canon. (-NCT)",
+            nco = "Canon. (-NCO)",
+            paste0("Canonical (", nm, ")")
+          )
+          mods[[lbl]] <- x$models$canonical_excl[[nm]]
+        }
       } else {
+        # old single-model behavior
+        exc <- x$settings$exclude
         lbl <- "Canonical (filtered)"
+        if (identical(exc, "nct")) lbl <- "Canon. (-NCT)"
+        if (identical(exc, "nco")) lbl <- "Canon. (-NCO)"
+        mods[[lbl]] <- x$models$canonical_excl
       }
-      mods[[lbl]] <- x$models$canonical_excl
     }
     
     coef_omit <- x$settings$coef_omit

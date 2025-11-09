@@ -511,16 +511,16 @@ variables in <code>original</code>.</p>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="section level3">
-<h3 id="notes">Notes<a class="anchor" aria-label="anchor" href="#notes"></a>
-</h3>
+<div class="section level4">
+<h4 id="notes">Notes<a class="anchor" aria-label="anchor" href="#notes"></a>
+</h4>
 <ul>
 <li>p-value legend: + &lt; 0.1, * &lt; 0.05, ** &lt; 0.01, *** &lt;
 0.001.</li>
 <li>Controls (minimal): {F, H}.</li>
 <li>Controls (canonical): {A, B, C, F, G, H}.</li>
 </ul>
+</div>
 </div>
 <div class="section level3">
 <h3 id="creating-sub-reports-roles-only-or-models-only">Creating sub-reports (roles-only or models-only)<a class="anchor" aria-label="anchor" href="#creating-sub-reports-roles-only-or-models-only"></a>
@@ -573,68 +573,49 @@ call); no roles table is printed.</p></li>
 <div class="section level3">
 <h3 id="using-special-canonical-sets">Using special canonical sets<a class="anchor" aria-label="anchor" href="#using-special-canonical-sets"></a>
 </h3>
+<p>By default, <code><a href="../reference/DAGassist.html">DAGassist()</a></code> reports the canonical adjustment
+set, which only excludes non-admissible adjustments (colliders,
+mediators, and their descendants). Sometimes, users may want to see the
+canonical set minus certain classes of “neutral” controls, per
+Hunermund, Louw and Ronkko (2025). The <code>exclude =</code> argument
+enables selective exclusion of neutral controls. -
+<code>exclude = "nct"</code> drops neutral controls on the treatment -
+<code>exclude = "nco"</code> drops neutral controls on the outcome</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span>dag <span class="op">=</span> <span class="va">dag_model</span>,</span>
 <span>          formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">D</span> <span class="op">+</span> <span class="va">G</span> <span class="op">+</span> <span class="va">H</span> <span class="op">+</span> <span class="cn">F</span> <span class="op">+</span> <span class="va">A</span> <span class="op">+</span> <span class="va">B</span> <span class="op">+</span> <span class="va">C</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span>,</span>
-<span>          exclude <span class="op">=</span> <span class="st">"nct"</span><span class="op">)</span> </span>
-<span><span class="co">#&gt; DAGassist Report: </span></span>
+<span>          exclude <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"nct"</span>, <span class="st">"nco"</span><span class="op">)</span>,</span>
+<span>          show <span class="op">=</span> <span class="st">"models"</span>,</span>
+<span>          type <span class="op">=</span> <span class="st">"text"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; DAGassist Report:</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Roles:</span></span>
-<span><span class="co">#&gt; variable  role        X  Y  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO</span></span>
-<span><span class="co">#&gt; D         exposure    x                                                                  </span></span>
-<span><span class="co">#&gt; Y         outcome        x                                                               </span></span>
-<span><span class="co">#&gt; A         confounder        x                                 x                          </span></span>
-<span><span class="co">#&gt; B         confounder        x                                                            </span></span>
-<span><span class="co">#&gt; C         confounder        x                                                            </span></span>
-<span><span class="co">#&gt; F         confounder        x                                                            </span></span>
-<span><span class="co">#&gt; G         nco                                                                         x  </span></span>
-<span><span class="co">#&gt; H         nco                                                 x                       x  </span></span>
+<span><span class="co">#&gt; ## Models</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; No bad controls detected in your formula.</span></span>
-<span><span class="co">#&gt; Minimal controls 1: {F, H}</span></span>
-<span><span class="co">#&gt; Minimal controls 2: {C, F}</span></span>
-<span><span class="co">#&gt; Minimal controls 3: {A, B, H}</span></span>
-<span><span class="co">#&gt; Minimal controls 4: {A, B, C}</span></span>
-<span><span class="co">#&gt; Canonical controls: {A, B, C, F, G, H}</span></span>
+<span><span class="co">#&gt; |Term     | Original | Minimal 1 | Minimal 2 | Minimal 3 | Minimal 4 | Canonical | Canon. (-NCT) | Canon. (-NCO) |</span></span>
+<span><span class="co">#&gt; |:--------|:--------:|:---------:|:---------:|:---------:|:---------:|:---------:|:-------------:|:-------------:|</span></span>
+<span><span class="co">#&gt; |D        | 1.034*** | 0.977***  | 0.969***  | 1.038***  | 1.024***  | 1.034***  |   1.034***    |   1.019***    |</span></span>
+<span><span class="co">#&gt; |         | (0.032)  |  (0.020)  |  (0.023)  |  (0.036)  |  (0.041)  |  (0.032)  |    (0.032)    |    (0.038)    |</span></span>
+<span><span class="co">#&gt; |G        | 0.397*** |           |           |           |           | 0.397***  |   0.397***    |               |</span></span>
+<span><span class="co">#&gt; |         | (0.032)  |           |           |           |           |  (0.032)  |    (0.032)    |               |</span></span>
+<span><span class="co">#&gt; |H        | 0.486*** | 0.522***  |           | 0.495***  |           | 0.486***  |   0.486***    |               |</span></span>
+<span><span class="co">#&gt; |         | (0.032)  |  (0.028)  |           |  (0.031)  |           |  (0.032)  |    (0.032)    |               |</span></span>
+<span><span class="co">#&gt; |F        | 0.618*** | 0.606***  | 0.593***  |           |           | 0.618***  |   0.618***    |   0.618***    |</span></span>
+<span><span class="co">#&gt; |         | (0.037)  |  (0.036)  |  (0.040)  |           |           |  (0.037)  |    (0.037)    |    (0.044)    |</span></span>
+<span><span class="co">#&gt; |A        | -0.111** |           |           | 0.158***  | 0.169***  | -0.111**  |   -0.111**    |    -0.088+    |</span></span>
+<span><span class="co">#&gt; |         | (0.043)  |           |           |  (0.047)  |  (0.051)  |  (0.043)  |    (0.043)    |    (0.050)    |</span></span>
+<span><span class="co">#&gt; |B        |  -0.008  |           |           | -0.161*** | -0.162*** |  -0.008   |    -0.008     |    -0.013     |</span></span>
+<span><span class="co">#&gt; |         | (0.039)  |           |           |  (0.045)  |  (0.049)  |  (0.039)  |    (0.039)    |    (0.046)    |</span></span>
+<span><span class="co">#&gt; |C        |  0.037   |           | 0.420***  |           | 0.391***  |   0.037   |     0.037     |   0.403***    |</span></span>
+<span><span class="co">#&gt; |         | (0.042)  |           |  (0.040)  |           |  (0.045)  |  (0.042)  |    (0.042)    |    (0.041)    |</span></span>
+<span><span class="co">#&gt; |Num.Obs. |   1000   |   1000    |   1000    |   1000    |   1000    |   1000    |     1000      |     1000      |</span></span>
+<span><span class="co">#&gt; |R2       |  0.836   |   0.809   |   0.769   |   0.762   |   0.724   |   0.836   |     0.836     |     0.770     |</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Formulas:</span></span>
-<span><span class="co">#&gt;   original:  Y ~ D + G + H + F + A + B + C</span></span>
+<span><span class="co">#&gt; ### Notes</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Model comparison:</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+-----------+-----------+---------------+</span></span>
-<span><span class="co">#&gt; |   | Original | Minimal 1 | Minimal 2 | Minimal 3 | Minimal 4 | Canonical | Canon. (-NCT) |</span></span>
-<span><span class="co">#&gt; +===+==========+===========+===========+===========+===========+===========+===============+</span></span>
-<span><span class="co">#&gt; | D | 1.034*** | 0.977***  | 0.969***  | 1.038***  | 1.024***  | 1.034***  | 1.034***      |</span></span>
-<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+-----------+-----------+---------------+</span></span>
-<span><span class="co">#&gt; |   | (0.032)  | (0.020)   | (0.023)   | (0.036)   | (0.041)   | (0.032)   | (0.032)       |</span></span>
-<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+-----------+-----------+---------------+</span></span>
-<span><span class="co">#&gt; | G | 0.397*** |           |           |           |           | 0.397***  | 0.397***      |</span></span>
-<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+-----------+-----------+---------------+</span></span>
-<span><span class="co">#&gt; |   | (0.032)  |           |           |           |           | (0.032)   | (0.032)       |</span></span>
-<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+-----------+-----------+---------------+</span></span>
-<span><span class="co">#&gt; | H | 0.486*** | 0.522***  |           | 0.495***  |           | 0.486***  | 0.486***      |</span></span>
-<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+-----------+-----------+---------------+</span></span>
-<span><span class="co">#&gt; |   | (0.032)  | (0.028)   |           | (0.031)   |           | (0.032)   | (0.032)       |</span></span>
-<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+-----------+-----------+---------------+</span></span>
-<span><span class="co">#&gt; | F | 0.618*** | 0.606***  | 0.593***  |           |           | 0.618***  | 0.618***      |</span></span>
-<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+-----------+-----------+---------------+</span></span>
-<span><span class="co">#&gt; |   | (0.037)  | (0.036)   | (0.040)   |           |           | (0.037)   | (0.037)       |</span></span>
-<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+-----------+-----------+---------------+</span></span>
-<span><span class="co">#&gt; | A | -0.111** |           |           | 0.158***  | 0.169***  | -0.111**  | -0.111**      |</span></span>
-<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+-----------+-----------+---------------+</span></span>
-<span><span class="co">#&gt; |   | (0.043)  |           |           | (0.047)   | (0.051)   | (0.043)   | (0.043)       |</span></span>
-<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+-----------+-----------+---------------+</span></span>
-<span><span class="co">#&gt; | B | -0.008   |           |           | -0.161*** | -0.162*** | -0.008    | -0.008        |</span></span>
-<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+-----------+-----------+---------------+</span></span>
-<span><span class="co">#&gt; |   | (0.039)  |           |           | (0.045)   | (0.049)   | (0.039)   | (0.039)       |</span></span>
-<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+-----------+-----------+---------------+</span></span>
-<span><span class="co">#&gt; | C | 0.037    |           | 0.420***  |           | 0.391***  | 0.037     | 0.037         |</span></span>
-<span><span class="co">#&gt; +---+----------+-----------+-----------+-----------+-----------+-----------+---------------+</span></span>
-<span><span class="co">#&gt; |   | (0.042)  |           | (0.040)   |           | (0.045)   | (0.042)   | (0.042)       |</span></span>
-<span><span class="co">#&gt; +===+==========+===========+===========+===========+===========+===========+===============+</span></span>
-<span><span class="co">#&gt; | + p &lt; 0.1, * p &lt; 0.05, ** p &lt; 0.01, *** p &lt; 0.001                                        |</span></span>
-<span><span class="co">#&gt; +===+==========+===========+===========+===========+===========+===========+===============+</span></span></code></pre></div>
+<span><span class="co">#&gt; - p-value legend: + &lt; 0.1, * &lt; 0.05, ** &lt; 0.01, *** &lt; 0.001.</span></span>
+<span><span class="co">#&gt; - Controls (minimal): {F, H}.</span></span>
+<span><span class="co">#&gt; - Controls (canonical): {A, B, C, F, G, H}.</span></span>
+<span><span class="co">#&gt; </span></span></code></pre></div>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

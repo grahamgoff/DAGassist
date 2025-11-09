@@ -1,8 +1,7 @@
 # R/report_text.R — minimal & readable
 
 .report_txt <- function(res, out) {
-  if (is.null(out) || !nzchar(out)) stop("type='text' requires `out=`.", call. = FALSE)
-  
+
   roles <- tryCatch(res$roles_df, error = function(e) NULL)
   mods  <- tryCatch(res$models,    error = function(e) NULL)
   msets <- tryCatch(res$min_sets,  error = function(e) list())
@@ -42,8 +41,14 @@
     }
   }
   
-  lines <- c(lines, "## Notes", "", paste0("- ", notes), "")
+  lines <- c(lines, "### Notes", "", paste0("- ", notes), "")
   
-  writeLines(lines, out, useBytes = TRUE)
-  invisible(out)
+  if (is.null(out)) {
+    cat(paste(lines, collapse = "\n"), "\n")
+    invisible(NULL)
+  } else {
+    dir.create(dirname(out), recursive = TRUE, showWarnings = FALSE)
+    writeLines(lines, out, useBytes = TRUE)
+    invisible(out)
+  }
 }

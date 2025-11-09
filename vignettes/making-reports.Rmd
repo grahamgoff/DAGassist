@@ -225,9 +225,15 @@ DAGassist(dag = dag_model,
 
 ## Using special canonical sets
 
+By default, `DAGassist()` reports the canonical adjustment set, which only excludes non-admissible adjustments (colliders, mediators, and their descendants). Sometimes, users may want to see the canonical set minus certain classes of "neutral" controls, per Hunermund, Louw and Ronkko (2025). The `exclude =` argument enables selective exclusion of neutral controls.
+ - `exclude = "nct"` drops neutral controls on the treatment
+ - `exclude = "nco"` drops neutral controls on the outcome
+
 ```{r spec-canon}
 DAGassist(dag = dag_model,
           formula = lm(Y ~ D + G + H + F + A + B + C, data = df),
-          exclude = "nct") 
+          exclude = c("nct", "nco"),
+          show = "models",
+          type = "text")
 ```
 

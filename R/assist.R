@@ -733,8 +733,14 @@ DAGassist <- function(dag,
       unevaluated_str = report$unevaluated_str,
       show = show
     )
-    .report_txt(res_min, out)
-    return(invisible(structure(report, file = normalizePath(out, mustWork = FALSE))))
+    if (is.null(out)) {
+      # console text output support
+      .report_txt(res_min, out = NULL)
+      return(invisible(report))
+    } else {
+      .report_txt(res_min, out)
+      return(invisible(structure(report, file = normalizePath(out, mustWork = FALSE))))
+    }
   }
   
   ##### DOTWHISKER OUT BRANCH #####

@@ -68,14 +68,14 @@ DAGassist::DAGassist(dag = dag_model,
 #> DAGassist Report: 
 #> 
 #> Roles:
-#> variable  role        X  Y  conf  med  col  dOut  dMed  dCol
-#> X         exposure    x                                     
-#> Y         outcome        x                                  
-#> Z         confounder        x                               
-#> M         mediator                x                         
-#> C         collider                     x    x     x         
-#> A         other                                             
-#> B         other                                             
+#> variable  role        X  Y  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
+#> X         exposure    x                                                                  
+#> Y         outcome        x                                                               
+#> Z         confounder        x                                                            
+#> M         mediator                x                                                      
+#> C         collider                     x    x     x                                      
+#> A         nco                                                                         x  
+#> B         nco                                                                         x  
 #> 
 #>  (!) Bad controls in your formula: {M, C}
 #> Minimal controls 1: {Z}

@@ -1,5 +1,13 @@
 # Changelog
 
+## DAGassist v0.2.7
+
+#### Highlights
+
+- Fixed broken link in vignette for CRAN resubmission
+
+This is the CRAN version.
+
 ## DAGassist v0.2.6
 
 #### Highlights
@@ -13,8 +21,6 @@
   added legend to define abbreviations
 - Added Canonical -neutral control (on treatment/outcome) comparison
   column options
-
-This is the CRAN version.
 
 ## DAGassist 0.2.5
 

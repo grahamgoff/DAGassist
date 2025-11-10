@@ -100,16 +100,16 @@ cat(readLines(out_txt), sep = "\n") # show the output
 
 ### Roles
 
-| Variable |    Role    | `X` | `Y` | `CON` | `MED` | `COL` | `dOut` | `dMed` | `dCol` | dConfOn | dConfOff | `NCT` | `NCO` |
-|:---------|:----------:|:---:|:---:|:-----:|:-----:|:-----:|:------:|:------:|:------:|:-------:|:--------:|:-----:|:-----:|
-| A        | confounder |     |     |   x   |       |       |        |        |        |    x    |          |       |       |
-| B        | confounder |     |     |   x   |       |       |        |        |        |         |          |       |       |
-| C        | confounder |     |     |   x   |       |       |        |        |        |         |          |       |       |
-| D        |  exposure  |  x  |     |       |       |       |        |        |        |         |          |       |       |
-| F        | confounder |     |     |   x   |       |       |        |        |        |         |          |       |       |
-| G        |    nco     |     |     |       |       |       |        |        |        |         |          |       |   x   |
-| H        |    nco     |     |     |       |       |       |        |        |        |    x    |          |       |   x   |
-| Y        |  outcome   |     |  x  |       |       |       |        |        |        |         |          |       |       |
+| Variable |    Role    | Exp. | Out. | `CON` | `MED` | `COL` | `dOut` | `dMed` | `dCol` | dConfOn | dConfOff | `NCT` | `NCO` |
+|:---------|:----------:|:----:|:----:|:-----:|:-----:|:-----:|:------:|:------:|:------:|:-------:|:--------:|:-----:|:-----:|
+| A        | confounder |      |      |   x   |       |       |        |        |        |    x    |          |       |       |
+| B        | confounder |      |      |   x   |       |       |        |        |        |         |          |       |       |
+| C        | confounder |      |      |   x   |       |       |        |        |        |         |          |       |       |
+| D        |  exposure  |  x   |      |       |       |       |        |        |        |         |          |       |       |
+| F        | confounder |      |      |   x   |       |       |        |        |        |         |          |       |       |
+| G        |    nco     |      |      |       |       |       |        |        |        |         |          |       |   x   |
+| H        |    nco     |      |      |       |       |       |        |        |        |    x    |          |       |   x   |
+| Y        |  outcome   |      |  x   |       |       |       |        |        |        |         |          |       |       |
 
 #### Models
 
@@ -167,29 +167,17 @@ DAGassist(dag = dag_model,
 #> DAGassist Report: 
 #> 
 #> Roles:
-#> variable  role        X  Y  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
-#> D         exposure    x                                                                  
-#> Y         outcome        x                                                               
-#> A         confounder        x                                 x                          
-#> B         confounder        x                                                            
-#> C         confounder        x                                                            
-#> F         confounder        x                                                            
-#> G         nco                                                                         x  
-#> H         nco                                                 x                       x  
+#> variable  role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
+#> D         exposure    x                                                                        
+#> Y         outcome           x                                                                  
+#> A         confounder              x                                 x                          
+#> B         confounder              x                                                            
+#> C         confounder              x                                                            
+#> F         confounder              x                                                            
+#> G         nco                                                                               x  
+#> H         nco                                                       x                       x  
 #> 
-#> Roles legend:
-#>   X         = exposure
-#>   Y         = outcome
-#>   CON       = confounder
-#>   MED       = mediator
-#>   COL       = collider
-#>   dOut      = proper descendant of Y
-#>   dMed      = proper descendant of any mediator
-#>   dCol      = proper descendant of any collider
-#>   dConfOn   = descendant of a confounder on a back-door path
-#>   dConfOff  = descendant of a confounder off a back-door path
-#>   NCT       = neutral control on treatment
-#>   NCO       = neutral control on outcome
+#> Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome
 ```
 
 ### Making a dot‑whisker plot of the key coefficient

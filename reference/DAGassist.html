@@ -133,15 +133,18 @@ This makes it possible to generate and export just roles or just comparisons.</p
 <dt id="arg-out">out<a class="anchor" aria-label="anchor" href="#arg-out"></a></dt>
 <dd><p>Output file path for the non-console types:</p><ul><li><p><code>type="latex"</code>: a <strong>LaTeX fragment</strong> written to <code>out</code> (usually <code>.tex</code>);
 when omitted, the fragment is printed to the console.</p></li>
+<li><p><code>type="text"</code>/<code>"txt"</code>: a <strong>plain-text</strong> file written to <code>out</code>;
+when omitted, the report is printed to console.</p></li>
+<li><p><code>type="dotwhisker"</code>/<code>"dwplot"</code>: a <strong>image (.png)</strong> file written to <code>out</code>;
+when omitted, the plot is rendered within RStudio.</p></li>
 <li><p><code>type="docx"</code>/<code>"word"</code>: a <strong>Word (.docx)</strong> file written to <code>out</code>.</p></li>
-<li><p><code>type="excel"</code>/<code>"xlsx"</code>: an <strong>Excel (.xlsx)</strong> file written to <code>out</code>.</p></li>
-<li><p><code>type="text"</code>/<code>"txt"</code>: a <strong>plain-text</strong> file written to <code>out</code>.
-Ignored for <code>type="console"</code> and for the plotting types.</p></li>
+<li><p><code>type="excel"</code>/<code>"xlsx"</code>: an <strong>Excel (.xlsx)</strong> file written to <code>out</code>.
+Ignored for <code>type="console"</code>.</p></li>
 </ul></dd>
 
 
 <dt id="arg-imply">imply<a class="anchor" aria-label="anchor" href="#arg-imply"></a></dt>
-<dd><p>Logical; default <code>FALSE</code>. <strong>Evaluation scope.</strong></p><ul><li><p>If <code>FALSE</code> (default): restrict DAG evaluation to variables <strong>named in the formula</strong>
+<dd><p>Logical; default <code>FALSE</code>. Specifies <strong>evaluation scope.</strong></p><ul><li><p>If <code>FALSE</code> (default): restrict DAG evaluation to variables <strong>named in the formula</strong>
 (prune the DAG to exposure, outcome, and RHS terms). Roles/sets/bad-controls are
 computed on this pruned graph, and the roles table <strong>only</strong> shows those variables.
 Essentially, it fits the DAG to the formula.</p></li>
@@ -216,13 +219,14 @@ you pass explicitly (call arguments win).</p>
 <p><strong>Fixest tails.</strong> For engines like <strong>fixest</strong> that use <code>|</code> to denote FE/IV parts,
 DAGassist preserves any <code>| ...</code> tail when constructing minimal/canonical formulas
 (e.g., <code>Y ~ X + controls | fe | iv(...)</code>).</p>
-<p><strong>Roles grid.</strong> The roles table displays short headers:</p><ul><li><p><code>X</code> (exposure), <code>Y</code> (outcome),</p></li>
+<p><strong>Roles grid.</strong> The roles table displays short headers:</p><ul><li><p><code>Exp.</code> (exposure),</p></li>
+<li><p><code>Out.</code> (outcome),</p></li>
 <li><p><code>CON</code> (confounder),</p></li>
 <li><p><code>MED</code> (mediator),</p></li>
 <li><p><code>COL</code> (collider),</p></li>
-<li><p><code>dOut</code> (proper descendant of <code>Y</code>),</p></li>
-<li><p><code>dMed</code> (proper descendant of any mediator),</p></li>
-<li><p><code>dCol</code> (proper descendant of any collider),</p></li>
+<li><p><code>dOut</code> (descendant of <code>Y</code>),</p></li>
+<li><p><code>dMed</code> (descendant of any mediator),</p></li>
+<li><p><code>dCol</code> (descendant of any collider),</p></li>
 <li><p><code>dConfOn</code> (descendant of a confounder <strong>on</strong> a back-door path),</p></li>
 <li><p><code>dConfOff</code> (descendant of a confounder <strong>off</strong> a back-door path),</p></li>
 <li><p><code>NCT</code> (neutral control on treatment),</p></li>
@@ -272,97 +276,7 @@ exporters in <code>report_*</code> modules.</p></div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># generate a console DAGassist report</span></span></span>
-<span class="r-in"><span><span class="fu">DAGassist</span><span class="op">(</span>dag <span class="op">=</span> <span class="va">g</span>, formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">Z</span> <span class="op">+</span> <span class="va">C</span> <span class="op">+</span> <span class="va">M</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> DAGassist Report: </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Roles:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> variable  role        X  Y  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> X         exposure    x                                                                  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Y         outcome        x                                                               </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Z         confounder        x                                                            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> M         mediator                x                                                      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> C         collider                     x    x     x                                      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  (!) Bad controls in your formula: {C, M}</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Roles legend:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   X         = exposure</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Y         = outcome</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   CON       = confounder</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   MED       = mediator</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   COL       = collider</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   dOut      = proper descendant of Y</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   dMed      = proper descendant of any mediator</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   dCol      = proper descendant of any collider</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   dConfOn   = descendant of a confounder on a back-door path</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   dConfOff  = descendant of a confounder off a back-door path</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   NCT       = neutral control on treatment</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   NCO       = neutral control on outcome</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Minimal controls 1: {Z}</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Canonical controls: {Z}</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Formulas:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   original:  Y ~ X + Z + C + M</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Model comparison:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +---+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |   | Original | Minimal 1 | Canonical |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +===+==========+===========+===========+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | X | 0.467*** | 1.306***  | 1.306***  |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +---+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |   | (0.122)  | (0.098)   | (0.098)   |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +---+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | Z | 0.185+   | 0.235+    | 0.235+    |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +---+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |   | (0.102)  | (0.127)   | (0.127)   |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +---+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | C | 0.368*** |           |           |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +---+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |   | (0.076)  |           |           |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +---+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | M | 0.512*** |           |           |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +---+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |   | (0.077)  |           |           |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +===+==========+===========+===========+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | + p &lt; 0.1, * p &lt; 0.05, ** p &lt; 0.01,  |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | *** p &lt; 0.001                        |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +===+==========+===========+===========+ </span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># generate a LaTeX DAGassist report</span></span></span>
-<span class="r-in"><span><span class="co"># \donttest{</span></span></span>
-<span class="r-in"><span><span class="fu">DAGassist</span><span class="op">(</span>dag <span class="op">=</span> <span class="va">g</span>, formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">Z</span> <span class="op">+</span> <span class="va">C</span> <span class="op">+</span> <span class="va">M</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>          type <span class="op">=</span> <span class="st">"latex"</span>, out <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"frag.tex"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="co"># }</span></span></span>
-<span class="r-in"><span><span class="co"># generate just the roles table in the console</span></span></span>
-<span class="r-in"><span><span class="fu">DAGassist</span><span class="op">(</span>dag <span class="op">=</span> <span class="va">g</span>, show <span class="op">=</span> <span class="st">"roles"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> DAGassist Report: </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Roles:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> variable  role        X  Y  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> X         exposure    x                                                                  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Y         outcome        x                                                               </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Z         confounder        x                                                            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> M         mediator                x                                                      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> C         collider                     x    x     x                                      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> A         nco                                                                         x  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> B         nco                                                                         x  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Roles legend:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   X         = exposure</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Y         = outcome</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   CON       = confounder</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   MED       = mediator</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   COL       = collider</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   dOut      = proper descendant of Y</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   dMed      = proper descendant of any mediator</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   dCol      = proper descendant of any collider</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   dConfOn   = descendant of a confounder on a back-door path</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   dConfOff  = descendant of a confounder off a back-door path</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   NCT       = neutral control on treatment</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   NCO       = neutral control on outcome</span>
-</code></pre></div>
+
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

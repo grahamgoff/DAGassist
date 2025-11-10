@@ -180,12 +180,12 @@ variables in <code>original</code>.</p>
 <div class="section level3">
 <h3 id="roles">Roles<a class="anchor" aria-label="anchor" href="#roles"></a>
 </h3>
-<table class="table">
+<table style="width:100%;" class="table">
 <colgroup>
 <col width="8%">
-<col width="11%">
-<col width="4%">
-<col width="4%">
+<col width="10%">
+<col width="5%">
+<col width="5%">
 <col width="6%">
 <col width="6%">
 <col width="6%">
@@ -200,8 +200,8 @@ variables in <code>original</code>.</p>
 <thead><tr class="header">
 <th align="left">Variable</th>
 <th align="center">Role</th>
-<th align="center"><code>X</code></th>
-<th align="center"><code>Y</code></th>
+<th align="center">Exp.</th>
+<th align="center">Out.</th>
 <th align="center"><code>CON</code></th>
 <th align="center"><code>MED</code></th>
 <th align="center"><code>COL</code></th>
@@ -558,29 +558,17 @@ call); no roles table is printed.</p></li>
 <span><span class="co">#&gt; DAGassist Report: </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Roles:</span></span>
-<span><span class="co">#&gt; variable  role        X  Y  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO</span></span>
-<span><span class="co">#&gt; D         exposure    x                                                                  </span></span>
-<span><span class="co">#&gt; Y         outcome        x                                                               </span></span>
-<span><span class="co">#&gt; A         confounder        x                                 x                          </span></span>
-<span><span class="co">#&gt; B         confounder        x                                                            </span></span>
-<span><span class="co">#&gt; C         confounder        x                                                            </span></span>
-<span><span class="co">#&gt; F         confounder        x                                                            </span></span>
-<span><span class="co">#&gt; G         nco                                                                         x  </span></span>
-<span><span class="co">#&gt; H         nco                                                 x                       x  </span></span>
+<span><span class="co">#&gt; variable  role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO</span></span>
+<span><span class="co">#&gt; D         exposure    x                                                                        </span></span>
+<span><span class="co">#&gt; Y         outcome           x                                                                  </span></span>
+<span><span class="co">#&gt; A         confounder              x                                 x                          </span></span>
+<span><span class="co">#&gt; B         confounder              x                                                            </span></span>
+<span><span class="co">#&gt; C         confounder              x                                                            </span></span>
+<span><span class="co">#&gt; F         confounder              x                                                            </span></span>
+<span><span class="co">#&gt; G         nco                                                                               x  </span></span>
+<span><span class="co">#&gt; H         nco                                                       x                       x  </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Roles legend:</span></span>
-<span><span class="co">#&gt;   X         = exposure</span></span>
-<span><span class="co">#&gt;   Y         = outcome</span></span>
-<span><span class="co">#&gt;   CON       = confounder</span></span>
-<span><span class="co">#&gt;   MED       = mediator</span></span>
-<span><span class="co">#&gt;   COL       = collider</span></span>
-<span><span class="co">#&gt;   dOut      = proper descendant of Y</span></span>
-<span><span class="co">#&gt;   dMed      = proper descendant of any mediator</span></span>
-<span><span class="co">#&gt;   dCol      = proper descendant of any collider</span></span>
-<span><span class="co">#&gt;   dConfOn   = descendant of a confounder on a back-door path</span></span>
-<span><span class="co">#&gt;   dConfOff  = descendant of a confounder off a back-door path</span></span>
-<span><span class="co">#&gt;   NCT       = neutral control on treatment</span></span>
-<span><span class="co">#&gt;   NCO       = neutral control on outcome</span></span></code></pre></div>
+<span><span class="co">#&gt; Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level3">

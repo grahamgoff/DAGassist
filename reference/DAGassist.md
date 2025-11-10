@@ -100,16 +100,20 @@ DAGassist(
   - `type="latex"`: a **LaTeX fragment** written to `out` (usually
     `.tex`); when omitted, the fragment is printed to the console.
 
+  - `type="text"`/`"txt"`: a **plain-text** file written to `out`; when
+    omitted, the report is printed to console.
+
+  - `type="dotwhisker"`/`"dwplot"`: a **image (.png)** file written to
+    `out`; when omitted, the plot is rendered within RStudio.
+
   - `type="docx"`/`"word"`: a **Word (.docx)** file written to `out`.
 
   - `type="excel"`/`"xlsx"`: an **Excel (.xlsx)** file written to `out`.
-
-  - `type="text"`/`"txt"`: a **plain-text** file written to `out`.
-    Ignored for `type="console"` and for the plotting types.
+    Ignored for `type="console"`.
 
 - imply:
 
-  Logical; default `FALSE`. **Evaluation scope.**
+  Logical; default `FALSE`. Specifies **evaluation scope.**
 
   - If `FALSE` (default): restrict DAG evaluation to variables **named
     in the formula** (prune the DAG to exposure, outcome, and RHS
@@ -214,7 +218,9 @@ minimal/canonical formulas (e.g., `Y ~ X + controls | fe | iv(...)`).
 
 **Roles grid.** The roles table displays short headers:
 
-- `X` (exposure), `Y` (outcome),
+- `Exp.` (exposure),
+
+- `Out.` (outcome),
 
 - `CON` (confounder),
 
@@ -222,11 +228,11 @@ minimal/canonical formulas (e.g., `Y ~ X + controls | fe | iv(...)`).
 
 - `COL` (collider),
 
-- `dOut` (proper descendant of `Y`),
+- `dOut` (descendant of `Y`),
 
-- `dMed` (proper descendant of any mediator),
+- `dMed` (descendant of any mediator),
 
-- `dCol` (proper descendant of any collider),
+- `dCol` (descendant of any collider),
 
 - `dConfOn` (descendant of a confounder **on** a back-door path),
 
@@ -297,96 +303,3 @@ models-only, and LaTeX/Word/Excel reports.
 for the console printer, and the helper exporters in `report_*` modules.
 
 ## Examples
-
-``` r
-# generate a console DAGassist report
-DAGassist(dag = g, formula = lm(Y ~ X + Z + C + M, data = df))
-#> DAGassist Report: 
-#> 
-#> Roles:
-#> variable  role        X  Y  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
-#> X         exposure    x                                                                  
-#> Y         outcome        x                                                               
-#> Z         confounder        x                                                            
-#> M         mediator                x                                                      
-#> C         collider                     x    x     x                                      
-#> 
-#>  (!) Bad controls in your formula: {C, M}
-#> 
-#> Roles legend:
-#>   X         = exposure
-#>   Y         = outcome
-#>   CON       = confounder
-#>   MED       = mediator
-#>   COL       = collider
-#>   dOut      = proper descendant of Y
-#>   dMed      = proper descendant of any mediator
-#>   dCol      = proper descendant of any collider
-#>   dConfOn   = descendant of a confounder on a back-door path
-#>   dConfOff  = descendant of a confounder off a back-door path
-#>   NCT       = neutral control on treatment
-#>   NCO       = neutral control on outcome
-#> Minimal controls 1: {Z}
-#> Canonical controls: {Z}
-#> 
-#> Formulas:
-#>   original:  Y ~ X + Z + C + M
-#> 
-#> Model comparison:
-#> 
-#> +---+----------+-----------+-----------+
-#> |   | Original | Minimal 1 | Canonical |
-#> +===+==========+===========+===========+
-#> | X | 0.467*** | 1.306***  | 1.306***  |
-#> +---+----------+-----------+-----------+
-#> |   | (0.122)  | (0.098)   | (0.098)   |
-#> +---+----------+-----------+-----------+
-#> | Z | 0.185+   | 0.235+    | 0.235+    |
-#> +---+----------+-----------+-----------+
-#> |   | (0.102)  | (0.127)   | (0.127)   |
-#> +---+----------+-----------+-----------+
-#> | C | 0.368*** |           |           |
-#> +---+----------+-----------+-----------+
-#> |   | (0.076)  |           |           |
-#> +---+----------+-----------+-----------+
-#> | M | 0.512*** |           |           |
-#> +---+----------+-----------+-----------+
-#> |   | (0.077)  |           |           |
-#> +===+==========+===========+===========+
-#> | + p < 0.1, * p < 0.05, ** p < 0.01,  |
-#> | *** p < 0.001                        |
-#> +===+==========+===========+===========+ 
-
-# generate a LaTeX DAGassist report
-# \donttest{
-DAGassist(dag = g, formula = lm(Y ~ X + Z + C + M, data = df),
-          type = "latex", out = file.path(tempdir(), "frag.tex"))
-# }
-# generate just the roles table in the console
-DAGassist(dag = g, show = "roles")
-#> DAGassist Report: 
-#> 
-#> Roles:
-#> variable  role        X  Y  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
-#> X         exposure    x                                                                  
-#> Y         outcome        x                                                               
-#> Z         confounder        x                                                            
-#> M         mediator                x                                                      
-#> C         collider                     x    x     x                                      
-#> A         nco                                                                         x  
-#> B         nco                                                                         x  
-#> 
-#> Roles legend:
-#>   X         = exposure
-#>   Y         = outcome
-#>   CON       = confounder
-#>   MED       = mediator
-#>   COL       = collider
-#>   dOut      = proper descendant of Y
-#>   dMed      = proper descendant of any mediator
-#>   dCol      = proper descendant of any collider
-#>   dConfOn   = descendant of a confounder on a back-door path
-#>   dConfOff  = descendant of a confounder off a back-door path
-#>   NCT       = neutral control on treatment
-#>   NCO       = neutral control on outcome
-```

@@ -102,28 +102,14 @@ DAGassist(
 #> DAGassist Report: 
 #> 
 #> Roles:
-#> variable  role        X  Y  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
-#> X         exposure    x                                                                  
-#> Y         outcome        x                                                               
-#> Z         confounder        x                                                            
-#> M         mediator                x                                                      
-#> A         nco                                                                         x  
+#> variable  role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
+#> X         exposure    x                                                                        
+#> Y         outcome           x                                                                  
+#> Z         confounder              x                                                            
+#> M         mediator                      x                                                      
+#> A         nco                                                                               x  
 #> 
 #>  (!) Bad controls in your formula: {M}
-#> 
-#> Roles legend:
-#>   X         = exposure
-#>   Y         = outcome
-#>   CON       = confounder
-#>   MED       = mediator
-#>   COL       = collider
-#>   dOut      = proper descendant of Y
-#>   dMed      = proper descendant of any mediator
-#>   dCol      = proper descendant of any collider
-#>   dConfOn   = descendant of a confounder on a back-door path
-#>   dConfOff  = descendant of a confounder off a back-door path
-#>   NCT       = neutral control on treatment
-#>   NCO       = neutral control on outcome
 #> Minimal controls 1: {Z}
 #> Canonical controls: {A, Z}
 #> 
@@ -153,7 +139,9 @@ DAGassist(
 #> +===+==========+===========+===========+
 #> | + p < 0.1, * p < 0.05, ** p < 0.01,  |
 #> | *** p < 0.001                        |
-#> +===+==========+===========+===========+
+#> +===+==========+===========+===========+ 
+#> 
+#> Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome
 ```
 
 ### Exporting
@@ -185,7 +173,7 @@ cat(readLines(out_tex, n = 15), sep = "\n") # briefly show the output
 #> \begin{longtblr}[presep=0pt, postsep=0pt, caption={DAGassist Report:}, label={tab:dagassist}]%
 #> {width=\textwidth,colsep=1.5pt,rowsep=0pt,abovesep=0pt,belowsep=0pt,column{3}={colsep=6pt},colspec={X[35,l]X[15,l]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]}}
 #> \toprule
-#> Variable & Role & \rotatebox[origin=c]{60}{X} & \rotatebox[origin=c]{60}{Y} & \rotatebox[origin=c]{60}{CON} & \rotatebox[origin=c]{60}{MED} & \rotatebox[origin=c]{60}{COL} & \rotatebox[origin=c]{60}{dOut} & \rotatebox[origin=c]{60}{dMed} & \rotatebox[origin=c]{60}{dCol} & \rotatebox[origin=c]{60}{dConfOn} & \rotatebox[origin=c]{60}{dConfOff} & \rotatebox[origin=c]{60}{NCT} & \rotatebox[origin=c]{60}{NCO} \\
+#> Variable & Role & \rotatebox[origin=c]{60}{Exp.} & \rotatebox[origin=c]{60}{Out.} & \rotatebox[origin=c]{60}{CON} & \rotatebox[origin=c]{60}{MED} & \rotatebox[origin=c]{60}{COL} & \rotatebox[origin=c]{60}{dOut} & \rotatebox[origin=c]{60}{dMed} & \rotatebox[origin=c]{60}{dCol} & \rotatebox[origin=c]{60}{dConfOn} & \rotatebox[origin=c]{60}{dConfOff} & \rotatebox[origin=c]{60}{NCT} & \rotatebox[origin=c]{60}{NCO} \\
 #> \midrule
 #> A & nco &  &  &  &  &  &  &  &  &  &  &  & x \\
 #> M & mediator &  &  &  & x &  &  &  &  &  &  &  &  \\

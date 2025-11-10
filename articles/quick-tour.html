@@ -187,28 +187,14 @@ variables that are not <code>confounders</code>, <code>mediators</code>,
 <span><span class="co">#&gt; DAGassist Report: </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Roles:</span></span>
-<span><span class="co">#&gt; variable  role        X  Y  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO</span></span>
-<span><span class="co">#&gt; X         exposure    x                                                                  </span></span>
-<span><span class="co">#&gt; Y         outcome        x                                                               </span></span>
-<span><span class="co">#&gt; Z         confounder        x                                                            </span></span>
-<span><span class="co">#&gt; M         mediator                x                                                      </span></span>
-<span><span class="co">#&gt; A         nco                                                                         x  </span></span>
+<span><span class="co">#&gt; variable  role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO</span></span>
+<span><span class="co">#&gt; X         exposure    x                                                                        </span></span>
+<span><span class="co">#&gt; Y         outcome           x                                                                  </span></span>
+<span><span class="co">#&gt; Z         confounder              x                                                            </span></span>
+<span><span class="co">#&gt; M         mediator                      x                                                      </span></span>
+<span><span class="co">#&gt; A         nco                                                                               x  </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  (!) Bad controls in your formula: {M}</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Roles legend:</span></span>
-<span><span class="co">#&gt;   X         = exposure</span></span>
-<span><span class="co">#&gt;   Y         = outcome</span></span>
-<span><span class="co">#&gt;   CON       = confounder</span></span>
-<span><span class="co">#&gt;   MED       = mediator</span></span>
-<span><span class="co">#&gt;   COL       = collider</span></span>
-<span><span class="co">#&gt;   dOut      = proper descendant of Y</span></span>
-<span><span class="co">#&gt;   dMed      = proper descendant of any mediator</span></span>
-<span><span class="co">#&gt;   dCol      = proper descendant of any collider</span></span>
-<span><span class="co">#&gt;   dConfOn   = descendant of a confounder on a back-door path</span></span>
-<span><span class="co">#&gt;   dConfOff  = descendant of a confounder off a back-door path</span></span>
-<span><span class="co">#&gt;   NCT       = neutral control on treatment</span></span>
-<span><span class="co">#&gt;   NCO       = neutral control on outcome</span></span>
 <span><span class="co">#&gt; Minimal controls 1: {Z}</span></span>
 <span><span class="co">#&gt; Canonical controls: {A, Z}</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -238,7 +224,9 @@ variables that are not <code>confounders</code>, <code>mediators</code>,
 <span><span class="co">#&gt; +===+==========+===========+===========+</span></span>
 <span><span class="co">#&gt; | + p &lt; 0.1, * p &lt; 0.05, ** p &lt; 0.01,  |</span></span>
 <span><span class="co">#&gt; | *** p &lt; 0.001                        |</span></span>
-<span><span class="co">#&gt; +===+==========+===========+===========+</span></span></code></pre></div>
+<span><span class="co">#&gt; +===+==========+===========+===========+ </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="exporting">Exporting<a class="anchor" aria-label="anchor" href="#exporting"></a>
@@ -270,7 +258,7 @@ checks, this is an example of how to output a report in
 <span><span class="co">#&gt; \begin{longtblr}[presep=0pt, postsep=0pt, caption={DAGassist Report:}, label={tab:dagassist}]%</span></span>
 <span><span class="co">#&gt; {width=\textwidth,colsep=1.5pt,rowsep=0pt,abovesep=0pt,belowsep=0pt,column{3}={colsep=6pt},colspec={X[35,l]X[15,l]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]}}</span></span>
 <span><span class="co">#&gt; \toprule</span></span>
-<span><span class="co">#&gt; Variable &amp; Role &amp; \rotatebox[origin=c]{60}{X} &amp; \rotatebox[origin=c]{60}{Y} &amp; \rotatebox[origin=c]{60}{CON} &amp; \rotatebox[origin=c]{60}{MED} &amp; \rotatebox[origin=c]{60}{COL} &amp; \rotatebox[origin=c]{60}{dOut} &amp; \rotatebox[origin=c]{60}{dMed} &amp; \rotatebox[origin=c]{60}{dCol} &amp; \rotatebox[origin=c]{60}{dConfOn} &amp; \rotatebox[origin=c]{60}{dConfOff} &amp; \rotatebox[origin=c]{60}{NCT} &amp; \rotatebox[origin=c]{60}{NCO} \\</span></span>
+<span><span class="co">#&gt; Variable &amp; Role &amp; \rotatebox[origin=c]{60}{Exp.} &amp; \rotatebox[origin=c]{60}{Out.} &amp; \rotatebox[origin=c]{60}{CON} &amp; \rotatebox[origin=c]{60}{MED} &amp; \rotatebox[origin=c]{60}{COL} &amp; \rotatebox[origin=c]{60}{dOut} &amp; \rotatebox[origin=c]{60}{dMed} &amp; \rotatebox[origin=c]{60}{dCol} &amp; \rotatebox[origin=c]{60}{dConfOn} &amp; \rotatebox[origin=c]{60}{dConfOff} &amp; \rotatebox[origin=c]{60}{NCT} &amp; \rotatebox[origin=c]{60}{NCO} \\</span></span>
 <span><span class="co">#&gt; \midrule</span></span>
 <span><span class="co">#&gt; A &amp; nco &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp; x \\</span></span>
 <span><span class="co">#&gt; M &amp; mediator &amp;  &amp;  &amp;  &amp; x &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  \\</span></span>

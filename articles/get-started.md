@@ -69,56 +69,32 @@ DAGassist(dag = dag_model, formula = Y ~ X + C, data = df, imply = FALSE, show =
 #> DAGassist Report: 
 #> 
 #> Roles:
-#> variable  role       X  Y  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
-#> X         exposure   x                                                                  
-#> Y         outcome       x                                                               
-#> C         collider                    x    x                                            
+#> variable  role       Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
+#> X         exposure   x                                                                        
+#> Y         outcome          x                                                                  
+#> C         collider                          x    x                                            
 #> 
 #>  (!) Bad controls in your formula: {C}
 #> 
-#> Roles legend:
-#>   X         = exposure
-#>   Y         = outcome
-#>   CON       = confounder
-#>   MED       = mediator
-#>   COL       = collider
-#>   dOut      = proper descendant of Y
-#>   dMed      = proper descendant of any mediator
-#>   dCol      = proper descendant of any collider
-#>   dConfOn   = descendant of a confounder on a back-door path
-#>   dConfOff  = descendant of a confounder off a back-door path
-#>   NCT       = neutral control on treatment
-#>   NCO       = neutral control on outcome
+#> Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome
 
 #full-DAG evaluation
 DAGassist(dag = dag_model, formula = Y ~ X + C, data = df, imply = TRUE,  show = "roles")
 #> DAGassist Report: 
 #> 
 #> Roles:
-#> variable  role        X  Y  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
-#> X         exposure    x                                                                  
-#> Y         outcome        x                                                               
-#> Z         confounder        x                                                            
-#> M         mediator                x                                                      
-#> C         collider                     x    x     x                                      
-#> A         nco                                                                         x  
-#> B         nco                                                                         x  
+#> variable  role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
+#> X         exposure    x                                                                        
+#> Y         outcome           x                                                                  
+#> Z         confounder              x                                                            
+#> M         mediator                      x                                                      
+#> C         collider                           x    x     x                                      
+#> A         nco                                                                               x  
+#> B         nco                                                                               x  
 #> 
 #>  (!) Bad controls in your formula: {C}
 #> 
-#> Roles legend:
-#>   X         = exposure
-#>   Y         = outcome
-#>   CON       = confounder
-#>   MED       = mediator
-#>   COL       = collider
-#>   dOut      = proper descendant of Y
-#>   dMed      = proper descendant of any mediator
-#>   dCol      = proper descendant of any collider
-#>   dConfOn   = descendant of a confounder on a back-door path
-#>   dConfOff  = descendant of a confounder off a back-door path
-#>   NCT       = neutral control on treatment
-#>   NCO       = neutral control on outcome
+#> Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome
 ```
 
 ### `eval_all`: keep non-DAG RHS terms in derived models
@@ -175,26 +151,14 @@ DAGassist(
 #> DAGassist Report: 
 #> 
 #> Roles:
-#> variable  role       X  Y  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
-#> Exposure  exposure   x                                                                  
-#> Outcome   outcome       x                                                               
-#> Collider  collider                    x    x                                            
+#> variable  role       Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
+#> Exposure  exposure   x                                                                        
+#> Outcome   outcome          x                                                                  
+#> Collider  collider                          x    x                                            
 #> 
 #>  (!) Bad controls in your formula: {C}
 #> 
-#> Roles legend:
-#>   X         = exposure
-#>   Y         = outcome
-#>   CON       = confounder
-#>   MED       = mediator
-#>   COL       = collider
-#>   dOut      = proper descendant of Y
-#>   dMed      = proper descendant of any mediator
-#>   dCol      = proper descendant of any collider
-#>   dConfOn   = descendant of a confounder on a back-door path
-#>   dConfOff  = descendant of a confounder off a back-door path
-#>   NCT       = neutral control on treatment
-#>   NCO       = neutral control on outcome
+#> Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome
 ```
 
 ### `omit_intercept` and `omit_factors`: output-only filters

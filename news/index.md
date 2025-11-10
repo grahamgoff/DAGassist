@@ -1,5 +1,31 @@
 # Changelog
 
+## DAGassist v0.2.6
+
+#### Highlights
+
+- Supports multiple exposures
+- Detects DAG conditions like M-Bias and Butterfly Bias
+- Added neutral control (on treatment and outcome) and descendant of
+  confounder on/off back-door path roles
+- Enabled console LaTeX / markdown output
+- Updated export functions to support new expanded roles table, and
+  added legend to define abbreviations
+- Added Canonical -neutral control (on treatment/outcome) comparison
+  column options
+
+This is the CRAN version.
+
+## DAGassist 0.2.5
+
+### Highlights
+
+- Added dotwhisker output functionality
+- Added support for individually generating and exporting roles and
+  comparison tables
+- Added bivariate specification to comparison table by default
+- Significantly enhanced vignette, article, and roxygen documentation
+
 ## DAGassist 0.2.4
 
 CRAN release: 2025-09-21
@@ -10,8 +36,6 @@ CRAN release: 2025-09-21
   unused and causing issues.
 - Updated `DESCRIPTION` to reference `dagitty` and relevant article
   under methods.
-
-This is for CRAN re-submission.
 
 ## DAGassist 0.2.3
 
@@ -25,8 +49,6 @@ This is for CRAN re-submission.
 - Added `dMed` (descendant of mediator) and `dCol` (descendant of
   collider)
 - Updated documentation and added vignettes
-
-This is the last release before CRAN submission.
 
 ## DAGassist 0.2.2
 

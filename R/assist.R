@@ -294,7 +294,8 @@ DAGassist <- function(dag,
         min_sets = report$controls_minimal_all,
         canon = report$controls_canonical,
         unevaluated_str= report$unevaluated_str,
-        show = show
+        show = show,
+        verbose = verbose
       )
       
       if (!is.null(out)) {
@@ -313,14 +314,15 @@ DAGassist <- function(dag,
     
     if (type %in% c("docx","word")) {
       res_min <- list(
-        roles_df       = report$roles_display,
-        coef_omit      = report$settings$coef_omit,
-        coef_rename    = labmap,
-        models         = mods_full,
-        min_sets       = report$controls_minimal_all,
-        canon          = report$controls_canonical,
+        roles_df= report$roles_display,
+        coef_omit = report$settings$coef_omit,
+        coef_rename = labmap,
+        models = mods_full,
+        min_sets = report$controls_minimal_all,
+        canon = report$controls_canonical,
         unevaluated_str= report$unevaluated_str,
-        show           = show
+        show = show,
+        verbose = verbose
       )
       .report_docx(res_min, out)
       return(invisible(structure(report, file = file_attr)))
@@ -328,14 +330,15 @@ DAGassist <- function(dag,
     
     if (type %in% c("excel","xlsx")) {
       res_min <- list(
-        roles_df       = report$roles_display,
-        coef_omit      = report$settings$coef_omit,
-        coef_rename    = labmap,
-        models         = mods_full,
-        min_sets       = report$controls_minimal_all,
-        canon          = report$controls_canonical,
+        roles_df = report$roles_display,
+        coef_omit = report$settings$coef_omit,
+        coef_rename = labmap,
+        models = mods_full,
+        min_sets = report$controls_minimal_all,
+        canon = report$controls_canonical,
         unevaluated_str= report$unevaluated_str,
-        show           = show
+        show = show,
+        verbose=verbose
       )
       .report_xlsx(res_min, out)
       return(invisible(structure(report, file = file_attr)))
@@ -343,14 +346,15 @@ DAGassist <- function(dag,
     
     if (type %in% c("text","txt")) {
       res_min <- list(
-        roles_df       = report$roles_display,
-        coef_omit      = report$settings$coef_omit,
-        coef_rename    = labmap,
-        models         = mods_full,
-        min_sets       = report$controls_minimal_all,
-        canon          = report$controls_canonical,
+        roles_df= report$roles_display,
+        coef_omit = report$settings$coef_omit,
+        coef_rename = labmap,
+        models = mods_full,
+        min_sets = report$controls_minimal_all,
+        canon = report$controls_canonical,
         unevaluated_str= report$unevaluated_str,
-        show           = show
+        show = show,
+        verbose=verbose
       )
       .report_txt(res_min, out)
       return(invisible(structure(report, file = file_attr)))
@@ -669,7 +673,8 @@ DAGassist <- function(dag,
       min_sets = report$controls_minimal_all,
       canon = report$controls_canonical,
       unevaluated_str = report$unevaluated_str,
-      show = show
+      show = show,
+      verbose=verbose
     )
     
     if (!is.null(out)) {
@@ -700,7 +705,8 @@ DAGassist <- function(dag,
       min_sets = report$controls_minimal_all,
       canon = report$controls_canonical,
       unevaluated_str = report$unevaluated_str,
-      show = show
+      show = show,
+      verbose=verbose
     )
     return(.report_docx(res_min, out))
   }
@@ -715,7 +721,8 @@ DAGassist <- function(dag,
       min_sets = report$controls_minimal_all,
       canon = report$controls_canonical,
       unevaluated_str = report$unevaluated_str,
-      show = show
+      show = show,
+      verbose=verbose
     )
     .report_xlsx(res_min, out)
     return(invisible(structure(report, file = normalizePath(out, mustWork = FALSE))))
@@ -731,7 +738,8 @@ DAGassist <- function(dag,
       min_sets = report$controls_minimal_all,
       canon = report$controls_canonical,
       unevaluated_str = report$unevaluated_str,
-      show = show
+      show = show,
+      verbose=verbose
     )
     if (is.null(out)) {
       # console text output support
@@ -815,7 +823,22 @@ print.DAGassist_report <- function(x, ...) {
       }
     }
   }
-  
+  if (verbose && show != "models") {
+    cat("\nRoles legend:\n",
+        "  X         = exposure\n",
+        "  Y         = outcome\n",
+        "  CON       = confounder\n",
+        "  MED       = mediator\n",
+        "  COL       = collider\n",
+        "  dOut      = proper descendant of Y\n",
+        "  dMed      = proper descendant of any mediator\n",
+        "  dCol      = proper descendant of any collider\n",
+        "  dConfOn   = descendant of a confounder on a back-door path\n",
+        "  dConfOff  = descendant of a confounder off a back-door path\n",
+        "  NCT       = neutral control on treatment\n",
+        "  NCO       = neutral control on outcome\n",
+        sep = "")
+  }
   if (show != "roles"){
     if (identical(show, "all")){
       # compare adjustment sets

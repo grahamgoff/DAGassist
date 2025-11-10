@@ -41,6 +41,13 @@
     }
   }
   
+  if (isTRUE(res$verbose) && show != "models") {
+    notes <- c(
+      "Roles legend: X (exposure); Y (outcome); CON (confounder); MED (mediator); COL (collider); dOut (proper descendant of Y); dMed (proper descendant of any mediator); dCol (proper descendant of any collider); dConfOn (descendant of a confounder on a back-door path); dConfOff (descendant of a confounder off a back-door path); NCT (neutral control on treatment); NCO (neutral control on outcome).",
+      notes
+    )
+  }
+  
   lines <- c(lines, "#### Notes", "", paste0("- ", notes), "")
   
   if (is.null(out)) {

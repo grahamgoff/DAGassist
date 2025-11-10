@@ -174,7 +174,7 @@
 #'
 #' # generate a LaTeX DAGassist report in console
 #' DAGassist(dag = g, formula = lm(Y ~ X + Z + C + M, data = df),
-#'           type = "latex"))
+#'           type = "latex")
 #' 
 #' # generate just the roles table in the console
 #' DAGassist(dag = g, show = "roles")

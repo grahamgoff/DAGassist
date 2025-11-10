@@ -77,7 +77,7 @@
 #' engine arguments directly from that call; these are merged with `engine`/`engine_args`
 #' you pass explicitly (call arguments win).
 #'
-#' **Fixest tails.** For engines like **fixest** that use `|` to denote FE/IV parts,
+#' **fixest tails.** For engines like **fixest** that use `|` to denote FE/IV parts,
 #' DAGassist preserves any `| ...` tail when constructing minimal/canonical formulas
 #' (e.g., `Y ~ X + controls | fe | iv(...)`).
 #'
@@ -113,7 +113,7 @@
 #' * `dwplot`/`dotwhisker` produces a dot-whisker visualization of the fitted models.
 #'
 #' **Dependencies.** Core requires `{dagitty}`. Optional enhancements: `{modelsummary}`
-#' (pretty tables), `{broom}` (fallback tidying), `{rmarkdown}` + **Pandoc** (DOCX),
+#' (pretty tables), `{broom}` (fallback tidying), `{rmarkdown}` + **pandoc** (DOCX),
 #' `{writexl}` (XLSX), `{dotwhisker}`/`{ggplot2}` for plotting.
 #'
 #' @return An object of class `"DAGassist_report"`, invisibly for file and plot

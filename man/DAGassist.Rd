@@ -146,7 +146,7 @@ DAGassist extracts the engine function, formula, data argument, and any addition
 engine arguments directly from that call; these are merged with \code{engine}/\code{engine_args}
 you pass explicitly (call arguments win).
 
-\strong{Fixest tails.} For engines like \strong{fixest} that use \code{|} to denote FE/IV parts,
+\strong{fixest tails.} For engines like \strong{fixest} that use \code{|} to denote FE/IV parts,
 DAGassist preserves any \verb{| ...} tail when constructing minimal/canonical formulas
 (e.g., \code{Y ~ X + controls | fe | iv(...)}).
 
@@ -186,7 +186,7 @@ it uses \code{tabularray} long tables and will include any requested Canon. (-NC
 }
 
 \strong{Dependencies.} Core requires \code{{dagitty}}. Optional enhancements: \code{{modelsummary}}
-(pretty tables), \code{{broom}} (fallback tidying), \code{{rmarkdown}} + \strong{Pandoc} (DOCX),
+(pretty tables), \code{{broom}} (fallback tidying), \code{{rmarkdown}} + \strong{pandoc} (DOCX),
 \code{{writexl}} (XLSX), \code{{dotwhisker}}/\code{{ggplot2}} for plotting.
 }
 \section{Interpreting the output}{

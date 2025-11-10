@@ -25,13 +25,13 @@ Questions of causality predominate throughout the natural and social sciences [@
 The back-door adjustment criterion has two main components:
 
 - ``...conditioning on variables that lie on back-door paths can be an effective strategy to identify a causal effect'' [@MorganWinship2015, pp. 116].
-- ``...if a set of conditioning variables blocks all back-door paths, the analyst must then varify that no variables within the conditioning set block the causal effect of interest or otherwise mistakenly adjust it away'' [@MorganWinship2015, pp. 117].
+- ``...if a set of conditioning variables blocks all back-door paths, the analyst must then verify that no variables within the conditioning set block the causal effect of interest or otherwise mistakenly adjust it away'' [@MorganWinship2015, pp. 117].
 
 Essentially, researchers should condition on only the set of variables that enables them to close back-door paths. 
 
 
 SUTVA: 
-"SUTVA is simply the a priori assumption that the value of Y for unit $u$ when exposed to treatment $t$ will be the same no matter what mechanism is used to assign treatment $t$ to unit $u$ and no matter what treatnebts the other units receive" [@MorganWinship2015, pp. 48]. 
+"SUTVA is simply the a priori assumption that the value of Y for unit $u$ when exposed to treatment $t$ will be the same no matter what mechanism is used to assign treatment $t$ to unit $u$ and no matter what treatments the other units receive" [@MorganWinship2015, pp. 48]. 
 
 On ceteris paribus assumptions:
 "When a facile ceteris paribus assumption is invoked to relieve the analyst from having to discuss other contrasts that are nearly certain to occur at the same time, the posited causal states may be open to the charge that they are too improbable or ill-defined to justify the pursuit of a causal analysis based on a causal analysis based on them" [@MorganWinship2015, pp. 43]. 

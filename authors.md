@@ -10,7 +10,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/grahamgoff/DAGassist/blob/dev/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/grahamgoff/DAGassist/blob/v0.2.6/DESCRIPTION)
 
 Goff G, Denly M (2025). *DAGassist: Test Robustness with Directed
 Acyclic Graphs*. R package version 0.2.6,

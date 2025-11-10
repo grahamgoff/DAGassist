@@ -286,8 +286,7 @@ models-only, and LaTeX/Word/Excel reports.
   paths (confounders only).
 
 - **Canonical** - the largest permissible set: includes all controls
-  that are not `MED`, `COL`, `dOut`, `dMed`, or `dCol`. `other`
-  variables may appear here.
+  that are not `MED`, `COL`, `dOut`, `dMed`, or `dCol`.
 
 ## Errors and edge cases
 
@@ -303,3 +302,128 @@ models-only, and LaTeX/Word/Excel reports.
 for the console printer, and the helper exporters in `report_*` modules.
 
 ## Examples
+
+``` r
+# generate a console DAGassist report
+DAGassist(dag = g, 
+          formula = lm(Y ~ X + Z + C + M, data = df))
+#> DAGassist Report: 
+#> 
+#> Roles:
+#> variable  role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
+#> X         exposure    x                                                                        
+#> Y         outcome           x                                                                  
+#> Z         confounder              x                                                            
+#> M         mediator                      x                                                      
+#> C         collider                           x    x     x                                      
+#> 
+#>  (!) Bad controls in your formula: {C, M}
+#> Minimal controls 1: {Z}
+#> Canonical controls: {Z}
+#> 
+#> Formulas:
+#>   original:  Y ~ X + Z + C + M
+#> 
+#> Model comparison:
+#> 
+#> +---+----------+-----------+-----------+
+#> |   | Original | Minimal 1 | Canonical |
+#> +===+==========+===========+===========+
+#> | X | 0.467*** | 1.306***  | 1.306***  |
+#> +---+----------+-----------+-----------+
+#> |   | (0.122)  | (0.098)   | (0.098)   |
+#> +---+----------+-----------+-----------+
+#> | Z | 0.185+   | 0.235+    | 0.235+    |
+#> +---+----------+-----------+-----------+
+#> |   | (0.102)  | (0.127)   | (0.127)   |
+#> +---+----------+-----------+-----------+
+#> | C | 0.368*** |           |           |
+#> +---+----------+-----------+-----------+
+#> |   | (0.076)  |           |           |
+#> +---+----------+-----------+-----------+
+#> | M | 0.512*** |           |           |
+#> +---+----------+-----------+-----------+
+#> |   | (0.077)  |           |           |
+#> +===+==========+===========+===========+
+#> | + p < 0.1, * p < 0.05, ** p < 0.01,  |
+#> | *** p < 0.001                        |
+#> +===+==========+===========+===========+ 
+#> 
+#> Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome
+
+# generate a LaTeX DAGassist report in console
+DAGassist(dag = g, 
+          formula = lm(Y ~ X + Z + C + M, data = df),
+          type = "latex")
+#> % --------------------- DAGassist LaTeX fragment ---------------------
+#> % Requires: \usepackage{tabularray} \UseTblrLibrary{booktabs,siunitx,talltblr}
+#> \begingroup\footnotesize
+#> \begingroup\setlength{\emergencystretch}{3em}
+#> % needs \usepackage{graphicx} for \rotatebox
+#> \begin{longtblr}[presep=0pt, postsep=0pt, caption={DAGassist Report:}, label={tab:dagassist}]%
+#> {width=\textwidth,colsep=1.5pt,rowsep=0pt,abovesep=0pt,belowsep=0pt,column{3}={colsep=6pt},colspec={X[35,l]X[15,l]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]}}
+#> \toprule
+#> Variable & Role & \rotatebox[origin=c]{60}{Exp.} & \rotatebox[origin=c]{60}{Out.} & \rotatebox[origin=c]{60}{CON} & \rotatebox[origin=c]{60}{MED} & \rotatebox[origin=c]{60}{COL} & \rotatebox[origin=c]{60}{dOut} & \rotatebox[origin=c]{60}{dMed} & \rotatebox[origin=c]{60}{dCol} & \rotatebox[origin=c]{60}{dConfOn} & \rotatebox[origin=c]{60}{dConfOff} & \rotatebox[origin=c]{60}{NCT} & \rotatebox[origin=c]{60}{NCO} \\
+#> \midrule
+#> C & collider &  &  &  &  & x & x & x &  &  &  &  &  \\
+#> M & mediator &  &  &  & x &  &  &  &  &  &  &  &  \\
+#> X & exposure & x &  &  &  &  &  &  &  &  &  &  &  \\
+#> Y & outcome &  & x &  &  &  &  &  &  &  &  &  &  \\
+#> Z & confounder &  &  & x &  &  &  &  &  &  &  &  &  \\
+#> \bottomrule
+#> \end{longtblr}
+#> \endgroup
+#> % no vertical glue between tables
+#> \nointerlineskip
+#> \begin{longtblr}[presep=0pt,postsep=0pt,%% tabularray outer open
+#> entry=none,label=none,
+#> note{}={+ p \num{< 0.1}, * p \num{< 0.05}, ** p \num{< 0.01}, *** p \num{< 0.001}},
+#> ]                     %% tabularray outer close
+#> {                     %% tabularray inner open
+#> colspec={X[]X[]X[]X[]},
+#> hline{2}={1-4}{solid, black, 0.05em},
+#> hline{10}={1-4}{solid, black, 0.05em},
+#> hline{1}={1-4}{solid, black, 0.1em},
+#> hline{12}={1-4}{solid, black, 0.1em},
+#> column{2-4}={}{halign=c},
+#> column{1}={}{halign=l},
+#> }                     %% tabularray inner close
+#> & Original & Minimal 1 & Canonical \\
+#> X & \num{0.467}*** & \num{1.306}*** & \num{1.306}*** \\
+#> & (\num{0.122}) & (\num{0.098}) & (\num{0.098}) \\
+#> Z & \num{0.185}+ & \num{0.235}+ & \num{0.235}+ \\
+#> & (\num{0.102}) & (\num{0.127}) & (\num{0.127}) \\
+#> C & \num{0.368}*** &  &  \\
+#> & (\num{0.076}) &  &  \\
+#> M & \num{0.512}*** &  &  \\
+#> & (\num{0.077}) &  &  \\
+#> Num.Obs. & \num{150} & \num{150} & \num{150} \\
+#> R2 & \num{0.806} & \num{0.693} & \num{0.693} \\
+#> \end{longtblr}
+#> \par\endgroup
+#> \addtocounter{table}{-1}
+#> \vspace{1em}
+#> \footnotesize
+#> \noindent\textit{Controls (minimal):} {Z}\\
+#> \textit{Controls (canonical):} {Z}
+#> \\
+#> \scriptsize
+#> \textit{Roles legend:} Exp. (exposure); Out. (outcome); CON (confounder); MED (mediator); COL (collider); dOut (proper descendant of Y); dMed (proper descendant of any mediator); dCol (proper descendant of any collider); dConfOn (descendant of a confounder on a back-door path); dConfOff (descendant of a confounder off a back-door path); NCT (neutral control on treatment); NCO (neutral control on outcome). 
+
+# generate just the roles table in the console
+DAGassist(dag = g, 
+          show = "roles")
+#> DAGassist Report: 
+#> 
+#> Roles:
+#> variable  role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
+#> X         exposure    x                                                                        
+#> Y         outcome           x                                                                  
+#> Z         confounder              x                                                            
+#> M         mediator                      x                                                      
+#> C         collider                           x    x     x                                      
+#> A         nco                                                                               x  
+#> B         nco                                                                               x  
+#> 
+#> Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome
+```

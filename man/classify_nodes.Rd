@@ -9,50 +9,45 @@ classify_nodes(dag, exposure, outcome)
 \arguments{
 \item{dag}{A \code{dagitty} DAG object.}
 
-\item{exposure}{Optional-- inferred from DAG if not set; character; exposure node name (X).}
+\item{exposure}{Optional-- inferred from DAG if not set; character; exposure node name (Exp.).}
 
-\item{outcome}{Optional-- inferred from DAG if not set; character; outcome node name (Y).}
+\item{outcome}{Optional-- inferred from DAG if not set; character; outcome node name (Out.).}
 }
 \value{
 A data.frame with one row per node and columns:
 \itemize{
 \item \code{variable} (node name)
 \item logical flags: \code{is_exposure}, \code{is_outcome}, \code{is_confounder},
-\code{is_mediator}, \code{is_collider}, \code{is_descendant_of_outcome},
-\code{is_descendant_of_exposure}
+\code{is_mediator}, \code{is_collider}, \code{is_neutral_on_treatment},
+\code{is_neutral_on_outcome}, \code{is_descendant_of_mediator},
+\code{is_descendant_of_collider}, \code{is_descendant_of_confounder_on_bdp},
+\code{is_descendant_of_confounder_off_bdp}
 \item \code{role} (a single primary label)
 }
 }
 \description{
-Labels each node as one of: \code{exposure}, \code{outcome}, \code{confounder},
-\code{mediator}, \code{collider}, \code{descendant_of_outcome}, or \code{other}.
+Labels each node by causal role in a console tabular grid. This function is
+mostly used as an internal helper, but can be used on its own. Users are
+encouraged to alternatively use \code{DAGassist::DAGassist(show=roles)} for role
+table specific output.
 }
-\details{
-label definitions
-\emph{confounder} -- ancestor of both X and Y, and not a descendant of X
-\emph{mediator} -- descendant of X and ancestor of Y
-\emph{collider} -- node with 2 or more parents on an X / Y path (non-structural)
-\emph{descendant_of_outcome} -- any descendant of Y
-\code{exposure} / \code{outcome} labeled explicitly in function call
-
-Notes:
-\itemize{
-\item in definitions, x is exposure and y is outcome
-\item structural colliders are calculated, but only to define non-structural.
-structural colliders are not included as a boolean flag
-\item A node may satisfy multiple properties; we also return boolean flags
-for each property. The \code{role} column gives a single "primary" label
-using the precedence defined below.
-}
+\note{
+Roles legend:
+\code{Exp.} = exposure
+\code{Out.} = outcome
+\code{CON} = confounder
+\code{MED} = mediator
+\code{COL} = collider
+\code{dOut} = descendant of Out.
+\code{dMed} = descendant of any mediator,
+\code{dCol} = descendant of any collider
+\code{dConfOn} = descendant of a confounder on a back-door path
+\code{dConfOff} = descendant of a confounder off a back-door path
+\code{NCT} = neutral control on treatment
+\code{NCO} = neutral control on outcome
 }
 \examples{
-  d1 <- dagitty::dagitty("dag { Z -> X; Z -> Y; X -> Y }") # confounder Z
-  classify_nodes(d1, exposure = "X", outcome = "Y")
-
-  d2 <- dagitty::dagitty("dag { X -> M -> Y }") # mediator M
-  classify_nodes(d2, "X", "Y")
-
-  d3 <- dagitty::dagitty("dag { X -> C <- Y }") # collider C
-  classify_nodes(d3, "X", "Y")
-
+  d1 <- dagitty::dagitty("dag {X[exposure];Y[outcome] Z -> X; Z -> Y; X -> Y }") 
+  classify_nodes(d1)
+  
 }

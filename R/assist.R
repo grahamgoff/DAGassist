@@ -29,9 +29,6 @@
 #'   printer (formulas + notes).
 #' @param type Output type. One of
 #'   `"console"` (default), `"latex"`/`"docx"`/`"word"`,
-#'   `"excel"`/`"xlsx"`, `"text"`/`"txt"`.
-#' @param type Output type. One of
-#'   `"console"` (default), `"latex"`/`"docx"`/`"word"`,
 #'   `"excel"`/`"xlsx"`, `"text"`/`"txt"`,
 #'   or the plotting types `"dwplot"`/`"dotwhisker"`.
 #'   For `type = "latex"`, if no `out=` is supplied, a LaTeX fragment is printed
@@ -39,11 +36,14 @@
 #' @param out Output file path for the non-console types:
 #'   * `type="latex"`: a **LaTeX fragment** written to `out` (usually `.tex`);
 #'     when omitted, the fragment is printed to the console.
+#'   * `type="text"`/`"txt"`: a **plain-text** file written to `out`;
+#'     when omitted, the report is printed to console.
+#'   * `type="dotwhisker"`/`"dwplot"`: a **image (.png)** file written to `out`;
+#'     when omitted, the plot is rendered within RStudio.
 #'   * `type="docx"`/`"word"`: a **Word (.docx)** file written to `out`.
 #'   * `type="excel"`/`"xlsx"`: an **Excel (.xlsx)** file written to `out`.
-#'   * `type="text"`/`"txt"`: a **plain-text** file written to `out`.
-#'   Ignored for `type="console"` and for the plotting types.
-#' @param imply Logical; default `FALSE`. **Evaluation scope.**
+#'   Ignored for `type="console"`.
+#' @param imply Logical; default `FALSE`. Specifies **evaluation scope.**
 #'   - If `FALSE` (default): restrict DAG evaluation to variables **named in the formula**
 #'     (prune the DAG to exposure, outcome, and RHS terms). Roles/sets/bad-controls are
 #'     computed on this pruned graph, and the roles table **only** shows those variables.
@@ -82,13 +82,14 @@
 #' (e.g., `Y ~ X + controls | fe | iv(...)`).
 #'
 #' **Roles grid.** The roles table displays short headers:
-#'   - `X` (exposure), `Y` (outcome),
+#'   - `Exp.` (exposure), 
+#'   - `Out.` (outcome),
 #'   - `CON` (confounder),
 #'   - `MED` (mediator),
 #'   - `COL` (collider),
-#'   - `dOut` (proper descendant of `Y`),
-#'   - `dMed` (proper descendant of any mediator),
-#'   - `dCol` (proper descendant of any collider),
+#'   - `dOut` (descendant of `Y`),
+#'   - `dMed` (descendant of any mediator),
+#'   - `dCol` (descendant of any collider),
 #'   - `dConfOn` (descendant of a confounder **on** a back-door path),
 #'   - `dConfOff` (descendant of a confounder **off** a back-door path),
 #'   - `NCT` (neutral control on treatment),
@@ -171,11 +172,10 @@
 #' # generate a console DAGassist report
 #' DAGassist(dag = g, formula = lm(Y ~ X + Z + C + M, data = df))
 #'
-#' # generate a LaTeX DAGassist report
-#' \donttest{
+#' # generate a LaTeX DAGassist report in console
 #' DAGassist(dag = g, formula = lm(Y ~ X + Z + C + M, data = df),
-#'           type = "latex", out = file.path(tempdir(), "frag.tex"))
-#' }
+#'           type = "latex"))
+#' 
 #' # generate just the roles table in the console
 #' DAGassist(dag = g, show = "roles")
 #' @export
@@ -822,22 +822,22 @@ print.DAGassist_report <- function(x, ...) {
                        "\n", sep = ""))
       }
     }
-  }
-  if (verbose && show != "models") {
-    cat("\nRoles legend:\n",
-        "  X         = exposure\n",
-        "  Y         = outcome\n",
-        "  CON       = confounder\n",
-        "  MED       = mediator\n",
-        "  COL       = collider\n",
-        "  dOut      = proper descendant of Y\n",
-        "  dMed      = proper descendant of any mediator\n",
-        "  dCol      = proper descendant of any collider\n",
-        "  dConfOn   = descendant of a confounder on a back-door path\n",
-        "  dConfOff  = descendant of a confounder off a back-door path\n",
-        "  NCT       = neutral control on treatment\n",
-        "  NCO       = neutral control on outcome\n",
-        sep = "")
+    
+    # if we're only showing roles (no comparison table), print legend here
+    if (!identical(x$settings$show, "all") && !identical(x$settings$show, "models")) {
+      if (isTRUE(verbose)) {
+        cat(
+          "\nRoles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome\n",
+          sep = ""
+        )
+      } else {
+        cat(
+          clr_yellow(
+            "\nLegend hidden because verbose = FALSE. Re-run with verbose = TRUE to see role definitions.\n"
+          )
+        )
+      }
+    }
   }
   if (show != "roles"){
     if (identical(show, "all")){
@@ -987,5 +987,20 @@ print.DAGassist_report <- function(x, ...) {
     
     coef_omit <- x$settings$coef_omit
     .print_model_comparison_list(mods, coef_rename = x$labels_map, coef_omit = coef_omit)
+    
+    if (identical(show, "all")) {
+      if (isTRUE(verbose)) {
+        cat(
+          "\nRoles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome\n",
+          sep = ""
+        )
+      } else {
+        cat(
+          clr_yellow(
+            "\nLegend hidden because verbose = FALSE. Re-run with verbose = TRUE to see role definitions.\n"
+          )
+        )
+      }
+    }
   }
 }

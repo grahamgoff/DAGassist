@@ -196,8 +196,8 @@
   map <- c(
     variable = "Variable",
     role = "Role",
-    is_exposure = "X",
-    is_outcome = "Y",
+    is_exposure = "Exp.",
+    is_outcome = "Out.",
     is_confounder = "CON",
     is_mediator = "MED",
     is_collider = "COL",

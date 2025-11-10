@@ -225,8 +225,9 @@
           # put legend right after the table, same size as outer group
           roles_chunk <- c(
             roles_chunk,
+            "\\noindent",
             "\\scriptsize",
-            "\\textit{Roles legend:} X (exposure); Y (outcome); CON (confounder); MED (mediator); COL (collider); dOut (proper descendant of Y); dMed (proper descendant of any mediator); dCol (proper descendant of any collider); dConfOn (descendant of a confounder on a back-door path); dConfOff (descendant of a confounder off a back-door path); NCT (neutral control on treatment); NCO (neutral control on outcome)."
+            "\\textit{Roles legend:} Exp. (exposure); Out. (outcome); CON (confounder); MED (mediator); COL (collider); dOut (proper descendant of Y); dMed (proper descendant of any mediator); dCol (proper descendant of any collider); dConfOn (descendant of a confounder on a back-door path); dConfOff (descendant of a confounder off a back-door path); NCT (neutral control on treatment); NCO (neutral control on outcome)."
           )
         }
         
@@ -301,7 +302,7 @@
             notes,
             "\\\\",
             "\\scriptsize",
-            "\\textit{Roles legend:} X (exposure); Y (outcome); CON (confounder); MED (mediator); COL (collider); dOut (proper descendant of Y); dMed (proper descendant of any mediator); dCol (proper descendant of any collider); dConfOn (descendant of a confounder on a back-door path); dConfOff (descendant of a confounder off a back-door path); NCT (neutral control on treatment); NCO (neutral control on outcome)."
+            "\\textit{Roles legend:} Exp. (exposure); Out. (outcome); CON (confounder); MED (mediator); COL (collider); dOut (proper descendant of Y); dMed (proper descendant of any mediator); dCol (proper descendant of any collider); dConfOn (descendant of a confounder on a back-door path); dConfOff (descendant of a confounder off a back-door path); NCT (neutral control on treatment); NCO (neutral control on outcome)."
           )
         }
         

@@ -66,13 +66,16 @@ This makes it possible to generate and export just roles or just comparisons.}
 \itemize{
 \item \code{type="latex"}: a \strong{LaTeX fragment} written to \code{out} (usually \code{.tex});
 when omitted, the fragment is printed to the console.
+\item \code{type="text"}/\code{"txt"}: a \strong{plain-text} file written to \code{out};
+when omitted, the report is printed to console.
+\item \code{type="dotwhisker"}/\code{"dwplot"}: a \strong{image (.png)} file written to \code{out};
+when omitted, the plot is rendered within RStudio.
 \item \code{type="docx"}/\code{"word"}: a \strong{Word (.docx)} file written to \code{out}.
 \item \code{type="excel"}/\code{"xlsx"}: an \strong{Excel (.xlsx)} file written to \code{out}.
-\item \code{type="text"}/\code{"txt"}: a \strong{plain-text} file written to \code{out}.
-Ignored for \code{type="console"} and for the plotting types.
+Ignored for \code{type="console"}.
 }}
 
-\item{imply}{Logical; default \code{FALSE}. \strong{Evaluation scope.}
+\item{imply}{Logical; default \code{FALSE}. Specifies \strong{evaluation scope.}
 \itemize{
 \item If \code{FALSE} (default): restrict DAG evaluation to variables \strong{named in the formula}
 (prune the DAG to exposure, outcome, and RHS terms). Roles/sets/bad-controls are
@@ -149,13 +152,14 @@ DAGassist preserves any \verb{| ...} tail when constructing minimal/canonical fo
 
 \strong{Roles grid.} The roles table displays short headers:
 \itemize{
-\item \code{X} (exposure), \code{Y} (outcome),
+\item \code{Exp.} (exposure),
+\item \code{Out.} (outcome),
 \item \code{CON} (confounder),
 \item \code{MED} (mediator),
 \item \code{COL} (collider),
-\item \code{dOut} (proper descendant of \code{Y}),
-\item \code{dMed} (proper descendant of any mediator),
-\item \code{dCol} (proper descendant of any collider),
+\item \code{dOut} (descendant of \code{Y}),
+\item \code{dMed} (descendant of any mediator),
+\item \code{dCol} (descendant of any collider),
 \item \code{dConfOn} (descendant of a confounder \strong{on} a back-door path),
 \item \code{dConfOff} (descendant of a confounder \strong{off} a back-door path),
 \item \code{NCT} (neutral control on treatment),
@@ -227,11 +231,10 @@ df <- data.frame(A,B,Z,X,M,Y,C)
 # generate a console DAGassist report
 DAGassist(dag = g, formula = lm(Y ~ X + Z + C + M, data = df))
 
-# generate a LaTeX DAGassist report
-\donttest{
+# generate a LaTeX DAGassist report in console
 DAGassist(dag = g, formula = lm(Y ~ X + Z + C + M, data = df),
-          type = "latex", out = file.path(tempdir(), "frag.tex"))
-}
+          type = "latex"))
+
 # generate just the roles table in the console
 DAGassist(dag = g, show = "roles")
 \dontshow{\}) # examplesIf}

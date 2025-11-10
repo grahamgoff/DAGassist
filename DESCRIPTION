@@ -1,6 +1,6 @@
 Package: DAGassist
 Title: Test Robustness with Directed Acyclic Graphs
-Version: 0.2.5
+Version: 0.3.0
 Authors@R: c(
     person("Graham", "Goff", 
       email = "goffgrahamc@gmail.com", 
@@ -12,8 +12,8 @@ Authors@R: c(
       comment = c(ORCID = "0000-0002-7074-5011"))
   )
 Maintainer: Graham Goff <goffgrahamc@gmail.com>
-Description: Provides DAG-driven robustness checks for observational studies.
-    Given a 'dagitty' directed acyclic graph (DAG) object and a model specification, 
+Description: Provides robustness checks to align estimands with the identification 
+    that they require. Given a 'dagitty' object and a model specification, 
     'DAGassist' classifies variables by causal roles, flags problematic controls, 
     and generates a report comparing the original model with minimal and canonical 
     adjustment sets. Exports publication-grade reports in 'LaTeX', 'Word', 'Excel',

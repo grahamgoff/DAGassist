@@ -48,7 +48,7 @@ vignette for a guide on using different parameters get the most out of
 DAGassist. For the purpose of this tutorial, we will keep it simple.
 
 See the [Supported
-Models](https://grahamgoff.github.io/DAGassist/articles/compatibility.html)
+Models](https://grahamgoff.github.io/DAGassist/articles/compatability.html)
 vignette for documentation on what engines `DAGassist` supports. Since
 `DAGassist` is model-agnostic, if an engine accepts a standard
 `formula + data` interface, it will usually work.

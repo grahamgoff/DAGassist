@@ -21,7 +21,7 @@ Guide](https://grahamgoff.github.io/DAGassist/articles/get-started.html)
 vignette for examples of how to get the most out of `DAGassist`.
 
 See the [Supported
-Models](https://grahamgoff.github.io/DAGassist/articles/compatibility.html)
+Models](https://grahamgoff.github.io/DAGassist/articles/compatability.html)
 vignette for documentation on what engines `DAGassist` supports.
 
 See the [Ecosystem Guide](NA) for how `DAGassist` fits in the R DAG
@@ -55,14 +55,14 @@ DAGassist::DAGassist(dag = dag_model,
 #> DAGassist Report: 
 #> 
 #> Roles:
-#> variable  role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
-#> X         exposure    x                                                                        
-#> Y         outcome           x                                                                  
-#> Z         confounder              x                                                            
-#> M         mediator                      x                                                      
-#> C         collider                           x    x     x                                      
-#> A         nco                                                                               x  
-#> B         nco                                                                               x  
+#> variable  role        X  Y  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
+#> X         exposure    x                                                                  
+#> Y         outcome        x                                                               
+#> Z         confounder        x                                                            
+#> M         mediator                x                                                      
+#> C         collider                     x    x     x                                      
+#> A         nco                                                                         x  
+#> B         nco                                                                         x  
 #> 
 #>  (!) Bad controls in your formula: {M, C}
 #> Minimal controls 1: {Z}
@@ -102,9 +102,7 @@ DAGassist::DAGassist(dag = dag_model,
 #> +===+===========+===========+===========+
 #> | + p < 0.1, * p < 0.05, ** p < 0.01,   |
 #> | *** p < 0.001                         |
-#> +===+===========+===========+===========+ 
-#> 
-#> Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome
+#> +===+===========+===========+===========+
 
 # note: this example uses a test DAG and dataset, which was created
 # silently for the sake of brevity.

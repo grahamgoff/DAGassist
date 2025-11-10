@@ -517,6 +517,12 @@ variables in <code>original</code>.</p>
 <h5 id="notes">Notes<a class="anchor" aria-label="anchor" href="#notes"></a>
 </h5>
 <ul>
+<li>Roles legend: X (exposure); Y (outcome); CON (confounder); MED
+(mediator); COL (collider); dOut (proper descendant of Y); dMed (proper
+descendant of any mediator); dCol (proper descendant of any collider);
+dConfOn (descendant of a confounder on a back-door path); dConfOff
+(descendant of a confounder off a back-door path); NCT (neutral control
+on treatment); NCO (neutral control on outcome).</li>
 <li>p-value legend: + &lt; 0.1, * &lt; 0.05, ** &lt; 0.01, *** &lt;
 0.001.</li>
 <li>Controls (minimal): {F, H}.</li>
@@ -560,7 +566,21 @@ call); no roles table is printed.</p></li>
 <span><span class="co">#&gt; C         confounder        x                                                            </span></span>
 <span><span class="co">#&gt; F         confounder        x                                                            </span></span>
 <span><span class="co">#&gt; G         nco                                                                         x  </span></span>
-<span><span class="co">#&gt; H         nco                                                 x                       x</span></span></code></pre></div>
+<span><span class="co">#&gt; H         nco                                                 x                       x  </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Roles legend:</span></span>
+<span><span class="co">#&gt;   X         = exposure</span></span>
+<span><span class="co">#&gt;   Y         = outcome</span></span>
+<span><span class="co">#&gt;   CON       = confounder</span></span>
+<span><span class="co">#&gt;   MED       = mediator</span></span>
+<span><span class="co">#&gt;   COL       = collider</span></span>
+<span><span class="co">#&gt;   dOut      = proper descendant of Y</span></span>
+<span><span class="co">#&gt;   dMed      = proper descendant of any mediator</span></span>
+<span><span class="co">#&gt;   dCol      = proper descendant of any collider</span></span>
+<span><span class="co">#&gt;   dConfOn   = descendant of a confounder on a back-door path</span></span>
+<span><span class="co">#&gt;   dConfOff  = descendant of a confounder off a back-door path</span></span>
+<span><span class="co">#&gt;   NCT       = neutral control on treatment</span></span>
+<span><span class="co">#&gt;   NCO       = neutral control on outcome</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level3">

@@ -312,6 +312,20 @@ DAGassist(dag = g, formula = lm(Y ~ X + Z + C + M, data = df))
 #> C         collider                     x    x     x                                      
 #> 
 #>  (!) Bad controls in your formula: {C, M}
+#> 
+#> Roles legend:
+#>   X         = exposure
+#>   Y         = outcome
+#>   CON       = confounder
+#>   MED       = mediator
+#>   COL       = collider
+#>   dOut      = proper descendant of Y
+#>   dMed      = proper descendant of any mediator
+#>   dCol      = proper descendant of any collider
+#>   dConfOn   = descendant of a confounder on a back-door path
+#>   dConfOff  = descendant of a confounder off a back-door path
+#>   NCT       = neutral control on treatment
+#>   NCO       = neutral control on outcome
 #> Minimal controls 1: {Z}
 #> Canonical controls: {Z}
 #> 
@@ -361,4 +375,18 @@ DAGassist(dag = g, show = "roles")
 #> C         collider                     x    x     x                                      
 #> A         nco                                                                         x  
 #> B         nco                                                                         x  
+#> 
+#> Roles legend:
+#>   X         = exposure
+#>   Y         = outcome
+#>   CON       = confounder
+#>   MED       = mediator
+#>   COL       = collider
+#>   dOut      = proper descendant of Y
+#>   dMed      = proper descendant of any mediator
+#>   dCol      = proper descendant of any collider
+#>   dConfOn   = descendant of a confounder on a back-door path
+#>   dConfOff  = descendant of a confounder off a back-door path
+#>   NCT       = neutral control on treatment
+#>   NCO       = neutral control on outcome
 ```

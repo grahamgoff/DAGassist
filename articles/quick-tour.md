@@ -110,6 +110,20 @@ DAGassist(
 #> A         nco                                                                         x  
 #> 
 #>  (!) Bad controls in your formula: {M}
+#> 
+#> Roles legend:
+#>   X         = exposure
+#>   Y         = outcome
+#>   CON       = confounder
+#>   MED       = mediator
+#>   COL       = collider
+#>   dOut      = proper descendant of Y
+#>   dMed      = proper descendant of any mediator
+#>   dCol      = proper descendant of any collider
+#>   dConfOn   = descendant of a confounder on a back-door path
+#>   dConfOff  = descendant of a confounder off a back-door path
+#>   NCT       = neutral control on treatment
+#>   NCO       = neutral control on outcome
 #> Minimal controls 1: {Z}
 #> Canonical controls: {A, Z}
 #> 

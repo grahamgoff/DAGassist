@@ -134,6 +134,12 @@ cat(readLines(out_txt), sep = "\n") # show the output
 
 ##### Notes
 
+- Roles legend: X (exposure); Y (outcome); CON (confounder); MED
+  (mediator); COL (collider); dOut (proper descendant of Y); dMed
+  (proper descendant of any mediator); dCol (proper descendant of any
+  collider); dConfOn (descendant of a confounder on a back-door path);
+  dConfOff (descendant of a confounder off a back-door path); NCT
+  (neutral control on treatment); NCO (neutral control on outcome).
 - p-value legend: + \< 0.1, \* \< 0.05, \*\* \< 0.01, \*\*\* \< 0.001.
 - Controls (minimal): {F, H}.
 - Controls (canonical): {A, B, C, F, G, H}.
@@ -169,7 +175,21 @@ DAGassist(dag = dag_model,
 #> C         confounder        x                                                            
 #> F         confounder        x                                                            
 #> G         nco                                                                         x  
-#> H         nco                                                 x                       x
+#> H         nco                                                 x                       x  
+#> 
+#> Roles legend:
+#>   X         = exposure
+#>   Y         = outcome
+#>   CON       = confounder
+#>   MED       = mediator
+#>   COL       = collider
+#>   dOut      = proper descendant of Y
+#>   dMed      = proper descendant of any mediator
+#>   dCol      = proper descendant of any collider
+#>   dConfOn   = descendant of a confounder on a back-door path
+#>   dConfOff  = descendant of a confounder off a back-door path
+#>   NCT       = neutral control on treatment
+#>   NCO       = neutral control on outcome
 ```
 
 ### Making a dot‑whisker plot of the key coefficient

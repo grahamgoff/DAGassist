@@ -144,7 +144,7 @@
 #'   \item **Minimal** - the smallest adjustment set that blocks all back-door paths
 #'         (confounders only).
 #'   \item **Canonical** - the largest permissible set: includes all controls that are not
-#'         `MED`, `COL`, `dOut`, `dMed`, or `dCol`. `other` variables may appear here.
+#'         `MED`, `COL`, `dOut`, `dMed`, or `dCol`. 
 #' }
 #'@section Errors and edge cases:
 #'  * If exposure/outcome cannot be inferred uniquely, the function stops with a clear message.

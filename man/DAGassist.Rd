@@ -199,7 +199,7 @@ and LaTeX/Word/Excel reports.
 \item \strong{Minimal} - the smallest adjustment set that blocks all back-door paths
 (confounders only).
 \item \strong{Canonical} - the largest permissible set: includes all controls that are not
-\code{MED}, \code{COL}, \code{dOut}, \code{dMed}, or \code{dCol}. \code{other} variables may appear here.
+\code{MED}, \code{COL}, \code{dOut}, \code{dMed}, or \code{dCol}.
 }
 }
 
@@ -229,14 +229,17 @@ C <- 0.5*X + 0.4*Y + rnorm(n)
 df <- data.frame(A,B,Z,X,M,Y,C)
 }
 # generate a console DAGassist report
-DAGassist(dag = g, formula = lm(Y ~ X + Z + C + M, data = df))
+DAGassist(dag = g, 
+          formula = lm(Y ~ X + Z + C + M, data = df))
 
 # generate a LaTeX DAGassist report in console
-DAGassist(dag = g, formula = lm(Y ~ X + Z + C + M, data = df),
-          type = "latex"))
+DAGassist(dag = g, 
+          formula = lm(Y ~ X + Z + C + M, data = df),
+          type = "latex")
 
 # generate just the roles table in the console
-DAGassist(dag = g, show = "roles")
+DAGassist(dag = g, 
+          show = "roles")
 \dontshow{\}) # examplesIf}
 }
 \seealso{

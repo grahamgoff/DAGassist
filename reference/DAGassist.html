@@ -216,7 +216,7 @@ and any filtered canonical formulas.</p></li>
 DAGassist extracts the engine function, formula, data argument, and any additional
 engine arguments directly from that call; these are merged with <code>engine</code>/<code>engine_args</code>
 you pass explicitly (call arguments win).</p>
-<p><strong>Fixest tails.</strong> For engines like <strong>fixest</strong> that use <code>|</code> to denote FE/IV parts,
+<p><strong>fixest tails.</strong> For engines like <strong>fixest</strong> that use <code>|</code> to denote FE/IV parts,
 DAGassist preserves any <code>| ...</code> tail when constructing minimal/canonical formulas
 (e.g., <code>Y ~ X + controls | fe | iv(...)</code>).</p>
 <p><strong>Roles grid.</strong> The roles table displays short headers:</p><ul><li><p><code>Exp.</code> (exposure),</p></li>
@@ -246,7 +246,7 @@ it uses <code>tabularray</code> long tables and will include any requested Canon
 <li><p><code>text</code>/<code>txt</code> writes a <strong>plain-text</strong> report for logs/notes.</p></li>
 <li><p><code>dwplot</code>/<code>dotwhisker</code> produces a dot-whisker visualization of the fitted models.</p></li>
 </ul><p><strong>Dependencies.</strong> Core requires <code>{dagitty}</code>. Optional enhancements: <code>{modelsummary}</code>
-(pretty tables), <code>{broom}</code> (fallback tidying), <code>{rmarkdown}</code> + <strong>Pandoc</strong> (DOCX),
+(pretty tables), <code>{broom}</code> (fallback tidying), <code>{rmarkdown}</code> + <strong>pandoc</strong> (DOCX),
 <code>{writexl}</code> (XLSX), <code>{dotwhisker}</code>/<code>{ggplot2}</code> for plotting.</p>
     </div>
     <div class="section level2">

@@ -30,7 +30,7 @@ The back-door adjustment criterion has two main components:
   effective strategy to identify a causal effect’’ ([Morgan and Winship
   2015, 116](#ref-MorganWinship2015)).
 - \`\`…if a set of conditioning variables blocks all back-door paths,
-  the analyst must then varify that no variables within the conditioning
+  the analyst must then verify that no variables within the conditioning
   set block the causal effect of interest or otherwise mistakenly adjust
   it away’’ ([Morgan and Winship 2015, 117](#ref-MorganWinship2015)).
 
@@ -40,7 +40,7 @@ that enables them to close back-door paths.
 SUTVA: “SUTVA is simply the a priori assumption that the value of Y for
 unit $u$ when exposed to treatment $t$ will be the same no matter what
 mechanism is used to assign treatment $t$ to unit $u$ and no matter what
-treatnebts the other units receive” ([Morgan and Winship 2015,
+treatments the other units receive” ([Morgan and Winship 2015,
 48](#ref-MorganWinship2015)).
 
 On ceteris paribus assumptions: “When a facile ceteris paribus

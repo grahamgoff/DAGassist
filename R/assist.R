@@ -29,9 +29,6 @@
 #'   printer (formulas + notes).
 #' @param type Output type. One of
 #'   `"console"` (default), `"latex"`/`"docx"`/`"word"`,
-#'   `"excel"`/`"xlsx"`, `"text"`/`"txt"`.
-#' @param type Output type. One of
-#'   `"console"` (default), `"latex"`/`"docx"`/`"word"`,
 #'   `"excel"`/`"xlsx"`, `"text"`/`"txt"`,
 #'   or the plotting types `"dwplot"`/`"dotwhisker"`.
 #'   For `type = "latex"`, if no `out=` is supplied, a LaTeX fragment is printed
@@ -39,11 +36,14 @@
 #' @param out Output file path for the non-console types:
 #'   * `type="latex"`: a **LaTeX fragment** written to `out` (usually `.tex`);
 #'     when omitted, the fragment is printed to the console.
+#'   * `type="text"`/`"txt"`: a **plain-text** file written to `out`;
+#'     when omitted, the report is printed to console.
+#'   * `type="dotwhisker"`/`"dwplot"`: a **image (.png)** file written to `out`;
+#'     when omitted, the plot is rendered within RStudio.
 #'   * `type="docx"`/`"word"`: a **Word (.docx)** file written to `out`.
 #'   * `type="excel"`/`"xlsx"`: an **Excel (.xlsx)** file written to `out`.
-#'   * `type="text"`/`"txt"`: a **plain-text** file written to `out`.
-#'   Ignored for `type="console"` and for the plotting types.
-#' @param imply Logical; default `FALSE`. **Evaluation scope.**
+#'   Ignored for `type="console"`.
+#' @param imply Logical; default `FALSE`. Specifies **evaluation scope.**
 #'   - If `FALSE` (default): restrict DAG evaluation to variables **named in the formula**
 #'     (prune the DAG to exposure, outcome, and RHS terms). Roles/sets/bad-controls are
 #'     computed on this pruned graph, and the roles table **only** shows those variables.
@@ -82,13 +82,14 @@
 #' (e.g., `Y ~ X + controls | fe | iv(...)`).
 #'
 #' **Roles grid.** The roles table displays short headers:
-#'   - `X` (exposure), `Y` (outcome),
+#'   - `Exp.` (exposure), 
+#'   - `Out.` (outcome),
 #'   - `CON` (confounder),
 #'   - `MED` (mediator),
 #'   - `COL` (collider),
-#'   - `dOut` (proper descendant of `Y`),
-#'   - `dMed` (proper descendant of any mediator),
-#'   - `dCol` (proper descendant of any collider),
+#'   - `dOut` (descendant of `Y`),
+#'   - `dMed` (descendant of any mediator),
+#'   - `dCol` (descendant of any collider),
 #'   - `dConfOn` (descendant of a confounder **on** a back-door path),
 #'   - `dConfOff` (descendant of a confounder **off** a back-door path),
 #'   - `NCT` (neutral control on treatment),
@@ -143,7 +144,7 @@
 #'   \item **Minimal** - the smallest adjustment set that blocks all back-door paths
 #'         (confounders only).
 #'   \item **Canonical** - the largest permissible set: includes all controls that are not
-#'         `MED`, `COL`, `dOut`, `dMed`, or `dCol`. `other` variables may appear here.
+#'         `MED`, `COL`, `dOut`, `dMed`, or `dCol`. 
 #' }
 #'@section Errors and edge cases:
 #'  * If exposure/outcome cannot be inferred uniquely, the function stops with a clear message.
@@ -169,15 +170,17 @@
 #' df <- data.frame(A,B,Z,X,M,Y,C)
 #' }
 #' # generate a console DAGassist report
-#' DAGassist(dag = g, formula = lm(Y ~ X + Z + C + M, data = df))
+#' DAGassist(dag = g, 
+#'           formula = lm(Y ~ X + Z + C + M, data = df))
 #'
-#' # generate a LaTeX DAGassist report
-#' \donttest{
-#' DAGassist(dag = g, formula = lm(Y ~ X + Z + C + M, data = df),
-#'           type = "latex", out = file.path(tempdir(), "frag.tex"))
-#' }
+#' # generate a LaTeX DAGassist report in console
+#' DAGassist(dag = g, 
+#'           formula = lm(Y ~ X + Z + C + M, data = df),
+#'           type = "latex")
+#' 
 #' # generate just the roles table in the console
-#' DAGassist(dag = g, show = "roles")
+#' DAGassist(dag = g, 
+#'           show = "roles")
 #' @export
 
 DAGassist <- function(dag, 
@@ -294,7 +297,8 @@ DAGassist <- function(dag,
         min_sets = report$controls_minimal_all,
         canon = report$controls_canonical,
         unevaluated_str= report$unevaluated_str,
-        show = show
+        show = show,
+        verbose = verbose
       )
       
       if (!is.null(out)) {
@@ -313,14 +317,15 @@ DAGassist <- function(dag,
     
     if (type %in% c("docx","word")) {
       res_min <- list(
-        roles_df       = report$roles_display,
-        coef_omit      = report$settings$coef_omit,
-        coef_rename    = labmap,
-        models         = mods_full,
-        min_sets       = report$controls_minimal_all,
-        canon          = report$controls_canonical,
+        roles_df= report$roles_display,
+        coef_omit = report$settings$coef_omit,
+        coef_rename = labmap,
+        models = mods_full,
+        min_sets = report$controls_minimal_all,
+        canon = report$controls_canonical,
         unevaluated_str= report$unevaluated_str,
-        show           = show
+        show = show,
+        verbose = verbose
       )
       .report_docx(res_min, out)
       return(invisible(structure(report, file = file_attr)))
@@ -328,14 +333,15 @@ DAGassist <- function(dag,
     
     if (type %in% c("excel","xlsx")) {
       res_min <- list(
-        roles_df       = report$roles_display,
-        coef_omit      = report$settings$coef_omit,
-        coef_rename    = labmap,
-        models         = mods_full,
-        min_sets       = report$controls_minimal_all,
-        canon          = report$controls_canonical,
+        roles_df = report$roles_display,
+        coef_omit = report$settings$coef_omit,
+        coef_rename = labmap,
+        models = mods_full,
+        min_sets = report$controls_minimal_all,
+        canon = report$controls_canonical,
         unevaluated_str= report$unevaluated_str,
-        show           = show
+        show = show,
+        verbose=verbose
       )
       .report_xlsx(res_min, out)
       return(invisible(structure(report, file = file_attr)))
@@ -343,14 +349,15 @@ DAGassist <- function(dag,
     
     if (type %in% c("text","txt")) {
       res_min <- list(
-        roles_df       = report$roles_display,
-        coef_omit      = report$settings$coef_omit,
-        coef_rename    = labmap,
-        models         = mods_full,
-        min_sets       = report$controls_minimal_all,
-        canon          = report$controls_canonical,
+        roles_df= report$roles_display,
+        coef_omit = report$settings$coef_omit,
+        coef_rename = labmap,
+        models = mods_full,
+        min_sets = report$controls_minimal_all,
+        canon = report$controls_canonical,
         unevaluated_str= report$unevaluated_str,
-        show           = show
+        show = show,
+        verbose=verbose
       )
       .report_txt(res_min, out)
       return(invisible(structure(report, file = file_attr)))
@@ -669,7 +676,8 @@ DAGassist <- function(dag,
       min_sets = report$controls_minimal_all,
       canon = report$controls_canonical,
       unevaluated_str = report$unevaluated_str,
-      show = show
+      show = show,
+      verbose=verbose
     )
     
     if (!is.null(out)) {
@@ -700,7 +708,8 @@ DAGassist <- function(dag,
       min_sets = report$controls_minimal_all,
       canon = report$controls_canonical,
       unevaluated_str = report$unevaluated_str,
-      show = show
+      show = show,
+      verbose=verbose
     )
     return(.report_docx(res_min, out))
   }
@@ -715,7 +724,8 @@ DAGassist <- function(dag,
       min_sets = report$controls_minimal_all,
       canon = report$controls_canonical,
       unevaluated_str = report$unevaluated_str,
-      show = show
+      show = show,
+      verbose=verbose
     )
     .report_xlsx(res_min, out)
     return(invisible(structure(report, file = normalizePath(out, mustWork = FALSE))))
@@ -731,10 +741,17 @@ DAGassist <- function(dag,
       min_sets = report$controls_minimal_all,
       canon = report$controls_canonical,
       unevaluated_str = report$unevaluated_str,
-      show = show
+      show = show,
+      verbose=verbose
     )
-    .report_txt(res_min, out)
-    return(invisible(structure(report, file = normalizePath(out, mustWork = FALSE))))
+    if (is.null(out)) {
+      # console text output support
+      .report_txt(res_min, out = NULL)
+      return(invisible(report))
+    } else {
+      .report_txt(res_min, out)
+      return(invisible(structure(report, file = normalizePath(out, mustWork = FALSE))))
+    }
   }
   
   ##### DOTWHISKER OUT BRANCH #####
@@ -808,8 +825,23 @@ print.DAGassist_report <- function(x, ...) {
                        "\n", sep = ""))
       }
     }
+    
+    # if we're only showing roles (no comparison table), print legend here
+    if (!identical(x$settings$show, "all") && !identical(x$settings$show, "models")) {
+      if (isTRUE(verbose)) {
+        cat(
+          "\nRoles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome\n",
+          sep = ""
+        )
+      } else {
+        cat(
+          clr_yellow(
+            "\nLegend hidden because verbose = FALSE. Re-run with verbose = TRUE to see role definitions.\n"
+          )
+        )
+      }
+    }
   }
-  
   if (show != "roles"){
     if (identical(show, "all")){
       # compare adjustment sets
@@ -958,5 +990,20 @@ print.DAGassist_report <- function(x, ...) {
     
     coef_omit <- x$settings$coef_omit
     .print_model_comparison_list(mods, coef_rename = x$labels_map, coef_omit = coef_omit)
+    
+    if (identical(show, "all")) {
+      if (isTRUE(verbose)) {
+        cat(
+          "\nRoles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome\n",
+          sep = ""
+        )
+      } else {
+        cat(
+          clr_yellow(
+            "\nLegend hidden because verbose = FALSE. Re-run with verbose = TRUE to see role definitions.\n"
+          )
+        )
+      }
+    }
   }
 }

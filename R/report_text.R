@@ -1,8 +1,7 @@
 # R/report_text.R — minimal & readable
 
 .report_txt <- function(res, out) {
-  if (is.null(out) || !nzchar(out)) stop("type='text' requires `out=`.", call. = FALSE)
-  
+
   roles <- tryCatch(res$roles_df, error = function(e) NULL)
   mods  <- tryCatch(res$models,    error = function(e) NULL)
   msets <- tryCatch(res$min_sets,  error = function(e) list())
@@ -10,7 +9,7 @@
   cmap  <- tryCatch(res$coef_rename, error = function(e) NULL)  
   show <- tryCatch(res$show, error = function(e) "all")
   
-  lines <- c("DAGassist Report:", "")
+  lines <- c("## DAGassist Report:", "")
   
   #use pretty roles x grid if available. else, print bool stacks
   if (show != "models" && is.data.frame(roles) && nrow(roles)) {
@@ -24,7 +23,7 @@
                                            coef_rename = cmap,
                                            coef_omit = res$coef_omit)
     if (!is.null(built$df) && nrow(built$df)) {
-      lines <- c(lines, "## Models", "", .df_to_md_pipe(built$df), "")
+      lines <- c(lines, "### Models", "", .df_to_md_pipe(built$df), "")
     }
   }
 
@@ -42,8 +41,21 @@
     }
   }
   
-  lines <- c(lines, "## Notes", "", paste0("- ", notes), "")
+  if (isTRUE(res$verbose) && show != "models") {
+    notes <- c(
+      "Roles legend: X (exposure); Y (outcome); CON (confounder); MED (mediator); COL (collider); dOut (proper descendant of Y); dMed (proper descendant of any mediator); dCol (proper descendant of any collider); dConfOn (descendant of a confounder on a back-door path); dConfOff (descendant of a confounder off a back-door path); NCT (neutral control on treatment); NCO (neutral control on outcome).",
+      notes
+    )
+  }
   
-  writeLines(lines, out, useBytes = TRUE)
-  invisible(out)
+  lines <- c(lines, "#### Notes", "", paste0("- ", notes), "")
+  
+  if (is.null(out)) {
+    cat(paste(lines, collapse = "\n"), "\n")
+    invisible(NULL)
+  } else {
+    dir.create(dirname(out), recursive = TRUE, showWarnings = FALSE)
+    writeLines(lines, out, useBytes = TRUE)
+    invisible(out)
+  }
 }

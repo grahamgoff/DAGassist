@@ -1,6 +1,6 @@
 ############################ INTERNAL HELPERS ##################################
 # talltblr to longtblr 
-.to_longtblr <- function(x) {
+.to_longtblr <- function(x, keep_toprule = FALSE) {
   # strip float wrappers/centering
   x <- gsub("\\\\begin\\{table\\}(\\[[^\\]]*\\])?\\s*", "", x, perl = TRUE)
   x <- gsub("\\\\end\\{table\\}\\s*", "", x, perl = TRUE)
@@ -34,8 +34,10 @@
   # flexible columns
   x <- gsub("Q\\[", "X[", x, perl = TRUE)
   
-  # optional: align the look by removing the second table's top rule
-  x <- sub("\\\\toprule", "", x, perl = TRUE)
+  # <-- only remove \toprule in the default case
+  if (!keep_toprule) {
+    x <- sub("\\\\toprule", "", x, perl = TRUE)
+  }
   
   x
 }
@@ -49,7 +51,11 @@
   x
 }
 
-.df_to_longtable_centered <- function(df, raw_cols = character()) {
+.df_to_longtable_centered <- function(df,
+                                      raw_cols = character(),
+                                      caption = "DAGassist Report:",
+                                      label = "tab:dagassist") {
+  
   stopifnot(is.data.frame(df))
   df2 <- df
   
@@ -107,7 +113,8 @@
     "\\begingroup\\setlength{\\emergencystretch}{3em}",
     # small colsep so center columns "touch" visually
     "% needs \\usepackage{graphicx} for \\rotatebox",
-    "\\begin{longtblr}[presep=0pt, postsep=0pt, caption={DAGassist Report:}, label={tab:dagassist}]%",
+    sprintf("\\begin{longtblr}[presep=0pt, postsep=0pt, caption={%s}, label={%s}]%%",
+            caption, label),
     #modified to prevent x overlap
     sprintf("{width=\\textwidth,colsep=1.5pt,rowsep=0pt,abovesep=0pt,belowsep=0pt,column{3}={colsep=6pt},colspec={%s}}", colspec),
     "\\toprule",
@@ -126,42 +133,60 @@
   paste0("{", paste(.tex_escape(s), collapse = ", "), "}")
 }
 
-.msummary_to_longtable_centered <- function(mods, coef_rename=NULL, coef_omit=NULL) {
+.msummary_to_longtable_centered <- function(mods,
+                                            coef_rename = NULL,
+                                            coef_omit   = NULL,
+                                            models_only = FALSE) {
   if (!requireNamespace("modelsummary", quietly = TRUE)) {
     return(c("% modelsummary not installed; skipping model comparison"))
   }
   
-  #build a modelsummary map: names = raw coef names, values = labels
-  #this is similar to just running coef_rename but it deals with escape
+  # build rename map
   cm <- NULL
   if (length(coef_rename)) {
-    #manually escape to avoid issues
     esc <- function(s) gsub("([%_&#{}~^$\\\\])", "\\\\\\1", s, perl = TRUE)
-    #escape is false in the modelsummary spec to allow manual \mbox 
-    #we need \mbox to avoid weird auto line breaks in long labels
     nowrap <- function(s) paste0("\\mbox{", esc(s), "}")
     vals <- vapply(unname(coef_rename), nowrap, character(1))
     names(vals) <- names(coef_rename)
     cm <- vals
   }
   
-  #suppress the once-per-session warning about siunitx
   out <- suppressWarnings(
     modelsummary::modelsummary(
       mods,
-      output = "latex",
-      stars = TRUE,
-      escape = FALSE,
+      output   = "latex",
+      stars    = TRUE,
+      escape   = FALSE,
       gof_omit = "IC|Log|Adj|Pseudo|AIC|BIC|F$|RMSE$|Within|Between|Std|sigma",
       booktabs = TRUE,
-      coef_omit = coef_omit,    
-      coef_rename=cm
+      coef_omit   = coef_omit,
+      coef_rename = cm
     )
   )
-  # Coerce to single string
+  
   out <- paste(as.character(out), collapse = "\n")
-  out <- .to_longtblr(out)
-  strsplit(out, "\n")[[1]]
+  # keep the top rule ONLY if this is models-only
+  out <- .to_longtblr(out, keep_toprule = models_only)
+  lines <- strsplit(out, "\n")[[1]]
+  
+  if (models_only) {
+    # line where the longtblr actually starts
+    start_idx <- grep("^\\\\begin\\{longtblr\\}\\[", lines)
+    if (length(start_idx)) {
+      # find the line (at or after start_idx) that actually closes the [...] block
+      end_idx <- which(grepl("\\]", lines))
+      end_idx <- end_idx[end_idx >= start_idx[1]][1]  # first ] after begin{longtblr}[
+      if (length(end_idx) && !is.na(end_idx)) {
+        lines[end_idx] <- sub(
+          "\\]",
+          ", caption={DAGassist Model Comparison}, label={tab:dagassist-models}]",
+          lines[end_idx]
+        )
+      }
+    }
+  }
+  
+  lines
 }
 
 ################################################################################
@@ -187,16 +212,48 @@
     "\\begingroup\\footnotesize",
     {
       if (show != "models" && is.data.frame(roles) && nrow(roles)) {
-        c(.df_to_longtable_centered(.roles_pretty(roles)),
-          "% no vertical glue between tables",
-          "\\nointerlineskip")
+        
+        cap <- if (identical(show, "roles")) "DAGassist Roles Table" else "DAGassist Report:"
+        
+        roles_chunk <- .df_to_longtable_centered(
+          .roles_pretty(roles),
+          caption = cap,
+          label   = "tab:dagassist"
+        )
+        
+        if (identical(show, "roles") && isTRUE(res$verbose)) {
+          # put legend right after the table, same size as outer group
+          roles_chunk <- c(
+            roles_chunk,
+            "\\noindent",
+            "\\scriptsize",
+            "\\textit{Roles legend:} Exp. (exposure); Out. (outcome); CON (confounder); MED (mediator); COL (collider); dOut (proper descendant of Y); dMed (proper descendant of any mediator); dCol (proper descendant of any collider); dConfOn (descendant of a confounder on a back-door path); dConfOff (descendant of a confounder off a back-door path); NCT (neutral control on treatment); NCO (neutral control on outcome)."
+          )
+        }
+        
+        if (identical(show, "roles")) {
+          # if show=roles return just the roles and legend 
+          roles_chunk
+        } else {
+          #if full report keep the glue so models table sits under it
+          c(
+            roles_chunk,
+            "% no vertical glue between tables",
+            "\\nointerlineskip"
+          )
+        }
+        
       } else character(0)
     },
     {
-      if (show != "roles" && !is.null(mods)) .msummary_to_longtable_centered(mods, 
-                                                          coef_rename=res$coef_rename,
-                                                          coef_omit = res$coef_omit) 
-      else character(0)
+      if (show != "roles" && !is.null(mods)) {
+        .msummary_to_longtable_centered(
+          mods,
+          coef_rename = res$coef_rename,
+          coef_omit   = res$coef_omit,
+          models_only = identical(show, "models")
+        )
+      } else character(0)
     },
     "\\par\\endgroup",
     #adtocounter reduces the table ref number by one because there are two 
@@ -207,33 +264,50 @@
       "\\addtocounter{table}{-1}"
     }else character(0),
     {
-      notes <- c(
-        "\\vspace{1em}",
-        "\\footnotesize"
-      )
-      
-      if (show != "roles") {
-        msets <- tryCatch(res$min_sets, error = function(e) list())
-        canon <- tryCatch(res$canon,    error = function(e) character(0))
-        min_str   <- if (length(msets)) .set_brace(msets[[1]]) else "{}"
-        canon_str <- .set_brace(canon)
-        
+      # roles-only: we've already printed the legend right after the table,
+      # so we don't need a global notes section
+      if (identical(show, "roles")) {
+        character(0)
+      } else {
         notes <- c(
-          notes,
-          paste0("\\textit{Controls (minimal):} ",   min_str,   "\\\\"),
-          paste0("\\textit{Controls (canonical):} ", canon_str)
+          "\\vspace{1em}",
+          "\\footnotesize"
         )
         
-        if (!is.null(res$unevaluated_str) && nzchar(res$unevaluated_str)) {
+        if (show != "roles") {
+          msets <- tryCatch(res$min_sets, error = function(e) list())
+          canon <- tryCatch(res$canon,    error = function(e) character(0))
+          min_str <- if (length(msets)) .set_brace(msets[[1]]) else "{}"
+          canon_str <- .set_brace(canon)
+          
           notes <- c(
             notes,
-            sprintf("\\textit{Unevaluated regressors (not in DAG):} {%s}",
-                    .tex_escape(res$unevaluated_str))
+            paste0("\\noindent\\textit{Controls (minimal):} ", min_str, "\\\\"),
+            paste0("\\textit{Controls (canonical):} ", canon_str)
+          )
+          
+          if (!is.null(res$unevaluated_str) && nzchar(res$unevaluated_str)) {
+            notes <- c(
+              notes,
+              sprintf("\\textit{Unevaluated regressors (not in DAG):} {%s}",
+                      .tex_escape(res$unevaluated_str))
+            )
+          }
+        }
+        
+        #  for full report add legend at the end
+        if (isTRUE(res$verbose) &&
+            !identical(show, "models")) {
+          notes <- c(
+            notes,
+            "\\\\",
+            "\\scriptsize",
+            "\\textit{Roles legend:} Exp. (exposure); Out. (outcome); CON (confounder); MED (mediator); COL (collider); dOut (proper descendant of Y); dMed (proper descendant of any mediator); dCol (proper descendant of any collider); dConfOn (descendant of a confounder on a back-door path); dConfOff (descendant of a confounder off a back-door path); NCT (neutral control on treatment); NCO (neutral control on outcome)."
           )
         }
+        
+        notes
       }
-      
-      notes  # always return a character vector, irrespective of show param
     }
   )
   

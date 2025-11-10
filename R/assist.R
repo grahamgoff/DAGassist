@@ -170,14 +170,17 @@
 #' df <- data.frame(A,B,Z,X,M,Y,C)
 #' }
 #' # generate a console DAGassist report
-#' DAGassist(dag = g, formula = lm(Y ~ X + Z + C + M, data = df))
+#' DAGassist(dag = g, 
+#'           formula = lm(Y ~ X + Z + C + M, data = df))
 #'
 #' # generate a LaTeX DAGassist report in console
-#' DAGassist(dag = g, formula = lm(Y ~ X + Z + C + M, data = df),
+#' DAGassist(dag = g, 
+#'           formula = lm(Y ~ X + Z + C + M, data = df),
 #'           type = "latex")
 #' 
 #' # generate just the roles table in the console
-#' DAGassist(dag = g, show = "roles")
+#' DAGassist(dag = g, 
+#'           show = "roles")
 #' @export
 
 DAGassist <- function(dag, 

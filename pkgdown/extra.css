@@ -28,3 +28,15 @@ pre code {
   background-color: #ffffff !important;
   color: #000000 !important;
 }
+
+/* only bump the GitHub icon, not the whole navbar */
+.navbar .nav-link[aria-label="GitHub"] .fab.fa-github {
+  font-size: 1.6rem;   /* adjust to taste */
+  line-height: 1;      /* keep it tight so it doesn't stretch vertically */
+}
+
+/* optional: keep the link itself from adding extra padding/height */
+.navbar .nav-link[aria-label="GitHub"] {
+  padding-top: 0.4rem;
+  padding-bottom: 0.4rem;
+}

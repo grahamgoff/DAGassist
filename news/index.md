@@ -2,6 +2,8 @@
 
 ## DAGassist v0.2.7
 
+CRAN release: 2025-11-11
+
 #### Highlights
 
 - Fixed broken link in vignette for CRAN resubmission

@@ -11,3 +11,7 @@
 ## Changes
 * Updated Authors@R to reflect current authors
 * Package changes listed in NEWS.md
+
+## Notes
+* The word “estimands” in DESCRIPTION is a causal inference term and is used intentionally.
+* The previous submission (0.2.6) was withdrawn at my request after CRAN reported the 404; this version contains the corrected links.

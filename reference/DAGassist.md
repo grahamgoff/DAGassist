@@ -29,6 +29,7 @@ DAGassist(
   omit_intercept = TRUE,
   omit_factors = TRUE,
   bivariate = FALSE,
+  estimand = c("none", "ATE", "ATT"),
   engine_args = list()
 )
 ```
@@ -160,6 +161,15 @@ DAGassist(
   Logical; if `TRUE`, include a bivariate (exposure-only) specification
   in the comparison table **in addition** to the user's original and
   DAG-derived models.
+
+- estimand:
+
+  Character; causal estimand for **binary treatments**. Currently only
+  supported for `type = "console"`. One of `"none"` (default), `"ATE"`,
+  or `"ATT"`. When `"ATE"` or `"ATT"`, the console print method will
+  attempt to compute inverse-probability weights via the WeightIt
+  package and add weighted versions of each comparison model as
+  additional columns.
 
 - engine_args:
 

@@ -68,6 +68,7 @@ XLSX, plain text). It also supports passing a <strong>single engine call</strong
 <span>  omit_intercept <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  omit_factors <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  bivariate <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  estimand <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"none"</span>, <span class="st">"ATE"</span>, <span class="st">"ATT"</span><span class="op">)</span>,</span>
 <span>  engine_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -183,6 +184,14 @@ This parameter only suppresses factor <strong>output</strong>–they are still i
 <dt id="arg-bivariate">bivariate<a class="anchor" aria-label="anchor" href="#arg-bivariate"></a></dt>
 <dd><p>Logical; if <code>TRUE</code>, include a bivariate (exposure-only) specification
 in the comparison table <strong>in addition</strong> to the user's original and DAG-derived models.</p></dd>
+
+
+<dt id="arg-estimand">estimand<a class="anchor" aria-label="anchor" href="#arg-estimand"></a></dt>
+<dd><p>Character; causal estimand for <strong>binary treatments</strong>. Currently only
+supported for <code>type = "console"</code>. One of <code>"none"</code> (default), <code>"ATE"</code>, or <code>"ATT"</code>.
+When <code>"ATE"</code> or <code>"ATT"</code>, the console print method will attempt to compute
+inverse-probability weights via the <span class="pkg">WeightIt</span> package and add weighted
+versions of each comparison model as additional columns.</p></dd>
 
 
 <dt id="arg-engine-args">engine_args<a class="anchor" aria-label="anchor" href="#arg-engine-args"></a></dt>

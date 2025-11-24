@@ -1,11 +1,23 @@
-# R/weights.R — estimand recovery helpers (internal)
-# Binary exposures only; console output only.
+# weights.R
+#
+# Estimand recovery helpers
+#
+# These helpers add optional estimand recovery to DAGassist console output.
+# When the user sets `estimand = "ATE"` or `"ATT"` (and `type = "console"`),
+# DAGassist will:
+#   - Pick a set of controls from the report (canonical → minimal → fallback),
+#   - Use WeightIt to fit a binary treatment model and compute IPW weights,
+#   - Re-fit each comparison model with those weights, and
+#   - Append the weighted models as extra columns in the console table
+#      (e.g., "Original (ATE)", "Minimal 1 (ATE)", "Canonical (ATE)", ...).
+#
+# Design choices:
+#   - Binary exposures only (0/1 or two-level factors),
+#   - Console output only (no LaTeX/Word/Excel integration yet),
+#   - WeightIt is optional; if it isn't installed, we fail with a clear message.
 
-# Internal: map a model column name to its formula in a DAGassist_report
+# support multicolumn weight output
 .dagassist_formula_for_model_name <- function(x, model_name) {
-  # x is a DAGassist_report
-  
-  # 1) Core specs
   if (identical(model_name, "Original")) {
     return(x$formulas$original)
   }
@@ -19,7 +31,7 @@
     if (!is.na(idx) && length(x$formulas$minimal_list) >= idx) {
       return(x$formulas$minimal_list[[idx]])
     }
-    # fallback: single minimal formula
+    # Fallback: single minimal formula
     return(x$formulas$minimal)
   }
   
@@ -27,11 +39,11 @@
     return(x$formulas$canonical)
   }
   
-  # 2) Canonical with exclusions (Canon. (-NCT), Canon. (-NCO), etc.)
+  # Canonical with exclusions (e.g., "Canon. (-NCT)", "Canon. (-NCO)", ...)
   cex <- x$formulas$canonical_excl
   if (!is.null(cex)) {
     if (is.list(cex)) {
-      # new style: list(nco = <fml>, nct = <fml>, ...)
+      # New style: list(nco = <fml>, nct = <fml>, ...)
       for (nm in names(cex)) {
         lbl <- switch(
           nm,
@@ -42,129 +54,166 @@
         if (identical(lbl, model_name)) return(cex[[nm]])
       }
     } else {
-      # old style: single canonical_excl
-      # All labels ("Canon. (-NCT)", etc.) map to same formula
+      # Old style: single canonical_excl
+      # All labels ("Canon. (-NCT)", etc.) map to the same formula
       return(cex)
     }
   }
   
+  # If we get here, we couldn't match the label to a stored formula
   NULL
 }
 
-# Internal: choose controls for the treatment model
+# Choose controls for the treatment model
 .dagassist_treatment_controls <- function(x, exposure) {
-  # Prefer canonical controls if available
+  # find control set for the treatment model:
+  #   - Prefer canonical controls
+  #   - Otherwise use the first minimal set
+  #   - Otherwise fall back to the original controls (excluding exposure/outcome)
+  
   controls <- x$controls_canonical
   if (length(controls)) {
     controls <- unname(controls)
   } else {
-    # fall back to the first minimal set, then to collapsed minimal
     if (length(x$controls_minimal_all)) {
       controls <- x$controls_minimal_all[[1L]]
     } else if (length(x$controls_minimal)) {
       controls <- x$controls_minimal
     } else {
-      # last resort: RHS of original, minus exposure/outcome
+      # Last resort: RHS of original formula, minus exposure and outcome
       rhs <- .rhs_terms_safe(x$formulas$original)
       out <- get_by_role(x$roles, "outcome")
       controls <- setdiff(rhs, c(exposure, out))
     }
   }
-  
-  # keep only variables actually in the data
+  # keep only variables that are actually present in the data
   controls <- intersect(controls, names(x$.__data))
   unique(controls)
 }
 
-# Internal: add weighted versions of each model column (ATE/ATT) using WeightIt
+# Add weighted versions of each model column (ATE/ATT) using WeightIt
 .dagassist_add_weighted_models <- function(x, mods) {
-  # x: DAGassist_report
-  # mods: named list of fitted models (Original, Minimal 1, Canonical, ...)
-  
   est <- x$settings$estimand
   if (is.null(est) || identical(est, "none")) {
     return(mods)
   }
   
-  # require WeightIt
+  # WeightIt is an optional dependency. fail early with a friendly message
   if (!requireNamespace("WeightIt", quietly = TRUE)) {
     stop(
       "Estimand recovery (estimand = '", est, "') requires the 'WeightIt' package.\n",
-      "Please install WeightIt or set estimand = 'none'.",
+      "To keep DAGassist lightweight, WeightIt is not installed by default.\n",
+      "Please install it (e.g., install.packages('WeightIt')) or set estimand = 'none'.",
       call. = FALSE
     )
   }
   
   data <- x$.__data
   if (is.null(data)) {
-    stop("Original data not available in report; estimand recovery requires DAGassist() to be called with `data=`.", call. = FALSE)
+    stop(
+      "Original data not found on the report object.\n",
+      "Estimand recovery requires calling DAGassist() with the `data` argument.",
+      call. = FALSE
+    )
   }
   
-  # exposure name from roles
   exp_nm <- get_by_role(x$roles, "exposure")
-  if (is.na(exp_nm) || !nzchar(exp_nm)) {
-    stop("Could not identify a unique exposure node; estimand recovery requires a single exposure.", call. = FALSE)
-  }
-  if (!exp_nm %in% names(data)) {
-    stop("Exposure variable '", exp_nm, "' not found in data; cannot compute weights.", call. = FALSE)
+  
+  # only support a single binary exposure for estimand recovery. this will mostly
+  # apply to diff in diff. may need to add support to picking one exposure to 
+  # weight on (likely, the non-time one) after researching
+  if (length(exp_nm) != 1L || is.na(exp_nm) || !nzchar(exp_nm)) {
+    stop(
+      "Estimand recovery currently supports exactly one exposure node.\n",
+      "DAGassist found ", length(exp_nm), " exposure nodes in the DAG.\n\n",
+      "Please either:\n",
+      "  * simplify the DAG to a single exposure for this call, or\n",
+      "  * set `estimand = \"none\"`.\n",
+      call. = FALSE
+    )
   }
   
-  # binary check: allow 0/1 numeric or 2-level factor
+  if (!exp_nm %in% names(data)) {
+    stop(
+      "Exposure variable '", exp_nm, "' was identified in the DAG but not found in `data`.\n",
+      "Please check that the DAG node names and data column names match.",
+      call. = FALSE
+    )
+  }
+  
+  # check for binary: allow 0/1 numeric or a two-level factor
   Tvar <- data[[exp_nm]]
   if (is.factor(Tvar)) {
     if (nlevels(Tvar) != 2L) {
-      stop("Estimand recovery currently supports only binary exposures (2-level factor).", call. = FALSE)
+      stop(
+        "Estimand recovery currently supports only binary exposures.\n",
+        "The exposure '", exp_nm, "' is a factor with ", nlevels(Tvar),
+        " levels. Please recode it to a two-level factor or 0/1 numeric,\n",
+        "or set `estimand = \"none\"`.",
+        call. = FALSE
+      )
     }
   } else {
     uniq <- sort(unique(stats::na.omit(Tvar)))
     if (!all(uniq %in% c(0, 1))) {
-      stop("Estimand recovery currently supports only binary exposures coded 0/1 (or a 2-level factor).", call. = FALSE)
+      stop(
+        "Estimand recovery currently supports only binary exposures coded 0/1\n",
+        "(or a two-level factor). The exposure '", exp_nm,
+        "' took the values: ", paste(uniq, collapse = ", "), ".\n",
+        "Please recode it or set `estimand = \"none\"`.",
+        call. = FALSE
+      )
     }
   }
   
-  # choose controls for treatment model
+  # choose controls for the treatment model
   controls <- .dagassist_treatment_controls(x, exp_nm)
   
-  # build treatment formula
+  # build treatment model: exposure ~ controls
   if (length(controls)) {
-    rhs <- paste(controls, collapse = " + ")
+    rhs    <- paste(controls, collapse = " + ")
     f_treat <- stats::as.formula(paste(exp_nm, "~", rhs))
   } else {
+    # no controls: simple treated vs not-treated
     f_treat <- stats::as.formula(paste(exp_nm, "~ 1"))
   }
   
-  # compute weights via WeightIt
+  # Compute weights via WeightIt
   wtobj <- WeightIt::weightit(
     formula  = f_treat,
     data     = data,
     method   = "ps",
     estimand = est
   )
+  
   w <- wtobj$weights
   if (length(w) != nrow(data)) {
     stop(
-      "WeightIt returned weights of length ", length(w),
-      " for data with ", nrow(data), " rows.",
+      "WeightIt returned ", length(w), " weights for data with ",
+      nrow(data), " rows.\n",
+      "Please inspect the WeightIt object and your treatment model.",
       call. = FALSE
     )
   }
   
   # engine and engine_args from DAGassist() call, stored in settings
-  engine      <- x$settings$engine
+  engine <- x$settings$engine
   engine_args <- x$settings$engine_args
+  
   if (is.null(engine)) {
     stop(
-      "Modeling engine not found on report object.\n",
+      "Modeling engine not found on the report object.\n",
       "Please ensure DAGassist() stores `engine` in report$settings.",
       call. = FALSE
     )
   }
+  
   if (!is.list(engine_args)) engine_args <- list()
   
-  # we want engine_args + weights; weights should override if already present
+  # add weights to engine_args (weights override any existing entry)
   engine_args_w <- utils::modifyList(engine_args, list(weights = w))
   
-  # fit weighted versions for each model using same formula + data + engine
+  # fit weighted versions for each model using the same engine 
   weighted_mods <- list()
   for (nm in names(mods)) {
     fml <- .dagassist_formula_for_model_name(x, nm)
@@ -173,7 +222,6 @@
     weighted_mods[[nm]] <- fit_w
   }
   
-  # interleave: Original, Original (ATE), Minimal 1, Minimal 1 (ATE), etc.
   est_label <- paste0(" (", est, ")")
   mods_out  <- list()
   

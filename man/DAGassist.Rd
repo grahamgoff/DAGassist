@@ -23,6 +23,7 @@ DAGassist(
   omit_intercept = TRUE,
   omit_factors = TRUE,
   bivariate = FALSE,
+  estimand = c("none", "ATE", "ATT"),
   engine_args = list()
 )
 }
@@ -105,6 +106,12 @@ This parameter only suppresses factor \strong{output}--they are still included i
 
 \item{bivariate}{Logical; if \code{TRUE}, include a bivariate (exposure-only) specification
 in the comparison table \strong{in addition} to the user's original and DAG-derived models.}
+
+\item{estimand}{Character; causal estimand for \strong{binary treatments}. Currently only
+supported for \code{type = "console"}. One of \code{"none"} (default), \code{"ATE"}, or \code{"ATT"}.
+When \code{"ATE"} or \code{"ATT"}, the console print method will attempt to compute
+inverse-probability weights via the \pkg{WeightIt} package and add weighted
+versions of each comparison model as additional columns.}
 
 \item{engine_args}{Named list of extra arguments forwarded to \code{engine(...)}.
 If \code{formula} is an engine call, arguments from the call are merged with

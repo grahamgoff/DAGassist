@@ -45,27 +45,32 @@ Attribute to Morgan and Winship (p. 17-19)
 
 ``` r
 DAGassist(dag_model, show="roles", type="txt")
-#> ## DAGassist Report:
-#> 
-#> ## Roles
-#> 
-#> |Variable      |    Role    | Exp. | Out. | `CON` | `MED` | `COL` | `dOut` | `dMed` | `dCol` | dConfOn | dConfOff | `NCT` | `NCO` |
-#> |:-------------|:----------:|:----:|:----:|:-----:|:-----:|:-----:|:------:|:------:|:------:|:-------:|:--------:|:-----:|:-----:|
-#> |age           | confounder |      |      |   x   |       |       |        |        |        |         |          |       |       |
-#> |birth_control |  mediator  |      |      |       |   x   |       |        |   x    |        |         |          |       |       |
-#> |children      |  outcome   |      |  x   |       |       |       |        |        |        |         |          |       |       |
-#> |class         | confounder |      |      |   x   |       |       |        |        |        |         |          |       |       |
-#> |education     |  exposure  |  x   |      |       |       |       |        |        |        |         |          |       |       |
-#> |gender        | confounder |      |      |   x   |       |       |        |        |        |         |          |       |       |
-#> |immigrant     | confounder |      |      |   x   |       |       |        |        |        |         |          |       |       |
-#> |income        |  mediator  |      |      |       |   x   |       |        |        |        |         |          |       |       |
-#> |married       |  mediator  |      |      |       |   x   |       |        |   x    |        |         |          |       |       |
-#> |religion      |  mediator  |      |      |       |   x   |       |        |        |        |         |          |       |       |
-#> |urban         | confounder |      |      |   x   |       |       |        |        |        |         |          |       |       |
-#> 
-#> #### Notes
-#> 
-#> - Roles legend: X (exposure); Y (outcome); CON (confounder); MED (mediator); COL (collider); dOut (proper descendant of Y); dMed (proper descendant of any mediator); dCol (proper descendant of any collider); dConfOn (descendant of a confounder on a back-door path); dConfOff (descendant of a confounder off a back-door path); NCT (neutral control on treatment); NCO (neutral control on outcome).
-#> - p-value legend: + < 0.1, * < 0.05, ** < 0.01, *** < 0.001.
-#> 
 ```
+
+## DAGassist Report:
+
+## Roles
+
+| Variable      |    Role    | Exp. | Out. | `CON` | `MED` | `COL` | `dOut` | `dMed` | `dCol` | dConfOn | dConfOff | `NCT` | `NCO` |
+|:--------------|:----------:|:----:|:----:|:-----:|:-----:|:-----:|:------:|:------:|:------:|:-------:|:--------:|:-----:|:-----:|
+| age           | confounder |      |      |   x   |       |       |        |        |        |         |          |       |       |
+| birth_control |  mediator  |      |      |       |   x   |       |        |   x    |        |         |          |       |       |
+| children      |  outcome   |      |  x   |       |       |       |        |        |        |         |          |       |       |
+| class         | confounder |      |      |   x   |       |       |        |        |        |         |          |       |       |
+| education     |  exposure  |  x   |      |       |       |       |        |        |        |         |          |       |       |
+| gender        | confounder |      |      |   x   |       |       |        |        |        |         |          |       |       |
+| immigrant     | confounder |      |      |   x   |       |       |        |        |        |         |          |       |       |
+| income        |  mediator  |      |      |       |   x   |       |        |        |        |         |          |       |       |
+| married       |  mediator  |      |      |       |   x   |       |        |   x    |        |         |          |       |       |
+| religion      |  mediator  |      |      |       |   x   |       |        |        |        |         |          |       |       |
+| urban         | confounder |      |      |   x   |       |       |        |        |        |         |          |       |       |
+
+#### Notes
+
+- Roles legend: X (exposure); Y (outcome); CON (confounder); MED
+  (mediator); COL (collider); dOut (proper descendant of Y); dMed
+  (proper descendant of any mediator); dCol (proper descendant of any
+  collider); dConfOn (descendant of a confounder on a back-door path);
+  dConfOff (descendant of a confounder off a back-door path); NCT
+  (neutral control on treatment); NCO (neutral control on outcome).
+- p-value legend: + \< 0.1, \* \< 0.05, \*\* \< 0.01, \*\*\* \< 0.001.

@@ -28,6 +28,7 @@ articles:
     contents:
       - making-reports
       - compatibility
+      - estimand-recovery
   - title: "Extended Documentation"
     contents:
       - articles/ecosystem

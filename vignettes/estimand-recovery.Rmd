@@ -448,8 +448,76 @@ dA$edu_degree <- relevel(dA$edu_degree, "HS_grad")
 
 df <- dat
 ```
-```{r summary}
-summary(df)
+```{r summary, echo=FALSE}
+toy_summary_split <- function(dat, top_k = 3, digits = 2) {
+  stopifnot(is.data.frame(dat))
+
+  fmt <- function(x) {
+    ifelse(is.na(x), NA_character_, format(round(x, digits), nsmall = digits, trim = TRUE))
+  }
+
+  num_table <- function(df) {
+    out <- lapply(names(df), function(nm) {
+      x <- df[[nm]]
+      s <- summary(x)
+      data.frame(
+        variable = nm,
+        type = class(x)[1],
+        Min = fmt(unname(s["Min."])),
+        Q1 = fmt(unname(s["1st Qu."])),
+        Median = fmt(unname(s["Median"])),
+        Mean = fmt(unname(s["Mean"])),
+        Q3 = fmt(unname(s["3rd Qu."])),
+        Max = fmt(unname(s["Max."])),
+        stringsAsFactors = FALSE
+      )
+    })
+    res <- do.call(rbind, out)
+    rownames(res) <- NULL
+    res
+  }
+
+  fac_table <- function(df) {
+    out <- lapply(names(df), function(nm) {
+      x <- df[[nm]]
+      if (is.logical(x)) x <- factor(x, levels = c(FALSE, TRUE))
+      if (is.character(x)) x <- factor(x)
+      x <- as.factor(x)
+
+      tab <- sort(table(x, useNA = "no"), decreasing = TRUE)
+      k <- min(top_k, length(tab))
+      top <- tab[seq_len(k)]
+      rest <- sum(tab) - sum(top)
+
+      parts <- paste0(names(top), ":", as.integer(top))
+      if (rest > 0) parts <- c(parts, paste0("(Other):", as.integer(rest)))
+
+      data.frame(
+        variable = nm,
+        type = class(df[[nm]])[1],
+        top_levels = paste(parts, collapse = "  "),
+        stringsAsFactors = FALSE
+      )
+    })
+    res <- do.call(rbind, out)
+    rownames(res) <- NULL
+    res
+  }
+
+  is_cat <- vapply(dat, function(x) is.factor(x) || is.character(x) || is.logical(x), logical(1))
+  num_df <- dat[!is_cat]
+  cat_df <- dat[is_cat]
+
+  list(
+    numeric = if (ncol(num_df)) num_table(num_df) else data.frame(),
+    categorical = if (ncol(cat_df)) fac_table(cat_df) else data.frame()
+  )
+}
+
+# vignette usage:
+tabs <- toy_summary_split(dat, top_k = 3)
+knitr::kable(tabs$numeric, align = "l")
+knitr::kable(tabs$categorical, align = "l")
 ```
 
 

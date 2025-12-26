@@ -43,8 +43,14 @@ Attribute to Morgan and Winship (p. 17-19)
 
 ![](estimand-recovery_files/figure-html/example-dag-1.png)
 
+Boilerplate `DAGassist`:
+
 ``` r
-DAGassist(dag_model, show="roles", type="txt")
+DAGassist(dag_model,
+          formula = lm(children ~ edu_year + age + class + gender + 
+                         immigrant + urban + birth_control + income + 
+                         married + religion, data = dat),
+          type="txt")
 ```
 
 ## DAGassist Report:
@@ -57,13 +63,48 @@ DAGassist(dag_model, show="roles", type="txt")
 | birth_control |  mediator  |      |      |       |   x   |       |        |   x    |        |         |          |       |       |
 | children      |  outcome   |      |  x   |       |       |       |        |        |        |         |          |       |       |
 | class         | confounder |      |      |   x   |       |       |        |        |        |         |          |       |       |
-| education     |  exposure  |  x   |      |       |       |       |        |        |        |         |          |       |       |
+| edu_year      |  exposure  |  x   |      |       |       |       |        |        |        |         |          |       |       |
 | gender        | confounder |      |      |   x   |       |       |        |        |        |         |          |       |       |
 | immigrant     | confounder |      |      |   x   |       |       |        |        |        |         |          |       |       |
 | income        |  mediator  |      |      |       |   x   |       |        |        |        |         |          |       |       |
 | married       |  mediator  |      |      |       |   x   |       |        |   x    |        |         |          |       |       |
 | religion      |  mediator  |      |      |       |   x   |       |        |        |        |         |          |       |       |
 | urban         | confounder |      |      |   x   |       |       |        |        |        |         |          |       |       |
+
+### Models
+
+| Term                 |   Original   |  Minimal 1   |  Canonical   |
+|:---------------------|:------------:|:------------:|:------------:|
+| edu_year             | -0.047\*\*\* | -0.054\*\*\* | -0.054\*\*\* |
+|                      |   (0.013)    |   (0.013)    |   (0.013)    |
+| age                  | 0.066\*\*\*  | 0.079\*\*\*  | 0.079\*\*\*  |
+|                      |   (0.004)    |   (0.003)    |   (0.003)    |
+| genderMale           |    -0.046    |    -0.037    |    -0.037    |
+|                      |   (0.083)    |   (0.082)    |   (0.082)    |
+| immigrantYes         |    0.121     |    0.098     |    0.098     |
+|                      |   (0.124)    |   (0.124)    |   (0.124)    |
+| urbanUrban           |    -0.128    |    -0.136    |    -0.136    |
+|                      |   (0.091)    |   (0.091)    |   (0.091)    |
+| birth_control        |    -0.103    |              |              |
+|                      |   (0.095)    |              |              |
+| income               |   0.000\*    |              |              |
+|                      |   (0.000)    |              |              |
+| married              | 0.456\*\*\*  |              |              |
+|                      |   (0.117)    |              |              |
+| religionMuslim       |    0.059     |              |              |
+|                      |   (0.151)    |              |              |
+| religionHindu        |  -0.611\*\*  |              |              |
+|                      |   (0.222)    |              |              |
+| religionBuddhist     |    0.230     |              |              |
+|                      |   (0.222)    |              |              |
+| religionJewish       |    0.130     |              |              |
+|                      |   (0.215)    |              |              |
+| religionUnaffiliated | -0.468\*\*\* |              |              |
+|                      |   (0.096)    |              |              |
+| religionOther        |   -0.350\*   |              |              |
+|                      |   (0.167)    |              |              |
+| Num.Obs.             |     5000     |     5000     |     5000     |
+| R2                   |    0.153     |    0.142     |    0.142     |
 
 #### Notes
 
@@ -74,3 +115,5 @@ DAGassist(dag_model, show="roles", type="txt")
   dConfOff (descendant of a confounder off a back-door path); NCT
   (neutral control on treatment); NCO (neutral control on outcome).
 - p-value legend: + \< 0.1, \* \< 0.05, \*\* \< 0.01, \*\*\* \< 0.001.
+- Controls (minimal): {age, class, gender, immigrant, urban}.
+- Controls (canonical): {age, class, gender, immigrant, urban}.

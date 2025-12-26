@@ -229,8 +229,13 @@ Events on Fertility Patterns<a class="anchor" aria-label="anchor" href="#example
 <span><span class="co">#&gt; [1] TRUE</span></span>
 <span><span class="co">#&gt; list()</span></span></code></pre>
 <p><img src="estimand-recovery_files/figure-html/example-dag-1.png" class="r-plt" alt="" width="768"></p>
+<p>Boilerplate <code>DAGassist</code>:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">dag_model</span>, show<span class="op">=</span><span class="st">"roles"</span>, type<span class="op">=</span><span class="st">"txt"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">dag_model</span>,</span>
+<span>          formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">children</span> <span class="op">~</span> <span class="va">edu_year</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">class</span> <span class="op">+</span> <span class="va">gender</span> <span class="op">+</span> </span>
+<span>                         <span class="va">immigrant</span> <span class="op">+</span> <span class="va">urban</span> <span class="op">+</span> <span class="va">birth_control</span> <span class="op">+</span> <span class="va">income</span> <span class="op">+</span> </span>
+<span>                         <span class="va">married</span> <span class="op">+</span> <span class="va">religion</span>, data <span class="op">=</span> <span class="va">dat</span><span class="op">)</span>,</span>
+<span>          type<span class="op">=</span><span class="st">"txt"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="dagassist-report">DAGassist Report:<a class="anchor" aria-label="anchor" href="#dagassist-report"></a>
@@ -338,7 +343,7 @@ Events on Fertility Patterns<a class="anchor" aria-label="anchor" href="#example
 <td align="center"></td>
 </tr>
 <tr class="odd">
-<td align="left">education</td>
+<td align="left">edu_year</td>
 <td align="center">exposure</td>
 <td align="center">x</td>
 <td align="center"></td>
@@ -451,6 +456,199 @@ Events on Fertility Patterns<a class="anchor" aria-label="anchor" href="#example
 </tr>
 </tbody>
 </table>
+<div class="section level3">
+<h3 id="models">Models<a class="anchor" aria-label="anchor" href="#models"></a>
+</h3>
+<table class="table">
+<thead><tr class="header">
+<th align="left">Term</th>
+<th align="center">Original</th>
+<th align="center">Minimal 1</th>
+<th align="center">Canonical</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">edu_year</td>
+<td align="center">-0.047***</td>
+<td align="center">-0.054***</td>
+<td align="center">-0.054***</td>
+</tr>
+<tr class="even">
+<td align="left"> </td>
+<td align="center">(0.013)</td>
+<td align="center">(0.013)</td>
+<td align="center">(0.013)</td>
+</tr>
+<tr class="odd">
+<td align="left">age</td>
+<td align="center">0.066***</td>
+<td align="center">0.079***</td>
+<td align="center">0.079***</td>
+</tr>
+<tr class="even">
+<td align="left"> </td>
+<td align="center">(0.004)</td>
+<td align="center">(0.003)</td>
+<td align="center">(0.003)</td>
+</tr>
+<tr class="odd">
+<td align="left">genderMale</td>
+<td align="center">-0.046</td>
+<td align="center">-0.037</td>
+<td align="center">-0.037</td>
+</tr>
+<tr class="even">
+<td align="left"> </td>
+<td align="center">(0.083)</td>
+<td align="center">(0.082)</td>
+<td align="center">(0.082)</td>
+</tr>
+<tr class="odd">
+<td align="left">immigrantYes</td>
+<td align="center">0.121</td>
+<td align="center">0.098</td>
+<td align="center">0.098</td>
+</tr>
+<tr class="even">
+<td align="left"> </td>
+<td align="center">(0.124)</td>
+<td align="center">(0.124)</td>
+<td align="center">(0.124)</td>
+</tr>
+<tr class="odd">
+<td align="left">urbanUrban</td>
+<td align="center">-0.128</td>
+<td align="center">-0.136</td>
+<td align="center">-0.136</td>
+</tr>
+<tr class="even">
+<td align="left"> </td>
+<td align="center">(0.091)</td>
+<td align="center">(0.091)</td>
+<td align="center">(0.091)</td>
+</tr>
+<tr class="odd">
+<td align="left">birth_control</td>
+<td align="center">-0.103</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left"> </td>
+<td align="center">(0.095)</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">income</td>
+<td align="center">0.000*</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left"> </td>
+<td align="center">(0.000)</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">married</td>
+<td align="center">0.456***</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left"> </td>
+<td align="center">(0.117)</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">religionMuslim</td>
+<td align="center">0.059</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left"> </td>
+<td align="center">(0.151)</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">religionHindu</td>
+<td align="center">-0.611**</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left"> </td>
+<td align="center">(0.222)</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">religionBuddhist</td>
+<td align="center">0.230</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left"> </td>
+<td align="center">(0.222)</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">religionJewish</td>
+<td align="center">0.130</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left"> </td>
+<td align="center">(0.215)</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">religionUnaffiliated</td>
+<td align="center">-0.468***</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left"> </td>
+<td align="center">(0.096)</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">religionOther</td>
+<td align="center">-0.350*</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left"> </td>
+<td align="center">(0.167)</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">Num.Obs.</td>
+<td align="center">5000</td>
+<td align="center">5000</td>
+<td align="center">5000</td>
+</tr>
+<tr class="even">
+<td align="left">R2</td>
+<td align="center">0.153</td>
+<td align="center">0.142</td>
+<td align="center">0.142</td>
+</tr>
+</tbody>
+</table>
 <div class="section level4">
 <h4 id="notes">Notes<a class="anchor" aria-label="anchor" href="#notes"></a>
 </h4>
@@ -463,7 +661,10 @@ dConfOn (descendant of a confounder on a back-door path); dConfOff
 on treatment); NCO (neutral control on outcome).</li>
 <li>p-value legend: + &lt; 0.1, * &lt; 0.05, ** &lt; 0.01, *** &lt;
 0.001.</li>
+<li>Controls (minimal): {age, class, gender, immigrant, urban}.</li>
+<li>Controls (canonical): {age, class, gender, immigrant, urban}.</li>
 </ul>
+</div>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

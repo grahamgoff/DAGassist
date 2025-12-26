@@ -529,7 +529,7 @@ library(tidyverse)
 x_pos <- c(
   children = 10,
     income = 5,
-    education = 0,
+    edu_year = 0,
     urban = 10,
     immigrant = 10,
     class = 3,
@@ -543,7 +543,7 @@ x_pos <- c(
 y_pos <- c(
   children = 0,
     income = 0.5,
-    education = 0,
+    edu_year = 0,
     urban = 2,
     immigrant = -2,
     class = -4,
@@ -555,23 +555,23 @@ y_pos <- c(
 )
 
 dag_model <- dagify(
-  children ~ income + education + urban + immigrant + class + religion + 
+  children ~ income + edu_year + urban + immigrant + class + religion + 
     birth_control + married + gender + age,
-  education ~ class + immigrant + urban + gender + age,
-  income ~ education + urban + immigrant + class + gender + age,
-  religion ~ education + urban + class,
-  birth_control ~ education + religion + married + age, 
-  married ~ education + religion + age,
+  edu_year ~ class + immigrant + urban + gender + age,
+  income ~ edu_year + urban + immigrant + class + gender + age,
+  religion ~ edu_year + urban + class,
+  birth_control ~ edu_year + religion + married + age, 
+  married ~ edu_year + religion + age,
   
   coords = list(x=x_pos, y=y_pos),
 
-  exposure = "education",
+  exposure = "edu_year",
   outcome = "children",
   
   labels = c(
     children = "Children",
     income = "Income",
-    education = "Education",
+    edu_year = "Education",
     urban = "Urban/Rural",
     immigrant = "Immigrant",
     class = "Parents' Class",
@@ -610,8 +610,15 @@ ggdag_status(dag_model,
   theme(legend.position = "none") 
 
 ```
-```{r roles-table, results='asis'}
-DAGassist(dag_model, show="roles", type="txt")
+
+Boilerplate `DAGassist`:
+
+```{r dag-table, results='asis'}
+DAGassist(dag_model,
+          formula = lm(children ~ edu_year + age + class + gender + 
+                         immigrant + urban + birth_control + income + 
+                         married + religion, data = dat),
+          type="txt")
 ```
 
 

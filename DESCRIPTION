@@ -48,7 +48,9 @@ Suggests:
     rmarkdown,
     testthat (>= 3.0.0),
     tidyverse,
-    DiagrammeR
+    DiagrammeR,
+    twangContinuous,
+    WeightIt
 VignetteBuilder: 
     knitr
 Config/Needs/website: pkgdown, rmarkdown, DiagrammeR, htmltools

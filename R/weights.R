@@ -16,6 +16,53 @@
 #   - Console output only (no LaTeX/Word/Excel integration yet),
 #   - WeightIt is optional; if it isn't installed, we fail with a clear message.
 
+# Decide whether exposure is binary (0/1 numeric, logical, or 2-level factor)
+# vs continuous (numeric with >= 3 unique values).
+.dagassist_exposure_kind <- function(Tvar) {
+  if (is.logical(Tvar)) return("binary")
+  
+  if (is.factor(Tvar)) {
+    if (nlevels(Tvar) == 2L) return("binary")
+    return("unsupported")
+  }
+  
+  if (is.numeric(Tvar)) {
+    u <- sort(unique(stats::na.omit(Tvar)))
+    if (length(u) >= 3L) return("continuous")
+    if (length(u) == 2L && all(u %in% c(0, 1))) return("binary")
+    return("unsupported")  # e.g., 1/2 coding -> require recode to 0/1
+  }
+  
+  "unsupported"
+}
+
+# Allow user to write stop_method or stop.method; normalize to twangContinuous’s stop.method
+.dagassist_normalize_weights_args <- function(args) {
+  if (is.null(args)) return(list())
+  if (!is.list(args)) stop("`weights_args` must be a list.", call. = FALSE)
+  
+  if ("stop_method" %in% names(args) && !"stop.method" %in% names(args)) {
+    names(args)[names(args) == "stop_method"] <- "stop.method"
+  }
+  args
+}
+
+# Keep only args that are formal arguments of `fun`; return list(keep=..., drop=...)
+.dagassist_filter_args <- function(args, fun) {
+  if (length(args) == 0L) return(list(keep = list(), drop = character(0)))
+  
+  nms <- names(args)
+  if (is.null(nms) || any(nms == "")) {
+    stop("`weights_args` must be a *named* list.", call. = FALSE)
+  }
+  
+  fmls <- names(formals(fun))
+  keep_nms <- intersect(nms, fmls)
+  drop_nms <- setdiff(nms, keep_nms)
+  
+  list(keep = args[keep_nms], drop = drop_nms)
+}
+
 # support multicolumn weight output
 .dagassist_formula_for_model_name <- function(x, model_name) {
   if (identical(model_name, "Original")) {
@@ -98,16 +145,6 @@
     return(mods)
   }
   
-  # WeightIt is an optional dependency. fail early with a friendly message
-  if (!requireNamespace("WeightIt", quietly = TRUE)) {
-    stop(
-      "Estimand recovery (estimand = '", est, "') requires the 'WeightIt' package.\n",
-      "To keep DAGassist lightweight, WeightIt is not installed by default.\n",
-      "Please install it (e.g., install.packages('WeightIt')) or set estimand = 'none'.",
-      call. = FALSE
-    )
-  }
-  
   data <- x$.__data
   if (is.null(data)) {
     stop(
@@ -141,29 +178,47 @@
     )
   }
   
-  # check for binary: allow 0/1 numeric or a two-level factor
   Tvar <- data[[exp_nm]]
-  if (is.factor(Tvar)) {
-    if (nlevels(Tvar) != 2L) {
+  kind <- .dagassist_exposure_kind(Tvar)
+  
+  # normalize and read weight args 
+  wargs <- .dagassist_normalize_weights_args(x$settings$weights_args)
+  
+  if (identical(kind, "binary")) {
+    if (!requireNamespace("WeightIt", quietly = TRUE)) {
       stop(
-        "Estimand recovery currently supports only binary exposures.\n",
-        "The exposure '", exp_nm, "' is a factor with ", nlevels(Tvar),
-        " levels. Please recode it to a two-level factor or 0/1 numeric,\n",
-        "or set `estimand = \"none\"`.",
+        "Estimand recovery for binary exposures requires the 'WeightIt' package.\n",
+        "Install it (install.packages('WeightIt')) or set estimand = 'none'.",
+        call. = FALSE
+      )
+    }
+  } else if (identical(kind, "continuous")) {
+    if (!requireNamespace("twangContinuous", quietly = TRUE)) {
+      stop(
+        "Estimand recovery for continuous exposures requires the 'twangContinuous' package.\n",
+        "Install it (install.packages('twangContinuous')) or set estimand = 'none'.",
+        call. = FALSE
+      )
+    }
+    if (!identical(est, "ATE")) {
+      stop(
+        "For continuous exposures, DAGassist currently supports estimand = 'ATE' only.\n",
+        "Set estimand = 'ATE' (or 'none').",
         call. = FALSE
       )
     }
   } else {
-    uniq <- sort(unique(stats::na.omit(Tvar)))
-    if (!all(uniq %in% c(0, 1))) {
-      stop(
-        "Estimand recovery currently supports only binary exposures coded 0/1\n",
-        "(or a two-level factor). The exposure '", exp_nm,
-        "' took the values: ", paste(uniq, collapse = ", "), ".\n",
-        "Please recode it or set `estimand = \"none\"`.",
-        call. = FALSE
-      )
-    }
+    # helpful error
+    u <- try(sort(unique(stats::na.omit(Tvar))), silent = TRUE)
+    stop(
+      "Estimand recovery supports either:\n",
+      "  * Binary exposures (0/1 numeric, logical, or 2-level factor), or\n",
+      "  * Continuous numeric exposures (>= 3 unique values).\n\n",
+      "Exposure '", exp_nm, "' is class: ", paste(class(Tvar), collapse = "/"),
+      if (!inherits(u, "try-error")) paste0("\nObserved values (unique): ", paste(u, collapse = ", ")) else "",
+      "\n\nPlease recode it or set estimand = 'none'.",
+      call. = FALSE
+    )
   }
   
   # choose controls for the treatment model
@@ -178,15 +233,55 @@
     f_treat <- stats::as.formula(paste(exp_nm, "~ 1"))
   }
   
-  # Compute weights via WeightIt
-  wtobj <- WeightIt::weightit(
-    formula  = f_treat,
-    data     = data,
-    method   = "ps",
-    estimand = est
-  )
+  # Compute weights via the appropriate backend
+  if (identical(kind, "binary")) {
+    # filter user-provided args to what weightit() actually accepts
+    fa <- .dagassist_filter_args(wargs, WeightIt::weightit)
+    if (length(fa$drop)) {
+      warning(
+        "Ignoring these weights_args for WeightIt::weightit(): ",
+        paste(fa$drop, collapse = ", "),
+        call. = FALSE
+      )
+    }
+    
+    wtobj <- do.call(
+      WeightIt::weightit,
+      c(
+        list(
+          formula = f_treat,
+          data = data,
+          method = "ps",
+          estimand = est
+        ),
+        fa$keep
+      )
+    )
+    
+    w <- wtobj$weights
+    
+  } else if (identical(kind, "continuous")) {
+    # filter args to what ps.cont() accepts
+    fa <- .dagassist_filter_args(wargs, twangContinuous::ps.cont)
+    if (length(fa$drop)) {
+      warning(
+        "Ignoring these weights_args for twangContinuous::ps.cont(): ",
+        paste(fa$drop, collapse = ", "),
+        call. = FALSE
+      )
+    }
+    
+    psobj <- do.call(
+      twangContinuous::ps.cont,
+      c(list(formula = f_treat, data = data), fa$keep)
+    )
+    
+    # Use the same stop.method if user provided it; else twangContinuous default ("wcor")
+    stop_method <- if (!is.null(fa$keep[["stop.method"]])) fa$keep[["stop.method"]] else "wcor"
+    
+    w <- twangContinuous::get.weights(psobj, stop.method = stop_method, withSampW = TRUE)
+  }
   
-  w <- wtobj$weights
   if (length(w) != nrow(data)) {
     stop(
       "WeightIt returned ", length(w), " weights for data with ",

@@ -74,7 +74,9 @@
 #'    supported for `type = "console"`. One of `"none"` (default), `"ATE"`, or `"ATT"`.
 #'    When `"ATE"` or `"ATT"`, the console print method will attempt to compute 
 #'    inverse-probability weights via the \pkg{WeightIt} package and add weighted 
-#'    versions of each comparison model as additional columns. 
+#'    versions of each comparison model as additional columns.
+#' @param weights_arg List; parameters for weighting package. `DAGassist` is agnostic
+#'    and passes list directly to the respective weighting package 
 #'    
 #' @details
 #' **Engine-call parsing.** If `formula` is a call (e.g., `feols(Y ~ X | fe, data=df)`),
@@ -208,7 +210,8 @@ DAGassist <- function(dag,
                       omit_factors = TRUE,
                       bivariate = FALSE,
                       estimand = c("none", "ATE", "ATT"),
-                      engine_args = list()) {
+                      engine_args = list(),
+                      weights_args = list()) {
   # set output type
   type <- match.arg(type)
   # set show type
@@ -277,7 +280,7 @@ DAGassist <- function(dag,
         canonical = NULL,
         canonical_excl = NULL
       ),
-      unevaluated     = character(0),
+      unevaluated = character(0),
       unevaluated_str = "",
       verbose = isTRUE(verbose),
       imply   = isTRUE(imply)
@@ -666,7 +669,8 @@ DAGassist <- function(dag,
     exclude=exclude,
     engine = engine,
     engine_args = engine_args,
-    estimand = estimand
+    estimand = estimand,
+    weights_args = weights_args
   )
   report$.__data <- data
   report$settings$coef_omit <- .build_coef_omit(

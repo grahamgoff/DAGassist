@@ -1,0 +1,549 @@
+---
+title: "Recovering Estimands with DAGassist"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{estimand-recovery}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r dev-load, include=FALSE}
+# Prefer source build when available (works in RStudio, pkgdown, or local render)
+if (requireNamespace("devtools", quietly = TRUE) && file.exists(file.path("..","DESCRIPTION"))) {
+  # Don't error on CRAN/build machines that don't have devtools or the source path
+  try(devtools::load_all("..", quiet = TRUE), silent = TRUE)
+}
+
+# If we've already loaded from source, avoid re-attaching a different installed build later
+from_source <- try({
+  "DAGassist" %in% loadedNamespaces() &&
+    grepl(normalizePath(".."), getNamespaceInfo(asNamespace("DAGassist"), "path"), fixed = TRUE)
+}, silent = TRUE)
+from_source <- isTRUE(from_source)
+
+# Feature gates (computed *after* attempting load_all)
+has_show <- tryCatch({
+  "show" %in% names(formals(DAGassist::DAGassist))
+}, error = function(e) FALSE)
+
+# Robust check: dev build defines a private .report_dotwhisker helper
+has_dotwhisker <- tryCatch({
+  exists(".report_dotwhisker", envir = asNamespace("DAGassist"), inherits = FALSE)
+}, error = function(e) FALSE)
+```
+
+```{r setup, eval=FALSE}
+library(DAGassist)
+```
+
+From Denly email:
+
+The problem is that, for observational regressions with controls, linear regression and generalized linear model methods (e.g., logit) do not recover average treatment effects by default. Instead, they recover weighted strata-specific averages. Take a peak at the Chattopadhyay and Zubizarreta’s (2024) Harvard Data Science Review article in Mendeley, which breaks things down in a very friendly way
+
+## Example: The Causal Effects of Family Background and Life Course Events on Fertility Patterns
+
+Attribute to Morgan and Winship (p. 17-19)
+
+```{r make-df, include=FALSE}
+
+simulate_toy_panel <- function(
+  n_id = 1000,
+  n_t  = 5,
+  seed = 20251225,
+  p_band = c(0.001, 0.08),    
+  max_tries = 160
+) {
+  stopifnot(length(p_band) == 2, p_band[1] < p_band[2])
+
+  clamp <- function(x, lo, hi) pmin(pmax(x, lo), hi)
+  inv_logit <- function(z) 1 / (1 + exp(-z))
+
+  rmultinom1 <- function(prob_named) {
+    levs <- names(prob_named)
+    levs[which.max(stats::runif(1) <= cumsum(prob_named))]
+  }
+
+  set.seed(seed)
+  id <- seq_len(n_id)
+
+  gender <- factor(sample(c("Female", "Male"), n_id, replace = TRUE, prob = c(0.51, 0.49)))
+  immigrant <- rbinom(n_id, 1, 0.13)
+  urban <- rbinom(n_id, 1, 0.72)
+
+  class_levels <- c("Low", "Working", "Middle", "Upper")
+  class <- factor(sample(class_levels, n_id, replace = TRUE, prob = c(0.18, 0.38, 0.34, 0.10)),
+                  levels = class_levels, ordered = TRUE)
+  class_num <- as.integer(class) - 1L
+
+  age0 <- round(clamp(rnorm(n_id, mean = 35, sd = 16), 0, 100 - (n_t - 1)), 1)
+
+  target_deg_adult <- c(
+    HS_grad      = 0.40,
+    Some_college = 0.28,
+    BA           = 0.22,
+    MA           = 0.08,
+    PhD_or_prof  = 0.02
+  )
+  stopifnot(abs(sum(target_deg_adult) - 1) < 1e-8)
+
+  edu_me_sd <- 0.70                 
+  income_intercept <- 10.45         
+  income_sd <- 0.58
+  marriage_intercept <- -3.75
+  children_cap <- 12L
+
+  edu_fert_scale <- 1.25
+
+  assign_deg_by_quantiles <- function(z, age0, target_deg_adult) {
+    adult_idx <- which(age0 >= 25)
+
+    qs <- stats::quantile(
+      z[adult_idx],
+      probs = cumsum(target_deg_adult)[1:4],
+      names = FALSE,
+      type = 8
+    )
+
+    assign_deg <- function(zv, cuts) {
+      out <- rep("PhD_or_prof", length(zv))
+      out[zv < cuts[4]] <- "MA"
+      out[zv < cuts[3]] <- "BA"
+      out[zv < cuts[2]] <- "Some_college"
+      out[zv < cuts[1]] <- "HS_grad"
+      out
+    }
+
+    deg <- rep(NA_character_, length(z))
+
+    deg[adult_idx] <- assign_deg(z[adult_idx], qs)
+
+    # 22–24: allow BA but NOT grad degrees
+    idx_22_24 <- which(age0 >= 22 & age0 < 25)
+    if (length(idx_22_24) > 0) {
+      tmp <- assign_deg(z[idx_22_24], qs)
+      tmp[tmp %in% c("MA", "PhD_or_prof")] <- "BA"
+      deg[idx_22_24] <- tmp
+    }
+
+    # 18–21: allow Some_college but NOT BA+
+    idx_18_21 <- which(age0 >= 18 & age0 < 22)
+    if (length(idx_18_21) > 0) {
+      tmp <- assign_deg(z[idx_18_21], qs)
+      tmp[tmp %in% c("BA", "MA", "PhD_or_prof")] <- "Some_college"
+      deg[idx_18_21] <- tmp
+    }
+
+    # <18: in progress
+    deg[age0 < 18] <- "In_progress"
+
+    deg[is.na(deg)] <- "HS_grad"
+    deg
+  }
+
+  # helper: map degree to target years of schooling
+  degree_to_target_years <- function(deg, age0) {
+    target_years <- numeric(length(deg))
+
+    # K-12 accumulation for in-progress kids/teens
+    k12 <- clamp(age0 - 5, 0, 13)
+
+    target_years[deg == "In_progress"] <- k12[deg == "In_progress"]
+    target_years[deg == "HS_grad"]      <- 12   + rnorm(sum(deg == "HS_grad"), 0, 0.30)
+    target_years[deg == "Some_college"] <- 13.5 + rnorm(sum(deg == "Some_college"), 0, 0.45)
+    target_years[deg == "BA"]           <- 16   + rnorm(sum(deg == "BA"), 0, 0.55)
+    target_years[deg == "MA"]           <- 18   + rnorm(sum(deg == "MA"), 0, 0.65)
+    target_years[deg == "PhD_or_prof"]  <- 21   + rnorm(sum(deg == "PhD_or_prof"), 0, 0.70)
+
+    # feasibility given age
+    max_feasible <- clamp(age0 - 5, 0, 22)
+    clamp(target_years, 0, max_feasible)
+  }
+
+  # ---- Try loop: redraw endogenous noise until calibration holds ----
+  for (try_idx in seq_len(max_tries)) {
+    set.seed(seed + 7000 + try_idx)
+
+    # Panel skeleton
+    year <- rep(0:(n_t - 1), times = n_id)
+    pid  <- rep(id, each = n_t)
+    age  <- clamp(rep(age0, each = n_t) + year, 0, 100)
+
+    gender_p <- rep(gender, each = n_t)
+    immigrant_p <- rep(immigrant, each = n_t)
+    urban_p <- rep(urban, each = n_t)
+    class_p <- rep(class, each = n_t)
+    class_num_p <- rep(class_num, each = n_t)
+
+    # -----------------------
+    # Education propensity index z
+    # -----------------------
+    abil <- rnorm(n_id, 0, 1)
+    z <- 0.85 * abil +
+      0.55 * class_num +
+      0.20 * urban +
+      (-0.10) * immigrant +
+      0.05 * (gender == "Female") +
+      (-0.04) * (age0 - 35) +
+      rnorm(n_id, 0, 0.35)
+
+    # Robust degree assignment (adult shares forced; HS > BA forced)
+    deg <- assign_deg_by_quantiles(z, age0, target_deg_adult)
+    edu_degree <- factor(rep(deg, each = n_t),
+                         levels = c("In_progress","HS_grad","Some_college","BA","MA","PhD_or_prof"))
+
+    # True baseline education from degree + feasibility
+    edu0_true <- degree_to_target_years(deg, age0)
+    edu_target <- clamp(edu0_true, 0, 22)  # target is baseline level (then accrual for young)
+
+    # Evolve education in panel (<25 can grow toward a slightly higher personal target)
+    # Give some additional accumulation for young people (esp. HS->BA pathways).
+    edu_target2 <- edu_target
+    bump <- rep(0, n_id)
+    bump[deg %in% c("HS_grad","Some_college","BA") & age0 < 23] <- rnorm(sum(deg %in% c("HS_grad","Some_college","BA") & age0 < 23), 1.2, 0.6)
+    bump <- clamp(bump, 0, 3.0)
+    edu_target2 <- clamp(edu_target2 + bump, 0, 22)
+
+    edu_true <- numeric(length(pid))
+    edu_true[year == 0] <- edu0_true
+
+    for (i in seq_len(n_id)) {
+      idx <- which(pid == i)
+      for (t in seq_along(idx)) {
+        if (t == 1) next
+        prev <- edu_true[idx[t - 1]]
+        a <- age[idx[t]]
+        if (a < 25 && prev < edu_target2[i]) {
+          delta <- clamp(rnorm(1, mean = 1.0, sd = 0.25), 0, 1.2)
+          edu_true[idx[t]] <- pmin(prev + delta, edu_target2[i])
+        } else {
+          edu_true[idx[t]] <- prev
+        }
+      }
+    }
+
+    # observed edu_year (measurement error)
+    edu_year <- clamp(edu_true + rnorm(length(pid), 0, edu_me_sd), 0, 22)
+
+    # -----------------------
+    # Religion (depends on baseline edu_true + class + urban)
+    # -----------------------
+    rel_levels <- c("Christian","Muslim","Hindu","Buddhist","Jewish","Unaffiliated","Other")
+
+    religion0 <- character(n_id)
+    for (i in seq_len(n_id)) {
+      e <- edu0_true[i]; cnum <- class_num[i]; u <- urban[i]
+      score <- c(
+        Christian     =  0.95 - 0.010*e - 0.02*u + 0.03*cnum,
+        Muslim        = -0.45 - 0.006*e + 0.02*u,
+        Hindu         = -1.55 + 0.004*e,
+        Buddhist      = -1.60 + 0.004*e,
+        Jewish        = -1.85 + 0.030*e + 0.04*cnum + 0.03*u,
+        Unaffiliated  =  0.10 + 0.045*e + 0.08*u,
+        Other         = -0.95 + 0.004*e
+      )
+      prob <- exp(score) / sum(exp(score))
+      religion0[i] <- rmultinom1(prob)
+    }
+    religion <- factor(rep(religion0, each = n_t), levels = rel_levels)
+
+    # -----------------------
+    # Married (no married < 17; edu delays slightly)
+    # -----------------------
+    rel_marriage_effect <- setNames(c(
+      Christian =  0.18, Muslim = 0.20, Hindu = 0.10, Buddhist = 0.06,
+      Jewish = 0.10, Unaffiliated = -0.15, Other = 0.00
+    ), rel_levels)
+
+    lp_married <- marriage_intercept +
+      0.22 * (age - 18) +
+      (-0.00115) * (age - 38)^2 +
+      (-0.012) * edu_true +
+      rel_marriage_effect[as.character(religion)]
+
+    married <- rbinom(length(pid), 1, inv_logit(lp_married))
+    married[age < 17] <- 0L
+
+    # -----------------------
+    # Birth control (edu increases use; marriage increases use)
+    # -----------------------
+    rel_bc_effect <- setNames(c(
+      Christian = -0.05, Muslim = -0.20, Hindu = -0.10, Buddhist = -0.05,
+      Jewish = 0.05, Unaffiliated = 0.15, Other = 0.00
+    ), rel_levels)
+
+    lp_bc <- -1.05 +
+      0.085 * edu_true +
+      0.55 * married +
+      0.04 * (age - 18) -
+      0.0009 * (age - 30)^2 +
+      rel_bc_effect[as.character(religion)]
+
+    birth_control <- rbinom(length(pid), 1, inv_logit(lp_bc))
+
+    # -----------------------
+    # Income (US-like)
+    # -----------------------
+    lp_inc <- income_intercept +
+      0.060 * (edu_true - 12) +
+      0.12 * urban_p +
+      (-0.05) * immigrant_p +
+      0.10 * class_num_p +
+      (-0.03) * (gender_p == "Female") +
+      0.030 * (age - 25) -
+      0.00055 * (age - 45)^2
+
+    income <- exp(rnorm(length(pid), mean = lp_inc, sd = income_sd))
+    income[age < 16] <- exp(rnorm(sum(age < 16), mean = 8.45, sd = 0.25))
+
+    # -----------------------
+    # Children: degree gradient + negative edu effect, with dispersion
+    # -----------------------
+    deg_fert_effect <- c(
+      In_progress = 0.00,
+      HS_grad = 0.00,
+      Some_college = -0.06,
+      BA = -0.10,
+      MA = -0.12,
+      PhD_or_prof = -0.14
+    )
+    deg_eff_i <- deg_fert_effect[deg]
+
+    fert_i <- rnorm(n_id, 0, 0.95)
+    fert_pref <- rep(fert_i, each = n_t)
+
+    rel_fert_effect <- setNames(c(
+      Christian =  0.10, Muslim = 0.18, Hindu = 0.08, Buddhist = -0.05,
+      Jewish = -0.02, Unaffiliated = -0.12, Other = 0.00
+    ), rel_levels)
+
+    idx0 <- which(year == 0)
+    rel0 <- rel_fert_effect[religion0]
+    mar0 <- married[idx0]
+    bc0  <- birth_control[idx0]
+    inc0 <- income[idx0]
+    a0 <- age0
+
+    age_term0 <- ifelse(a0 < 15, -10,
+                        0.11 * (pmin(a0, 42) - 18) - 0.0022 * (pmin(a0, 42) - 28)^2)
+
+    beta_edu_children0 <- (-0.020 * edu_fert_scale)
+
+    mu_children0 <- exp(
+      -0.85 +
+        age_term0 +
+        0.55 * mar0 +
+        (-0.45) * bc0 +
+        beta_edu_children0 * edu0_true +
+        deg_eff_i +
+        (-0.0000007) * inc0 +
+        0.04 * class_num +
+        rel0 +
+        fert_i
+    )
+
+    children0 <- rnbinom(n_id, size = 1.3, mu = mu_children0)
+    children0[a0 < 15] <- 0L
+    children0 <- pmin(children0, children_cap)
+
+    fertile <- (age >= 15 & age <= 45)
+    beta_edu_births <- (-0.008 * edu_fert_scale)
+
+    lp_birth <- -3.35 +
+      0.80 * married +
+      (-0.90) * birth_control +
+      beta_edu_births * edu_true +
+      rep(deg_eff_i, each = n_t) +
+      0.02 * (age - 22) -
+      0.0010 * (age - 30)^2 +
+      rel_fert_effect[as.character(religion)] +
+      fert_pref
+
+    births <- rpois(length(pid), exp(lp_birth) * fertile)
+    births <- pmin(births, 2L)
+
+    children <- numeric(length(pid))
+    for (i in seq_len(n_id)) {
+      idx <- which(pid == i)
+      children[idx] <- children0[i] + cumsum(births[idx])
+    }
+    children <- pmin(children, children_cap)
+
+    # Assemble
+    df <- data.frame(
+      id = pid,
+      year = year,
+      age = age,
+      gender = gender_p,
+      immigrant = factor(immigrant_p, levels = c(0, 1), labels = c("No", "Yes")),
+      urban = factor(urban_p, levels = c(0, 1), labels = c("Rural", "Urban")),
+      class = class_p,
+      religion = religion,
+      edu_year = round(edu_year, 1),
+      edu_degree = edu_degree,
+      married = married,
+      birth_control = birth_control,
+      income = round(income, 0),
+      children = children
+    )
+
+    # -----------------------
+    # Calibration: LAST WAVE, age-adjusted edu_year
+    # -----------------------
+    dL <- df[df$year == max(df$year), ]
+    fit <- lm(children ~ edu_year + age, data = dL)
+    cc <- summary(fit)$coefficients
+    est  <- unname(cc["edu_year", "Estimate"])
+    pval <- unname(cc["edu_year", "Pr(>|t|)"])
+    if (is.na(pval)) pval <- 0
+
+    lo <- p_band[1]; hi <- p_band[2]
+    ok <- (est < 0) && (pval >= lo) && (pval <= hi)
+
+    if (ok || try_idx == max_tries) {
+      attr(df, "pval_last_wave_age_adj") <- pval
+      attr(df, "edu_est_last_wave_age_adj") <- est
+      attr(df, "edu_fert_scale_used") <- edu_fert_scale
+      attr(df, "edu_me_sd_used") <- edu_me_sd
+      attr(df, "tries") <- try_idx
+      return(df)
+    }
+
+    # If too weak / wrong sign: strengthen negative edu effect
+    if (est >= 0 || pval > hi) edu_fert_scale <- edu_fert_scale * 1.12
+
+    # If too significant: weaken edu effect and add measurement error
+    if (pval < lo) {
+      edu_fert_scale <- edu_fert_scale * 0.85
+      edu_me_sd <- min(edu_me_sd * 1.08, 2.0)
+    }
+  }
+}
+
+# ---- Example usage ----
+dat <- simulate_toy_panel(n_id = 1000, n_t = 5, seed = 20251225)
+
+d0 <- subset(dat, year == 0)
+dL <- subset(dat, year == max(year))
+
+# Calibration check (what we target)
+summary(lm(children ~ edu_year + age, data = dL))
+attr(dat, "pval_last_wave_age_adj")
+attr(dat, "edu_est_last_wave_age_adj")
+attr(dat, "tries")
+
+# Attainment realism (adult-only)
+d0_adult <- subset(d0, age >= 25 & edu_degree != "In_progress")
+prop.table(table(d0_adult$edu_degree))
+
+# Degree-type result (adult, completed degrees)
+dA <- subset(dL, age >= 25 & edu_degree != "In_progress")
+dA$edu_degree <- relevel(dA$edu_degree, "HS_grad")
+
+df <- dat
+```
+```{r summary}
+summary(df)
+```
+
+
+```{r example-dag, echo=FALSE, message=FALSE, fig.width=8, fig.height=5}
+library(dagitty)
+library(ggdag)
+library(tidyverse)
+
+x_pos <- c(
+  children = 10,
+    income = 5,
+    education = 0,
+    urban = 10,
+    immigrant = 10,
+    class = 3,
+    religion = 1,
+    birth_control = 8,
+    married = 5,
+    gender = 3,
+    age = 7
+)
+
+y_pos <- c(
+  children = 0,
+    income = 0.5,
+    education = 0,
+    urban = 2,
+    immigrant = -2,
+    class = -4,
+    religion = -2,
+    birth_control = -4,
+    married = -4,
+    gender = 2,
+    age = 2
+)
+
+dag_model <- dagify(
+  children ~ income + education + urban + immigrant + class + religion + 
+    birth_control + married + gender + age,
+  education ~ class + immigrant + urban + gender + age,
+  income ~ education + urban + immigrant + class + gender + age,
+  religion ~ education + urban + class,
+  birth_control ~ education + religion + married + age, 
+  married ~ education + religion + age,
+  
+  coords = list(x=x_pos, y=y_pos),
+
+  exposure = "education",
+  outcome = "children",
+  
+  labels = c(
+    children = "Children",
+    income = "Income",
+    education = "Education",
+    urban = "Urban/Rural",
+    immigrant = "Immigrant",
+    class = "Parents' Class",
+    religion = "Religion",
+    birth_control = "Birth Control",
+    married = "Married",
+    gender = "Gender",
+    age = "Age"
+  )
+)
+  
+  #check if valid DAG
+is.dagitty(dag_model)                   
+dagitty::isAcyclic(dag_model)            
+dagitty::findCycle(dag_model)
+
+ggdag_status(dag_model,
+             text       = FALSE,
+             use_labels = "label") +
+  geom_dag_label_repel(aes(label = NA)) +               
+  theme_dag() +
+  scale_fill_manual(             
+    values = c(
+      exposure = "black",
+      outcome  = "grey30",
+      none     = "grey90"
+    )
+  ) +
+  scale_color_manual(
+    values = c(
+      exposure = "black",
+      outcome  = "grey30",
+      none     = "grey60"
+    )
+  ) +
+  theme(legend.position = "none") 
+
+```
+```{r roles-table}
+DAGassist(dag_model, show="roles", type="txt")
+```
+
+

@@ -610,7 +610,7 @@ ggdag_status(dag_model,
   theme(legend.position = "none") 
 
 ```
-```{r roles-table}
+```{r roles-table, results='asis'}
 DAGassist(dag_model, show="roles", type="txt")
 ```
 

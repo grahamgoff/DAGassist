@@ -13,6 +13,8 @@
   Creation](https://grahamgoff.github.io/DAGassist/articles/making-reports.md):
 - [Supported
   Models](https://grahamgoff.github.io/DAGassist/articles/compatibility.md):
+- [Recovering Estimands with
+  DAGassist](https://grahamgoff.github.io/DAGassist/articles/estimand-recovery.md):
 
 ### Extended Documentation
 

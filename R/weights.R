@@ -1,23 +1,7 @@
 # weights.R
 #
 # Estimand recovery helpers
-#
-# These helpers add optional estimand recovery to DAGassist console output.
-# When the user sets `estimand = "ATE"` or `"ATT"` (and `type = "console"`),
-# DAGassist will:
-#   - Pick a set of controls from the report (canonical → minimal → fallback),
-#   - Use WeightIt to fit a binary treatment model and compute IPW weights,
-#   - Re-fit each comparison model with those weights, and
-#   - Append the weighted models as extra columns in the console table
-#      (e.g., "Original (ATE)", "Minimal 1 (ATE)", "Canonical (ATE)", ...).
-#
-# Design choices:
-#   - Binary exposures only (0/1 or two-level factors),
-#   - Console output only (no LaTeX/Word/Excel integration yet),
-#   - WeightIt is optional; if it isn't installed, we fail with a clear message.
 
-# Decide whether exposure is binary (0/1 numeric, logical, or 2-level factor)
-# vs continuous (numeric with >= 3 unique values).
 .dagassist_exposure_kind <- function(Tvar) {
   if (is.logical(Tvar)) return("binary")
   

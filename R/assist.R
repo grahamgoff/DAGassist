@@ -224,10 +224,10 @@ DAGassist <- function(dag,
   
   estimand <- match.arg(estimand)
   
-  if (!identical(type, "console") && !identical(estimand, "none")) {
+  if (type %in% c("dwplot", "dotwhisker") && !identical(estimand, "none")) {
     stop(
-      "Estimand recovery (estimand != 'none') is currently supported only for type = 'console'.\n",
-      "Please either set type = 'console' or estimand = 'none'.",
+      "Estimand recovery (estimand != 'none') is not currently supported for type = 'dwplot'/'dotwhisker'.\n",
+      "Please use type = 'console', 'latex', 'text', 'excel', or 'docx', or set estimand = 'none'.",
       call. = FALSE
     )
   }

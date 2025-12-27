@@ -618,6 +618,7 @@ DAGassist(dag_model,
           formula = lm(children ~ edu_year + age + class + gender + 
                          immigrant + urban + birth_control + income + 
                          married + religion, data = dat),
+          estimand = "ATE",
           type="txt")
 ```
 

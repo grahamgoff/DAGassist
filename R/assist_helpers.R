@@ -72,7 +72,11 @@
       mods[[lbl]] <- report$models$canonical_excl
     }
   }
-  
+  # If estimand recovery is requested, append weighted versions of each model
+  est <- tryCatch(report$settings$estimand, error = function(e) NULL)
+  if (!is.null(est) && !identical(est, "none")) {
+    mods <- .dagassist_add_weighted_models(report, mods)
+  }
   mods
 }
 
@@ -158,7 +162,19 @@
       } else character(0)
     }
   )
-  
+  # If estimand recovery is requested, include weighted-model rows in the same order
+  est <- tryCatch(report$settings$estimand, error = function(e) NULL)
+  if (!is.null(est) && !identical(est, "none")) {
+    est_label <- paste0(" (", est, ")")
+    labs2  <- character(0)
+    forms2 <- character(0)
+    for (j in seq_along(labs)) {
+      labs2  <- c(labs2, labs[[j]],  paste0(labs[[j]], est_label))
+      forms2 <- c(forms2, forms[[j]], forms[[j]])
+    }
+    labs  <- labs2
+    forms <- forms2
+  }
   data.frame(Model = labs, Formula = forms, stringsAsFactors = FALSE)
 }
 

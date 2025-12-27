@@ -24,7 +24,8 @@ DAGassist(
   omit_factors = TRUE,
   bivariate = FALSE,
   estimand = c("none", "ATE", "ATT"),
-  engine_args = list()
+  engine_args = list(),
+  weights_args = list()
 )
 }
 \arguments{
@@ -116,6 +117,9 @@ versions of each comparison model as additional columns.}
 \item{engine_args}{Named list of extra arguments forwarded to \code{engine(...)}.
 If \code{formula} is an engine call, arguments from the call are merged with
 \code{engine_args} (call values take precedence).}
+
+\item{weight_args}{List; parameters for weighting package. \code{DAGassist} is agnostic
+and passes list directly to the respective weighting package}
 }
 \value{
 An object of class \code{"DAGassist_report"}, invisibly for file and plot

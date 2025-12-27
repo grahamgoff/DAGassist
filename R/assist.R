@@ -70,6 +70,13 @@
 #'    `"nco"` (drop *neutral-on-outcome* controls). You can supply one or both,
 #'    e.g. `exclude = c("nco", "nct")`; each requested variant is fitted and shown
 #'    as a separate "Canon. (-...)" column in the console/model exports.
+#' @param estimand Character; causal estimand for **binary treatments**. Currently only
+#'    supported for `type = "console"`. One of `"none"` (default), `"ATE"`, or `"ATT"`.
+#'    When `"ATE"` or `"ATT"`, the console print method will attempt to compute 
+#'    inverse-probability weights via the \pkg{WeightIt} package and add weighted 
+#'    versions of each comparison model as additional columns.
+#' @param weights_args List; parameters for weighting package. `DAGassist` is agnostic
+#'    and passes list directly to the respective weighting package 
 #'    
 #' @details
 #' **Engine-call parsing.** If `formula` is a call (e.g., `feols(Y ~ X | fe, data=df)`),
@@ -202,7 +209,9 @@ DAGassist <- function(dag,
                       omit_intercept = TRUE,
                       omit_factors = TRUE,
                       bivariate = FALSE,
-                      engine_args = list()) {
+                      estimand = c("none", "ATE", "ATT"),
+                      engine_args = list(),
+                      weights_args = list()) {
   # set output type
   type <- match.arg(type)
   # set show type
@@ -211,6 +220,16 @@ DAGassist <- function(dag,
   # fail quickly if show = models and no formula
   if (show == "models" && (missing(formula) || is.null(formula))) {
     stop("show='models' requires a model specification (formula or engine call).", call. = FALSE)
+  }
+  
+  estimand <- match.arg(estimand)
+  
+  if (type %in% c("dwplot", "dotwhisker") && !identical(estimand, "none")) {
+    stop(
+      "Estimand recovery (estimand != 'none') is not currently supported for type = 'dwplot'/'dotwhisker'.\n",
+      "Please use type = 'console', 'latex', 'text', 'excel', or 'docx', or set estimand = 'none'.",
+      call. = FALSE
+    )
   }
   
   ###### FAST-PATH FOR ROLES ONLY OUTPUT TO NOT REQUIRE FORMULA OR DATA ########
@@ -248,28 +267,28 @@ DAGassist <- function(dag,
       controls_canonical_excl = character(0),
       conditions = conditions,  
       formulas = list(
-        original     = NULL,
-        minimal      = NULL,
+        original = NULL,
+        minimal = NULL,
         minimal_list = list(),
-        canonical    = NULL,
+        canonical = NULL,
         canonical_excl = NULL
       ),
       models = list(
-        original     = NULL,
-        minimal      = NULL,
+        original = NULL,
+        minimal = NULL,
         minimal_list = list(),
-        canonical    = NULL,
+        canonical = NULL,
         canonical_excl = NULL
       ),
-      unevaluated     = character(0),
+      unevaluated = character(0),
       unevaluated_str = "",
       verbose = isTRUE(verbose),
       imply   = isTRUE(imply)
     )
     report$settings <- list(
       omit_intercept = isTRUE(omit_intercept),
-      omit_factors   = isTRUE(omit_factors),
-      show           = show
+      omit_factors = isTRUE(omit_factors),
+      show = show
     )
     report$.__data <- if (!is.null(data)) data else NULL
     report$settings$coef_omit <- .build_coef_omit(
@@ -280,7 +299,7 @@ DAGassist <- function(dag,
     class(report) <- c("DAGassist_report", class(report))
     
     # build objects for exporters
-    mods_full      <- .build_named_mods(report)
+    mods_full <- .build_named_mods(report)
     models_df_full <- .build_models_df(report)
     
     # export to file or return to console
@@ -647,7 +666,11 @@ DAGassist <- function(dag,
     omit_intercept = isTRUE(omit_intercept),
     omit_factors = isTRUE(omit_factors),
     show = show,
-    exclude=exclude
+    exclude=exclude,
+    engine = engine,
+    engine_args = engine_args,
+    estimand = estimand,
+    weights_args = weights_args
   )
   report$.__data <- data
   report$settings$coef_omit <- .build_coef_omit(
@@ -989,7 +1012,18 @@ print.DAGassist_report <- function(x, ...) {
     }
     
     coef_omit <- x$settings$coef_omit
-    .print_model_comparison_list(mods, coef_rename = x$labels_map, coef_omit = coef_omit)
+    
+    # if estimand != "none", add weighted versions of each model column
+    if (!is.null(x$settings$estimand) &&
+        !identical(x$settings$estimand, "none")) {
+      mods <- .dagassist_add_weighted_models(x, mods)
+    }
+    
+    .print_model_comparison_list(
+      mods,
+      coef_rename = x$labels_map,
+      coef_omit = coef_omit
+    )
     
     if (identical(show, "all")) {
       if (isTRUE(verbose)) {

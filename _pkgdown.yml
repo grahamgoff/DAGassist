@@ -12,10 +12,12 @@ development:
 navbar:
   structure:
     left:  [home, articles, reference, news]
-    right: []
-  #components:
-    #news:
-      #text: "News"   
+    right: [github]
+  components:
+    github:
+      icon: fab fa-github
+      href: https://github.com/grahamgoff/DAGassist
+      aria-label: GitHub 
     
 articles:
   - title: "Tutorials"
@@ -26,6 +28,7 @@ articles:
     contents:
       - making-reports
       - compatibility
+      - estimand-recovery
   - title: "Extended Documentation"
     contents:
       - articles/ecosystem

@@ -69,7 +69,8 @@ XLSX, plain text). It also supports passing a <strong>single engine call</strong
 <span>  omit_factors <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  bivariate <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  estimand <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"none"</span>, <span class="st">"ATE"</span>, <span class="st">"ATT"</span><span class="op">)</span>,</span>
-<span>  engine_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  engine_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  weights_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -198,6 +199,11 @@ versions of each comparison model as additional columns.</p></dd>
 <dd><p>Named list of extra arguments forwarded to <code>engine(...)</code>.
 If <code>formula</code> is an engine call, arguments from the call are merged with
 <code>engine_args</code> (call values take precedence).</p></dd>
+
+
+<dt id="arg-weight-args">weight_args<a class="anchor" aria-label="anchor" href="#arg-weight-args"></a></dt>
+<dd><p>List; parameters for weighting package. <code>DAGassist</code> is agnostic
+and passes list directly to the respective weighting package</p></dd>
 
 </dl></div>
     <div class="section level2">

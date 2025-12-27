@@ -30,7 +30,8 @@ DAGassist(
   omit_factors = TRUE,
   bivariate = FALSE,
   estimand = c("none", "ATE", "ATT"),
-  engine_args = list()
+  engine_args = list(),
+  weights_args = list()
 )
 ```
 
@@ -176,6 +177,11 @@ DAGassist(
   Named list of extra arguments forwarded to `engine(...)`. If `formula`
   is an engine call, arguments from the call are merged with
   `engine_args` (call values take precedence).
+
+- weight_args:
+
+  List; parameters for weighting package. `DAGassist` is agnostic and
+  passes list directly to the respective weighting package
 
 ## Value
 

@@ -235,6 +235,7 @@ Events on Fertility Patterns<a class="anchor" aria-label="anchor" href="#example
 <span>          formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">children</span> <span class="op">~</span> <span class="va">edu_year</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">class</span> <span class="op">+</span> <span class="va">gender</span> <span class="op">+</span> </span>
 <span>                         <span class="va">immigrant</span> <span class="op">+</span> <span class="va">urban</span> <span class="op">+</span> <span class="va">birth_control</span> <span class="op">+</span> <span class="va">income</span> <span class="op">+</span> </span>
 <span>                         <span class="va">married</span> <span class="op">+</span> <span class="va">religion</span>, data <span class="op">=</span> <span class="va">dat</span><span class="op">)</span>,</span>
+<span>          estimand <span class="op">=</span> <span class="st">"ATE"</span>,</span>
 <span>          type<span class="op">=</span><span class="st">"txt"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -459,179 +460,275 @@ Events on Fertility Patterns<a class="anchor" aria-label="anchor" href="#example
 <div class="section level3">
 <h3 id="models">Models<a class="anchor" aria-label="anchor" href="#models"></a>
 </h3>
-<table class="table">
+<table style="width:100%;" class="table">
+<colgroup>
+<col width="20%">
+<col width="10%">
+<col width="15%">
+<col width="10%">
+<col width="16%">
+<col width="10%">
+<col width="16%">
+</colgroup>
 <thead><tr class="header">
 <th align="left">Term</th>
 <th align="center">Original</th>
+<th align="center">Original (ATE)</th>
 <th align="center">Minimal 1</th>
+<th align="center">Minimal 1 (ATE)</th>
 <th align="center">Canonical</th>
+<th align="center">Canonical (ATE)</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
 <td align="left">edu_year</td>
 <td align="center">-0.047***</td>
+<td align="center">-0.115***</td>
 <td align="center">-0.054***</td>
+<td align="center">-0.124***</td>
 <td align="center">-0.054***</td>
+<td align="center">-0.124***</td>
 </tr>
 <tr class="even">
 <td align="left"> </td>
 <td align="center">(0.013)</td>
+<td align="center">(0.011)</td>
 <td align="center">(0.013)</td>
+<td align="center">(0.010)</td>
 <td align="center">(0.013)</td>
+<td align="center">(0.010)</td>
 </tr>
 <tr class="odd">
 <td align="left">age</td>
 <td align="center">0.066***</td>
+<td align="center">0.058***</td>
 <td align="center">0.079***</td>
+<td align="center">0.072***</td>
 <td align="center">0.079***</td>
+<td align="center">0.072***</td>
 </tr>
 <tr class="even">
 <td align="left"> </td>
 <td align="center">(0.004)</td>
+<td align="center">(0.004)</td>
+<td align="center">(0.003)</td>
+<td align="center">(0.003)</td>
 <td align="center">(0.003)</td>
 <td align="center">(0.003)</td>
 </tr>
 <tr class="odd">
 <td align="left">genderMale</td>
 <td align="center">-0.046</td>
+<td align="center">0.092</td>
 <td align="center">-0.037</td>
+<td align="center">0.058</td>
 <td align="center">-0.037</td>
+<td align="center">0.058</td>
 </tr>
 <tr class="even">
 <td align="left"> </td>
 <td align="center">(0.083)</td>
+<td align="center">(0.080)</td>
 <td align="center">(0.082)</td>
+<td align="center">(0.079)</td>
 <td align="center">(0.082)</td>
+<td align="center">(0.079)</td>
 </tr>
 <tr class="odd">
 <td align="left">immigrantYes</td>
 <td align="center">0.121</td>
+<td align="center">0.640***</td>
 <td align="center">0.098</td>
+<td align="center">0.631***</td>
 <td align="center">0.098</td>
+<td align="center">0.631***</td>
 </tr>
 <tr class="even">
 <td align="left"> </td>
 <td align="center">(0.124)</td>
+<td align="center">(0.128)</td>
 <td align="center">(0.124)</td>
+<td align="center">(0.128)</td>
 <td align="center">(0.124)</td>
+<td align="center">(0.128)</td>
 </tr>
 <tr class="odd">
 <td align="left">urbanUrban</td>
 <td align="center">-0.128</td>
+<td align="center">-0.614***</td>
 <td align="center">-0.136</td>
+<td align="center">-0.481***</td>
 <td align="center">-0.136</td>
+<td align="center">-0.481***</td>
 </tr>
 <tr class="even">
 <td align="left"> </td>
 <td align="center">(0.091)</td>
+<td align="center">(0.088)</td>
 <td align="center">(0.091)</td>
+<td align="center">(0.086)</td>
 <td align="center">(0.091)</td>
+<td align="center">(0.086)</td>
 </tr>
 <tr class="odd">
 <td align="left">birth_control</td>
 <td align="center">-0.103</td>
+<td align="center">-0.263**</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 </tr>
 <tr class="even">
 <td align="left"> </td>
 <td align="center">(0.095)</td>
+<td align="center">(0.095)</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 </tr>
 <tr class="odd">
 <td align="left">income</td>
 <td align="center">0.000*</td>
+<td align="center">0.000***</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 </tr>
 <tr class="even">
 <td align="left"> </td>
 <td align="center">(0.000)</td>
+<td align="center">(0.000)</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 </tr>
 <tr class="odd">
 <td align="left">married</td>
 <td align="center">0.456***</td>
+<td align="center">0.345***</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 </tr>
 <tr class="even">
 <td align="left"> </td>
 <td align="center">(0.117)</td>
+<td align="center">(0.101)</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 </tr>
 <tr class="odd">
 <td align="left">religionMuslim</td>
 <td align="center">0.059</td>
+<td align="center">0.061</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 </tr>
 <tr class="even">
 <td align="left"> </td>
 <td align="center">(0.151)</td>
+<td align="center">(0.162)</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 </tr>
 <tr class="odd">
 <td align="left">religionHindu</td>
 <td align="center">-0.611**</td>
+<td align="center">-1.040***</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 </tr>
 <tr class="even">
 <td align="left"> </td>
 <td align="center">(0.222)</td>
+<td align="center">(0.171)</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 </tr>
 <tr class="odd">
 <td align="left">religionBuddhist</td>
 <td align="center">0.230</td>
+<td align="center">-0.026</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 </tr>
 <tr class="even">
 <td align="left"> </td>
 <td align="center">(0.222)</td>
+<td align="center">(0.203)</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 </tr>
 <tr class="odd">
 <td align="left">religionJewish</td>
 <td align="center">0.130</td>
+<td align="center">0.147</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 </tr>
 <tr class="even">
 <td align="left"> </td>
 <td align="center">(0.215)</td>
+<td align="center">(0.234)</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 </tr>
 <tr class="odd">
 <td align="left">religionUnaffiliated</td>
 <td align="center">-0.468***</td>
+<td align="center">-0.134</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 </tr>
 <tr class="even">
 <td align="left"> </td>
 <td align="center">(0.096)</td>
+<td align="center">(0.091)</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 </tr>
 <tr class="odd">
 <td align="left">religionOther</td>
 <td align="center">-0.350*</td>
+<td align="center">-0.349+</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 </tr>
 <tr class="even">
 <td align="left"> </td>
 <td align="center">(0.167)</td>
+<td align="center">(0.186)</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 </tr>
@@ -640,12 +737,18 @@ Events on Fertility Patterns<a class="anchor" aria-label="anchor" href="#example
 <td align="center">5000</td>
 <td align="center">5000</td>
 <td align="center">5000</td>
+<td align="center">5000</td>
+<td align="center">5000</td>
+<td align="center">5000</td>
 </tr>
 <tr class="even">
 <td align="left">R2</td>
 <td align="center">0.153</td>
+<td align="center">0.153</td>
 <td align="center">0.142</td>
+<td align="center">0.140</td>
 <td align="center">0.142</td>
+<td align="center">0.140</td>
 </tr>
 </tbody>
 </table>

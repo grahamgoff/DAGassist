@@ -118,7 +118,7 @@ versions of each comparison model as additional columns.}
 If \code{formula} is an engine call, arguments from the call are merged with
 \code{engine_args} (call values take precedence).}
 
-\item{weight_args}{List; parameters for weighting package. \code{DAGassist} is agnostic
+\item{weights_args}{List; parameters for weighting package. \code{DAGassist} is agnostic
 and passes list directly to the respective weighting package}
 }
 \value{

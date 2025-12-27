@@ -75,7 +75,7 @@
 #'    When `"ATE"` or `"ATT"`, the console print method will attempt to compute 
 #'    inverse-probability weights via the \pkg{WeightIt} package and add weighted 
 #'    versions of each comparison model as additional columns.
-#' @param weight_args List; parameters for weighting package. `DAGassist` is agnostic
+#' @param weights_args List; parameters for weighting package. `DAGassist` is agnostic
 #'    and passes list directly to the respective weighting package 
 #'    
 #' @details

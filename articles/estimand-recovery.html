@@ -64,19 +64,18 @@
     
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/grahamgoff/DAGassist" class="external-link">DAGassist</a></span><span class="op">)</span></span></code></pre></div>
-<p>From Denly email:</p>
-<p>The problem is that, for observational regressions with controls,
-linear regression and generalized linear model methods (e.g., logit) do
-not recover average treatment effects by default. Instead, they recover
-weighted strata-specific averages. Take a peak at the Chattopadhyay and
-Zubizarreta’s (2024) Harvard Data Science Review article in Mendeley,
-which breaks things down in a very friendly way</p>
-<div class="section level2">
-<h2 id="example-the-causal-effects-of-family-background-and-life-course-events-on-fertility-patterns">Example: The Causal Effects of Family Background and Life Course
-Events on Fertility Patterns<a class="anchor" aria-label="anchor" href="#example-the-causal-effects-of-family-background-and-life-course-events-on-fertility-patterns"></a>
-</h2>
-<p>Attribute to Morgan and Winship (p. 17-19)</p>
-<table style="width:100%;" class="table">
+<p>The backdoor criteria dictate that […]. Upon fitting controls to
+close backdoors, many researchers interpret the treatment coefficient as
+the <code>average treatment effect (ATE)</code>. However, for
+observational regressions with controls, linear regression and
+generalized linear model methods do not recover average treatment
+effects by default. Instead, they recover weighted strata-specific
+averages (Chattopadhyay and Zubizarreta 2024). To remedy this
+discrepancy, <code>DAGassist</code> automates estimand recovery via
+weights. This vignette uses a simulated dataset to provide an applied
+example of this functionality.</p>
+<details><summary><strong>Dataset summary statistics (click to expand)</strong>
+</summary><table style="width:100%;" class="table">
 <colgroup>
 <col width="18%">
 <col width="10%">
@@ -224,14 +223,26 @@ Events on Fertility Patterns<a class="anchor" aria-label="anchor" href="#example
 <td align="left">HS_grad:1635 Some_college:1390 BA:950 (Other):1025</td>
 </tr>
 </tbody>
-</table>
-<pre><code><span><span class="co">#&gt; [1] TRUE</span></span>
-<span><span class="co">#&gt; [1] TRUE</span></span>
-<span><span class="co">#&gt; list()</span></span></code></pre>
+</table></details><div class="section level2">
+<h2 id="example-the-causal-effects-of-family-background-and-life-course-events-on-fertility-patterns">Example: The Causal Effects of Family Background and Life Course
+Events on Fertility Patterns<a class="anchor" aria-label="anchor" href="#example-the-causal-effects-of-family-background-and-life-course-events-on-fertility-patterns"></a>
+</h2>
 <p><img src="estimand-recovery_files/figure-html/example-dag-1.png" class="r-plt" alt="" width="768"></p>
-<p>Boilerplate <code>DAGassist</code>:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">dag_model</span>,</span>
+<p>The DAG above visualizes a common social science question: how does
+education affect fertility (Morgan and Winship, 17-19)? The DAG model
+encodes a plausible, but not exhaustive, set of covariates. In the
+report below, <code>DAGassist</code> classifies variables by their
+causal roles, reestimates the model with DAG-consistent adjustment sets,
+and recovers the <code>ATE</code> using weights.</p>
+<p>Note: estimand recovery for binary treatments requires
+<code>WeightIt</code>, and continuous treatments require
+<code>twangContinuous</code>. The below model has years of education as
+its treatment and therefore uses <code>twangContinuous</code> (see
+descriptive statistics for details on covariates).</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">twangContinuous</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">dag_model</span>,</span>
 <span>          formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">children</span> <span class="op">~</span> <span class="va">edu_year</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">class</span> <span class="op">+</span> <span class="va">gender</span> <span class="op">+</span> </span>
 <span>                         <span class="va">immigrant</span> <span class="op">+</span> <span class="va">urban</span> <span class="op">+</span> <span class="va">birth_control</span> <span class="op">+</span> <span class="va">income</span> <span class="op">+</span> </span>
 <span>                         <span class="va">married</span> <span class="op">+</span> <span class="va">religion</span>, data <span class="op">=</span> <span class="va">dat</span><span class="op">)</span>,</span>

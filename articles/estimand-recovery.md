@@ -4,15 +4,15 @@
 library(DAGassist)
 ```
 
-The backdoor criteria dictate that \[…\]. Upon fitting controls to close
-backdoors, many researchers interpret the treatment coefficient as the
-`average treatment effect (ATE)`. However, for observational regressions
-with controls, linear regression and generalized linear model methods do
-not recover average treatment effects by default. Instead, they recover
-weighted strata-specific averages (Chattopadhyay and Zubizarreta 2024).
-To remedy this discrepancy, `DAGassist` automates estimand recovery via
-weights. This vignette uses a simulated dataset to provide an applied
-example of this functionality.
+Researchers often include control variables to block backdoor paths.
+Many interpret the resulting treatment coefficient as the
+`average treatment effect (ATE)`. However, linear regression and
+generalized linear model methods do not recover ATE by default. Instead,
+they recover weighted strata-specific averages (Chattopadhyay and
+Zubizarreta 2024). To bridge this gap, DAGassist automates estimand
+recovery by constructing weights that align estimation with a
+user-specified target estimand. This vignette illustrates the workflow
+using a simulated dataset.
 
 **Dataset summary statistics (click to expand)**
 
@@ -36,9 +36,12 @@ example of this functionality.
 | religion   | factor  | Christian:1965 Unaffiliated:1665 Muslim:450 (Other):920 |
 | edu_degree | factor  | HS_grad:1635 Some_college:1390 BA:950 (Other):1025      |
 
-## Example: The Causal Effects of Family Background and Life Course Events on Fertility Patterns
+![\*Example: The Causal Effects of Family Background and Life Course
+Events on Fertility
+Patterns\*](estimand-recovery_files/figure-html/example-dag-1.png)
 
-![](estimand-recovery_files/figure-html/example-dag-1.png)
+*Example: The Causal Effects of Family Background and Life Course Events
+on Fertility Patterns*
 
 The DAG above visualizes a common social science question: how does
 education affect fertility (Morgan and Winship, 17-19)? The DAG model

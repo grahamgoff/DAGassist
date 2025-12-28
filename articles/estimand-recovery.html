@@ -64,16 +64,15 @@
     
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/grahamgoff/DAGassist" class="external-link">DAGassist</a></span><span class="op">)</span></span></code></pre></div>
-<p>The backdoor criteria dictate that […]. Upon fitting controls to
-close backdoors, many researchers interpret the treatment coefficient as
-the <code>average treatment effect (ATE)</code>. However, for
-observational regressions with controls, linear regression and
-generalized linear model methods do not recover average treatment
-effects by default. Instead, they recover weighted strata-specific
-averages (Chattopadhyay and Zubizarreta 2024). To remedy this
-discrepancy, <code>DAGassist</code> automates estimand recovery via
-weights. This vignette uses a simulated dataset to provide an applied
-example of this functionality.</p>
+<p>Researchers often include control variables to block backdoor paths.
+Many interpret the resulting treatment coefficient as the
+<code>average treatment effect (ATE)</code>. However, linear regression
+and generalized linear model methods do not recover ATE by default.
+Instead, they recover weighted strata-specific averages (Chattopadhyay
+and Zubizarreta 2024). To bridge this gap, DAGassist automates estimand
+recovery by constructing weights that align estimation with a
+user-specified target estimand. This vignette illustrates the workflow
+using a simulated dataset.</p>
 <details><summary><strong>Dataset summary statistics (click to expand)</strong>
 </summary><table style="width:100%;" class="table">
 <colgroup>
@@ -223,11 +222,12 @@ example of this functionality.</p>
 <td align="left">HS_grad:1635 Some_college:1390 BA:950 (Other):1025</td>
 </tr>
 </tbody>
-</table></details><div class="section level2">
-<h2 id="example-the-causal-effects-of-family-background-and-life-course-events-on-fertility-patterns">Example: The Causal Effects of Family Background and Life Course
-Events on Fertility Patterns<a class="anchor" aria-label="anchor" href="#example-the-causal-effects-of-family-background-and-life-course-events-on-fertility-patterns"></a>
-</h2>
-<p><img src="estimand-recovery_files/figure-html/example-dag-1.png" class="r-plt" alt="" width="768"></p>
+</table></details><div class="figure">
+<img src="estimand-recovery_files/figure-html/example-dag-1.png" class="r-plt" alt="*Example: The Causal Effects of Family Background and Life Course Events on Fertility Patterns*" width="768"><p class="caption">
+<em>Example: The Causal Effects of Family Background and Life Course
+Events on Fertility Patterns</em>
+</p>
+</div>
 <p>The DAG above visualizes a common social science question: how does
 education affect fertility (Morgan and Winship, 17-19)? The DAG model
 encodes a plausible, but not exhaustive, set of covariates. In the
@@ -248,7 +248,6 @@ descriptive statistics for details on covariates).</p>
 <span>                         <span class="va">married</span> <span class="op">+</span> <span class="va">religion</span>, data <span class="op">=</span> <span class="va">dat</span><span class="op">)</span>,</span>
 <span>          estimand <span class="op">=</span> <span class="st">"ATE"</span>,</span>
 <span>          type<span class="op">=</span><span class="st">"txt"</span><span class="op">)</span></span></code></pre></div>
-</div>
 <div class="section level2">
 <h2 id="dagassist-report">DAGassist Report:<a class="anchor" aria-label="anchor" href="#dagassist-report"></a>
 </h2>

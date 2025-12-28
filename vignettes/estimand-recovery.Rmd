@@ -43,14 +43,10 @@ has_dotwhisker <- tryCatch({
 library(DAGassist)
 ```
 
-From Denly email:
+The backdoor criteria dictate that [...]. Upon fitting controls to close backdoors, many researchers interpret the treatment coefficient as the `average treatment effect (ATE)`. However, for observational regressions with controls, linear regression and generalized linear model methods do not recover average treatment effects by default. Instead, they recover weighted strata-specific averages (Chattopadhyay and Zubizarreta 2024). To remedy this discrepancy, `DAGassist` automates estimand recovery via weights. This vignette uses a simulated dataset to provide an applied example of this functionality.
 
-The problem is that, for observational regressions with controls, linear regression and generalized linear model methods (e.g., logit) do not recover average treatment effects by default. Instead, they recover weighted strata-specific averages. Take a peak at the Chattopadhyay and Zubizarreta’s (2024) Harvard Data Science Review article in Mendeley, which breaks things down in a very friendly way
-
-## Example: The Causal Effects of Family Background and Life Course Events on Fertility Patterns
-
-Attribute to Morgan and Winship (p. 17-19)
-
+<details>
+<summary><strong>Dataset summary statistics (click to expand)</strong></summary>
 ```{r make-df, include=FALSE}
 
 simulate_toy_panel <- function(
@@ -519,7 +515,9 @@ tabs <- toy_summary_split(dat, top_k = 3)
 knitr::kable(tabs$numeric, align = "l")
 knitr::kable(tabs$categorical, align = "l")
 ```
+</details>
 
+## Example: The Causal Effects of Family Background and Life Course Events on Fertility Patterns 
 
 ```{r example-dag, echo=FALSE, message=FALSE, fig.width=8, fig.height=5}
 library(dagitty)
@@ -584,9 +582,9 @@ dag_model <- dagify(
 )
   
   #check if valid DAG
-is.dagitty(dag_model)                   
-dagitty::isAcyclic(dag_model)            
-dagitty::findCycle(dag_model)
+#is.dagitty(dag_model)                   
+#dagitty::isAcyclic(dag_model)            
+#dagitty::findCycle(dag_model)
 
 ggdag_status(dag_model,
              text       = FALSE,
@@ -611,9 +609,13 @@ ggdag_status(dag_model,
 
 ```
 
-Boilerplate `DAGassist`:
+The DAG above visualizes a common social science question: how does education affect fertility (Morgan and Winship, 17-19)? The DAG model encodes a plausible, but not exhaustive, set of covariates. In the report below, `DAGassist` classifies variables by their causal roles, reestimates the model with DAG-consistent adjustment sets, and recovers the `ATE` using weights. 
 
-```{r dag-table, results='asis'}
+Note: estimand recovery for binary treatments requires `WeightIt`, and continuous treatments require `twangContinuous`. The below model has years of education as its treatment and therefore uses `twangContinuous` (see descriptive statistics for details on covariates). 
+
+```{r dag-table, results='asis', message=FALSE}
+library(twangContinuous)
+
 DAGassist(dag_model,
           formula = lm(children ~ edu_year + age + class + gender + 
                          immigrant + urban + birth_control + income + 

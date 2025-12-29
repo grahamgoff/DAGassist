@@ -247,6 +247,7 @@ descriptive statistics for details on covariates).</p>
 <span>                         <span class="va">immigrant</span> <span class="op">+</span> <span class="va">urban</span> <span class="op">+</span> <span class="va">birth_control</span> <span class="op">+</span> <span class="va">income</span> <span class="op">+</span> </span>
 <span>                         <span class="va">married</span> <span class="op">+</span> <span class="va">religion</span>, data <span class="op">=</span> <span class="va">dat</span><span class="op">)</span>,</span>
 <span>          estimand <span class="op">=</span> <span class="st">"ATE"</span>,</span>
+<span>          bivariate <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>          type<span class="op">=</span><span class="st">"txt"</span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="dagassist-report">DAGassist Report:<a class="anchor" aria-label="anchor" href="#dagassist-report"></a>
@@ -470,20 +471,24 @@ descriptive statistics for details on covariates).</p>
 <div class="section level3">
 <h3 id="models">Models<a class="anchor" aria-label="anchor" href="#models"></a>
 </h3>
-<table style="width:100%;" class="table">
+<table class="table">
 <colgroup>
-<col width="20%">
-<col width="10%">
 <col width="15%">
-<col width="10%">
-<col width="16%">
-<col width="10%">
-<col width="16%">
+<col width="8%">
+<col width="12%">
+<col width="8%">
+<col width="12%">
+<col width="8%">
+<col width="12%">
+<col width="8%">
+<col width="12%">
 </colgroup>
 <thead><tr class="header">
 <th align="left">Term</th>
 <th align="center">Original</th>
 <th align="center">Original (ATE)</th>
+<th align="center">Bivariate</th>
+<th align="center">Bivariate (ATE)</th>
 <th align="center">Minimal 1</th>
 <th align="center">Minimal 1 (ATE)</th>
 <th align="center">Canonical</th>
@@ -494,6 +499,8 @@ descriptive statistics for details on covariates).</p>
 <td align="left">edu_year</td>
 <td align="center">-0.047***</td>
 <td align="center">-0.115***</td>
+<td align="center">0.057***</td>
+<td align="center">-0.152***</td>
 <td align="center">-0.054***</td>
 <td align="center">-0.124***</td>
 <td align="center">-0.054***</td>
@@ -501,6 +508,8 @@ descriptive statistics for details on covariates).</p>
 </tr>
 <tr class="even">
 <td align="left"> </td>
+<td align="center">(0.013)</td>
+<td align="center">(0.011)</td>
 <td align="center">(0.013)</td>
 <td align="center">(0.011)</td>
 <td align="center">(0.013)</td>
@@ -512,6 +521,8 @@ descriptive statistics for details on covariates).</p>
 <td align="left">age</td>
 <td align="center">0.066***</td>
 <td align="center">0.058***</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center">0.079***</td>
 <td align="center">0.072***</td>
 <td align="center">0.079***</td>
@@ -521,6 +532,8 @@ descriptive statistics for details on covariates).</p>
 <td align="left"> </td>
 <td align="center">(0.004)</td>
 <td align="center">(0.004)</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center">(0.003)</td>
 <td align="center">(0.003)</td>
 <td align="center">(0.003)</td>
@@ -530,6 +543,8 @@ descriptive statistics for details on covariates).</p>
 <td align="left">genderMale</td>
 <td align="center">-0.046</td>
 <td align="center">0.092</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center">-0.037</td>
 <td align="center">0.058</td>
 <td align="center">-0.037</td>
@@ -539,6 +554,8 @@ descriptive statistics for details on covariates).</p>
 <td align="left"> </td>
 <td align="center">(0.083)</td>
 <td align="center">(0.080)</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center">(0.082)</td>
 <td align="center">(0.079)</td>
 <td align="center">(0.082)</td>
@@ -548,6 +565,8 @@ descriptive statistics for details on covariates).</p>
 <td align="left">immigrantYes</td>
 <td align="center">0.121</td>
 <td align="center">0.640***</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center">0.098</td>
 <td align="center">0.631***</td>
 <td align="center">0.098</td>
@@ -557,6 +576,8 @@ descriptive statistics for details on covariates).</p>
 <td align="left"> </td>
 <td align="center">(0.124)</td>
 <td align="center">(0.128)</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center">(0.124)</td>
 <td align="center">(0.128)</td>
 <td align="center">(0.124)</td>
@@ -566,6 +587,8 @@ descriptive statistics for details on covariates).</p>
 <td align="left">urbanUrban</td>
 <td align="center">-0.128</td>
 <td align="center">-0.614***</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center">-0.136</td>
 <td align="center">-0.481***</td>
 <td align="center">-0.136</td>
@@ -575,6 +598,8 @@ descriptive statistics for details on covariates).</p>
 <td align="left"> </td>
 <td align="center">(0.091)</td>
 <td align="center">(0.088)</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center">(0.091)</td>
 <td align="center">(0.086)</td>
 <td align="center">(0.091)</td>
@@ -588,11 +613,15 @@ descriptive statistics for details on covariates).</p>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
 </tr>
 <tr class="even">
 <td align="left"> </td>
 <td align="center">(0.095)</td>
 <td align="center">(0.095)</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
@@ -606,11 +635,15 @@ descriptive statistics for details on covariates).</p>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
 </tr>
 <tr class="even">
 <td align="left"> </td>
 <td align="center">(0.000)</td>
 <td align="center">(0.000)</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
@@ -624,11 +657,15 @@ descriptive statistics for details on covariates).</p>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
 </tr>
 <tr class="even">
 <td align="left"> </td>
 <td align="center">(0.117)</td>
 <td align="center">(0.101)</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
@@ -642,11 +679,15 @@ descriptive statistics for details on covariates).</p>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
 </tr>
 <tr class="even">
 <td align="left"> </td>
 <td align="center">(0.151)</td>
 <td align="center">(0.162)</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
@@ -660,11 +701,15 @@ descriptive statistics for details on covariates).</p>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
 </tr>
 <tr class="even">
 <td align="left"> </td>
 <td align="center">(0.222)</td>
 <td align="center">(0.171)</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
@@ -678,11 +723,15 @@ descriptive statistics for details on covariates).</p>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
 </tr>
 <tr class="even">
 <td align="left"> </td>
 <td align="center">(0.222)</td>
 <td align="center">(0.203)</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
@@ -696,11 +745,15 @@ descriptive statistics for details on covariates).</p>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
 </tr>
 <tr class="even">
 <td align="left"> </td>
 <td align="center">(0.215)</td>
 <td align="center">(0.234)</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
@@ -714,11 +767,15 @@ descriptive statistics for details on covariates).</p>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
 </tr>
 <tr class="even">
 <td align="left"> </td>
 <td align="center">(0.096)</td>
 <td align="center">(0.091)</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
@@ -732,11 +789,15 @@ descriptive statistics for details on covariates).</p>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
 </tr>
 <tr class="even">
 <td align="left"> </td>
 <td align="center">(0.167)</td>
 <td align="center">(0.186)</td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
@@ -750,11 +811,15 @@ descriptive statistics for details on covariates).</p>
 <td align="center">5000</td>
 <td align="center">5000</td>
 <td align="center">5000</td>
+<td align="center">5000</td>
+<td align="center">5000</td>
 </tr>
 <tr class="even">
 <td align="left">R2</td>
 <td align="center">0.153</td>
 <td align="center">0.153</td>
+<td align="center">0.004</td>
+<td align="center">0.040</td>
 <td align="center">0.142</td>
 <td align="center">0.140</td>
 <td align="center">0.142</td>
@@ -777,6 +842,11 @@ on treatment); NCO (neutral control on outcome).</li>
 <li>Controls (minimal): {age, class, gender, immigrant, urban}.</li>
 <li>Controls (canonical): {age, class, gender, immigrant, urban}.</li>
 </ul>
+<div class="figure">
+<img src="estimand-recovery_files/figure-html/dwplot-1.png" class="r-plt" alt="*Visualizing the effect of estimand recovery*" width="768"><p class="caption">
+<em>Visualizing the effect of estimand recovery</em>
+</p>
+</div>
 </div>
 </div>
 </div>

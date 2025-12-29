@@ -619,7 +619,17 @@ DAGassist(dag_model,
                          immigrant + urban + birth_control + income + 
                          married + religion, data = dat),
           estimand = "ATE",
+          bivariate = TRUE,
           type="txt")
 ```
 
+```{r dwplot, echo=FALSE, warning=FALSE, fig.width=8, fig.height=5, fig.cap="*Visualizing the effect of estimand recovery*"}
+DAGassist(dag_model,
+          formula = lm(children ~ edu_year + age + class + gender + 
+                         immigrant + urban + birth_control + income + 
+                         married + religion, data = dat),
+          estimand = "ATE",
+          bivariate = TRUE,
+          type="dwplot")
+```
 

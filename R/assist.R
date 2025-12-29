@@ -224,14 +224,6 @@ DAGassist <- function(dag,
   
   estimand <- match.arg(estimand)
   
-  if (type %in% c("dwplot", "dotwhisker") && !identical(estimand, "none")) {
-    stop(
-      "Estimand recovery (estimand != 'none') is not currently supported for type = 'dwplot'/'dotwhisker'.\n",
-      "Please use type = 'console', 'latex', 'text', 'excel', or 'docx', or set estimand = 'none'.",
-      call. = FALSE
-    )
-  }
-  
   ###### FAST-PATH FOR ROLES ONLY OUTPUT TO NOT REQUIRE FORMULA OR DATA ########
   roles_only_no_formula <- identical(show, "roles") && (missing(formula) || is.null(formula))
   if (roles_only_no_formula) {

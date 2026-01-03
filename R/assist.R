@@ -209,9 +209,12 @@ DAGassist <- function(dag,
                       omit_intercept = TRUE,
                       omit_factors = TRUE,
                       bivariate = FALSE,
-                      estimand = c("none", "ATE", "ATT"),
+                      estimand = c("raw", "none", "ATE", "ATT", "ACDE", "CDE"),
                       engine_args = list(),
-                      weights_args = list()) {
+                      weights_args = list(),
+                      auto_acde = TRUE,
+                      acde = list(),
+                      directeffects_args = list()) {
   # set output type
   type <- match.arg(type)
   # set show type
@@ -222,7 +225,10 @@ DAGassist <- function(dag,
     stop("show='models' requires a model specification (formula or engine call).", call. = FALSE)
   }
   
-  estimand <- match.arg(estimand)
+  estimand_requested <- estimand
+  estimand <- .dagassist_normalize_estimand(estimand)
+  acde <- .dagassist_normalize_acde_spec(acde)
+  
   
   ###### FAST-PATH FOR ROLES ONLY OUTPUT TO NOT REQUIRE FORMULA OR DATA ########
   roles_only_no_formula <- identical(show, "roles") && (missing(formula) || is.null(formula))
@@ -418,6 +424,15 @@ DAGassist <- function(dag,
   
   # classify nodes on the evaluation DAG (PRUNED when imply = FALSE)
   roles <- classify_nodes(dag_eval, exposure, outcome)
+  
+  # auto-map ATE -> ACDE if the user specification conditions on mediator(s)
+  estimand <- .dagassist_apply_auto_acde(
+    estimand = estimand,
+    formula = formula,
+    roles = roles,
+    auto_acde = auto_acde,
+    include_descendants = isTRUE(acde$include_descendants)
+  )
   
   #normalize labels and prepare roles table
   labmap <- tryCatch(.normalize_labels(labels, vars = unique(roles$variable)),
@@ -622,6 +637,7 @@ DAGassist <- function(dag,
     validation = v, 
     roles = roles,
     roles_display = roles_display,
+    dag = dag_eval,
     labels_map = labmap,
     bad_in_user = bad_in_user,
     
@@ -658,11 +674,15 @@ DAGassist <- function(dag,
     omit_intercept = isTRUE(omit_intercept),
     omit_factors = isTRUE(omit_factors),
     show = show,
-    exclude=exclude,
+    exclude = exclude,
     engine = engine,
     engine_args = engine_args,
     estimand = estimand,
-    weights_args = weights_args
+    estimand_requested = estimand_requested,
+    weights_args = weights_args,
+    auto_acde = isTRUE(auto_acde),
+    acde = acde,
+    directeffects_args = directeffects_args
   )
   report$.__data <- data
   report$settings$coef_omit <- .build_coef_omit(
@@ -1005,11 +1025,8 @@ print.DAGassist_report <- function(x, ...) {
     
     coef_omit <- x$settings$coef_omit
     
-    # if estimand != "none", add weighted versions of each model column
-    if (!is.null(x$settings$estimand) &&
-        !identical(x$settings$estimand, "none")) {
-      mods <- .dagassist_add_weighted_models(x, mods)
-    }
+    # Add requested estimands (ATE/ATT weights and/or ACDE via sequential_g)
+    mods <- .dagassist_add_estimand_models(x, mods)
     
     .print_model_comparison_list(
       mods,

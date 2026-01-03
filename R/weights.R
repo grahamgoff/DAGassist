@@ -358,8 +358,8 @@
   
   out <- mods
   # weights first (ATE/ATT)
-  if ("ATE" %in% ests) out <- .dagassist_add_weighted_models(x, out, "ATE")
-  if ("ATT" %in% ests) out <- .dagassist_add_weighted_models(x, out, "ATT")
+  if ("ATE" %in% ests) out <- .dagassist_add_weighted_models(x, out, estimand = "ATE")
+  if ("ATT" %in% ests) out <- .dagassist_add_weighted_models(x, out, estimand = "ATT")
   
   # ACDE last
   if ("ACDE" %in% ests) out <- .dagassist_add_acde_models(x, out)

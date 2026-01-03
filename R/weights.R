@@ -369,11 +369,17 @@
 
 
 # Add weighted versions of each model column (ATE/ATT) using WeightIt
-.dagassist_add_weighted_models <- function(x, mods) {
-  est <- x$settings$estimand
-  if (is.null(est) || identical(est, "none")) {
-    return(mods)
-  }
+.dagassist_add_weighted_models <- function(x, mods, estimand = NULL) {
+  # Use the estimand requested by the caller (ATE vs ATT). If not provided,
+  # fall back to whatever is stored on the report object.
+  ests <- .dagassist_normalize_estimand(
+    if (!is.null(estimand)) estimand else x$settings$estimand
+  )
+  
+  # Weighting only applies to ATE/ATT. ACDE is handled elsewhere.
+  ests <- intersect(ests, c("ATE", "ATT"))
+  if (!length(ests)) return(mods)
+  est <- ests[1L]
   
   data <- x$.__data
   if (is.null(data)) {

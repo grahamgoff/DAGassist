@@ -424,7 +424,7 @@
     if (!requireNamespace("WeightIt", quietly = TRUE)) {
       stop(
         "Estimand recovery for binary exposures requires the 'WeightIt' package.\n",
-        "Install it (install.packages('WeightIt')) or set estimand = 'none'.",
+        "Install it (install.packages('WeightIt')) or set estimand = 'raw'.",
         call. = FALSE
       )
     }
@@ -432,14 +432,14 @@
     if (!requireNamespace("twangContinuous", quietly = TRUE)) {
       stop(
         "Estimand recovery for continuous exposures requires the 'twangContinuous' package.\n",
-        "Install it (install.packages('twangContinuous')) or set estimand = 'none'.",
+        "Install it (install.packages('twangContinuous')) or set estimand = 'raw'.",
         call. = FALSE
       )
     }
     if (!identical(est, "ATE")) {
       stop(
         "For continuous exposures, DAGassist currently supports estimand = 'ATE' only.\n",
-        "Set estimand = 'ATE' (or 'none').",
+        "Set estimand = 'ATE' (or 'raw').",
         call. = FALSE
       )
     }
@@ -452,7 +452,7 @@
       "  * Continuous numeric exposures (>= 3 unique values).\n\n",
       "Exposure '", exp_nm, "' is class: ", paste(class(Tvar), collapse = "/"),
       if (!inherits(u, "try-error")) paste0("\nObserved values (unique): ", paste(u, collapse = ", ")) else "",
-      "\n\nPlease recode it or set estimand = 'none'.",
+      "\n\nPlease recode it or set estimand = 'raw'.",
       call. = FALSE
     )
   }

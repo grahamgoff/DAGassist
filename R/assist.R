@@ -696,7 +696,8 @@ DAGassist <- function(dag,
   
   class(report) <- c("DAGassist_report", class(report))
   # Build unified artifacts once for all outputs
-  mods_full <- .build_named_mods(report)
+  mods_full <- if (!is.null(report$models_full)) report$models_full else .build_named_mods(report)
+  report$models_full <- mods_full
   models_df_full <- .build_models_df(report)
   
   ##### LATEX OUT BRANCH #####
@@ -1030,7 +1031,9 @@ print.DAGassist_report <- function(x, ...) {
     
     # Add requested estimands (ATE/ATT weights and/or ACDE via sequential_g)
     mods <- .dagassist_add_estimand_models(x, mods)
-    
+    #persist models in the returned object
+    x$models_full <- mods
+  
     .print_model_comparison_list(
       mods,
       coef_rename = x$labels_map,

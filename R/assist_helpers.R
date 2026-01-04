@@ -569,6 +569,10 @@
       #match all factor indicators
       fac_pat <- paste0("^((?:factor|as\\.factor)\\s*\\()?(", alt, ")(\\))?(::|:|=|\\b).*$")
       pats <- c(pats, fac_pat)
+      # Also omit *explicit* factor()/as.factor() expansions even when the underlying
+      # data column is numeric/integer (common for FE IDs and years).
+      # Matches: "factor(ID)1354", "as.factor(year)2010", etc.
+      pats <- c(pats, "^\\s*(?:factor|as\\.factor)\\([^\\)]+\\).*")
     }
   }
   

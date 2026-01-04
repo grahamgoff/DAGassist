@@ -226,7 +226,7 @@ DAGassist <- function(dag,
   }
   
   # Ensure default to raw when no estimand arg is passed
-  estimand <- match.arg(estimand, several.ok = TRUE)
+  estimand <- match.arg(estimand)
   
   estimand_requested <- estimand
   estimand <- .dagassist_normalize_estimand(estimand)

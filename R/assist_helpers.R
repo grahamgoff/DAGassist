@@ -356,6 +356,37 @@
   c(out, trimws(paste(buf, collapse = "")))
 }
 
+# Extract term labels from the k-th top-level '|' block of a formula.
+# k = 1 is the main (pre-|) RHS; k = 2 is the first tail block (FE in fixest/felm),
+# k = 3 is the next block, etc.
+.dagassist_bar_block_terms <- function(fml, k = 2L) {
+  if (!inherits(fml, "formula")) return(character(0))
+  
+  s <- paste(deparse(fml, width.cutoff = 500L), collapse = " ")
+  parts <- .split_top_level(s, sep = "|")
+  if (length(parts) < k) return(character(0))
+  
+  txt <- trimws(parts[[k]])
+  if (!nzchar(txt)) return(character(0))
+  
+  # Build a RHS-only formula and pull term labels
+  rhs_fml <- stats::as.formula(paste0("~", txt), env = environment(fml))
+  
+  # If the block contains no variables (e.g., 1/0/TRUE/FALSE), treat as placeholder
+  expr <- rhs_fml[[2L]]
+  if (!length(all.vars(expr, functions = FALSE))) return(character(0))
+  
+  unique(attr(stats::terms(rhs_fml), "term.labels"))
+}
+
+# Factorize only bare symbols; leave complex terms untouched (i(), interactions, etc.)
+.dagassist_factorize_plain_terms <- function(terms) {
+  if (!length(terms)) return(character(0))
+  is_bare <- grepl("^[.A-Za-z][.A-Za-z0-9._]*$", terms)
+  terms[is_bare] <- paste0("factor(", terms[is_bare], ")")
+  terms
+}
+
 # Helper: collect any calls whose operator is '|' or '||' anywhere in the RHS.
 # This is engine-agnostic and does not import lme4.
 .collect_bar_calls <- function(expr, acc = list()) {

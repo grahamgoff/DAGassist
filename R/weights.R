@@ -222,44 +222,6 @@
   )
 }
 
-#helper to structurally extract FE vars
-.dagassist_extract_fixest_fe_vars <- function(fml) {
-  if (!inherits(fml, "formula")) return(character(0))
-  
-  rhs <- tryCatch(fml[[3L]], error = function(e) NULL)
-  if (is.null(rhs)) return(character(0))
-  
-  # Only treat as fixest multi-part if the TOP-LEVEL rhs is a `|` call
-  if (!is.call(rhs) || !identical(rhs[[1L]], as.name("|"))) {
-    return(character(0))
-  }
-  
-  # Flatten only the top-level `|` chain: block1 | block2 | block3 | ...
-  flatten_bar_chain <- function(expr) {
-    if (is.call(expr) && identical(expr[[1L]], as.name("|"))) {
-      c(flatten_bar_chain(expr[[2L]]), list(expr[[3L]]))
-    } else {
-      list(expr)
-    }
-  }
-  
-  blocks <- flatten_bar_chain(rhs)
-  if (length(blocks) < 2L) return(character(0))
-  
-  fe_expr <- blocks[[2L]]
-  
-  # Convert FE expression to a formula safely without deparse
-  fe_fml <- stats::as.formula(call("~", fe_expr), env = environment(fml))
-  
-  # If FE block is a placeholder (TRUE/0/1/etc.), term.labels will be empty
-  labs <- attr(stats::terms(fe_fml), "term.labels")
-  if (!length(labs)) return(character(0))
-  
-  # Expand labels to variable names
-  vars <- unique(unlist(lapply(labs, all.vars), use.names = FALSE))
-  vars
-}
-
 .dagassist_safe_descendants <- function(dag, node) {
   tryCatch(dagitty::descendants(dag, node), error = function(e) character(0))
 }
@@ -288,6 +250,16 @@
   unique(meds)
 }
 
+# Wrap factor() only around bare variable names (e.g., "ID", "year").
+# Leave complex FE terms untouched (e.g., "i(ID, ref = 1)", "ID^year", "ID:year").
+.dagassist_factorize_plain_terms <- function(terms) {
+  if (!length(terms)) return(character(0))
+  
+  is_bare_symbol <- grepl("^[.A-Za-z][.A-Za-z0-9._]*$", terms)
+  terms[is_bare_symbol] <- paste0("factor(", terms[is_bare_symbol], ")")
+  terms
+}
+
 # Build sequential_g formula (y ~ A + X | Z | M)
 .dagassist_build_acde_formula <- function(base_fml, x, acde) {
   if (is.null(x$dag)) {
@@ -310,10 +282,6 @@
   
   rhs_terms <- .rhs_terms_safe(base)  # term labels (includes exposure if present)
   rhs_terms <- unique(rhs_terms)
-  
-  # pull FE vars from fixest tail (if any); add explicit overrides
-  fe_vars <- .dagassist_extract_fixest_fe_vars(base_fml)
-  if (!is.null(acde$fe) && length(acde$fe)) fe_vars <- unique(c(fe_vars, as.character(acde$fe)))
   
   # Partition RHS into X vs Z unless user overrides
   # Z: descendants of A that are ALSO ancestors of mediator(s) AND outcome (intermediate confounders)
@@ -339,12 +307,17 @@
   x_auto <- setdiff(rhs_terms, c(exp_nm, m_terms, z_terms))
   if (!is.null(acde$x)) x_terms <- unique(as.character(acde$x)) else x_terms <- x_auto
   
-  # add FE terms into X block (as factors by default)
-  if (length(fe_vars)) {
+  # After x_terms is defined (important), append FE terms from the first | tail block
+  fe_terms <- .dagassist_bar_block_terms(base_fml, k = 2L)
+  
+  # User override: treat as terms (not only bare variable names)
+  if (!is.null(acde$fe) && length(acde$fe)) {
+    fe_terms <- unique(c(fe_terms, as.character(acde$fe)))
+  }
+  
+  if (length(fe_terms)) {
     if (isTRUE(acde$fe_as_factor)) {
-      fe_terms <- paste0("factor(", fe_vars, ")")
-    } else {
-      fe_terms <- fe_vars
+      fe_terms <- .dagassist_factorize_plain_terms(fe_terms)
     }
     x_terms <- unique(c(x_terms, fe_terms))
   }

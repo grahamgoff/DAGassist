@@ -183,30 +183,81 @@
   length(intersect(rhs, meds)) > 0L
 }
 
-# ---- Auto-map ATE -> ACDE when mediator is conditioned-on (optional) ----
-.dagassist_apply_auto_acde <- function(estimand, formula, roles,
+.dagassist_apply_auto_acde <- function(estimand,
+                                       formula,
+                                       roles,
                                        auto_acde = TRUE,
                                        include_descendants = FALSE) {
-  est <- .dagassist_normalize_estimand(estimand)
-  if (!isTRUE(auto_acde)) return(est)
-  if (!("ATE" %in% est)) return(est)
-  if ("ACDE" %in% est) return(est)
-  if (.dagassist_formula_controls_mediator(formula, roles, include_descendants = include_descendants)) {
-    est <- union(setdiff(est, "ATE"), "ACDE")
-  }
-  est
+  if (!isTRUE(auto_acde)) return(estimand)
+  
+  ests <- unique(.dagassist_normalize_estimand(estimand))
+  wants_total <- any(ests %in% c("ATE", "ATT"))
+  if (!wants_total) return(estimand)
+  
+  controls_mediator <- .dagassist_formula_controls_mediator(
+    formula,
+    roles,
+    include_descendants = include_descendants
+  )
+  if (!isTRUE(controls_mediator)) return(estimand)
+  
+  # identify mediators in  RHS 
+  meds <- roles$variable[roles$is_mediator |
+                           (isTRUE(include_descendants) & roles$is_descendant_of_mediator)]
+  meds_in_rhs <- intersect(.rhs_terms_safe(formula), meds)
+  
+  stop(
+    paste0(
+      "You requested estimand = ", paste(sprintf("'%s'", intersect(ests, c("ATE","ATT"))), collapse = " / "),
+      ", which targets a total effect.\n",
+      "However, your model conditions on mediator term(s): {",
+      paste(meds_in_rhs, collapse = ", "),
+      "}.\n\n",
+      "Fix options:\n",
+      "  1) Remove mediator terms from the formula and keep estimand = 'ATE'/'ATT' (total effect), OR\n",
+      "  2) Set estimand = 'ACDE' (alias: 'CDE') to estimate a controlled direct effect via sequential g-estimation.\n",
+      "  3) If you only want the naive regression output with mediators, use estimand = 'RAW'.\n"
+    ),
+    call. = FALSE
+  )
 }
 
-# ---- Extract simple fixest FE vars from RHS tail: y ~ x | fe1 + fe2 ----
+#helper to structurally extract FE vars
 .dagassist_extract_fixest_fe_vars <- function(fml) {
-  s <- paste(deparse(fml, width.cutoff = 500L), collapse = " ")
-  parts <- .split_top_level(s, sep = "|")
-  if (length(parts) < 2L) return(character(0))
-  fe_txt <- trimws(parts[2])
-  if (!nzchar(fe_txt) || fe_txt %in% c("0","1")) return(character(0))
-  out <- tryCatch(all.vars(stats::as.formula(paste("~", fe_txt))),
-                  error = function(e) character(0))
-  unique(out)
+  if (!inherits(fml, "formula")) return(character(0))
+  
+  rhs <- tryCatch(fml[[3L]], error = function(e) NULL)
+  if (is.null(rhs)) return(character(0))
+  
+  # Only treat as fixest multi-part if the TOP-LEVEL rhs is a `|` call
+  if (!is.call(rhs) || !identical(rhs[[1L]], as.name("|"))) {
+    return(character(0))
+  }
+  
+  # Flatten only the top-level `|` chain: block1 | block2 | block3 | ...
+  flatten_bar_chain <- function(expr) {
+    if (is.call(expr) && identical(expr[[1L]], as.name("|"))) {
+      c(flatten_bar_chain(expr[[2L]]), list(expr[[3L]]))
+    } else {
+      list(expr)
+    }
+  }
+  
+  blocks <- flatten_bar_chain(rhs)
+  if (length(blocks) < 2L) return(character(0))
+  
+  fe_expr <- blocks[[2L]]
+  
+  # Convert FE expression to a formula safely without deparse
+  fe_fml <- stats::as.formula(call("~", fe_expr), env = environment(fml))
+  
+  # If FE block is a placeholder (TRUE/0/1/etc.), term.labels will be empty
+  labs <- attr(stats::terms(fe_fml), "term.labels")
+  if (!length(labs)) return(character(0))
+  
+  # Expand labels to variable names
+  vars <- unique(unlist(lapply(labs, all.vars), use.names = FALSE))
+  vars
 }
 
 .dagassist_safe_descendants <- function(dag, node) {

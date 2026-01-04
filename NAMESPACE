@@ -3,6 +3,7 @@
 S3method(print,DAGassist_report)
 S3method(print,DAGassist_roles)
 S3method(print,DAGassist_validation)
+S3method(tidy,seqg)
 export("%>%")
 export(DAGassist)
 export(bad_controls_in)

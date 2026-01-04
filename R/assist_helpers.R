@@ -403,6 +403,71 @@
   acc
 }
 
+# Return FE / grouping variable *names* from common syntaxes:
+#  (a) fixest/lfe tails: y ~ x | FE (+ optional more | blocks)
+#  (b) lme4/nlme random-effects bars on RHS: (1 | FE), (x || FE), etc.
+#
+# We return *names* (e.g., "ID", "year"), not full terms.
+.dagassist_extract_fe_vars <- function(fml) {
+  if (!inherits(fml, "formula")) return(character(0))
+  
+  out <- character(0)
+  
+  # (a) tail block 2 for y ~ x | FE (fixest, felm, etc.)
+  # This uses your existing .dagassist_bar_block_terms().
+  fe_terms <- .dagassist_bar_block_terms(fml, k = 2L)
+  if (length(fe_terms)) {
+    # Convert any complex terms into underlying variable names.
+    # Example: "i(ID, ref=1)" -> "ID"
+    out <- c(out, unique(unlist(lapply(fe_terms, function(tt) {
+      expr <- tryCatch(parse(text = tt)[[1]], error = function(e) NULL)
+      if (is.null(expr)) return(character(0))
+      all.vars(expr, functions = FALSE)
+    }))))
+  }
+  
+  # (b) random-effects grouping variables like (1 | ID) or (x || ID)
+  base <- .strip_fixest_parts(fml)$base
+  rhs  <- tryCatch(base[[3L]], error = function(e) NULL)
+  if (!is.null(rhs)) {
+    bars <- .collect_bar_calls(rhs)
+    if (length(bars)) {
+      re_vars <- unique(unlist(lapply(bars, function(b) {
+        # b is a call like `|`(lhs, group) or `||`(lhs, group)
+        grp <- b[[3L]]
+        all.vars(grp, functions = FALSE)
+      })))
+      out <- c(out, re_vars)
+    }
+  }
+  
+  # Drop constants if they ever leak in via parsing
+  out <- setdiff(unique(out), c("TRUE", "FALSE", "T", "F"))
+  out[nzchar(out)]
+}
+
+# Keep only term strings that reference >=1 real data column.
+# Drops constants like TRUE/FALSE/1/0 and any term that doesn't resolve to data vars.
+.dagassist_terms_must_use_data <- function(terms, data_names) {
+  if (!length(terms)) return(character(0))
+  terms <- unique(trimws(as.character(terms)))
+  terms <- terms[nzchar(terms)]
+  
+  keep <- vapply(terms, function(tt) {
+    expr <- tryCatch(parse(text = tt)[[1L]], error = function(e) NULL)
+    if (is.null(expr)) return(FALSE)
+    
+    vars <- all.vars(expr, functions = FALSE)
+    
+    # constants like TRUE/FALSE typically yield vars==0 or vars=="TRUE"
+    if (!length(vars)) return(FALSE)
+    if (!all(vars %in% data_names)) return(FALSE)
+    TRUE
+  }, logical(1L))
+  
+  terms[keep]
+}
+
 # strip fixest FE/IV parts AND preserve random-effect bars (| or ||) from the RHS
 .strip_fixest_parts <- function(fml) {
   s <- paste(deparse(fml, width.cutoff = 500L), collapse = " ")

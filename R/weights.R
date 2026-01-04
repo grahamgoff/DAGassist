@@ -250,13 +250,21 @@
   unique(meds)
 }
 
-# Wrap factor() only around bare variable names (e.g., "ID", "year").
-# Leave complex FE terms untouched (e.g., "i(ID, ref = 1)", "ID^year", "ID:year").
-.dagassist_factorize_plain_terms <- function(terms) {
+# Wrap factor() ONLY for bare symbols that exist as columns in `data`.
+# This prevents factor(TRUE) and other length-1 constants from ever being created.
+.dagassist_factorize_plain_terms <- function(terms, data_names = NULL) {
   if (!length(terms)) return(character(0))
   
   is_bare_symbol <- grepl("^[.A-Za-z][.A-Za-z0-9._]*$", terms)
-  terms[is_bare_symbol] <- paste0("factor(", terms[is_bare_symbol], ")")
+  
+  if (!is.null(data_names)) {
+    is_in_data <- terms %in% data_names
+    to_wrap <- is_bare_symbol & is_in_data
+  } else {
+    to_wrap <- is_bare_symbol
+  }
+  
+  terms[to_wrap] <- paste0("factor(", terms[to_wrap], ")")
   terms
 }
 
@@ -289,8 +297,8 @@
   ancY  <- .dagassist_safe_ancestors(dag, out_nm)
   ancM  <- unique(unlist(lapply(m_terms, function(m) .dagassist_safe_ancestors(dag, m))))
   
-  # exclude mediator terms from candidates
-  cand <- setdiff(rhs_terms, m_terms)
+  # exclude mediator terms from candidates and don't let exposure in
+  cand <- setdiff(rhs_terms, c(exp_nm, m_terms))
   
   z_auto <- intersect(cand, descA)
   z_auto <- intersect(z_auto, ancY)
@@ -302,22 +310,32 @@
   
   # user override
   if (!is.null(acde$z)) z_terms <- unique(as.character(acde$z)) else z_terms <- z_auto
-  
+  #force exclude exposure from z
+  z_terms <- setdiff(z_terms, exp_nm)
   # X: everything else (excluding exposure, mediators, Z)
   x_auto <- setdiff(rhs_terms, c(exp_nm, m_terms, z_terms))
   if (!is.null(acde$x)) x_terms <- unique(as.character(acde$x)) else x_terms <- x_auto
   
-  # After x_terms is defined (important), append FE terms from the first | tail block
-  fe_terms <- .dagassist_bar_block_terms(base_fml, k = 2L)
+  # Append FE vars (engine-agnostic) into the X block.
+  # Key rule: only factorize symbols that actually exist in the data.
+  data_names <- names(x$.__data)
+  # Drop any constant / non-data term strings (this removes "TRUE")
+  x_terms <- .dagassist_terms_must_use_data(x_terms, data_names)
+  z_terms <- .dagassist_terms_must_use_data(z_terms, data_names)
+  m_terms <- .dagassist_terms_must_use_data(m_terms, data_names)
   
-  # User override: treat as terms (not only bare variable names)
+  fe_vars <- .dagassist_extract_fe_vars(base_fml)
   if (!is.null(acde$fe) && length(acde$fe)) {
-    fe_terms <- unique(c(fe_terms, as.character(acde$fe)))
+    # allow user override: accept vars or terms; coerce to character and merge
+    fe_vars <- unique(c(fe_vars, as.character(acde$fe)))
   }
-  
-  if (length(fe_terms)) {
+  #strip any weird junk from acde internal params
+  fe_vars <- setdiff(fe_vars, c("TRUE","FALSE","T","F","1","0"))
+  if (length(fe_vars)) {
     if (isTRUE(acde$fe_as_factor)) {
-      fe_terms <- .dagassist_factorize_plain_terms(fe_terms)
+      fe_terms <- .dagassist_factorize_plain_terms(fe_vars, data_names = data_names)
+    } else {
+      fe_terms <- fe_vars
     }
     x_terms <- unique(c(x_terms, fe_terms))
   }
@@ -368,6 +386,11 @@
     if (is.null(base_fml)) next
     
     f_acde <- .dagassist_build_acde_formula(base_fml, x, acde)
+    
+    if (isTRUE(x$verbose)) {
+      message("ACDE formula [", nm, "]: ", paste(deparse(f_acde, width.cutoff = 500L), collapse = " "))
+    }
+    
     fit <- .safe_fit(DirectEffects::sequential_g, f_acde, data, de_args)
     
     out[[paste0(nm, " ", .dagassist_model_name_labels("ACDE"))]] <- fit

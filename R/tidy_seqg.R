@@ -1,6 +1,7 @@
 # tidy_seqg.R
 # broom tidier + vcov for DirectEffects::sequential_g output ("seqg")
 
+#' @method vcov seqg
 #' @export
 vcov.seqg <- function(object, ...) {
   if (!requireNamespace("DirectEffects", quietly = TRUE)) {

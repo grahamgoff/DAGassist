@@ -1,3 +1,26 @@
+# build a unified, named list of models for all outputs.
+# (this is important. each of the out paths use .build_named_mods)
+##IN: `report` the list returned inside DAGassist(), which contains 
+#report$models$original -- fitted base model
+#report$models$minimal -- fitted minimal model
+#report$models$minimal_list -- list of all minimal fits
+#report$models$canonical -- fitted canonical model
+#report$formulas$original -- formula for original
+#report$formulas$canonical--  formula for Canonical
+#report$controls_minimal--vector of minimal controls 
+#
+##OUT:
+#named list of models with nice labels
+# e.g. ("Original", "Minimal 1", "Minimal 2", "Canonical")
+#
+##NOTE:
+#always includes original
+#if multiple minimal models exist labels them "Minimal (number)"
+#if there is a single minimal specification, include it as "Minimal 1".
+#include distinct canonical column only if  different from "Original" to avoid
+# duplicate columns downstream. the column will be lableled canonical, so no interp issues
+#presence of Canonical is decided via .same_formula().
+#downstream exporters rely on these names as table headers.
 #updated to add compatability with sequential g estimation via DirectEffects
 .build_named_mods <- function(report) {
   

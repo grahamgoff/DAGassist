@@ -54,61 +54,99 @@ vcov.seqg <- function(object, ...) {
   )
 }
 
+#' @method tidy seqg
 #' @export
 tidy.seqg <- function(x,
                       conf.int = FALSE,
                       conf.level = 0.95,
                       ...) {
   
-  co <- tryCatch(stats::coef(x), error = function(e) NULL)
-  if (is.null(co)) {
-    return(data.frame(
-      term = character(0),
-      estimate = numeric(0),
-      std.error = numeric(0),
-      statistic = numeric(0),
-      p.value = numeric(0)
-    ))
+  # Prefer DirectEffects' own inference (same machinery used by summary.seqg())
+  sm <- tryCatch(suppressWarnings(summary(x, ...)), error = function(e) NULL)
+  
+  mat <- NULL
+  if (inherits(sm, "coeftest")) {
+    mat <- as.matrix(sm)
+  } else if (is.matrix(sm)) {
+    mat <- sm
+  } else if (is.list(sm) && !is.null(sm$coefficients)) {
+    mat <- as.matrix(sm$coefficients)
   }
   
-  # Compute SEs via vcov.seqg; if that fails, return NA SEs (but do not crash modelsummary).
-  V <- tryCatch(stats::vcov(x), error = function(e) NULL)
-  se <- rep(NA_real_, length(co))
-  names(se) <- names(co)
-  
-  if (!is.null(V) && is.matrix(V)) {
-    d <- sqrt(diag(V))
-    # Align by name if possible
-    if (!is.null(names(d))) {
-      se[names(co)] <- d[names(co)]
-    } else {
-      se[seq_along(co)] <- d[seq_along(co)]
+  if (!is.null(mat) && nrow(mat) > 0) {
+    cn <- colnames(mat)
+    
+    pick1 <- function(cands) {
+      hit <- which(cn %in% cands)
+      if (length(hit)) hit[1] else NA_integer_
     }
+    
+    i_est  <- pick1(c("Estimate", "estimate"))
+    i_se   <- pick1(c("Std. Error", "Std. Err.", "Std.Err.", "std.error", "SE"))
+    i_stat <- pick1(c("t value", "z value", "statistic"))
+    i_p    <- pick1(c("Pr(>|t|)", "Pr(>|z|)", "p.value"))
+    
+    # Fallback: assume first four columns are (est, se, stat, p) like coeftest output
+    if (is.na(i_est))  i_est  <- 1
+    if (is.na(i_se))   i_se   <- if (ncol(mat) >= 2) 2 else NA_integer_
+    if (is.na(i_stat)) i_stat <- if (ncol(mat) >= 3) 3 else NA_integer_
+    if (is.na(i_p))    i_p    <- if (ncol(mat) >= 4) 4 else NA_integer_
+    
+    out <- data.frame(
+      term      = rownames(mat),
+      estimate  = as.numeric(mat[, i_est]),
+      std.error = if (!is.na(i_se))   as.numeric(mat[, i_se])   else NA_real_,
+      statistic = if (!is.na(i_stat)) as.numeric(mat[, i_stat]) else NA_real_,
+      p.value   = if (!is.na(i_p))    as.numeric(mat[, i_p])    else NA_real_,
+      stringsAsFactors = FALSE
+    )
+    
+  } else {
+    # Last-resort fallback (should almost never trigger now)
+    co <- tryCatch(stats::coef(x), error = function(e) NULL)
+    if (is.null(co)) {
+      return(data.frame(
+        term = character(0),
+        estimate = numeric(0),
+        std.error = numeric(0),
+        statistic = numeric(0),
+        p.value = numeric(0)
+      ))
+    }
+    V <- tryCatch(stats::vcov(x), error = function(e) NULL)
+    se <- rep(NA_real_, length(co))
+    names(se) <- names(co)
+    if (!is.null(V) && is.matrix(V)) {
+      d <- sqrt(diag(V))
+      if (!is.null(names(d))) se[names(co)] <- d[names(co)]
+    }
+    out <- data.frame(
+      term      = names(co),
+      estimate  = unname(co),
+      std.error = unname(se),
+      statistic = NA_real_,
+      p.value   = NA_real_,
+      stringsAsFactors = FALSE
+    )
   }
   
-  # ---- DAGassist presentation control ----
-  # If DAGassist attached exposure metadata, keep ONLY the exposure term by default.
+  # Optional conf int (Normal approx; modelsummary doesn't require this)
+  if (isTRUE(conf.int)) {
+    alpha <- 1 - conf.level
+    crit  <- stats::qnorm(1 - alpha / 2)
+    ok <- is.finite(out$std.error) & out$std.error > 0
+    out$conf.low  <- NA_real_
+    out$conf.high <- NA_real_
+    out$conf.low[ok]  <- out$estimate[ok] - crit * out$std.error[ok]
+    out$conf.high[ok] <- out$estimate[ok] + crit * out$std.error[ok]
+  }
+  
+  # Respect DAGassist meta filter if you ever attach it
   meta <- attr(x, "dagassist_meta", exact = TRUE)
   if (is.list(meta) && isTRUE(meta$tidy_only_exposure) && !is.null(meta$exposure)) {
-    keep <- meta$exposure
-    idx <- which(names(co) %in% keep)
-  } else {
-    idx <- seq_along(co)
+    out <- out[out$term %in% meta$exposure, , drop = FALSE]
   }
   
-  out <- data.frame(
-    term      = names(co)[idx],
-    estimate  = unname(co[idx]),
-    std.error = unname(se[idx]),
-    statistic = NA_real_,
-    p.value   = NA_real_,
-    stringsAsFactors = FALSE
-  )
-  
-  # Optional: Wald z/t if SE exists
-  ok <- is.finite(out$std.error) & out$std.error > 0
-  out$statistic[ok] <- out$estimate[ok] / out$std.error[ok]
-  out$p.value[ok] <- 2 * stats::pnorm(abs(out$statistic[ok]), lower.tail = FALSE)
-  
+  rownames(out) <- NULL
   out
 }

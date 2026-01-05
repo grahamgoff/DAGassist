@@ -339,13 +339,28 @@
     }
     x_terms <- unique(c(x_terms, fe_terms))
   }
-  
+  # Drop any baseline/intermediate covariates that are collinear with FE
+  # (e.g., time-invariant within unit when unit FE are included).
+  #fixest does this automatically and gracefully; DirectEffects does not. without
+  #something like this, collinearity breaks seqg
+  if (length(fe_vars)) {
+    dx <- .dagassist_drop_terms_collinear_with_fe(x_terms, x$.__data, fe_vars)
+    x_terms <- dx$keep
+    
+    dz <- .dagassist_drop_terms_collinear_with_fe(z_terms, x$.__data, fe_vars)
+    z_terms <- dz$keep
+    
+    if (isTRUE(x$verbose) && length(c(dx$dropped, dz$dropped))) {
+      message("Dropped FE-collinear covariates in ACDE: ",
+              paste(unique(c(dx$dropped, dz$dropped)), collapse = ", "))
+    }
+  }
   # Build text formula
   # First block always includes exposure; append X if any
   block1 <- paste(c(exp_nm, x_terms), collapse = " + ")
   if (!nzchar(block1)) block1 <- exp_nm
-  
-  blockZ <- if (length(z_terms)) paste(z_terms, collapse = " + ") else "1"
+  ##set to 0 instead of 1 because 1 trips singularity in first stage, causing summary() to fail
+  blockZ <- if (length(z_terms)) paste(z_terms, collapse = " + ") else "0"
   blockM <- paste(m_terms, collapse = " + ")
   
   f_txt <- paste0(out_nm, " ~ ", block1, " | ", blockZ, " | ", blockM)

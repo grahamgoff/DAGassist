@@ -468,6 +468,65 @@
   terms[keep]
 }
 
+# TRUE if x has no within-group variation (ignoring NAs)
+.dagassist_is_constant_within <- function(x, g) {
+  if (length(x) != length(g)) return(FALSE)
+  sp <- split(x, g, drop = TRUE)
+  all(vapply(sp, function(z) length(unique(z[!is.na(z)])) <= 1L, logical(1)))
+}
+
+# Drop any term whose *single underlying variable* is constant within any FE group.
+# This catches time-invariant-within-ID covariates when unit FE are included, etc.
+.dagassist_drop_terms_collinear_with_fe <- function(terms, data, fe_vars) {
+  if (!length(terms) || !length(fe_vars) || is.null(data)) {
+    return(list(keep = terms, dropped = character(0)))
+  }
+  
+  data_names <- names(data)
+  fe_vars <- intersect(unique(as.character(fe_vars)), data_names)
+  if (!length(fe_vars)) return(list(keep = terms, dropped = character(0)))
+  
+  terms <- unique(trimws(as.character(terms)))
+  terms <- terms[nzchar(terms)]
+  terms <- setdiff(terms, c("0","1","TRUE","FALSE","T","F"))
+  
+  dropped <- character(0)
+  keep <- character(0)
+  
+  for (tt in terms) {
+    vars <- tryCatch(all.vars(parse(text = tt)[[1]], functions = FALSE),
+                     error = function(e) character(0))
+    
+    # Only handle the simple/important case: terms that resolve to exactly one variable.
+    # If it's a composite expression (e.g., log(x), x:z), do not attempt to drop.
+    if (length(vars) != 1L) {
+      keep <- c(keep, tt)
+      next
+    }
+    
+    v <- vars[1]
+    # Don't drop FE terms themselves (factor(ID), ID, etc.)
+    if (v %in% fe_vars || !(v %in% data_names)) {
+      keep <- c(keep, tt)
+      next
+    }
+    
+    # If v is constant within ANY FE group, it is collinear with that FE.
+    collinear <- FALSE
+    for (fe in fe_vars) {
+      if (.dagassist_is_constant_within(data[[v]], data[[fe]])) {
+        collinear <- TRUE
+        dropped <- c(dropped, tt)
+        break
+      }
+    }
+    
+    if (!collinear) keep <- c(keep, tt)
+  }
+  
+  list(keep = unique(keep), dropped = unique(dropped))
+}
+
 # strip fixest FE/IV parts AND preserve random-effect bars (| or ||) from the RHS
 .strip_fixest_parts <- function(fml) {
   s <- paste(deparse(fml, width.cutoff = 500L), collapse = " ")

@@ -188,11 +188,39 @@
                                        roles,
                                        auto_acde = TRUE,
                                        include_descendants = FALSE) {
+  ests <- unique(.dagassist_normalize_estimand(estimand))
+  
+  # ACDE/CDE requires at least one mediator in the DAG / formula
+  wants_acde <- any(ests %in% c("ACDE", "CDE"))
+  if (isTRUE(wants_acde)) {
+    has_med <- FALSE
+    if (!is.null(roles)) {
+      if ("role" %in% names(roles)) {
+        has_med <- any(roles$role == "mediator")
+      }
+      if (!isTRUE(has_med) && "is_mediator" %in% names(roles)) {
+        has_med <- any(isTRUE(roles$is_mediator))
+      }
+    }
+    if (!isTRUE(has_med)) {
+      stop(
+        paste0(
+          "You requested estimand = 'ACDE' (alias: 'CDE'), but no mediator node(s) were detected in your DAG ",
+          "for this exposure/outcome pair.\n",
+          "ACDE/CDE is only defined when at least one mediator exists.\n\n",
+          "Fix options:\n",
+          "  1) Use estimand = 'ATE'/'ATT' for total effects (when no mediators are present), OR\n",
+          "  2) Use estimand = 'RAW' to report the naive regression output.\n"
+        ),
+        call. = FALSE
+      )
+    }
+  }
+  # allow ATE/ATT if formula includes mediators; will omit automatically
   if (!isTRUE(auto_acde)) return(estimand)
   
-  ests <- unique(.dagassist_normalize_estimand(estimand))
   wants_total <- any(ests %in% c("ATE", "ATT"))
-  if (!wants_total) return(estimand)
+  if (!isTRUE(wants_total)) return(estimand)
   
   controls_mediator <- .dagassist_formula_controls_mediator(
     formula,
@@ -201,25 +229,7 @@
   )
   if (!isTRUE(controls_mediator)) return(estimand)
   
-  # identify mediators in  RHS 
-  meds <- roles$variable[roles$is_mediator |
-                           (isTRUE(include_descendants) & roles$is_descendant_of_mediator)]
-  meds_in_rhs <- intersect(.rhs_terms_safe(formula), meds)
-  
-  stop(
-    paste0(
-      "You requested estimand = ", paste(sprintf("'%s'", intersect(ests, c("ATE","ATT"))), collapse = " / "),
-      ", which targets a total effect.\n",
-      "However, your model conditions on mediator term(s): {",
-      paste(meds_in_rhs, collapse = ", "),
-      "}.\n\n",
-      "Fix options:\n",
-      "  1) Remove mediator terms from the formula and keep estimand = 'ATE'/'ATT' (total effect), OR\n",
-      "  2) Set estimand = 'ACDE' (alias: 'CDE') to estimate a controlled direct effect via sequential g-estimation.\n",
-      "  3) If you only want the naive regression output with mediators, use estimand = 'RAW'.\n"
-    ),
-    call. = FALSE
-  )
+  estimand
 }
 
 .dagassist_safe_descendants <- function(dag, node) {

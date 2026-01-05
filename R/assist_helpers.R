@@ -886,11 +886,20 @@
   }
   ##preferred path: modelsummary
   if (requireNamespace("modelsummary", quietly = TRUE)) {
+    #may want to add param to customize gof--or maybe a simple list that can
+    #be passed straight to modelsummary
+    gof_map <- data.frame(
+      raw = c("nobs", "r.squared", "fixef"),
+      clean = c("Num.Obs.", "R2", "Fixed effects"),
+      fmt = c(0, 3, 0),
+      stringsAsFactors = FALSE
+    )
+    
     args <- list(
       mods,
       stars = TRUE,
       output = "markdown",
-      gof_map = NA
+      gof_map = gof_map
     )
     # only pass a VALID rename map (named char, length > 0)
     if (is.character(coef_rename) && length(coef_rename) && length(names(coef_rename))) {
@@ -1074,6 +1083,36 @@ get_by_role <- function(roles, value) {
   # fallback
   pkg <- tryCatch(utils::packageName(env), error = function(e) NA_character_)
   identical(pkg, "fixest")
+}
+
+#' Custom GOF fields for fixest models in modelsummary tables
+#'
+#' This is a method for modelsummary::glance_custom().
+#'
+#' @method glance_custom fixest
+#' @export
+glance_custom.fixest <- function(x, ...) {
+  fml <- tryCatch(stats::formula(x), error = function(e) NULL)
+  if (is.null(fml)) {
+    return(data.frame(fixef = NA_character_, stringsAsFactors = FALSE))
+  }
+  
+  f_txt <- paste(deparse(fml, width.cutoff = 500L), collapse = " ")
+  
+  parts <- strsplit(f_txt, "\\|", fixed = FALSE)[[1]]
+  if (length(parts) < 2) {
+    return(data.frame(fixef = NA_character_, stringsAsFactors = FALSE))
+  }
+  
+  fe_part <- trimws(parts[2])
+  if (!nzchar(fe_part) || identical(fe_part, "0")) {
+    return(data.frame(fixef = NA_character_, stringsAsFactors = FALSE))
+  }
+  
+  fe_part <- gsub("\\s+", " ", fe_part)
+  fe_part <- gsub("\\s*\\+\\s*", ", ", fe_part)
+  
+  data.frame(fixef = fe_part, stringsAsFactors = FALSE)
 }
 
 #the pretty colors

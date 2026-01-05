@@ -70,14 +70,26 @@
 #'    `"nco"` (drop *neutral-on-outcome* controls). You can supply one or both,
 #'    e.g. `exclude = c("nco", "nct")`; each requested variant is fitted and shown
 #'    as a separate "Canon. (-...)" column in the console/model exports.
-#' @param estimand Character; causal estimand for **binary treatments**. Currently only
-#'    supported for `type = "console"`. One of `"none"` (default), `"ATE"`, or `"ATT"`.
-#'    When `"ATE"` or `"ATT"`, the console print method will attempt to compute 
+#' @param estimand Character; causal estimand. Currently only
+#'    supported for `type = "console"`. One of `"raw"` (default), `"ATE"`, `"ATT"`, or `"ACDE"`.
+#'    For *binary treatments*, when `"ATE"` or `"ATT"`, the console print method will compute 
 #'    inverse-probability weights via the \pkg{WeightIt} package and add weighted 
-#'    versions of each comparison model as additional columns.
+#'    versions of each comparison model as additional columns. *Continuous treatments* link
+#'    to the \pkg{twangContinuous} package. For models with mediators, `"ACDE"` links to
+#'    the \pkg{DirectEffects} to for a controlled direct effect via sequential g-estimation.
 #' @param weights_args List; parameters for weighting package. `DAGassist` is agnostic
 #'    and passes list directly to the respective weighting package 
-#'    
+#' @param auto_acde Logical; if `TRUE` (default), automates handling conflicts between specifications
+#'    and estimand arguments. Fails gracefully with a helpful error when users specify ACDE estimand
+#'    for a model without mediators.
+#' @param acde List; options for the controlled direct effect workflow (estimands `"ACDE"`/`"CDE"`).
+#'   Users can override parts of the sequential g-estimation specification with named elements:
+#'   `m` (mediators), `x` (baseline covariates), `z` (intermediate covariates),
+#'   `fe` (fixed-effects variables), `fe_as_factor` (wrap `fe` as `factor()`), and
+#'   `include_descendants` (treat descendants of mediators as mediators). 
+#' @param directeffects_args Named list of arguments forwarded to [DirectEffects::sequential_g()]
+#'   when `estimand` includes `"ACDE"`/`"CDE"` (e.g., simulation/bootstrap controls,
+#'   variance estimator options).
 #' @details
 #' **Engine-call parsing.** If `formula` is a call (e.g., `feols(Y ~ X | fe, data=df)`),
 #' DAGassist extracts the engine function, formula, data argument, and any additional

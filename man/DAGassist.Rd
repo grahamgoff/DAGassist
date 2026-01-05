@@ -23,9 +23,12 @@ DAGassist(
   omit_intercept = TRUE,
   omit_factors = TRUE,
   bivariate = FALSE,
-  estimand = c("none", "ATE", "ATT"),
+  estimand = c("raw", "none", "ATE", "ATT", "ACDE", "CDE"),
   engine_args = list(),
-  weights_args = list()
+  weights_args = list(),
+  auto_acde = TRUE,
+  acde = list(),
+  directeffects_args = list()
 )
 }
 \arguments{
@@ -108,11 +111,13 @@ This parameter only suppresses factor \strong{output}--they are still included i
 \item{bivariate}{Logical; if \code{TRUE}, include a bivariate (exposure-only) specification
 in the comparison table \strong{in addition} to the user's original and DAG-derived models.}
 
-\item{estimand}{Character; causal estimand for \strong{binary treatments}. Currently only
-supported for \code{type = "console"}. One of \code{"none"} (default), \code{"ATE"}, or \code{"ATT"}.
-When \code{"ATE"} or \code{"ATT"}, the console print method will attempt to compute
+\item{estimand}{Character; causal estimand. Currently only
+supported for \code{type = "console"}. One of \code{"raw"} (default), \code{"ATE"}, \code{"ATT"}, or \code{"ACDE"}.
+For \emph{binary treatments}, when \code{"ATE"} or \code{"ATT"}, the console print method will compute
 inverse-probability weights via the \pkg{WeightIt} package and add weighted
-versions of each comparison model as additional columns.}
+versions of each comparison model as additional columns. \emph{Continuous treatments} link
+to the \pkg{twangContinuous} package. For models with mediators, \code{"ACDE"} links to
+the \pkg{DirectEffects} to for a controlled direct effect via sequential g-estimation.}
 
 \item{engine_args}{Named list of extra arguments forwarded to \code{engine(...)}.
 If \code{formula} is an engine call, arguments from the call are merged with
@@ -120,6 +125,20 @@ If \code{formula} is an engine call, arguments from the call are merged with
 
 \item{weights_args}{List; parameters for weighting package. \code{DAGassist} is agnostic
 and passes list directly to the respective weighting package}
+
+\item{auto_acde}{Logical; if \code{TRUE} (default), automates handling conflicts between specifications
+and estimand arguments. Fails gracefully with a helpful error when users specify ACDE estimand
+for a model without mediators.}
+
+\item{acde}{List; options for the controlled direct effect workflow (estimands \code{"ACDE"}/\code{"CDE"}).
+Users can override parts of the sequential g-estimation specification with named elements:
+\code{m} (mediators), \code{x} (baseline covariates), \code{z} (intermediate covariates),
+\code{fe} (fixed-effects variables), \code{fe_as_factor} (wrap \code{fe} as \code{factor()}), and
+\code{include_descendants} (treat descendants of mediators as mediators).}
+
+\item{directeffects_args}{Named list of arguments forwarded to \code{\link[DirectEffects:sequential_g]{DirectEffects::sequential_g()}}
+when \code{estimand} includes \code{"ACDE"}/\code{"CDE"} (e.g., simulation/bootstrap controls,
+variance estimator options).}
 }
 \value{
 An object of class \code{"DAGassist_report"}, invisibly for file and plot

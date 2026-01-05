@@ -18,11 +18,10 @@ utils::globalVariables(c(".data", "model"))
     out <- tryCatch(broom::tidy(m, conf.int = TRUE), error = function(e) NULL)
     if (is.null(out)) return(NULL)
     
-    #keep only the treatment (exposure) coefficient
+    ## keep the treatment coefficient
+    # reworked to handle factor treatments
     exp <- get_by_role(report$roles, "exposure")
-    if (!is.na(exp) && nzchar(exp)) {
-      out <- dplyr::filter(out, .data$term == exp)
-    }
+    out <- .dw_keep_exposure_coef(out, exp)
     if (nrow(out) == 0) return(NULL)
     
     out$model <- nm
@@ -67,9 +66,12 @@ utils::globalVariables(c(".data", "model"))
   # align legend names
   k <- length(mod_levels)
   greys <- setNames(grDevices::gray.colors(k, start = 0.15, end = 0.70), mod_levels)
-  shapes_nv <- setNames(c(16, 17, 15, 4, 8, 3, 7, 9, 10)[seq_len(k)], mod_levels)
-  ltypes_nv <- setNames(c("solid","dashed","dotdash","twodash","longdash",
-                          "dotted","solid","twodash","dotdash")[seq_len(k)], mod_levels)
+  
+  shape_pool <- c(16, 17, 15, 3, 7, 8, 0, 1, 2, 4, 5, 6, 9, 10, 11, 12, 13, 14, 18)
+  ltype_pool <- c("solid", "dashed", "dotdash", "twodash", "longdash", "dotted")
+  
+  shapes_nv <- setNames(rep_len(shape_pool, k), mod_levels)
+  ltypes_nv <- setNames(rep_len(ltype_pool, k), mod_levels)
   
   p <- p +
     # single legend comes from color
@@ -116,4 +118,38 @@ utils::globalVariables(c(".data", "model"))
       call. = FALSE
     )
   }
+}
+
+#helper for handling factor treatments
+.dw_keep_exposure_coef <- function(td, exposure) {
+  if (is.null(td) || !nrow(td) || is.na(exposure) || !nzchar(exposure)) return(td)
+  
+  # exact match 
+  if (any(td$term == exposure)) {
+    return(td[td$term == exposure, , drop = FALSE])
+  }
+  
+  # factors typically start with the variable name
+  esc <- gsub("([][{}()+*^$|\\\\.?])", "\\\\\\1", exposure)
+  idx <- grepl(paste0("^", esc), td$term) & !grepl(":", td$term, fixed = TRUE)
+  
+  if (sum(idx) == 1) return(td[idx, , drop = FALSE])
+  if (sum(idx) > 1) {
+    cand <- td[idx, , drop = FALSE]
+    cand <- cand[order(nchar(cand$term)), , drop = FALSE]
+    return(cand[1, , drop = FALSE])
+  }
+  
+  #last resort: any term containing exposure (prefer non-interactions)
+  idx2 <- grepl(exposure, td$term, fixed = TRUE)
+  if (sum(idx2) == 1) return(td[idx2, , drop = FALSE])
+  if (sum(idx2) > 1) {
+    cand <- td[idx2, , drop = FALSE]
+    cand_no_int <- cand[!grepl(":", cand$term, fixed = TRUE), , drop = FALSE]
+    if (nrow(cand_no_int)) cand <- cand_no_int
+    cand <- cand[order(nchar(cand$term)), , drop = FALSE]
+    return(cand[1, , drop = FALSE])
+  }
+  
+  td[0, , drop = FALSE]
 }

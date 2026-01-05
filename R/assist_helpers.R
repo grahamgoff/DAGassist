@@ -21,63 +21,55 @@
 # duplicate columns downstream. the column will be lableled canonical, so no interp issues
 #presence of Canonical is decided via .same_formula().
 #downstream exporters rely on these names as table headers.
+#updated to add compatability with sequential g estimation via DirectEffects
 .build_named_mods <- function(report) {
-  #start with base
-  mods <- list("Original" = report$models$original)
-  # optional bivariate (distinct from Original)
-  if (!is.null(report$models$bivariate) &&
-      !is.null(report$formulas$bivariate) &&
-      !.same_formula(report$formulas$bivariate, report$formulas$original)) {
-    mods[["Bivariate"]] <- report$models$bivariate
+  
+  mods <- report$models
+  
+  # Base models
+  mods_full <- list("Original" = mods$original)
+  
+  if (!is.null(mods$bivariate)) {
+    mods_full[["Bivariate"]] <- mods$bivariate
   }
-  #number and label minimal sets
-  if (length(report$models$minimal_list)) {
-    for (i in seq_along(report$models$minimal_list)) {
-      mods[[sprintf("Minimal %d", i)]] <- report$models$minimal_list[[i]]
-    } #default minimal 1
-  } else if (length(report$controls_minimal)) {
-    mods[["Minimal 1"]] <- report$models$minimal
+  
+  if (length(mods$minimal_list)) {
+    for (i in seq_along(mods$minimal_list)) {
+      mods_full[[sprintf("Minimal %d", i)]] <- mods$minimal_list[[i]]
+    }
+  } else {
+    mods_full[["Minimal 1"]] <- mods$minimal
   }
-  # separate canonical only if it differs from Original
-  if (!.same_formula(report$formulas$canonical, report$formulas$original)) {
-    mods[["Canonical"]] <- report$models$canonical
-  }
-  if (!is.null(report$models$canonical_excl)) {
-    # new style: list of filtered canonicals, e.g. list(nco = <mod>, nct = <mod>)
-    if (is.list(report$models$canonical_excl)) {
-      for (nm in names(report$models$canonical_excl)) {
+  
+  mods_full[["Canonical"]] <- mods$canonical
+  
+  if (!is.null(mods$canonical_excl)) {
+    cex <- mods$canonical_excl
+    if (is.list(cex)) {
+      for (nm in names(cex)) {
         lbl <- switch(
           nm,
-          nco = "Canon. (-NCO)",
           nct = "Canon. (-NCT)",
-          paste0("Canon. (-", toupper(nm), ")")
+          nco = "Canon. (-NCO)",
+          paste0("Canonical (", nm, ")")
         )
-        mods[[lbl]] <- report$models$canonical_excl[[nm]]
+        mods_full[[lbl]] <- cex[[nm]]
       }
     } else {
-      # backwards-compat: single model
-      exc <- character(0)
-      if (!is.null(report$settings) && !is.null(report$settings$exclude)) {
-        exc <- as.character(report$settings$exclude)
+      # old single-model behavior
+      exc <- report$settings$exclude
+      if (!is.null(exc)) {
+        if (identical(exc, "nct")) lbl <- "Canon. (-NCT)"
+        if (identical(exc, "nco")) lbl <- "Canon. (-NCO)"
+        mods_full[[lbl]] <- cex
       }
-      lbl <- "Canonical (filtered)"
-      if (length(exc)) {
-        lbl <- switch(
-          exc,
-          nco = "Canon. (-NCO)",
-          nct = "Canon. (-NCT)",
-          "Canonical (filtered)"
-        )
-      }
-      mods[[lbl]] <- report$models$canonical_excl
     }
   }
-  # If estimand recovery is requested, append weighted versions of each model
-  est <- tryCatch(report$settings$estimand, error = function(e) NULL)
-  if (!is.null(est) && !identical(est, "none")) {
-    mods <- .dagassist_add_weighted_models(report, mods)
-  }
-  mods
+  
+  # Add ATE/ATT weighted + ACDE via dispatcher (no-op if RAW)
+  mods_full <- .dagassist_add_estimand_models(report, mods_full)
+  
+  mods_full
 }
 
 # Build a dagitty subgraph restricted to `keep` nodes.
@@ -108,75 +100,83 @@
 ##OUT: df with cols `Model` and `Formula`
 ##NOTES from .build_named_mods apply here too
 .build_models_df <- function(report) {
-  # labels in print order 
-  labs <- c(
-    "Original",
-    if (!is.null(report$formulas$bivariate) &&
-        !.same_formula(report$formulas$bivariate, report$formulas$original))
-      "Bivariate"
-    else character(0),
-    if (length(report$formulas$minimal_list))
-      paste0("Minimal ", seq_along(report$formulas$minimal_list))
-    else if (length(report$controls_minimal))
-      "Minimal 1"
-    else character(0),
-    if (!.same_formula(report$formulas$canonical, report$formulas$original))
-      "Canonical"
-    else character(0),
-    # one label per filtered canonical
-    {
-      if (is.list(report$formulas$canonical_excl) && length(report$formulas$canonical_excl)) {
-        vapply(names(report$formulas$canonical_excl), function(nm) {
-          if (nm == "nct") "Canon. (-NCT)"
-          else if (nm == "nco") "Canon. (-NCO)"
-          else paste0("Canon. (-", toupper(nm), ")")
-        }, character(1))
-      } else if (!is.null(report$formulas$canonical_excl)) {
-        "Canonical (filtered)"
-      } else character(0)
+  
+  f <- report$formulas
+  
+  model_formulas <- list("Original" = f$original)
+  
+  if (!is.null(f$bivariate)) {
+    model_formulas[["Bivariate"]] <- f$bivariate
+  }
+  
+  if (length(f$minimal_list)) {
+    for (i in seq_along(f$minimal_list)) {
+      model_formulas[[sprintf("Minimal %d", i)]] <- f$minimal_list[[i]]
     }
+  } else {
+    model_formulas[["Minimal 1"]] <- f$minimal
+  }
+  
+  model_formulas[["Canonical"]] <- f$canonical
+  
+  if (!is.null(f$canonical_excl)) {
+    cex <- f$canonical_excl
+    if (is.list(cex)) {
+      for (nm in names(cex)) {
+        lbl <- switch(
+          nm,
+          nct = "Canon. (-NCT)",
+          nco = "Canon. (-NCO)",
+          paste0("Canonical (", nm, ")")
+        )
+        model_formulas[[lbl]] <- cex[[nm]]
+      }
+    } else {
+      exc <- report$settings$exclude
+      if (!is.null(exc)) {
+        if (identical(exc, "nct")) lbl <- "Canon. (-NCT)"
+        if (identical(exc, "nco")) lbl <- "Canon. (-NCO)"
+        model_formulas[[lbl]] <- cex
+      }
+    }
+  }
+  
+  # Add derived formula rows for requested estimands (ATE/ATT/ACDE)
+  ests <- .dagassist_normalize_estimand(report$settings$estimand)
+  
+  if ("ATE" %in% ests) {
+    wlab <- .dagassist_model_name_labels("ATE")
+    for (nm in names(model_formulas)) {
+      model_formulas[[paste0(nm, " ", wlab)]] <- model_formulas[[nm]]
+    }
+  }
+  
+  if ("ATT" %in% ests) {
+    wlab <- .dagassist_model_name_labels("ATT")
+    for (nm in names(model_formulas)) {
+      model_formulas[[paste0(nm, " ", wlab)]] <- model_formulas[[nm]]
+    }
+  }
+  
+  if ("ACDE" %in% ests) {
+    alab <- .dagassist_model_name_labels("ACDE")
+    for (nm in names(model_formulas)) {
+      nm_acde <- paste0(nm, " ", alab)
+      # build sequential_g formula from base model formula
+      model_formulas[[nm_acde]] <- .dagassist_formula_for_model_name(report, nm_acde)
+    }
+  }
+  
+  models_df <- data.frame(
+    model_name = names(model_formulas),
+    formula = vapply(model_formulas, function(ff) paste(deparse(ff), collapse=" "), character(1)),
+    type = rep("comparison", length(model_formulas)),
+    stringsAsFactors = FALSE
   )
   
-  forms <- c(
-    paste(deparse(report$formulas$original), collapse = " "),
-    if (!is.null(report$formulas$bivariate) &&
-        !.same_formula(report$formulas$bivariate, report$formulas$original))
-      paste(deparse(report$formulas$bivariate), collapse = " ")
-    else character(0),
-    if (length(report$formulas$minimal_list))
-      vapply(report$formulas$minimal_list, function(f) paste(deparse(f), collapse = " "), character(1))
-    else if (length(report$controls_minimal))
-      paste(deparse(report$formulas$minimal), collapse = " ")
-    else character(0),
-    if (!.same_formula(report$formulas$canonical, report$formulas$original))
-      paste(deparse(report$formulas$canonical), collapse = " ")
-    else character(0),
-    # one formula per filtered canonical
-    {
-      if (is.list(report$formulas$canonical_excl) && length(report$formulas$canonical_excl)) {
-        vapply(report$formulas$canonical_excl,
-               function(f) paste(deparse(f), collapse = " "),
-               character(1))
-      } else if (!is.null(report$formulas$canonical_excl)) {
-        paste(deparse(report$formulas$canonical_excl), collapse = " ")
-      } else character(0)
-    }
-  )
-  # If estimand recovery is requested, include weighted-model rows in the same order
-  est <- tryCatch(report$settings$estimand, error = function(e) NULL)
-  if (!is.null(est) && !identical(est, "none")) {
-    est_label <- paste0(" (", est, ")")
-    labs2  <- character(0)
-    forms2 <- character(0)
-    for (j in seq_along(labs)) {
-      labs2  <- c(labs2, labs[[j]],  paste0(labs[[j]], est_label))
-      forms2 <- c(forms2, forms[[j]], forms[[j]])
-    }
-    labs  <- labs2
-    forms <- forms2
-  }
-  data.frame(Model = labs, Formula = forms, stringsAsFactors = FALSE)
+  list(models_df = models_df, model_formulas = model_formulas)
 }
+
 
 ### infer x and y from the call, so the user does not have to make an  
 ### "engine" call 
@@ -379,6 +379,37 @@
   c(out, trimws(paste(buf, collapse = "")))
 }
 
+# Extract term labels from the k-th top-level '|' block of a formula.
+# k = 1 is the main (pre-|) RHS; k = 2 is the first tail block (FE in fixest/felm),
+# k = 3 is the next block, etc.
+.dagassist_bar_block_terms <- function(fml, k = 2L) {
+  if (!inherits(fml, "formula")) return(character(0))
+  
+  s <- paste(deparse(fml, width.cutoff = 500L), collapse = " ")
+  parts <- .split_top_level(s, sep = "|")
+  if (length(parts) < k) return(character(0))
+  
+  txt <- trimws(parts[[k]])
+  if (!nzchar(txt)) return(character(0))
+  
+  # Build a RHS-only formula and pull term labels
+  rhs_fml <- stats::as.formula(paste0("~", txt), env = environment(fml))
+  
+  # If the block contains no variables (e.g., 1/0/TRUE/FALSE), treat as placeholder
+  expr <- rhs_fml[[2L]]
+  if (!length(all.vars(expr, functions = FALSE))) return(character(0))
+  
+  unique(attr(stats::terms(rhs_fml), "term.labels"))
+}
+
+# Factorize only bare symbols; leave complex terms untouched (i(), interactions, etc.)
+.dagassist_factorize_plain_terms <- function(terms) {
+  if (!length(terms)) return(character(0))
+  is_bare <- grepl("^[.A-Za-z][.A-Za-z0-9._]*$", terms)
+  terms[is_bare] <- paste0("factor(", terms[is_bare], ")")
+  terms
+}
+
 # Helper: collect any calls whose operator is '|' or '||' anywhere in the RHS.
 # This is engine-agnostic and does not import lme4.
 .collect_bar_calls <- function(expr, acc = list()) {
@@ -393,6 +424,130 @@
     }
   }
   acc
+}
+
+# Return FE / grouping variable *names* from common syntaxes:
+#  (a) fixest/lfe tails: y ~ x | FE (+ optional more | blocks)
+#  (b) lme4/nlme random-effects bars on RHS: (1 | FE), (x || FE), etc.
+#
+# We return *names* (e.g., "ID", "year"), not full terms.
+.dagassist_extract_fe_vars <- function(fml) {
+  if (!inherits(fml, "formula")) return(character(0))
+  
+  out <- character(0)
+  
+  # (a) tail block 2 for y ~ x | FE (fixest, felm, etc.)
+  # This uses your existing .dagassist_bar_block_terms().
+  fe_terms <- .dagassist_bar_block_terms(fml, k = 2L)
+  if (length(fe_terms)) {
+    # Convert any complex terms into underlying variable names.
+    # Example: "i(ID, ref=1)" -> "ID"
+    out <- c(out, unique(unlist(lapply(fe_terms, function(tt) {
+      expr <- tryCatch(parse(text = tt)[[1]], error = function(e) NULL)
+      if (is.null(expr)) return(character(0))
+      all.vars(expr, functions = FALSE)
+    }))))
+  }
+  
+  # (b) random-effects grouping variables like (1 | ID) or (x || ID)
+  base <- .strip_fixest_parts(fml)$base
+  rhs  <- tryCatch(base[[3L]], error = function(e) NULL)
+  if (!is.null(rhs)) {
+    bars <- .collect_bar_calls(rhs)
+    if (length(bars)) {
+      re_vars <- unique(unlist(lapply(bars, function(b) {
+        # b is a call like `|`(lhs, group) or `||`(lhs, group)
+        grp <- b[[3L]]
+        all.vars(grp, functions = FALSE)
+      })))
+      out <- c(out, re_vars)
+    }
+  }
+  
+  # Drop constants if they ever leak in via parsing
+  out <- setdiff(unique(out), c("TRUE", "FALSE", "T", "F"))
+  out[nzchar(out)]
+}
+
+# Keep only term strings that reference >=1 real data column.
+# Drops constants like TRUE/FALSE/1/0 and any term that doesn't resolve to data vars.
+.dagassist_terms_must_use_data <- function(terms, data_names) {
+  if (!length(terms)) return(character(0))
+  terms <- unique(trimws(as.character(terms)))
+  terms <- terms[nzchar(terms)]
+  
+  keep <- vapply(terms, function(tt) {
+    expr <- tryCatch(parse(text = tt)[[1L]], error = function(e) NULL)
+    if (is.null(expr)) return(FALSE)
+    
+    vars <- all.vars(expr, functions = FALSE)
+    
+    # constants like TRUE/FALSE typically yield vars==0 or vars=="TRUE"
+    if (!length(vars)) return(FALSE)
+    if (!all(vars %in% data_names)) return(FALSE)
+    TRUE
+  }, logical(1L))
+  
+  terms[keep]
+}
+
+# TRUE if x has no within-group variation (ignoring NAs)
+.dagassist_is_constant_within <- function(x, g) {
+  if (length(x) != length(g)) return(FALSE)
+  sp <- split(x, g, drop = TRUE)
+  all(vapply(sp, function(z) length(unique(z[!is.na(z)])) <= 1L, logical(1)))
+}
+
+# Drop any term whose *single underlying variable* is constant within any FE group.
+# This catches time-invariant-within-ID covariates when unit FE are included, etc.
+.dagassist_drop_terms_collinear_with_fe <- function(terms, data, fe_vars) {
+  if (!length(terms) || !length(fe_vars) || is.null(data)) {
+    return(list(keep = terms, dropped = character(0)))
+  }
+  
+  data_names <- names(data)
+  fe_vars <- intersect(unique(as.character(fe_vars)), data_names)
+  if (!length(fe_vars)) return(list(keep = terms, dropped = character(0)))
+  
+  terms <- unique(trimws(as.character(terms)))
+  terms <- terms[nzchar(terms)]
+  terms <- setdiff(terms, c("0","1","TRUE","FALSE","T","F"))
+  
+  dropped <- character(0)
+  keep <- character(0)
+  
+  for (tt in terms) {
+    vars <- tryCatch(all.vars(parse(text = tt)[[1]], functions = FALSE),
+                     error = function(e) character(0))
+    
+    # Only handle the simple/important case: terms that resolve to exactly one variable.
+    # If it's a composite expression (e.g., log(x), x:z), do not attempt to drop.
+    if (length(vars) != 1L) {
+      keep <- c(keep, tt)
+      next
+    }
+    
+    v <- vars[1]
+    # Don't drop FE terms themselves (factor(ID), ID, etc.)
+    if (v %in% fe_vars || !(v %in% data_names)) {
+      keep <- c(keep, tt)
+      next
+    }
+    
+    # If v is constant within ANY FE group, it is collinear with that FE.
+    collinear <- FALSE
+    for (fe in fe_vars) {
+      if (.dagassist_is_constant_within(data[[v]], data[[fe]])) {
+        collinear <- TRUE
+        dropped <- c(dropped, tt)
+        break
+      }
+    }
+    
+    if (!collinear) keep <- c(keep, tt)
+  }
+  
+  list(keep = unique(keep), dropped = unique(dropped))
 }
 
 # strip fixest FE/IV parts AND preserve random-effect bars (| or ||) from the RHS
@@ -496,6 +651,10 @@
       #match all factor indicators
       fac_pat <- paste0("^((?:factor|as\\.factor)\\s*\\()?(", alt, ")(\\))?(::|:|=|\\b).*$")
       pats <- c(pats, fac_pat)
+      # Also omit *explicit* factor()/as.factor() expansions even when the underlying
+      # data column is numeric/integer (common for FE IDs and years).
+      # Matches: "factor(ID)1354", "as.factor(year)2010", etc.
+      pats <- c(pats, "^\\s*(?:factor|as\\.factor)\\([^\\)]+\\).*")
     }
   }
   

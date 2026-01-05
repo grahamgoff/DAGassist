@@ -70,14 +70,26 @@
 #'    `"nco"` (drop *neutral-on-outcome* controls). You can supply one or both,
 #'    e.g. `exclude = c("nco", "nct")`; each requested variant is fitted and shown
 #'    as a separate "Canon. (-...)" column in the console/model exports.
-#' @param estimand Character; causal estimand for **binary treatments**. Currently only
-#'    supported for `type = "console"`. One of `"none"` (default), `"ATE"`, or `"ATT"`.
-#'    When `"ATE"` or `"ATT"`, the console print method will attempt to compute 
+#' @param estimand Character; causal estimand. Currently only
+#'    supported for `type = "console"`. One of `"raw"` (default), `"ATE"`, `"ATT"`, or `"ACDE"`.
+#'    For *binary treatments*, when `"ATE"` or `"ATT"`, the console print method will compute 
 #'    inverse-probability weights via the \pkg{WeightIt} package and add weighted 
-#'    versions of each comparison model as additional columns.
+#'    versions of each comparison model as additional columns. *Continuous treatments* link
+#'    to the \pkg{twangContinuous} package. For models with mediators, `"ACDE"` links to
+#'    the \pkg{DirectEffects} to for a controlled direct effect via sequential g-estimation.
 #' @param weights_args List; parameters for weighting package. `DAGassist` is agnostic
 #'    and passes list directly to the respective weighting package 
-#'    
+#' @param auto_acde Logical; if `TRUE` (default), automates handling conflicts between specifications
+#'    and estimand arguments. Fails gracefully with a helpful error when users specify ACDE estimand
+#'    for a model without mediators.
+#' @param acde List; options for the controlled direct effect workflow (estimands `"ACDE"`/`"CDE"`).
+#'   Users can override parts of the sequential g-estimation specification with named elements:
+#'   `m` (mediators), `x` (baseline covariates), `z` (intermediate covariates),
+#'   `fe` (fixed-effects variables), `fe_as_factor` (wrap `fe` as `factor()`), and
+#'   `include_descendants` (treat descendants of mediators as mediators). 
+#' @param directeffects_args Named list of arguments forwarded to [DirectEffects::sequential_g()]
+#'   when `estimand` includes `"ACDE"`/`"CDE"` (e.g., simulation/bootstrap controls,
+#'   variance estimator options).
 #' @details
 #' **Engine-call parsing.** If `formula` is a call (e.g., `feols(Y ~ X | fe, data=df)`),
 #' DAGassist extracts the engine function, formula, data argument, and any additional
@@ -209,9 +221,12 @@ DAGassist <- function(dag,
                       omit_intercept = TRUE,
                       omit_factors = TRUE,
                       bivariate = FALSE,
-                      estimand = c("none", "ATE", "ATT"),
+                      estimand = c("raw", "none", "ATE", "ATT", "ACDE", "CDE"),
                       engine_args = list(),
-                      weights_args = list()) {
+                      weights_args = list(),
+                      auto_acde = TRUE,
+                      acde = list(),
+                      directeffects_args = list()) {
   # set output type
   type <- match.arg(type)
   # set show type
@@ -222,15 +237,13 @@ DAGassist <- function(dag,
     stop("show='models' requires a model specification (formula or engine call).", call. = FALSE)
   }
   
+  # Ensure default to raw when no estimand arg is passed
   estimand <- match.arg(estimand)
   
-  if (type %in% c("dwplot", "dotwhisker") && !identical(estimand, "none")) {
-    stop(
-      "Estimand recovery (estimand != 'none') is not currently supported for type = 'dwplot'/'dotwhisker'.\n",
-      "Please use type = 'console', 'latex', 'text', 'excel', or 'docx', or set estimand = 'none'.",
-      call. = FALSE
-    )
-  }
+  estimand_requested <- estimand
+  estimand <- .dagassist_normalize_estimand(estimand)
+  acde <- .dagassist_normalize_acde_spec(acde)
+  
   
   ###### FAST-PATH FOR ROLES ONLY OUTPUT TO NOT REQUIRE FORMULA OR DATA ########
   roles_only_no_formula <- identical(show, "roles") && (missing(formula) || is.null(formula))
@@ -426,6 +439,15 @@ DAGassist <- function(dag,
   
   # classify nodes on the evaluation DAG (PRUNED when imply = FALSE)
   roles <- classify_nodes(dag_eval, exposure, outcome)
+  
+  # auto-map ATE -> ACDE if the user specification conditions on mediator(s)
+  estimand <- .dagassist_apply_auto_acde(
+    estimand = estimand,
+    formula = formula,
+    roles = roles,
+    auto_acde = auto_acde,
+    include_descendants = isTRUE(acde$include_descendants)
+  )
   
   #normalize labels and prepare roles table
   labmap <- tryCatch(.normalize_labels(labels, vars = unique(roles$variable)),
@@ -630,6 +652,7 @@ DAGassist <- function(dag,
     validation = v, 
     roles = roles,
     roles_display = roles_display,
+    dag = dag_eval,
     labels_map = labmap,
     bad_in_user = bad_in_user,
     
@@ -666,11 +689,15 @@ DAGassist <- function(dag,
     omit_intercept = isTRUE(omit_intercept),
     omit_factors = isTRUE(omit_factors),
     show = show,
-    exclude=exclude,
+    exclude = exclude,
     engine = engine,
     engine_args = engine_args,
     estimand = estimand,
-    weights_args = weights_args
+    estimand_requested = estimand_requested,
+    weights_args = weights_args,
+    auto_acde = isTRUE(auto_acde),
+    acde = acde,
+    directeffects_args = directeffects_args
   )
   report$.__data <- data
   report$settings$coef_omit <- .build_coef_omit(
@@ -681,7 +708,8 @@ DAGassist <- function(dag,
   
   class(report) <- c("DAGassist_report", class(report))
   # Build unified artifacts once for all outputs
-  mods_full <- .build_named_mods(report)
+  mods_full <- if (!is.null(report$models_full)) report$models_full else .build_named_mods(report)
+  report$models_full <- mods_full
   models_df_full <- .build_models_df(report)
   
   ##### LATEX OUT BRANCH #####
@@ -1013,12 +1041,11 @@ print.DAGassist_report <- function(x, ...) {
     
     coef_omit <- x$settings$coef_omit
     
-    # if estimand != "none", add weighted versions of each model column
-    if (!is.null(x$settings$estimand) &&
-        !identical(x$settings$estimand, "none")) {
-      mods <- .dagassist_add_weighted_models(x, mods)
-    }
-    
+    # Add requested estimands (ATE/ATT weights and/or ACDE via sequential_g)
+    mods <- .dagassist_add_estimand_models(x, mods)
+    #persist models in the returned object
+    x$models_full <- mods
+  
     .print_model_comparison_list(
       mods,
       coef_rename = x$labels_map,

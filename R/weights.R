@@ -47,34 +47,54 @@
   list(keep = args[keep_nms], drop = drop_nms)
 }
 
-# support multicolumn weight output
 .dagassist_formula_for_model_name <- function(x, model_name) {
-  if (identical(model_name, "Original")) {
-    return(x$formulas$original)
+  
+  # detect derived suffix
+  is_weighted <- grepl("\\((ATE|ATT)\\)\\s*$", model_name, ignore.case = TRUE)
+  is_acde <- grepl("\\((ACDE|CDE)\\)\\s*$", model_name, ignore.case = TRUE)
+  
+  base_name <- sub("\\s*\\((ATE|ATT|ACDE|CDE)\\)\\s*$", "", model_name, ignore.case = TRUE)
+  
+  # If ACDE model label, build sequential_g formula from the *base* model formula
+  if (is_acde) {
+    base_fml <- .dagassist_formula_for_model_name(x, base_name)
+    if (is.null(base_fml)) return(NULL)
+    acde <- .dagassist_normalize_acde_spec(x$settings$acde)
+    return(.dagassist_build_acde_formula(base_fml, x, acde))
   }
   
-  if (identical(model_name, "Bivariate")) {
-    return(x$formulas$bivariate)
+  # weighted models use the same regression formula as their base model
+  if (is_weighted) {
+    return(.dagassist_formula_for_model_name(x, base_name))
   }
   
-  if (startsWith(model_name, "Minimal ")) {
-    idx <- suppressWarnings(as.integer(sub("Minimal\\s+", "", model_name)))
-    if (!is.na(idx) && length(x$formulas$minimal_list) >= idx) {
+  # ---- existing mapping logic (unchanged), but applied to base_name ----
+  # NOTE: this is your previous body, adjusted to use `base_name` instead of `model_name`
+  
+  of <- x$formulas$original
+  bf <- x$formulas$bivariate
+  mf <- x$formulas$minimal
+  cf <- x$formulas$canonical
+  cex <- x$formulas$canonical_excl
+  
+  if (identical(base_name, "Original")) return(of)
+  if (identical(base_name, "Bivariate")) return(bf)
+  
+  # Minimal i variants
+  if (grepl("^Minimal\\s+[0-9]+$", base_name)) {
+    idx <- as.integer(sub("^Minimal\\s+", "", base_name))
+    if (length(x$formulas$minimal_list) && idx <= length(x$formulas$minimal_list)) {
       return(x$formulas$minimal_list[[idx]])
     }
-    # Fallback: single minimal formula
-    return(x$formulas$minimal)
+    return(mf)
   }
   
-  if (identical(model_name, "Canonical")) {
-    return(x$formulas$canonical)
-  }
+  if (identical(base_name, "Canonical")) return(cf)
   
-  # Canonical with exclusions (e.g., "Canon. (-NCT)", "Canon. (-NCO)", ...)
-  cex <- x$formulas$canonical_excl
+  # Canonical exclusion variants
   if (!is.null(cex)) {
+    # list of excluded variants
     if (is.list(cex)) {
-      # New style: list(nco = <fml>, nct = <fml>, ...)
       for (nm in names(cex)) {
         lbl <- switch(
           nm,
@@ -82,18 +102,19 @@
           nco = "Canon. (-NCO)",
           paste0("Canonical (", nm, ")")
         )
-        if (identical(lbl, model_name)) return(cex[[nm]])
+        if (identical(lbl, base_name)) return(cex[[nm]])
       }
     } else {
-      # Old style: single canonical_excl
-      # All labels ("Canon. (-NCT)", etc.) map to the same formula
-      return(cex)
+      # old single-model behavior; map any label to the same formula
+      if (base_name %in% c("Canon. (-NCT)", "Canon. (-NCO)") || grepl("^Canonical\\s*\\(", base_name)) {
+        return(cex)
+      }
     }
   }
   
-  # If we get here, we couldn't match the label to a stored formula
   NULL
 }
+
 
 # Choose controls for the treatment model
 .dagassist_treatment_controls <- function(x, exposure) {
@@ -122,12 +143,315 @@
   unique(controls)
 }
 
-# Add weighted versions of each model column (ATE/ATT) using WeightIt
-.dagassist_add_weighted_models <- function(x, mods) {
-  est <- x$settings$estimand
-  if (is.null(est) || identical(est, "none")) {
-    return(mods)
+# ---- Estimand normalization (supports vectors) ----
+.dagassist_normalize_estimand <- function(estimand) {
+  if (is.null(estimand)) return("RAW")
+  est <- toupper(as.character(estimand))
+  est <- match.arg(est,
+                   choices = c("RAW","NONE","ATE","ATT","ACDE","CDE"),
+                   several.ok = TRUE)
+  est[est == "NONE"] <- "RAW"
+  est[est == "CDE"]  <- "ACDE"
+  unique(est)
+}
+
+# ---- Normalize ACDE spec list ----
+.dagassist_normalize_acde_spec <- function(acde) {
+  if (is.null(acde)) acde <- list()
+  if (!is.list(acde)) stop("`acde` must be a list.", call. = FALSE)
+  defaults <- list(
+    m = NULL,                 # mediators (character)
+    x = NULL,                 # baseline covariates override (character)
+    z = NULL,                 # intermediate covariates override (character)
+    fe = NULL,                # fixed-effects vars override (character)
+    fe_as_factor = TRUE,      # wrap FE vars as factor()
+    include_descendants = FALSE  # treat Dmediator as mediators
+  )
+  # base R merge
+  out <- defaults
+  for (nm in names(acde)) out[[nm]] <- acde[[nm]]
+  out
+}
+
+# ---- Detect if author formula conditions on mediator(s) ----
+.dagassist_formula_controls_mediator <- function(formula, roles, include_descendants = FALSE) {
+  rhs <- .rhs_terms_safe(formula)
+  meds <- roles$variable[roles$role == "mediator"]
+  if (isTRUE(include_descendants)) {
+    meds <- unique(c(meds, roles$variable[roles$role == "Dmediator"]))
   }
+  length(intersect(rhs, meds)) > 0L
+}
+
+.dagassist_apply_auto_acde <- function(estimand,
+                                       formula,
+                                       roles,
+                                       auto_acde = TRUE,
+                                       include_descendants = FALSE) {
+  ests <- unique(.dagassist_normalize_estimand(estimand))
+  
+  # ACDE/CDE requires at least one mediator in the DAG / formula
+  wants_acde <- any(ests %in% c("ACDE", "CDE"))
+  if (isTRUE(wants_acde)) {
+    has_med <- FALSE
+    if (!is.null(roles)) {
+      if ("role" %in% names(roles)) {
+        has_med <- any(roles$role == "mediator")
+      }
+      if (!isTRUE(has_med) && "is_mediator" %in% names(roles)) {
+        has_med <- any(isTRUE(roles$is_mediator))
+      }
+    }
+    if (!isTRUE(has_med)) {
+      stop(
+        paste0(
+          "You requested estimand = 'ACDE' (alias: 'CDE'), but no mediator node(s) were detected in your DAG ",
+          "for this exposure/outcome pair.\n",
+          "ACDE/CDE is only defined when at least one mediator exists.\n\n",
+          "Fix options:\n",
+          "  1) Use estimand = 'ATE'/'ATT' for total effects (when no mediators are present), OR\n",
+          "  2) Use estimand = 'RAW' to report the naive regression output.\n"
+        ),
+        call. = FALSE
+      )
+    }
+  }
+  # allow ATE/ATT if formula includes mediators; will omit automatically
+  if (!isTRUE(auto_acde)) return(estimand)
+  
+  wants_total <- any(ests %in% c("ATE", "ATT"))
+  if (!isTRUE(wants_total)) return(estimand)
+  
+  controls_mediator <- .dagassist_formula_controls_mediator(
+    formula,
+    roles,
+    include_descendants = include_descendants
+  )
+  if (!isTRUE(controls_mediator)) return(estimand)
+  
+  estimand
+}
+
+.dagassist_safe_descendants <- function(dag, node) {
+  tryCatch(dagitty::descendants(dag, node), error = function(e) character(0))
+}
+
+.dagassist_safe_ancestors <- function(dag, node) {
+  tryCatch(dagitty::ancestors(dag, node), error = function(e) character(0))
+}
+
+# ---- Infer mediator terms for ACDE ----
+.dagassist_infer_acde_mediators <- function(x, acde) {
+  # explicit user override wins
+  if (!is.null(acde$m) && length(acde$m)) return(unique(as.character(acde$m)))
+  
+  # infer from roles (and optionally Dmediator)
+  meds <- x$roles$variable[x$roles$role == "mediator"]
+  if (isTRUE(acde$include_descendants)) {
+    meds <- unique(c(meds, x$roles$variable[x$roles$role == "Dmediator"]))
+  }
+  
+  # if author formula includes some mediators, prioritize those
+  rhs <- .rhs_terms_safe(x$formulas$original)
+  in_fml <- intersect(rhs, meds)
+  if (length(in_fml)) return(in_fml)
+  
+  # fallback: all DAG mediators
+  unique(meds)
+}
+
+# Wrap factor() ONLY for bare symbols that exist as columns in `data`.
+# This prevents factor(TRUE) and other length-1 constants from ever being created.
+.dagassist_factorize_plain_terms <- function(terms, data_names = NULL) {
+  if (!length(terms)) return(character(0))
+  
+  is_bare_symbol <- grepl("^[.A-Za-z][.A-Za-z0-9._]*$", terms)
+  
+  if (!is.null(data_names)) {
+    is_in_data <- terms %in% data_names
+    to_wrap <- is_bare_symbol & is_in_data
+  } else {
+    to_wrap <- is_bare_symbol
+  }
+  
+  terms[to_wrap] <- paste0("factor(", terms[to_wrap], ")")
+  terms
+}
+
+# Build sequential_g formula (y ~ A + X | Z | M)
+.dagassist_build_acde_formula <- function(base_fml, x, acde) {
+  if (is.null(x$dag)) {
+    stop("ACDE requires storing the evaluated DAG on the report as `x$dag`.", call. = FALSE)
+  }
+  dag <- x$dag
+  exp_nm <- get_by_role(x$roles, "exposure")
+  out_nm <- get_by_role(x$roles, "outcome")
+  
+  # mediators
+  m_terms <- .dagassist_infer_acde_mediators(x, acde)
+  if (!length(m_terms)) {
+    stop("ACDE requested, but no mediator(s) could be inferred. Provide acde = list(m = c('M1','M2')).",
+         call. = FALSE)
+  }
+  
+  # strip fixest/random-effects tails from base formula (sequential_g uses | separators)
+  sp <- .strip_fixest_parts(base_fml)
+  base <- sp$base
+  
+  rhs_terms <- .rhs_terms_safe(base)  # term labels (includes exposure if present)
+  rhs_terms <- unique(rhs_terms)
+  
+  # Partition RHS into X vs Z unless user overrides
+  # Z: descendants of A that are ALSO ancestors of mediator(s) AND outcome (intermediate confounders)
+  descA <- .dagassist_safe_descendants(dag, exp_nm)
+  ancY  <- .dagassist_safe_ancestors(dag, out_nm)
+  ancM  <- unique(unlist(lapply(m_terms, function(m) .dagassist_safe_ancestors(dag, m))))
+  
+  # exclude mediator terms from candidates and don't let exposure in
+  cand <- setdiff(rhs_terms, c(exp_nm, m_terms))
+  
+  z_auto <- intersect(cand, descA)
+  z_auto <- intersect(z_auto, ancY)
+  z_auto <- intersect(z_auto, ancM)
+  
+  # also drop anything that is descendant of mediator (post-mediator)
+  descM <- unique(unlist(lapply(m_terms, function(m) .dagassist_safe_descendants(dag, m))))
+  z_auto <- setdiff(z_auto, descM)
+  
+  # user override
+  if (!is.null(acde$z)) z_terms <- unique(as.character(acde$z)) else z_terms <- z_auto
+  #force exclude exposure from z
+  z_terms <- setdiff(z_terms, exp_nm)
+  # X: everything else (excluding exposure, mediators, Z)
+  x_auto <- setdiff(rhs_terms, c(exp_nm, m_terms, z_terms))
+  if (!is.null(acde$x)) x_terms <- unique(as.character(acde$x)) else x_terms <- x_auto
+  
+  # Append FE vars (engine-agnostic) into the X block.
+  # Key rule: only factorize symbols that actually exist in the data.
+  data_names <- names(x$.__data)
+  # Drop any constant / non-data term strings (this removes "TRUE")
+  x_terms <- .dagassist_terms_must_use_data(x_terms, data_names)
+  z_terms <- .dagassist_terms_must_use_data(z_terms, data_names)
+  m_terms <- .dagassist_terms_must_use_data(m_terms, data_names)
+  
+  fe_vars <- .dagassist_extract_fe_vars(base_fml)
+  if (!is.null(acde$fe) && length(acde$fe)) {
+    # allow user override: accept vars or terms; coerce to character and merge
+    fe_vars <- unique(c(fe_vars, as.character(acde$fe)))
+  }
+  #strip any weird junk from acde internal params
+  fe_vars <- setdiff(fe_vars, c("TRUE","FALSE","T","F","1","0"))
+  if (length(fe_vars)) {
+    if (isTRUE(acde$fe_as_factor)) {
+      fe_terms <- .dagassist_factorize_plain_terms(fe_vars, data_names = data_names)
+    } else {
+      fe_terms <- fe_vars
+    }
+    x_terms <- unique(c(x_terms, fe_terms))
+  }
+  # Drop any baseline/intermediate covariates that are collinear with FE
+  # (e.g., time-invariant within unit when unit FE are included).
+  #fixest does this automatically and gracefully; DirectEffects does not. without
+  #something like this, collinearity breaks seqg
+  if (length(fe_vars)) {
+    dx <- .dagassist_drop_terms_collinear_with_fe(x_terms, x$.__data, fe_vars)
+    x_terms <- dx$keep
+    
+    dz <- .dagassist_drop_terms_collinear_with_fe(z_terms, x$.__data, fe_vars)
+    z_terms <- dz$keep
+    
+    if (isTRUE(x$verbose) && length(c(dx$dropped, dz$dropped))) {
+      message("Dropped FE-collinear covariates in ACDE: ",
+              paste(unique(c(dx$dropped, dz$dropped)), collapse = ", "))
+    }
+  }
+  # Build text formula
+  # First block always includes exposure; append X if any
+  block1 <- paste(c(exp_nm, x_terms), collapse = " + ")
+  if (!nzchar(block1)) block1 <- exp_nm
+  ##set to 0 instead of 1 because 1 trips singularity in first stage, causing summary() to fail
+  blockZ <- if (length(z_terms)) paste(z_terms, collapse = " + ") else "0"
+  blockM <- paste(m_terms, collapse = " + ")
+  
+  f_txt <- paste0(out_nm, " ~ ", block1, " | ", blockZ, " | ", blockM)
+  stats::as.formula(f_txt, env = environment(base_fml))
+}
+
+# ---- Add ACDE models (sequential g-estimation) ----
+.dagassist_add_acde_models <- function(x, mods) {
+  if (!requireNamespace("DirectEffects", quietly = TRUE)) {
+    stop(
+      "Estimand recovery for ACDE/CDE requires the 'DirectEffects' package.\n",
+      "Install it (install.packages('DirectEffects')) or set estimand = 'raw'.",
+      call. = FALSE
+    )
+  }
+  
+  data <- x$.__data
+  if (is.null(data)) {
+    stop(
+      "Original data not found on the report object.\n",
+      "ACDE requires calling DAGassist() with the `data` argument.",
+      call. = FALSE
+    )
+  }
+  
+  acde <- .dagassist_normalize_acde_spec(x$settings$acde)
+  
+  # args for sequential_g (user-supplied)
+  de_args <- x$settings$directeffects_args
+  if (is.null(de_args)) de_args <- list()
+  
+  out <- mods
+  for (nm in names(mods)) {
+    # skip already-derived models
+    if (grepl("\\((ATE|ATT|ACDE)\\)\\s*$", nm, ignore.case = TRUE)) next
+    
+    base_fml <- .dagassist_formula_for_model_name(x, nm)
+    if (is.null(base_fml)) next
+    
+    f_acde <- .dagassist_build_acde_formula(base_fml, x, acde)
+    
+    if (isTRUE(x$verbose)) {
+      message("ACDE formula [", nm, "]: ", paste(deparse(f_acde, width.cutoff = 500L), collapse = " "))
+    }
+    
+    fit <- .safe_fit(DirectEffects::sequential_g, f_acde, data, de_args)
+    
+    out[[paste0(nm, " ", .dagassist_model_name_labels("ACDE"))]] <- fit
+  }
+  out
+}
+
+# add whichever estimands are requested
+.dagassist_add_estimand_models <- function(x, mods) {
+  ests <- .dagassist_normalize_estimand(x$settings$estimand)
+  if (!length(ests) || identical(ests, "RAW")) return(mods)
+  
+  out <- mods
+  # weights first (ATE/ATT)
+  if ("ATE" %in% ests) out <- .dagassist_add_weighted_models(x, out, estimand = "ATE")
+  if ("ATT" %in% ests) out <- .dagassist_add_weighted_models(x, out, estimand = "ATT")
+  
+  # ACDE last
+  if ("ACDE" %in% ests) out <- .dagassist_add_acde_models(x, out)
+  
+  out
+}
+
+
+# Add weighted versions of each model column (ATE/ATT) using WeightIt
+.dagassist_add_weighted_models <- function(x, mods, estimand = NULL) {
+  # Use the estimand requested by the caller (ATE vs ATT). If not provided,
+  # fall back to whatever is stored on the report object.
+  ests <- .dagassist_normalize_estimand(
+    if (!is.null(estimand)) estimand else x$settings$estimand
+  )
+  
+  # Weighting only applies to ATE/ATT. ACDE is handled elsewhere.
+  ests <- intersect(ests, c("ATE", "ATT"))
+  if (!length(ests)) return(mods)
+  est <- ests[1L]
   
   data <- x$.__data
   if (is.null(data)) {
@@ -172,7 +496,7 @@
     if (!requireNamespace("WeightIt", quietly = TRUE)) {
       stop(
         "Estimand recovery for binary exposures requires the 'WeightIt' package.\n",
-        "Install it (install.packages('WeightIt')) or set estimand = 'none'.",
+        "Install it (install.packages('WeightIt')) or set estimand = 'raw'.",
         call. = FALSE
       )
     }
@@ -180,14 +504,14 @@
     if (!requireNamespace("twangContinuous", quietly = TRUE)) {
       stop(
         "Estimand recovery for continuous exposures requires the 'twangContinuous' package.\n",
-        "Install it (install.packages('twangContinuous')) or set estimand = 'none'.",
+        "Install it (install.packages('twangContinuous')) or set estimand = 'raw'.",
         call. = FALSE
       )
     }
     if (!identical(est, "ATE")) {
       stop(
         "For continuous exposures, DAGassist currently supports estimand = 'ATE' only.\n",
-        "Set estimand = 'ATE' (or 'none').",
+        "Set estimand = 'ATE' (or 'raw').",
         call. = FALSE
       )
     }
@@ -200,7 +524,7 @@
       "  * Continuous numeric exposures (>= 3 unique values).\n\n",
       "Exposure '", exp_nm, "' is class: ", paste(class(Tvar), collapse = "/"),
       if (!inherits(u, "try-error")) paste0("\nObserved values (unique): ", paste(u, collapse = ", ")) else "",
-      "\n\nPlease recode it or set estimand = 'none'.",
+      "\n\nPlease recode it or set estimand = 'raw'.",
       call. = FALSE
     )
   }
@@ -313,4 +637,19 @@
   }
   
   mods_out
+}
+
+#labels for weight columns
+.dagassist_model_name_labels <- function(estimand) {
+  est <- toupper(as.character(estimand))
+  switch(
+    est,
+    ATE  = "(ATE)",
+    ATT  = "(ATT)",
+    ACDE = "(ACDE)",
+    CDE  = "(ACDE)",   # alias
+    RAW  = "",
+    NONE = "",
+    ""
+  )
 }

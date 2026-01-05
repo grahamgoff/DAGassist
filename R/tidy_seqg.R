@@ -56,6 +56,7 @@ vcov.seqg <- function(object, ...) {
 }
 
 #' @method tidy seqg
+#' @importFrom broom tidy
 #' @export
 tidy.seqg <- function(x,
                       conf.int = FALSE,

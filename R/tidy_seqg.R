@@ -46,7 +46,20 @@ vcov.seqg <- function(object, ...) {
   }
   if (is.null(med.vars)) med.vars <- character(0)
   
-  DirectEffects::seq_g_vcov(
+  ##safe catch if directeffects not loaded
+  seq_g_vcov <- tryCatch(
+    get("seq_g_vcov", envir = asNamespace("DirectEffects")),
+    error = function(e) NULL
+  )
+  
+  if (is.null(seq_g_vcov) || !is.function(seq_g_vcov)) {
+    stop(
+      "Could not locate DirectEffects' internal function seq_g_vcov(). Please update DirectEffects or use summary(x, ...) for inference.",
+      call. = FALSE
+    )
+  }
+  
+  seq_g_vcov(
     first_mod = object$first_mod,
     direct_mod = object,
     X1 = X1,

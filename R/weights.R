@@ -353,6 +353,8 @@
   # (e.g., time-invariant within unit when unit FE are included).
   #fixest does this automatically and gracefully; DirectEffects does not. without
   #something like this, collinearity breaks seqg
+  ##dropped_fe must exist even if no FE or it breaks
+  dropped_fe <- character(0)
   if (length(fe_vars)) {
     dx <- .dagassist_drop_terms_collinear_with_fe(x_terms, x$.__data, fe_vars)
     x_terms <- dx$keep
@@ -360,10 +362,8 @@
     dz <- .dagassist_drop_terms_collinear_with_fe(z_terms, x$.__data, fe_vars)
     z_terms <- dz$keep
     
-    if (isTRUE(x$verbose) && length(c(dx$dropped, dz$dropped))) {
-      message("Dropped FE-collinear covariates in ACDE: ",
-              paste(unique(c(dx$dropped, dz$dropped)), collapse = ", "))
-    }
+    # collect for printer method
+    dropped_fe <- unique(c(dx$dropped, dz$dropped))
   }
   # Build text formula
   # First block always includes exposure; append X if any
@@ -374,7 +374,10 @@
   blockM <- paste(m_terms, collapse = " + ")
   
   f_txt <- paste0(out_nm, " ~ ", block1, " | ", blockZ, " | ", blockM)
-  stats::as.formula(f_txt, env = environment(base_fml))
+  #cache for printer later
+  f_acde <- stats::as.formula(f_txt, env = environment(base_fml))
+  attr(f_acde, "dagassist_fe_collinear_dropped") <- dropped_fe
+  f_acde
 }
 
 # ---- Add ACDE models (sequential g-estimation) ----
@@ -412,11 +415,17 @@
     
     f_acde <- .dagassist_build_acde_formula(base_fml, x, acde)
     
-    if (isTRUE(x$verbose)) {
-      message("ACDE formula [", nm, "]: ", paste(deparse(f_acde, width.cutoff = 500L), collapse = " "))
+    fit <- .safe_fit(DirectEffects::sequential_g, f_acde, data, de_args)
+    
+    #attach metadata for console printing later
+    if (!inherits(fit, "DAGassist_fit_error")) {
+      attr(fit, "dagassist_estimand") <- "ACDE"
+      attr(fit, "dagassist_acde_spec") <- nm
+      attr(fit, "dagassist_acde_formula") <- f_acde
+      attr(fit, "dagassist_fe_collinear_dropped") <- attr(f_acde, "dagassist_fe_collinear_dropped", exact = TRUE)
     }
     
-    fit <- .safe_fit(DirectEffects::sequential_g, f_acde, data, de_args)
+    out[[paste0(nm, " ", .dagassist_model_name_labels("ACDE"))]] <- fit
     
     out[[paste0(nm, " ", .dagassist_model_name_labels("ACDE"))]] <- fit
   }

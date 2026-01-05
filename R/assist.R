@@ -421,6 +421,10 @@ DAGassist <- function(dag,
     # User passed a plain formula; keep engine and data as provided
     # nothing to do here
   }
+  #if the engine is fixest and call did not specify notes param, suppress notes 
+  if (.dagassist_engine_is_fixest(engine) && is.null(engine_args$notes)) {
+    engine_args$notes <- FALSE
+  }
   ## infer exposure/outcome from DAG if user didn't set them
   xy <- .infer_xy(dag, exposure, outcome)
   exposure <- xy$exposure
@@ -707,10 +711,22 @@ DAGassist <- function(dag,
   )
   
   class(report) <- c("DAGassist_report", class(report))
-  # Build unified artifacts once for all outputs
-  mods_full <- if (!is.null(report$models_full)) report$models_full else .build_named_mods(report)
-  report$models_full <- mods_full
-  models_df_full <- .build_models_df(report)
+  
+  #for console output, do not build exporter objects, as they are computationally 
+  #expensive and the console printer will build models later
+  mods_full <- NULL
+  models_df_full <- NULL
+  
+  need_export_objects <- !identical(type, "console")
+  
+  if (isTRUE(need_export_objects)) {
+    mods_full <- .build_named_mods(report)
+    models_df_full <- .build_models_df(report)
+    
+    # cache to prevent refitting if the object is printed later.
+    report$models_full <- mods_full
+    report$models_df_full <- models_df_full
+  }
   
   ##### LATEX OUT BRANCH #####
   if (type == "latex") {
@@ -1041,13 +1057,20 @@ print.DAGassist_report <- function(x, ...) {
     
     coef_omit <- x$settings$coef_omit
     
-    # Add requested estimands (ATE/ATT weights and/or ACDE via sequential_g)
-    mods <- .dagassist_add_estimand_models(x, mods)
-    #persist models in the returned object
-    x$models_full <- mods
-  
+    #build estimand models ONCE. If DAGassist() already cached models_full
+    # (e.g., non-console types), reuse to avoid refitting.
+    mods_full <- x$models_full
+    if (is.null(mods_full) || !is.list(mods_full) || !length(mods_full)) {
+      mods_full <- .dagassist_add_estimand_models(x, mods)
+    }
+    
+    #print ACDE diagnostics once, rather than per-model which clutters output
+    if (isTRUE(verbose)) {
+      .dagassist_print_acde_console_info(mods_full)
+    }
+    
     .print_model_comparison_list(
-      mods,
+      mods_full,
       coef_rename = x$labels_map,
       coef_omit = coef_omit
     )

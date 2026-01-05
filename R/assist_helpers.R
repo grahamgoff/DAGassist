@@ -952,6 +952,52 @@
   invisible(NULL)
 }
 
+#print ACDE metadata once 
+# Expects ACDE fits to carry attributes set in weights.R.
+.dagassist_print_acde_console_info <- function(mods) {
+  if (is.null(mods) || !length(mods)) return(invisible(NULL))
+  
+  infos <- list()
+  
+  for (nm in names(mods)) {
+    m <- mods[[nm]]
+    f <- attr(m, "dagassist_acde_formula", exact = TRUE)
+    if (is.null(f)) next
+    
+    spec <- attr(m, "dagassist_acde_spec", exact = TRUE)
+    if (is.null(spec) || !nzchar(spec)) spec <- nm
+    
+    dropped <- attr(m, "dagassist_fe_collinear_dropped", exact = TRUE)
+    if (is.null(dropped)) dropped <- character(0)
+    
+    infos[[spec]] <- list(formula = f, dropped = dropped)
+  }
+  
+  if (!length(infos)) return(invisible(NULL))
+  
+  dropped_all <- sort(unique(unlist(lapply(infos, function(z) z$dropped), use.names = FALSE)))
+  
+  cat("\nACDE setup:\n")
+  if (length(dropped_all)) {
+    cat("  FE-collinear dropped: ", paste(dropped_all, collapse = ", "), "\n", sep = "")
+  } else {
+    cat("  FE-collinear dropped: (none)\n")
+  }
+  
+  cat("  Formulas (sequential_g):\n")
+  
+  spec_order <- c("Original", "Minimal 1", "Canonical")
+  specs <- names(infos)
+  ord <- c(intersect(spec_order, specs), setdiff(specs, spec_order))
+  
+  for (sp in ord) {
+    f_txt <- paste(deparse(infos[[sp]]$formula, width.cutoff = 500L), collapse = " ")
+    cat("   - ", sp, ": ", f_txt, "\n", sep = "")
+  }
+  
+  invisible(NULL)
+}
+
 #### helps find the exposure and outcome names 
 #### used for the note on DAG-derived additions when imply = TRUE
 ###IN:
@@ -1012,6 +1058,22 @@ get_by_role <- function(roles, value) {
     s <- paste0(..., collapse = "")
     if (.allow_ansi()) paste0(prefix, s, suffix) else s
   }
+}
+
+# detect whether the engine is a fixest estimator (feols/feglm/felm/etc.)
+# used for suppressing fixest's per-model notes and re-emitting compact diagnostics
+.dagassist_engine_is_fixest <- function(engine) {
+  if (is.null(engine) || !is.function(engine)) return(FALSE)
+  env <- tryCatch(environment(engine), error = function(e) NULL)
+  if (is.null(env)) return(FALSE)
+  
+  # environmentName() returns e.g. "namespace:fixest"
+  nm <- tryCatch(environmentName(env), error = function(e) "")
+  if (is.character(nm) && grepl("^namespace:fixest$", nm)) return(TRUE)
+  
+  # fallback
+  pkg <- tryCatch(utils::packageName(env), error = function(e) NA_character_)
+  identical(pkg, "fixest")
 }
 
 #the pretty colors

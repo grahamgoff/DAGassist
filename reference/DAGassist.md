@@ -29,9 +29,12 @@ DAGassist(
   omit_intercept = TRUE,
   omit_factors = TRUE,
   bivariate = FALSE,
-  estimand = c("none", "ATE", "ATT"),
+  estimand = c("raw", "none", "ATE", "ATT", "ACDE", "CDE"),
   engine_args = list(),
-  weights_args = list()
+  weights_args = list(),
+  auto_acde = TRUE,
+  acde = list(),
+  directeffects_args = list()
 )
 ```
 

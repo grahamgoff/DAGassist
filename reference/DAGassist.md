@@ -168,12 +168,15 @@ DAGassist(
 
 - estimand:
 
-  Character; causal estimand for **binary treatments**. Currently only
-  supported for `type = "console"`. One of `"none"` (default), `"ATE"`,
-  or `"ATT"`. When `"ATE"` or `"ATT"`, the console print method will
-  attempt to compute inverse-probability weights via the WeightIt
-  package and add weighted versions of each comparison model as
-  additional columns.
+  Character; causal estimand. Currently only supported for
+  `type = "console"`. One of `"raw"` (default), `"ATE"`, `"ATT"`, or
+  `"ACDE"`. For *binary treatments*, when `"ATE"` or `"ATT"`, the
+  console print method will compute inverse-probability weights via the
+  WeightIt package and add weighted versions of each comparison model as
+  additional columns. *Continuous treatments* link to the
+  twangContinuous package. For models with mediators, `"ACDE"` links to
+  the DirectEffects to for a controlled direct effect via sequential
+  g-estimation.
 
 - engine_args:
 
@@ -185,6 +188,29 @@ DAGassist(
 
   List; parameters for weighting package. `DAGassist` is agnostic and
   passes list directly to the respective weighting package
+
+- auto_acde:
+
+  Logical; if `TRUE` (default), automates handling conflicts between
+  specifications and estimand arguments. Fails gracefully with a helpful
+  error when users specify ACDE estimand for a model without mediators.
+
+- acde:
+
+  List; options for the controlled direct effect workflow (estimands
+  `"ACDE"`/`"CDE"`). Users can override parts of the sequential
+  g-estimation specification with named elements: `m` (mediators), `x`
+  (baseline covariates), `z` (intermediate covariates), `fe`
+  (fixed-effects variables), `fe_as_factor` (wrap `fe` as
+  [`factor()`](https://rdrr.io/r/base/factor.html)), and
+  `include_descendants` (treat descendants of mediators as mediators).
+
+- directeffects_args:
+
+  Named list of arguments forwarded to
+  [`DirectEffects::sequential_g()`](https://mattblackwell.github.io/DirectEffects/reference/sequential_g.html)
+  when `estimand` includes `"ACDE"`/`"CDE"` (e.g., simulation/bootstrap
+  controls, variance estimator options).
 
 ## Value
 

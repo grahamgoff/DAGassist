@@ -191,11 +191,13 @@ in the comparison table <strong>in addition</strong> to the user's original and 
 
 
 <dt id="arg-estimand">estimand<a class="anchor" aria-label="anchor" href="#arg-estimand"></a></dt>
-<dd><p>Character; causal estimand for <strong>binary treatments</strong>. Currently only
-supported for <code>type = "console"</code>. One of <code>"none"</code> (default), <code>"ATE"</code>, or <code>"ATT"</code>.
-When <code>"ATE"</code> or <code>"ATT"</code>, the console print method will attempt to compute
+<dd><p>Character; causal estimand. Currently only
+supported for <code>type = "console"</code>. One of <code>"raw"</code> (default), <code>"ATE"</code>, <code>"ATT"</code>, or <code>"ACDE"</code>.
+For <em>binary treatments</em>, when <code>"ATE"</code> or <code>"ATT"</code>, the console print method will compute
 inverse-probability weights via the <span class="pkg">WeightIt</span> package and add weighted
-versions of each comparison model as additional columns.</p></dd>
+versions of each comparison model as additional columns. <em>Continuous treatments</em> link
+to the <span class="pkg">twangContinuous</span> package. For models with mediators, <code>"ACDE"</code> links to
+the <span class="pkg">DirectEffects</span> to for a controlled direct effect via sequential g-estimation.</p></dd>
 
 
 <dt id="arg-engine-args">engine_args<a class="anchor" aria-label="anchor" href="#arg-engine-args"></a></dt>
@@ -207,6 +209,26 @@ If <code>formula</code> is an engine call, arguments from the call are merged wi
 <dt id="arg-weights-args">weights_args<a class="anchor" aria-label="anchor" href="#arg-weights-args"></a></dt>
 <dd><p>List; parameters for weighting package. <code>DAGassist</code> is agnostic
 and passes list directly to the respective weighting package</p></dd>
+
+
+<dt id="arg-auto-acde">auto_acde<a class="anchor" aria-label="anchor" href="#arg-auto-acde"></a></dt>
+<dd><p>Logical; if <code>TRUE</code> (default), automates handling conflicts between specifications
+and estimand arguments. Fails gracefully with a helpful error when users specify ACDE estimand
+for a model without mediators.</p></dd>
+
+
+<dt id="arg-acde">acde<a class="anchor" aria-label="anchor" href="#arg-acde"></a></dt>
+<dd><p>List; options for the controlled direct effect workflow (estimands <code>"ACDE"</code>/<code>"CDE"</code>).
+Users can override parts of the sequential g-estimation specification with named elements:
+<code>m</code> (mediators), <code>x</code> (baseline covariates), <code>z</code> (intermediate covariates),
+<code>fe</code> (fixed-effects variables), <code>fe_as_factor</code> (wrap <code>fe</code> as <code><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor()</a></code>), and
+<code>include_descendants</code> (treat descendants of mediators as mediators).</p></dd>
+
+
+<dt id="arg-directeffects-args">directeffects_args<a class="anchor" aria-label="anchor" href="#arg-directeffects-args"></a></dt>
+<dd><p>Named list of arguments forwarded to <code><a href="https://mattblackwell.github.io/DirectEffects/reference/sequential_g.html" class="external-link">DirectEffects::sequential_g()</a></code>
+when <code>estimand</code> includes <code>"ACDE"</code>/<code>"CDE"</code> (e.g., simulation/bootstrap controls,
+variance estimator options).</p></dd>
 
 </dl></div>
     <div class="section level2">

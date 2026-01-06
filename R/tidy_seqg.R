@@ -1,6 +1,7 @@
 # tidy_seqg.R
 # broom tidier + vcov for DirectEffects::sequential_g output ("seqg")
 
+#' @importFrom stats vcov
 #' @method vcov seqg
 #' @export
 vcov.seqg <- function(object, ...) {
@@ -166,6 +167,7 @@ tidy.seqg <- function(x,
   out
 }
 
+#' @importFrom stats nobs
 #' @method nobs seqg
 #' @export
 nobs.seqg <- function(object, ...) {

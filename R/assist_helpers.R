@@ -1108,8 +1108,7 @@ get_by_role <- function(roles, value) {
 #'
 #' This is a method for modelsummary::glance_custom().
 #'
-#' @method glance_custom fixest
-#' @export
+#' @noRd
 glance_custom.fixest <- function(x, ...) {
   fml <- tryCatch(stats::formula(x), error = function(e) NULL)
   if (is.null(fml)) {

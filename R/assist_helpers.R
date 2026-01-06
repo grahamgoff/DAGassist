@@ -878,12 +878,31 @@
   
   if (length(failed)) {
     cat("\nFit issues:\n")
-    for (nm in names(failed)) cat(sprintf("  - %s: %s\n", nm, failed[[nm]]$error))
+    # group by identical message to avoid repeating the same wall of text
+    err_txt <- vapply(failed, function(x) {
+      # normalize whitespace a bit so identical messages actually group
+      e <- x$error
+      e <- gsub("[ \t]+", " ", e)
+      e <- gsub("\n{3,}", "\n\n", e)
+      trimws(e)
+    }, character(1))
+    
+    groups <- split(names(err_txt), err_txt)
+    
+    for (msg in names(groups)) {
+      nms <- groups[[msg]]
+      cat("  - ", paste(nms, collapse = ", "), "\n", sep = "")
+      lines <- strsplit(msg, "\n", fixed = TRUE)[[1]]
+      for (ln in lines) cat("      ", ln, "\n", sep = "")
+    }
   }
+  
   if (!length(ok)) {
     cat("\nAll model fits failed - no comparison table to print.\n")
     return(invisible(NULL))
   }
+  #only send successful models to modelsummary
+  mods<-ok
   ##preferred path: modelsummary
   if (requireNamespace("modelsummary", quietly = TRUE)) {
     #may want to add param to customize gof--or maybe a simple list that can
@@ -894,7 +913,7 @@
       fmt = c(0, 3, 0),
       stringsAsFactors = FALSE
     )
-    
+   
     args <- list(
       mods,
       stars = TRUE,

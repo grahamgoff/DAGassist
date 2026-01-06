@@ -240,7 +240,6 @@
   tryCatch(dagitty::ancestors(dag, node), error = function(e) character(0))
 }
 
-# ---- Infer mediator terms for ACDE ----
 .dagassist_infer_acde_mediators <- function(x, acde) {
   # explicit user override wins
   if (!is.null(acde$m) && length(acde$m)) return(unique(as.character(acde$m)))
@@ -300,15 +299,53 @@
   
   rhs_terms <- .rhs_terms_safe(base)  # term labels (includes exposure if present)
   rhs_terms <- unique(rhs_terms)
+  ## sequential g is structured as (original|intermediate confounders|mediators)
+  ## here, i initially coded all mediators as coming in the third category,
+  ## which always led to an empty intermediate confounders set
+  ## instead, need to differentiate simple mediators from mediators that are ancestors
+  ## of other mediators. the latter will go in the middle bucket as intermediate confounders
+  # rhs_terms is for the current base formula (Original/Minimal/Canonical).
+  # mediators must come from the original model, or min/can will auto-drop and crash
+  sp_orig <- .strip_fixest_parts(x$formulas$original)
+  rhs_terms_orig <- unique(.rhs_terms_safe(sp_orig$base))
   
-  # Partition RHS into X vs Z unless user overrides
-  # Z: descendants of A that are ALSO ancestors of mediator(s) AND outcome (intermediate confounders)
+  m_terms <- intersect(m_terms, rhs_terms_orig)
+  
   descA <- .dagassist_safe_descendants(dag, exp_nm)
   ancY  <- .dagassist_safe_ancestors(dag, out_nm)
-  ancM  <- unique(unlist(lapply(m_terms, function(m) .dagassist_safe_ancestors(dag, m))))
+  
+  if (is.null(acde$z) && length(m_terms) > 1) {
+    
+    # candidates are mediators that are post-treatment and affect Y,
+    # and are ancestors of at least one other mediator in m_terms
+    candZ0 <- m_terms[vapply(m_terms, function(v) {
+      if (!(v %in% descA)) return(FALSE)
+      if (!(v %in% ancY))  return(FALSE)
+      
+      dv <- .dagassist_safe_descendants(dag, v)
+      any(setdiff(m_terms, v) %in% dv)
+    }, logical(1))]
+    
+    # drop any candidate that is a descendant of another candidate
+    candZ <- candZ0
+    if (length(candZ0) > 1) {
+      candZ <- candZ0[!vapply(candZ0, function(v) {
+        others <- setdiff(candZ0, v)
+        any(v %in% unlist(lapply(others, function(w) .dagassist_safe_descendants(dag, w))))
+      }, logical(1))]
+    }
+    # remove promoted-Z from mediator block
+    if (length(candZ)) {
+      m_terms <- setdiff(m_terms, candZ)
+    }
+  }
+  #  compute ancM using the final mediator set
+  ancM <- unique(unlist(lapply(m_terms, function(m) .dagassist_safe_ancestors(dag, m))))
   
   # exclude mediator terms from candidates and don't let exposure in
-  cand <- setdiff(rhs_terms, c(exp_nm, m_terms))
+  # but grab z vals from the original; minimal will auto-omit otherwise
+  rhs_pool <- unique(c(rhs_terms, rhs_terms_orig))
+  cand <- setdiff(rhs_pool, c(exp_nm, m_terms))
   
   z_auto <- intersect(cand, descA)
   z_auto <- intersect(z_auto, ancY)
@@ -325,14 +362,26 @@
   # X: everything else (excluding exposure, mediators, Z)
   x_auto <- setdiff(rhs_terms, c(exp_nm, m_terms, z_terms))
   if (!is.null(acde$x)) x_terms <- unique(as.character(acde$x)) else x_terms <- x_auto
-  
-  # Append FE vars (engine-agnostic) into the X block.
-  # Key rule: only factorize symbols that actually exist in the data.
-  data_names <- names(x$.__data)
-  # Drop any constant / non-data term strings (this removes "TRUE")
-  x_terms <- .dagassist_terms_must_use_data(x_terms, data_names)
-  z_terms <- .dagassist_terms_must_use_data(z_terms, data_names)
-  m_terms <- .dagassist_terms_must_use_data(m_terms, data_names)
+  #only validate term existence against data if DAGassist has a data.frame stored.
+  #in most cases, this will not be used because most users will just include
+  #data arg inside regression call
+  data_names <- NULL
+  if (!is.null(x$.__data) && is.data.frame(x$.__data)) {
+    data_names <- names(x$.__data)
+    # Drop non-data term strings 
+    x_terms <- .dagassist_terms_must_use_data(x_terms, data_names)
+    z_terms <- .dagassist_terms_must_use_data(z_terms, data_names)
+    m_terms <- .dagassist_terms_must_use_data(m_terms, data_names)
+  }
+  # if no mediators at this point, helpful error code
+  if (!length(m_terms)) {
+    stop(
+      "ACDE requested, but mediator terms are empty after internal filtering. ",
+      "This usually happens when DAGassist was called without `data=` (so `x$.__data` is NULL). ",
+      "Either (i) call DAGassist(..., data = <your data.frame>), or (ii) provide `acde = list(m = ...)`.",
+      call. = FALSE
+    )
+  }
   
   fe_vars <- .dagassist_extract_fe_vars(base_fml)
   if (!is.null(acde$fe) && length(acde$fe)) {
@@ -353,6 +402,8 @@
   # (e.g., time-invariant within unit when unit FE are included).
   #fixest does this automatically and gracefully; DirectEffects does not. without
   #something like this, collinearity breaks seqg
+  ##dropped_fe must exist even if no FE or it breaks
+  dropped_fe <- character(0)
   if (length(fe_vars)) {
     dx <- .dagassist_drop_terms_collinear_with_fe(x_terms, x$.__data, fe_vars)
     x_terms <- dx$keep
@@ -360,10 +411,8 @@
     dz <- .dagassist_drop_terms_collinear_with_fe(z_terms, x$.__data, fe_vars)
     z_terms <- dz$keep
     
-    if (isTRUE(x$verbose) && length(c(dx$dropped, dz$dropped))) {
-      message("Dropped FE-collinear covariates in ACDE: ",
-              paste(unique(c(dx$dropped, dz$dropped)), collapse = ", "))
-    }
+    # collect for printer method
+    dropped_fe <- unique(c(dx$dropped, dz$dropped))
   }
   # Build text formula
   # First block always includes exposure; append X if any
@@ -374,7 +423,12 @@
   blockM <- paste(m_terms, collapse = " + ")
   
   f_txt <- paste0(out_nm, " ~ ", block1, " | ", blockZ, " | ", blockM)
-  stats::as.formula(f_txt, env = environment(base_fml))
+  #cache for printer later
+  f_acde <- stats::as.formula(f_txt, env = environment(base_fml))
+  attr(f_acde, "dagassist_fe_collinear_dropped") <- dropped_fe
+  # store mediator terms for guardrails 
+  attr(f_acde, "dagassist_acde_m_terms") <- m_terms
+  f_acde
 }
 
 # ---- Add ACDE models (sequential g-estimation) ----
@@ -412,11 +466,26 @@
     
     f_acde <- .dagassist_build_acde_formula(base_fml, x, acde)
     
-    if (isTRUE(x$verbose)) {
-      message("ACDE formula [", nm, "]: ", paste(deparse(f_acde, width.cutoff = 500L), collapse = " "))
+    # guardrail for categorical mediators
+    m_terms <- attr(f_acde, "dagassist_acde_m_terms", exact = TRUE)
+    guard_msg <- .dagassist_acde_guard_mediators(data, m_terms)
+    
+    if (!is.null(guard_msg)) {
+      fit <- structure(
+        list(error = guard_msg, formula = f_acde),
+        class = "DAGassist_fit_error"
+      )
+    } else {
+      fit <- .safe_fit(DirectEffects::sequential_g, f_acde, data, de_args)
     }
     
-    fit <- .safe_fit(DirectEffects::sequential_g, f_acde, data, de_args)
+    #attach metadata for console printing later
+    if (!inherits(fit, "DAGassist_fit_error")) {
+      attr(fit, "dagassist_estimand") <- "ACDE"
+      attr(fit, "dagassist_acde_spec") <- nm
+      attr(fit, "dagassist_acde_formula") <- f_acde
+      attr(fit, "dagassist_fe_collinear_dropped") <- attr(f_acde, "dagassist_fe_collinear_dropped", exact = TRUE)
+    }
     
     out[[paste0(nm, " ", .dagassist_model_name_labels("ACDE"))]] <- fit
   }
@@ -651,5 +720,62 @@
     RAW  = "",
     NONE = "",
     ""
+  )
+}
+
+# ---- Guardrail: ACDE mediator types ----
+# DirectEffects::sequential_g() is fragile when mediators are not numeric columns.
+# This guard identifies non-numeric mediators and returns an actionable message.
+.dagassist_acde_guard_mediators <- function(data, m_terms) {
+  if (is.null(m_terms) || !length(m_terms)) return(NULL)
+  
+  m_terms <- unique(as.character(m_terms))
+  m_terms <- intersect(m_terms, names(data))
+  if (!length(m_terms)) return(NULL)
+  
+  classes <- vapply(m_terms, function(nm) paste(class(data[[nm]]), collapse = "/"), character(1))
+  is_bad  <- vapply(m_terms, function(nm) {
+    v <- data[[nm]]
+    is.factor(v) || is.character(v) || is.logical(v)
+  }, logical(1))
+  
+  bad <- m_terms[is_bad]
+  if (!length(bad)) return(NULL)
+  
+  # levels (only meaningful for factor/character)
+  lvl_txt <- vapply(bad, function(nm) {
+    v <- data[[nm]]
+    if (is.character(v)) v <- factor(v)
+    if (is.factor(v)) {
+      lv <- levels(v)
+      paste0("levels=", length(lv), if (length(lv) && length(lv) <= 8) paste0(" (", paste(lv, collapse = ", "), ")") else "")
+    } else if (is.logical(v)) {
+      "logical"
+    } else {
+      ""
+    }
+  }, character(1))
+  
+  bullets <- paste0(
+    "  - ", bad, "  [class: ", classes[match(bad, m_terms)], 
+    ifelse(nzchar(lvl_txt), paste0("; ", lvl_txt), ""),
+    "]"
+  )
+  
+  paste0(
+    "ACDE fit aborted before calling DirectEffects::sequential_g().\n\n",
+    "Reason:\n",
+    "  At least one mediator is non-numeric (factor/character/logical).\n",
+    "  DirectEffects::sequential_g() can throw `subscript out of bounds` in this case, ",
+    "  because categorical mediators expand to multiple model-matrix columns which do not ",
+    "  match the mediator term labels.\n\n",
+    "Problematic mediator(s):\n",
+    paste(bullets, collapse = "\n"), "\n\n",
+    "How to fix:\n",
+    "  1) Recode mediator(s) to numeric before calling DAGassist (e.g., binary 0/1).\n",
+    "  2) One-hot encode multi-category mediators into numeric dummy columns, then pass\n",
+    "     those dummy names explicitly via `acde = list(m = c(\"M1\",\"M2\", ...))`. \n",
+    "     Either ensure your DAG nodes match those column names, or use imply = FALSE to prevent mismatch issues. \n",
+    "  3) Exclude the categorical mediator(s) from ACDE by explicitly setting `acde$m`.\n"
   )
 }

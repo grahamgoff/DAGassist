@@ -87,7 +87,7 @@ classify_nodes <- function(dag, exposure, outcome) {
     setdiff(dagitty::descendants(dag, x), x)
   })))
   descY <- setdiff(dagitty::descendants(dag, outcome), outcome)
-  
+  paY <- dagitty::parents(dag, outcome)
   is_xy_collider <- function(m) {
     parents_m <- dagitty::parents(dag, m)
     (length(intersect(exposure, parents_m)) > 0L) && (outcome %in% parents_m)
@@ -98,7 +98,9 @@ classify_nodes <- function(dag, exposure, outcome) {
   collider_set <- nodes_vec[is_collider]
   
   ## vector compatible definition sets
-  conf_set <- setdiff(intersect(ancX, ancY), c(descX, exposure, outcome))
+  #affects X and directly affects Y
+  conf_set <- setdiff(intersect(ancX, paY), c(descX, exposure, outcome))
+  
   med_set <- setdiff(intersect(descX, ancY), c(exposure, outcome))
   doY_set <- descY
   # descendants of mediators / colliders
@@ -125,7 +127,7 @@ classify_nodes <- function(dag, exposure, outcome) {
   )
   neutral_trt_set <- setdiff(
     ancX,
-    c(ancY, descX, exposure, outcome, core_block)
+    c(paY, descX, exposure, outcome, core_block)
   )
   
   # neutral control on outcome: affects Y, does not affect T, not desc of X or 

@@ -1,6 +1,7 @@
 # tidy_seqg.R
 # broom tidier + vcov for DirectEffects::sequential_g output ("seqg")
 
+#' @importFrom stats vcov
 #' @method vcov seqg
 #' @export
 vcov.seqg <- function(object, ...) {
@@ -164,4 +165,41 @@ tidy.seqg <- function(x,
   
   rownames(out) <- NULL
   out
+}
+
+#' @importFrom stats nobs
+#' @method nobs seqg
+#' @export
+nobs.seqg <- function(object, ...) {
+  # DirectEffects::sequential_g() returns an object that typically includes `model`
+  # (a full model.frame). Prefer that because it reflects the estimation sample.
+  if (!is.null(object$model)) {
+    return(NROW(object$model))
+  }
+  
+  # Fallbacks (keep these permissive so we never error in GOF extraction)
+  if (!is.null(object$Ytilde)) {
+    return(length(object$Ytilde))
+  }
+  if (!is.null(object$residuals)) {
+    return(length(object$residuals))
+  }
+  
+  NA_integer_
+}
+
+#' @method glance seqg
+#' @importFrom broom glance
+#' @export
+glance.seqg <- function(x, ...) {
+  n <- tryCatch(stats::nobs(x), error = function(e) NA_integer_)
+  df_resid <- if (!is.null(x$df.residual)) as.integer(x$df.residual) else NA_integer_
+  
+  data.frame(
+    nobs = as.integer(n),
+    df.residual = df_resid,
+    r.squared = NA_real_,
+    adj.r.squared = NA_real_,
+    stringsAsFactors = FALSE
+  )
 }

@@ -77,9 +77,48 @@ simulate_toy_panel <- function(
   class <- factor(sample(class_levels, n_id, replace = TRUE, prob = c(0.18, 0.38, 0.34, 0.10)),
                   levels = class_levels, ordered = TRUE)
   class_num <- as.integer(class) - 1L
-
   age0 <- round(clamp(rnorm(n_id, mean = 35, sd = 16), 0, 100 - (n_t - 1)), 1)
 
+  # -----------------------
+# Contract type (baseline; affects edu_year, income, children)
+# -----------------------
+contract_levels <- c("Informal", "Temporary", "Permanent")
+
+contract0 <- character(n_id)
+for (i in seq_len(n_id)) {
+  cnum <- class_num[i]
+  u   <- urban[i]
+  im  <- immigrant[i]
+  gF  <- (gender[i] == "Female")
+  a0  <- age0[i]
+
+  # Scores: Permanent higher for higher class + urban; Informal higher for immigrant
+  score <- c(
+    Informal  =  0.15 - 0.25*cnum + 0.10*im - 0.05*u + 0.02*(a0 - 35),
+    Temporary =  0.05 + 0.05*cnum - 0.05*im + 0.02*u + 0.01*(a0 - 35),
+    Permanent = -0.20 + 0.22*cnum - 0.08*im + 0.10*u - 0.02*gF + 0.01*(a0 - 35)
+  )
+  prob <- exp(score) / sum(exp(score))
+  contract0[i] <- rmultinom1(prob)
+}
+
+contract <- factor(rep(contract0, each = n_t), levels = contract_levels)
+
+# Numeric index for linear effects (Informal=0, Temporary=1, Permanent=2)
+contract_num <- as.integer(factor(contract0, levels = contract_levels)) - 1L
+contract_num_p <- rep(contract_num, each = n_t)
+
+# -----------------------
+# Preference for children (baseline; affects children only)
+# -----------------------
+# Interpretable desired children: ~0 to 5, centered at ~2
+pref0 <- clamp(rnorm(n_id, mean = 2.0, sd = 1.0), 0, 5)
+pref <- rep(pref0, each = n_t)
+
+# Centered version for linear predictors
+pref_c <- pref0 - 2.0
+pref_c_p <- rep(pref_c, each = n_t)
+  
   target_deg_adult <- c(
     HS_grad      = 0.40,
     Some_college = 0.28,
@@ -182,12 +221,13 @@ simulate_toy_panel <- function(
     # -----------------------
     abil <- rnorm(n_id, 0, 1)
     z <- 0.85 * abil +
-      0.55 * class_num +
-      0.20 * urban +
-      (-0.10) * immigrant +
-      0.05 * (gender == "Female") +
-      (-0.04) * (age0 - 35) +
-      rnorm(n_id, 0, 0.35)
+  0.55 * class_num +
+  0.20 * urban +
+  (-0.10) * immigrant +
+  0.05 * (gender == "Female") +
+  (-0.04) * (age0 - 35) +
+  0.22 * contract_num +        # <--- contract raises schooling
+  rnorm(n_id, 0, 0.35)
 
     # Robust degree assignment (adult shares forced; HS > BA forced)
     deg <- assign_deg_by_quantiles(z, age0, target_deg_adult)
@@ -228,6 +268,47 @@ simulate_toy_panel <- function(
     edu_year <- clamp(edu_true + rnorm(length(pid), 0, edu_me_sd), 0, 22)
 
     # -----------------------
+# Job stability (time-varying; treatment-induced intermediate Z)
+#  - affected by edu_true (treatment) and baseline contract
+#  - affects mediators (income, married, birth_control) and outcome (children)
+# -----------------------
+rho_job <- 0.70                 # persistence over time
+job_trait_i <- rnorm(n_id, 0, 0.8)  # stable id-level trait
+
+job_stability_t <- numeric(length(pid))
+
+for (i in seq_len(n_id)) {
+  idx <- which(pid == i)
+
+  # baseline level at t=0
+  base0 <- -0.25 +
+    0.10 * (edu_true[idx[1]] - 12) +
+    0.30 * contract_num[i] +
+    0.10 * class_num[i] +
+    0.12 * urban[i] +
+    (-0.10) * immigrant[i] +
+    0.02 * (age0[i] - 35) +
+    0.05 * (gender[i] == "Female") +
+    job_trait_i[i] +
+    rnorm(1, 0, 0.45)
+
+  job_stability_t[idx[1]] <- clamp(base0, -3, 3)
+
+  if (length(idx) > 1) {
+    for (t in 2:length(idx)) {
+      prev <- job_stability_t[idx[t - 1]]
+
+      # current-period innovation (edu affects job stability each period)
+      innov <- -0.05 +
+        0.08 * (edu_true[idx[t]] - 12) +
+        0.08 * (age[idx[t]] - 35) / 10 +
+        rnorm(1, 0, 0.50)
+
+      job_stability_t[idx[t]] <- clamp(rho_job * prev + (1 - rho_job) * (base0 + innov), -3, 3)
+    }
+  }
+}
+    # -----------------------
     # Religion (depends on baseline edu_true + class + urban)
     # -----------------------
     rel_levels <- c("Christian","Muslim","Hindu","Buddhist","Jewish","Unaffiliated","Other")
@@ -258,10 +339,11 @@ simulate_toy_panel <- function(
     ), rel_levels)
 
     lp_married <- marriage_intercept +
-      0.22 * (age - 18) +
-      (-0.00115) * (age - 38)^2 +
-      (-0.012) * edu_true +
-      rel_marriage_effect[as.character(religion)]
+  0.22 * (age - 18) +
+  (-0.00115) * (age - 38)^2 +
+  (-0.012) * edu_true +
+  0.35 * job_stability_t +                        # <--- add
+  rel_marriage_effect[as.character(religion)]
 
     married <- rbinom(length(pid), 1, inv_logit(lp_married))
     married[age < 17] <- 0L
@@ -275,11 +357,12 @@ simulate_toy_panel <- function(
     ), rel_levels)
 
     lp_bc <- -1.05 +
-      0.085 * edu_true +
-      0.55 * married +
-      0.04 * (age - 18) -
-      0.0009 * (age - 30)^2 +
-      rel_bc_effect[as.character(religion)]
+  0.085 * edu_true +
+  0.55 * married +
+  0.25 * job_stability_t +                        # <--- add
+  0.04 * (age - 18) -
+  0.0009 * (age - 30)^2 +
+  rel_bc_effect[as.character(religion)]
 
     birth_control <- rbinom(length(pid), 1, inv_logit(lp_bc))
 
@@ -287,13 +370,15 @@ simulate_toy_panel <- function(
     # Income (US-like)
     # -----------------------
     lp_inc <- income_intercept +
-      0.060 * (edu_true - 12) +
-      0.12 * urban_p +
-      (-0.05) * immigrant_p +
-      0.10 * class_num_p +
-      (-0.03) * (gender_p == "Female") +
-      0.030 * (age - 25) -
-      0.00055 * (age - 45)^2
+  0.060 * (edu_true - 12) +
+  0.12 * urban_p +
+  (-0.05) * immigrant_p +
+  0.10 * class_num_p +
+  (-0.03) * (gender_p == "Female") +
+  0.030 * (age - 25) -
+  0.00055 * (age - 45)^2 +
+  0.18 * contract_num_p +                         # from earlier
+  0.22 * job_stability_t    
 
     income <- exp(rnorm(length(pid), mean = lp_inc, sd = income_sd))
     income[age < 16] <- exp(rnorm(sum(age < 16), mean = 8.45, sd = 0.25))
@@ -320,6 +405,7 @@ simulate_toy_panel <- function(
     ), rel_levels)
 
     idx0 <- which(year == 0)
+    job0 <- job_stability_t[idx0]
     rel0 <- rel_fert_effect[religion0]
     mar0 <- married[idx0]
     bc0  <- birth_control[idx0]
@@ -332,17 +418,20 @@ simulate_toy_panel <- function(
     beta_edu_children0 <- (-0.020 * edu_fert_scale)
 
     mu_children0 <- exp(
-      -0.85 +
-        age_term0 +
-        0.55 * mar0 +
-        (-0.45) * bc0 +
-        beta_edu_children0 * edu0_true +
-        deg_eff_i +
-        (-0.0000007) * inc0 +
-        0.04 * class_num +
-        rel0 +
-        fert_i
-    )
+  -0.85 +
+    age_term0 +
+    0.55 * mar0 +
+    (-0.45) * bc0 +
+    beta_edu_children0 * edu0_true +
+    deg_eff_i +
+    (-0.0000007) * inc0 +
+    0.04 * class_num +
+    0.18 * contract_num +
+    0.45 * pref_c +
+    0.25 * job0 +                                  # <--- add
+    rel0 +
+    fert_i
+)
 
     children0 <- rnbinom(n_id, size = 1.3, mu = mu_children0)
     children0[a0 < 15] <- 0L
@@ -352,15 +441,18 @@ simulate_toy_panel <- function(
     beta_edu_births <- (-0.008 * edu_fert_scale)
 
     lp_birth <- -3.35 +
-      0.80 * married +
-      (-0.90) * birth_control +
-      beta_edu_births * edu_true +
-      rep(deg_eff_i, each = n_t) +
-      0.02 * (age - 22) -
-      0.0010 * (age - 30)^2 +
-      rel_fert_effect[as.character(religion)] +
-      fert_pref
-
+  0.80 * married +
+  (-0.90) * birth_control +
+  beta_edu_births * edu_true +
+  rep(deg_eff_i, each = n_t) +
+  0.02 * (age - 22) -
+  0.0010 * (age - 30)^2 +
+  rel_fert_effect[as.character(religion)] +
+  0.12 * contract_num_p +
+  0.35 * pref_c_p +
+  0.18 * job_stability_t +                         # <--- add
+  fert_pref
+    
     births <- rpois(length(pid), exp(lp_birth) * fertile)
     births <- pmin(births, 2L)
 
@@ -373,21 +465,24 @@ simulate_toy_panel <- function(
 
     # Assemble
     df <- data.frame(
-      id = pid,
-      year = year,
-      age = age,
-      gender = gender_p,
-      immigrant = factor(immigrant_p, levels = c(0, 1), labels = c("No", "Yes")),
-      urban = factor(urban_p, levels = c(0, 1), labels = c("Rural", "Urban")),
-      class = class_p,
-      religion = religion,
-      edu_year = round(edu_year, 1),
-      edu_degree = edu_degree,
-      married = married,
-      birth_control = birth_control,
-      income = round(income, 0),
-      children = children
-    )
+  id = pid,
+  year = year,
+  age = age,
+  gender = gender_p,
+  immigrant = factor(immigrant_p, levels = c(0, 1), labels = c("No", "Yes")),
+  urban = factor(urban_p, levels = c(0, 1), labels = c("Rural", "Urban")),
+  class = class_p,
+  religion = religion,
+  contract = contract,
+  pref = pref,
+  edu_year = round(edu_year, 1),
+  edu_degree = edu_degree,
+  married = married,
+  birth_control = birth_control,
+  income = round(income, 0),
+  children = children,
+  job_stability_t = job_stability_t
+)
 
     # -----------------------
     # Calibration: LAST WAVE, age-adjusted edu_year
@@ -529,11 +624,13 @@ x_pos <- c(
     urban = 10,
     immigrant = 10,
     class = 3,
-    religion = 1,
     birth_control = 8,
     married = 5,
     gender = 3,
-    age = 7
+    age = 7,
+  pref = 12,
+  contract = 5,
+  job_stability_t = 7
 )
 
 y_pos <- c(
@@ -543,21 +640,23 @@ y_pos <- c(
     urban = 2,
     immigrant = -2,
     class = -4,
-    religion = -2,
     birth_control = -4,
     married = -4,
     gender = 2,
-    age = 2
+    age = 2,
+  pref = 0,
+  contract = 2,
+  job_stability_t = -2
 )
 
 dag_model <- dagify(
   children ~ income + edu_year + urban + immigrant + class + religion + 
-    birth_control + married + gender + age,
-  edu_year ~ class + immigrant + urban + gender + age,
-  income ~ edu_year + urban + immigrant + class + gender + age,
-  religion ~ edu_year + urban + class,
-  birth_control ~ edu_year + religion + married + age, 
-  married ~ edu_year + religion + age,
+    birth_control + married + gender + age + pref + contract + job_stability_t,
+  edu_year ~ class + immigrant + urban + gender + age + contract,
+  job_stability_t ~ edu_year + contract + class + urban + immigrant + age + gender,
+  income ~ edu_year + urban + immigrant + class + gender + age + contract +job_stability_t,
+  birth_control ~ edu_year + religion + married + age + job_stability_t, 
+  married ~ edu_year + religion + age + job_stability_t,
   
   coords = list(x=x_pos, y=y_pos),
 
@@ -571,11 +670,13 @@ dag_model <- dagify(
     urban = "Urban/Rural",
     immigrant = "Immigrant",
     class = "Parents' Class",
-    religion = "Religion",
     birth_control = "Birth Control",
     married = "Married",
     gender = "Gender",
-    age = "Age"
+    age = "Age",
+    pref = "Preference\nfor Children",
+    contract = "Contract Type",
+    job_stability_t = "Job Stability"
   )
 )
   
@@ -617,7 +718,7 @@ library(twangContinuous)
 DAGassist(dag_model,
           formula = lm(children ~ edu_year + age + class + gender + 
                          immigrant + urban + birth_control + income + 
-                         married + religion, data = dat),
+                         married + job_stability_t + contract + pref, data = dat),
           estimand = "ATE",
           bivariate = TRUE,
           type="txt")
@@ -627,9 +728,23 @@ DAGassist(dag_model,
 DAGassist(dag_model,
           formula = lm(children ~ edu_year + age + class + gender + 
                          immigrant + urban + birth_control + income + 
-                         married + religion, data = dat),
+                         married + job_stability_t + contract + pref, data = dat),
           estimand = "ATE",
           bivariate = TRUE,
           type="dwplot")
+```
+
+In some cases, the target estimand is the average controlled direct effect. `DAGassist` supports recovering the controlled direct effect using sequential g-estimation via integration with the `DirectEffects` R package. 
+
+Using the prior example, we can use `DAGassist` to estimate the effect of years of education on a person's number of children, except through birth control, income, and marital status.
+
+```{r cde-est}
+library(DirectEffects)
+
+DAGassist(dag_model,
+          formula = lm(children ~ edu_year + age + class + gender + 
+                         immigrant + urban + birth_control + income + 
+                         married + job_stability_t + contract + pref, data = dat),
+          estimand = "ACDE")
 ```
 

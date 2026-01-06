@@ -878,19 +878,47 @@
   
   if (length(failed)) {
     cat("\nFit issues:\n")
-    for (nm in names(failed)) cat(sprintf("  - %s: %s\n", nm, failed[[nm]]$error))
+    # group by identical message to avoid repeating the same wall of text
+    err_txt <- vapply(failed, function(x) {
+      # normalize whitespace a bit so identical messages actually group
+      e <- x$error
+      e <- gsub("[ \t]+", " ", e)
+      e <- gsub("\n{3,}", "\n\n", e)
+      trimws(e)
+    }, character(1))
+    
+    groups <- split(names(err_txt), err_txt)
+    
+    for (msg in names(groups)) {
+      nms <- groups[[msg]]
+      cat("  - ", paste(nms, collapse = ", "), "\n", sep = "")
+      lines <- strsplit(msg, "\n", fixed = TRUE)[[1]]
+      for (ln in lines) cat("      ", ln, "\n", sep = "")
+    }
   }
+  
   if (!length(ok)) {
     cat("\nAll model fits failed - no comparison table to print.\n")
     return(invisible(NULL))
   }
+  #only send successful models to modelsummary
+  mods<-ok
   ##preferred path: modelsummary
   if (requireNamespace("modelsummary", quietly = TRUE)) {
+    #may want to add param to customize gof--or maybe a simple list that can
+    #be passed straight to modelsummary
+    gof_map <- data.frame(
+      raw = c("nobs", "r.squared", "fixef"),
+      clean = c("Num.Obs.", "R2", "Fixed effects"),
+      fmt = c(0, 3, 0),
+      stringsAsFactors = FALSE
+    )
+   
     args <- list(
       mods,
       stars = TRUE,
       output = "markdown",
-      gof_map = NA
+      gof_map = gof_map
     )
     # only pass a VALID rename map (named char, length > 0)
     if (is.character(coef_rename) && length(coef_rename) && length(names(coef_rename))) {
@@ -949,6 +977,52 @@
     }
     print(utils::head(tryCatch(stats::coef(m), error = function(e) NULL)))
   }
+  invisible(NULL)
+}
+
+#print ACDE metadata once 
+# Expects ACDE fits to carry attributes set in weights.R.
+.dagassist_print_acde_console_info <- function(mods) {
+  if (is.null(mods) || !length(mods)) return(invisible(NULL))
+  
+  infos <- list()
+  
+  for (nm in names(mods)) {
+    m <- mods[[nm]]
+    f <- attr(m, "dagassist_acde_formula", exact = TRUE)
+    if (is.null(f)) next
+    
+    spec <- attr(m, "dagassist_acde_spec", exact = TRUE)
+    if (is.null(spec) || !nzchar(spec)) spec <- nm
+    
+    dropped <- attr(m, "dagassist_fe_collinear_dropped", exact = TRUE)
+    if (is.null(dropped)) dropped <- character(0)
+    
+    infos[[spec]] <- list(formula = f, dropped = dropped)
+  }
+  
+  if (!length(infos)) return(invisible(NULL))
+  
+  dropped_all <- sort(unique(unlist(lapply(infos, function(z) z$dropped), use.names = FALSE)))
+  
+  cat("\nACDE setup:\n")
+  if (length(dropped_all)) {
+    cat("  FE-collinear dropped: ", paste(dropped_all, collapse = ", "), "\n", sep = "")
+  } else {
+    cat("  FE-collinear dropped: (none)\n")
+  }
+  
+  cat("  Formulas (sequential_g):\n")
+  
+  spec_order <- c("Original", "Minimal 1", "Canonical")
+  specs <- names(infos)
+  ord <- c(intersect(spec_order, specs), setdiff(specs, spec_order))
+  
+  for (sp in ord) {
+    f_txt <- paste(deparse(infos[[sp]]$formula, width.cutoff = 500L), collapse = " ")
+    cat("   - ", sp, ": ", f_txt, "\n", sep = "")
+  }
+  
   invisible(NULL)
 }
 
@@ -1012,6 +1086,51 @@ get_by_role <- function(roles, value) {
     s <- paste0(..., collapse = "")
     if (.allow_ansi()) paste0(prefix, s, suffix) else s
   }
+}
+
+# detect whether the engine is a fixest estimator (feols/feglm/felm/etc.)
+# used for suppressing fixest's per-model notes and re-emitting compact diagnostics
+.dagassist_engine_is_fixest <- function(engine) {
+  if (is.null(engine) || !is.function(engine)) return(FALSE)
+  env <- tryCatch(environment(engine), error = function(e) NULL)
+  if (is.null(env)) return(FALSE)
+  
+  # environmentName() returns e.g. "namespace:fixest"
+  nm <- tryCatch(environmentName(env), error = function(e) "")
+  if (is.character(nm) && grepl("^namespace:fixest$", nm)) return(TRUE)
+  
+  # fallback
+  pkg <- tryCatch(utils::packageName(env), error = function(e) NA_character_)
+  identical(pkg, "fixest")
+}
+
+#' Custom GOF fields for fixest models in modelsummary tables
+#'
+#' This is a method for modelsummary::glance_custom().
+#'
+#' @noRd
+glance_custom.fixest <- function(x, ...) {
+  fml <- tryCatch(stats::formula(x), error = function(e) NULL)
+  if (is.null(fml)) {
+    return(data.frame(fixef = NA_character_, stringsAsFactors = FALSE))
+  }
+  
+  f_txt <- paste(deparse(fml, width.cutoff = 500L), collapse = " ")
+  
+  parts <- strsplit(f_txt, "\\|", fixed = FALSE)[[1]]
+  if (length(parts) < 2) {
+    return(data.frame(fixef = NA_character_, stringsAsFactors = FALSE))
+  }
+  
+  fe_part <- trimws(parts[2])
+  if (!nzchar(fe_part) || identical(fe_part, "0")) {
+    return(data.frame(fixef = NA_character_, stringsAsFactors = FALSE))
+  }
+  
+  fe_part <- gsub("\\s+", " ", fe_part)
+  fe_part <- gsub("\\s*\\+\\s*", ", ", fe_part)
+  
+  data.frame(fixef = fe_part, stringsAsFactors = FALSE)
 }
 
 #the pretty colors

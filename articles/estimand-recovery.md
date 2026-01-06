@@ -16,16 +16,18 @@ using a simulated dataset.
 
 **Dataset summary statistics (click to expand)**
 
-| variable      | type    | Min     | Q1       | Median   | Mean     | Q3        | Max       |
-|:--------------|:--------|:--------|:---------|:---------|:---------|:----------|:----------|
-| id            | integer | 1.00    | 250.75   | 500.50   | 500.50   | 750.25    | 1000.00   |
-| year          | integer | 0.00    | 1.00     | 2.00     | 2.00     | 3.00      | 4.00      |
-| age           | numeric | 0.00    | 27.60    | 37.70    | 37.76    | 47.40     | 86.20     |
-| edu_year      | numeric | 0.00    | 11.80    | 13.10    | 13.07    | 15.20     | 22.00     |
-| married       | integer | 0.00    | 0.00     | 1.00     | 0.54     | 1.00      | 1.00      |
-| birth_control | integer | 0.00    | 0.00     | 1.00     | 0.69     | 1.00      | 1.00      |
-| income        | numeric | 2277.00 | 33552.50 | 62842.00 | 80974.87 | 107020.75 | 784812.00 |
-| children      | numeric | 0.00    | 0.00     | 1.00     | 1.96     | 2.00      | 12.00     |
+| variable        | type    | Min     | Q1       | Median   | Mean      | Q3        | Max        |
+|:----------------|:--------|:--------|:---------|:---------|:----------|:----------|:-----------|
+| id              | integer | 1.00    | 250.75   | 500.50   | 500.50    | 750.25    | 1000.00    |
+| year            | integer | 0.00    | 1.00     | 2.00     | 2.00      | 3.00      | 4.00       |
+| age             | numeric | 0.00    | 27.60    | 37.70    | 37.76     | 47.40     | 86.20      |
+| pref            | numeric | 0.00    | 1.35     | 2.03     | 2.06      | 2.74      | 4.94       |
+| edu_year        | numeric | 0.00    | 11.80    | 13.10    | 13.07     | 15.20     | 22.00      |
+| married         | integer | 0.00    | 0.00     | 1.00     | 0.56      | 1.00      | 1.00       |
+| birth_control   | integer | 0.00    | 0.00     | 1.00     | 0.71      | 1.00      | 1.00       |
+| income          | numeric | 2344.00 | 43141.75 | 87560.50 | 125387.86 | 162098.50 | 1817478.00 |
+| children        | numeric | 0.00    | 0.00     | 0.00     | 2.03      | 3.00      | 12.00      |
+| job_stability_t | numeric | -3.00   | -0.27    | 0.55     | 0.49      | 1.29      | 3.00       |
 
 | variable   | type    | top_levels                                              |
 |:-----------|:--------|:--------------------------------------------------------|
@@ -33,8 +35,12 @@ using a simulated dataset.
 | immigrant  | factor  | No:4380 Yes:620                                         |
 | urban      | factor  | Urban:3560 Rural:1440                                   |
 | class      | ordered | Working:2080 Middle:1580 Low:885 (Other):455            |
-| religion   | factor  | Christian:1965 Unaffiliated:1665 Muslim:450 (Other):920 |
-| edu_degree | factor  | HS_grad:1635 Some_college:1390 BA:950 (Other):1025      |
+| religion   | factor  | Christian:2005 Unaffiliated:1725 Muslim:460 (Other):810 |
+| contract   | factor  | Temporary:1905 Permanent:1810 Informal:1285             |
+| edu_degree | factor  | HS_grad:1610 Some_college:1390 BA:975 (Other):1025      |
+
+    #> Warning: Removed 1 row containing missing values or values outside the scale range
+    #> (`geom_dag_point()`).
 
 ![\*Example: The Causal Effects of Family Background and Life Course
 Events on Fertility
@@ -61,7 +67,7 @@ library(twangContinuous)
 DAGassist(dag_model,
           formula = lm(children ~ edu_year + age + class + gender + 
                          immigrant + urban + birth_control + income + 
-                         married + religion, data = dat),
+                         married + job_stability_t + contract + pref, data = dat),
           estimand = "ATE",
           bivariate = TRUE,
           type="txt")
@@ -71,54 +77,52 @@ DAGassist(dag_model,
 
 ## Roles
 
-| Variable      |    Role    | Exp. | Out. | `CON` | `MED` | `COL` | `dOut` | `dMed` | `dCol` | dConfOn | dConfOff | `NCT` | `NCO` |
-|:--------------|:----------:|:----:|:----:|:-----:|:-----:|:-----:|:------:|:------:|:------:|:-------:|:--------:|:-----:|:-----:|
-| age           | confounder |      |      |   x   |       |       |        |        |        |         |          |       |       |
-| birth_control |  mediator  |      |      |       |   x   |       |        |   x    |        |         |          |       |       |
-| children      |  outcome   |      |  x   |       |       |       |        |        |        |         |          |       |       |
-| class         | confounder |      |      |   x   |       |       |        |        |        |         |          |       |       |
-| edu_year      |  exposure  |  x   |      |       |       |       |        |        |        |         |          |       |       |
-| gender        | confounder |      |      |   x   |       |       |        |        |        |         |          |       |       |
-| immigrant     | confounder |      |      |   x   |       |       |        |        |        |         |          |       |       |
-| income        |  mediator  |      |      |       |   x   |       |        |        |        |         |          |       |       |
-| married       |  mediator  |      |      |       |   x   |       |        |   x    |        |         |          |       |       |
-| religion      |  mediator  |      |      |       |   x   |       |        |        |        |         |          |       |       |
-| urban         | confounder |      |      |   x   |       |       |        |        |        |         |          |       |       |
+| Variable        |    Role    | Exp. | Out. | `CON` | `MED` | `COL` | `dOut` | `dMed` | `dCol` | dConfOn | dConfOff | `NCT` | `NCO` |
+|:----------------|:----------:|:----:|:----:|:-----:|:-----:|:-----:|:------:|:------:|:------:|:-------:|:--------:|:-----:|:-----:|
+| age             | confounder |      |      |   x   |       |       |        |        |        |         |          |       |       |
+| birth_control   |  mediator  |      |      |       |   x   |       |        |   x    |        |         |          |       |       |
+| children        |  outcome   |      |  x   |       |       |       |        |        |        |         |          |       |       |
+| class           | confounder |      |      |   x   |       |       |        |        |        |         |          |       |       |
+| contract        | confounder |      |      |   x   |       |       |        |        |        |         |          |       |       |
+| edu_year        |  exposure  |  x   |      |       |       |       |        |        |        |         |          |       |       |
+| gender          | confounder |      |      |   x   |       |       |        |        |        |         |          |       |       |
+| immigrant       | confounder |      |      |   x   |       |       |        |        |        |         |          |       |       |
+| income          |  mediator  |      |      |       |   x   |       |        |   x    |        |         |          |       |       |
+| job_stability_t |  mediator  |      |      |       |   x   |       |        |        |        |         |          |       |       |
+| married         |  mediator  |      |      |       |   x   |       |        |   x    |        |         |          |       |       |
+| pref            |    nco     |      |      |       |       |       |        |        |        |         |          |       |   x   |
+| urban           | confounder |      |      |   x   |       |       |        |        |        |         |          |       |       |
 
 ### Models
 
-| Term                 |   Original   | Original (ATE) |  Bivariate  | Bivariate (ATE) |  Minimal 1   | Minimal 1 (ATE) |  Canonical   | Canonical (ATE) |
-|:---------------------|:------------:|:--------------:|:-----------:|:---------------:|:------------:|:---------------:|:------------:|:---------------:|
-| edu_year             | -0.047\*\*\* |  -0.115\*\*\*  | 0.057\*\*\* |  -0.152\*\*\*   | -0.054\*\*\* |  -0.124\*\*\*   | -0.054\*\*\* |  -0.124\*\*\*   |
-|                      |   (0.013)    |    (0.011)     |   (0.013)   |     (0.011)     |   (0.013)    |     (0.010)     |   (0.013)    |     (0.010)     |
-| age                  | 0.066\*\*\*  |  0.058\*\*\*   |             |                 | 0.079\*\*\*  |   0.072\*\*\*   | 0.079\*\*\*  |   0.072\*\*\*   |
-|                      |   (0.004)    |    (0.004)     |             |                 |   (0.003)    |     (0.003)     |   (0.003)    |     (0.003)     |
-| genderMale           |    -0.046    |     0.092      |             |                 |    -0.037    |      0.058      |    -0.037    |      0.058      |
-|                      |   (0.083)    |    (0.080)     |             |                 |   (0.082)    |     (0.079)     |   (0.082)    |     (0.079)     |
-| immigrantYes         |    0.121     |  0.640\*\*\*   |             |                 |    0.098     |   0.631\*\*\*   |    0.098     |   0.631\*\*\*   |
-|                      |   (0.124)    |    (0.128)     |             |                 |   (0.124)    |     (0.128)     |   (0.124)    |     (0.128)     |
-| urbanUrban           |    -0.128    |  -0.614\*\*\*  |             |                 |    -0.136    |  -0.481\*\*\*   |    -0.136    |  -0.481\*\*\*   |
-|                      |   (0.091)    |    (0.088)     |             |                 |   (0.091)    |     (0.086)     |   (0.091)    |     (0.086)     |
-| birth_control        |    -0.103    |   -0.263\*\*   |             |                 |              |                 |              |                 |
-|                      |   (0.095)    |    (0.095)     |             |                 |              |                 |              |                 |
-| income               |   0.000\*    |  0.000\*\*\*   |             |                 |              |                 |              |                 |
-|                      |   (0.000)    |    (0.000)     |             |                 |              |                 |              |                 |
-| married              | 0.456\*\*\*  |  0.345\*\*\*   |             |                 |              |                 |              |                 |
-|                      |   (0.117)    |    (0.101)     |             |                 |              |                 |              |                 |
-| religionMuslim       |    0.059     |     0.061      |             |                 |              |                 |              |                 |
-|                      |   (0.151)    |    (0.162)     |             |                 |              |                 |              |                 |
-| religionHindu        |  -0.611\*\*  |  -1.040\*\*\*  |             |                 |              |                 |              |                 |
-|                      |   (0.222)    |    (0.171)     |             |                 |              |                 |              |                 |
-| religionBuddhist     |    0.230     |     -0.026     |             |                 |              |                 |              |                 |
-|                      |   (0.222)    |    (0.203)     |             |                 |              |                 |              |                 |
-| religionJewish       |    0.130     |     0.147      |             |                 |              |                 |              |                 |
-|                      |   (0.215)    |    (0.234)     |             |                 |              |                 |              |                 |
-| religionUnaffiliated | -0.468\*\*\* |     -0.134     |             |                 |              |                 |              |                 |
-|                      |   (0.096)    |    (0.091)     |             |                 |              |                 |              |                 |
-| religionOther        |   -0.350\*   |    -0.349+     |             |                 |              |                 |              |                 |
-|                      |   (0.167)    |    (0.186)     |             |                 |              |                 |              |                 |
-| Num.Obs.             |     5000     |      5000      |    5000     |      5000       |     5000     |      5000       |     5000     |      5000       |
-| R2                   |    0.153     |     0.153      |    0.004    |      0.040      |    0.142     |      0.140      |    0.142     |      0.140      |
+| Term              |   Original   | Original (ATE) |  Bivariate  | Bivariate (ATE) |  Minimal 1   | Minimal 1 (ATE) |  Canonical   | Canonical (ATE) |
+|:------------------|:------------:|:--------------:|:-----------:|:---------------:|:------------:|:---------------:|:------------:|:---------------:|
+| edu_year          | -0.122\*\*\* |  -0.115\*\*\*  | 0.060\*\*\* |     -0.016      | -0.080\*\*\* |    -0.031\*     | -0.080\*\*\* |     -0.020      |
+|                   |   (0.015)    |    (0.015)     |   (0.014)   |     (0.015)     |   (0.013)    |     (0.014)     |   (0.013)    |     (0.014)     |
+| age               | 0.070\*\*\*  |  0.057\*\*\*   |             |                 | 0.095\*\*\*  |   0.095\*\*\*   | 0.096\*\*\*  |   0.095\*\*\*   |
+|                   |   (0.004)    |    (0.005)     |             |                 |   (0.003)    |     (0.004)     |   (0.003)    |     (0.004)     |
+| genderMale        |   0.181\*    |  -0.349\*\*\*  |             |                 |   0.179\*    |  -0.467\*\*\*   |   0.190\*    |  -0.404\*\*\*   |
+|                   |   (0.085)    |    (0.087)     |             |                 |   (0.087)    |     (0.090)     |   (0.085)    |     (0.089)     |
+| immigrantYes      |   -0.246+    |    -0.336\*    |             |                 |    -0.172    |    -0.284\*     |   -0.243+    |    -0.366\*     |
+|                   |   (0.128)    |    (0.140)     |             |                 |   (0.131)    |     (0.144)     |   (0.129)    |     (0.142)     |
+| urbanUrban        |    0.121     |     0.052      |             |                 |   0.238\*    |     0.200+      |    0.175+    |     0.178+      |
+|                   |   (0.094)    |    (0.101)     |             |                 |   (0.096)    |     (0.103)     |   (0.094)    |     (0.102)     |
+| birth_control     |    0.133     |     0.012      |             |                 |              |                 |              |                 |
+|                   |   (0.103)    |    (0.111)     |             |                 |              |                 |              |                 |
+| income            |    0.000     |   0.000\*\*    |             |                 |              |                 |              |                 |
+|                   |   (0.000)    |    (0.000)     |             |                 |              |                 |              |                 |
+| married           | 0.703\*\*\*  |  0.792\*\*\*   |             |                 |              |                 |              |                 |
+|                   |   (0.122)    |    (0.123)     |             |                 |              |                 |              |                 |
+| job_stability_t   | 0.285\*\*\*  |  0.518\*\*\*   |             |                 |              |                 |              |                 |
+|                   |   (0.047)    |    (0.049)     |             |                 |              |                 |              |                 |
+| contractTemporary | 0.710\*\*\*  |  0.670\*\*\*   |             |                 | 0.772\*\*\*  |   0.800\*\*\*   | 0.804\*\*\*  |   0.785\*\*\*   |
+|                   |   (0.110)    |    (0.111)     |             |                 |   (0.112)    |     (0.113)     |   (0.110)    |     (0.111)     |
+| contractPermanent | 0.893\*\*\*  |    0.290\*     |             |                 | 1.116\*\*\*  |   0.743\*\*\*   | 1.093\*\*\*  |   0.643\*\*\*   |
+|                   |   (0.114)    |    (0.118)     |             |                 |   (0.113)    |     (0.117)     |   (0.111)    |     (0.116)     |
+| pref              | 0.581\*\*\*  |  0.544\*\*\*   |             |                 |              |                 | 0.578\*\*\*  |   0.499\*\*\*   |
+|                   |   (0.042)    |    (0.046)     |             |                 |              |                 |   (0.042)    |     (0.047)     |
+| Num.Obs.          |     5000     |      5000      |    5000     |      5000       |     5000     |      5000       |     5000     |      5000       |
+| R2                |    0.227     |     0.192      |    0.004    |      0.000      |    0.183     |      0.140      |    0.213     |      0.159      |
 
 #### Notes
 
@@ -129,10 +133,126 @@ DAGassist(dag_model,
   dConfOff (descendant of a confounder off a back-door path); NCT
   (neutral control on treatment); NCO (neutral control on outcome).
 - p-value legend: + \< 0.1, \* \< 0.05, \*\* \< 0.01, \*\*\* \< 0.001.
-- Controls (minimal): {age, class, gender, immigrant, urban}.
-- Controls (canonical): {age, class, gender, immigrant, urban}.
+- Controls (minimal): {age, class, contract, gender, immigrant, urban}.
+- Controls (canonical): {age, class, contract, gender, immigrant, pref,
+  urban}.
 
 ![\*Visualizing the effect of estimand
 recovery\*](estimand-recovery_files/figure-html/dwplot-1.png)
 
 *Visualizing the effect of estimand recovery*
+
+In some cases, the target estimand is the average controlled direct
+effect. `DAGassist` supports recovering the controlled direct effect
+using sequential g-estimation via integration with the `DirectEffects` R
+package.
+
+Using the prior example, we can use `DAGassist` to estimate the effect
+of years of education on a person’s number of children, except through
+birth control, income, and marital status.
+
+``` r
+library(DirectEffects)
+#> Registered S3 method overwritten by 'DirectEffects':
+#>   method    from     
+#>   vcov.seqg DAGassist
+
+DAGassist(dag_model,
+          formula = lm(children ~ edu_year + age + class + gender + 
+                         immigrant + urban + birth_control + income + 
+                         married + job_stability_t + contract + pref, data = dat),
+          estimand = "ACDE")
+#> DAGassist Report: 
+#> 
+#> Roles:
+#> variable         role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
+#> edu_year         exposure    x                                                                        
+#> children         outcome           x                                                                  
+#> age              confounder              x                                                            
+#> class            confounder              x                                                            
+#> contract         confounder              x                                                            
+#> gender           confounder              x                                                            
+#> immigrant        confounder              x                                                            
+#> urban            confounder              x                                                            
+#> birth_control    mediator                      x               x                                      
+#> income           mediator                      x               x                                      
+#> job_stability_t  mediator                      x                                                      
+#> married          mediator                      x               x                                      
+#> pref             nco                                                                               x  
+#> 
+#>  (!) Bad controls in your formula: {birth_control, income, married, job_stability_t}
+#> Minimal controls 1: {age, class, contract, gender, immigrant, urban}
+#> Canonical controls: {age, class, contract, gender, immigrant, pref, urban}
+#> 
+#> Formulas:
+#>   original:  children ~ edu_year + age + class + gender + immigrant + urban +     birth_control + income + married + job_stability_t + contract +     pref
+#> 
+#> ACDE setup:
+#>   FE-collinear dropped: (none)
+#>   Formulas (sequential_g):
+#>    - Original: children ~ edu_year + age + class + gender + immigrant + urban + contract + pref | job_stability_t | birth_control + income + married
+#>    - Minimal 1: children ~ edu_year + age + class + contract + gender + immigrant + urban | job_stability_t | birth_control + income + married
+#>    - Canonical: children ~ edu_year + age + class + contract + gender + immigrant + pref + urban | job_stability_t | birth_control + income + married
+#> 
+#> Model comparison:
+#> 
+#> +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+
+#> |                   | Original  | Minimal 1 | Canonical | Original (ACDE) | Minimal 1 (ACDE) | Canonical (ACDE) |
+#> +===================+===========+===========+===========+=================+==================+==================+
+#> | edu_year          | -0.122*** | -0.080*** | -0.080*** | -0.084***       | -0.083***        | -0.084***        |
+#> +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+
+#> |                   | (0.015)   | (0.013)   | (0.013)   | (0.010)         | (0.010)          | (0.010)          |
+#> +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+
+#> | age               | 0.070***  | 0.095***  | 0.096***  | 0.077***        | 0.076***         | 0.077***         |
+#> +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+
+#> |                   | (0.004)   | (0.003)   | (0.003)   | (0.003)         | (0.003)          | (0.003)          |
+#> +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+
+#> | genderMale        | 0.181*    | 0.179*    | 0.190*    | 0.185*          | 0.174*           | 0.185*           |
+#> +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+
+#> |                   | (0.085)   | (0.087)   | (0.085)   | (0.085)         | (0.086)          | (0.085)          |
+#> +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+
+#> | immigrantYes      | -0.246+   | -0.172    | -0.243+   | -0.237*         | -0.166           | -0.237*          |
+#> +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+
+#> |                   | (0.128)   | (0.131)   | (0.129)   | (0.115)         | (0.116)          | (0.115)          |
+#> +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+
+#> | urbanUrban        | 0.121     | 0.238*    | 0.175+    | 0.156+          | 0.224*           | 0.156+           |
+#> +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+
+#> |                   | (0.094)   | (0.096)   | (0.094)   | (0.090)         | (0.092)          | (0.090)          |
+#> +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+
+#> | birth_control     | 0.133     |           |           |                 |                  |                  |
+#> +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+
+#> |                   | (0.103)   |           |           |                 |                  |                  |
+#> +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+
+#> | income            | 0.000     |           |           |                 |                  |                  |
+#> +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+
+#> |                   | (0.000)   |           |           |                 |                  |                  |
+#> +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+
+#> | married           | 0.703***  |           |           |                 |                  |                  |
+#> +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+
+#> |                   | (0.122)   |           |           |                 |                  |                  |
+#> +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+
+#> | job_stability_t   | 0.285***  |           |           |                 |                  |                  |
+#> +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+
+#> |                   | (0.047)   |           |           |                 |                  |                  |
+#> +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+
+#> | contractTemporary | 0.710***  | 0.772***  | 0.804***  | 0.792***        | 0.766***         | 0.792***         |
+#> +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+
+#> |                   | (0.110)   | (0.112)   | (0.110)   | (0.102)         | (0.103)          | (0.102)          |
+#> +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+
+#> | contractPermanent | 0.893***  | 1.116***  | 1.093***  | 1.055***        | 1.091***         | 1.055***         |
+#> +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+
+#> |                   | (0.114)   | (0.113)   | (0.111)   | (0.102)         | (0.104)          | (0.102)          |
+#> +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+
+#> | pref              | 0.581***  |           | 0.578***  | 0.577***        |                  | 0.577***         |
+#> +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+
+#> |                   | (0.042)   |           | (0.042)   | (0.046)         |                  | (0.046)          |
+#> +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+
+#> | Num.Obs.          | 5000      | 5000      | 5000      | 5000            | 5000             | 5000             |
+#> +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+
+#> | R2                | 0.227     | 0.183     | 0.213     |                 |                  |                  |
+#> +===================+===========+===========+===========+=================+==================+==================+
+#> | + p < 0.1, * p < 0.05, ** p < 0.01, *** p < 0.001                                                             |
+#> +===================+===========+===========+===========+=================+==================+==================+ 
+#> 
+#> Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome
+```

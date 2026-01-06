@@ -74,16 +74,16 @@ recovery by constructing weights that align estimation with a
 user-specified target estimand. This vignette illustrates the workflow
 using a simulated dataset.</p>
 <details><summary><strong>Dataset summary statistics (click to expand)</strong>
-</summary><table style="width:100%;" class="table">
+</summary><table class="table">
 <colgroup>
-<col width="18%">
-<col width="10%">
-<col width="10%">
-<col width="11%">
+<col width="19%">
+<col width="9%">
+<col width="9%">
 <col width="11%">
 <col width="11%">
 <col width="12%">
 <col width="12%">
+<col width="13%">
 </colgroup>
 <thead><tr class="header">
 <th align="left">variable</th>
@@ -127,6 +127,16 @@ using a simulated dataset.</p>
 <td align="left">86.20</td>
 </tr>
 <tr class="even">
+<td align="left">pref</td>
+<td align="left">numeric</td>
+<td align="left">0.00</td>
+<td align="left">1.35</td>
+<td align="left">2.03</td>
+<td align="left">2.06</td>
+<td align="left">2.74</td>
+<td align="left">4.94</td>
+</tr>
+<tr class="odd">
 <td align="left">edu_year</td>
 <td align="left">numeric</td>
 <td align="left">0.00</td>
@@ -136,45 +146,55 @@ using a simulated dataset.</p>
 <td align="left">15.20</td>
 <td align="left">22.00</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">married</td>
 <td align="left">integer</td>
 <td align="left">0.00</td>
 <td align="left">0.00</td>
 <td align="left">1.00</td>
-<td align="left">0.54</td>
+<td align="left">0.56</td>
 <td align="left">1.00</td>
 <td align="left">1.00</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">birth_control</td>
 <td align="left">integer</td>
 <td align="left">0.00</td>
 <td align="left">0.00</td>
 <td align="left">1.00</td>
-<td align="left">0.69</td>
+<td align="left">0.71</td>
 <td align="left">1.00</td>
 <td align="left">1.00</td>
-</tr>
-<tr class="odd">
-<td align="left">income</td>
-<td align="left">numeric</td>
-<td align="left">2277.00</td>
-<td align="left">33552.50</td>
-<td align="left">62842.00</td>
-<td align="left">80974.87</td>
-<td align="left">107020.75</td>
-<td align="left">784812.00</td>
 </tr>
 <tr class="even">
+<td align="left">income</td>
+<td align="left">numeric</td>
+<td align="left">2344.00</td>
+<td align="left">43141.75</td>
+<td align="left">87560.50</td>
+<td align="left">125387.86</td>
+<td align="left">162098.50</td>
+<td align="left">1817478.00</td>
+</tr>
+<tr class="odd">
 <td align="left">children</td>
 <td align="left">numeric</td>
 <td align="left">0.00</td>
 <td align="left">0.00</td>
-<td align="left">1.00</td>
-<td align="left">1.96</td>
-<td align="left">2.00</td>
+<td align="left">0.00</td>
+<td align="left">2.03</td>
+<td align="left">3.00</td>
 <td align="left">12.00</td>
+</tr>
+<tr class="even">
+<td align="left">job_stability_t</td>
+<td align="left">numeric</td>
+<td align="left">-3.00</td>
+<td align="left">-0.27</td>
+<td align="left">0.55</td>
+<td align="left">0.49</td>
+<td align="left">1.29</td>
+<td align="left">3.00</td>
 </tr>
 </tbody>
 </table>
@@ -213,16 +233,23 @@ using a simulated dataset.</p>
 <tr class="odd">
 <td align="left">religion</td>
 <td align="left">factor</td>
-<td align="left">Christian:1965 Unaffiliated:1665 Muslim:450
-(Other):920</td>
+<td align="left">Christian:2005 Unaffiliated:1725 Muslim:460
+(Other):810</td>
 </tr>
 <tr class="even">
+<td align="left">contract</td>
+<td align="left">factor</td>
+<td align="left">Temporary:1905 Permanent:1810 Informal:1285</td>
+</tr>
+<tr class="odd">
 <td align="left">edu_degree</td>
 <td align="left">factor</td>
-<td align="left">HS_grad:1635 Some_college:1390 BA:950 (Other):1025</td>
+<td align="left">HS_grad:1610 Some_college:1390 BA:975 (Other):1025</td>
 </tr>
 </tbody>
-</table></details><div class="figure">
+</table></details><pre><code><span><span class="co">#&gt; Warning: Removed 1 row containing missing values or values outside the scale range</span></span>
+<span><span class="co">#&gt; (`geom_dag_point()`).</span></span></code></pre>
+<div class="figure">
 <img src="estimand-recovery_files/figure-html/example-dag-1.png" class="r-plt" alt="*Example: The Causal Effects of Family Background and Life Course Events on Fertility Patterns*" width="768"><p class="caption">
 <em>Example: The Causal Effects of Family Background and Life Course
 Events on Fertility Patterns</em>
@@ -239,13 +266,13 @@ and recovers the <code>ATE</code> using weights.</p>
 <code>twangContinuous</code>. The below model has years of education as
 its treatment and therefore uses <code>twangContinuous</code> (see
 descriptive statistics for details on covariates).</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">twangContinuous</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">dag_model</span>,</span>
 <span>          formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">children</span> <span class="op">~</span> <span class="va">edu_year</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">class</span> <span class="op">+</span> <span class="va">gender</span> <span class="op">+</span> </span>
 <span>                         <span class="va">immigrant</span> <span class="op">+</span> <span class="va">urban</span> <span class="op">+</span> <span class="va">birth_control</span> <span class="op">+</span> <span class="va">income</span> <span class="op">+</span> </span>
-<span>                         <span class="va">married</span> <span class="op">+</span> <span class="va">religion</span>, data <span class="op">=</span> <span class="va">dat</span><span class="op">)</span>,</span>
+<span>                         <span class="va">married</span> <span class="op">+</span> <span class="va">job_stability_t</span> <span class="op">+</span> <span class="va">contract</span> <span class="op">+</span> <span class="va">pref</span>, data <span class="op">=</span> <span class="va">dat</span><span class="op">)</span>,</span>
 <span>          estimand <span class="op">=</span> <span class="st">"ATE"</span>,</span>
 <span>          bivariate <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>          type<span class="op">=</span><span class="st">"txt"</span><span class="op">)</span></span></code></pre></div>
@@ -258,20 +285,20 @@ descriptive statistics for details on covariates).</p>
 </h2>
 <table class="table">
 <colgroup>
-<col width="12%">
+<col width="13%">
 <col width="10%">
 <col width="5%">
 <col width="5%">
-<col width="6%">
-<col width="6%">
-<col width="6%">
+<col width="5%">
+<col width="5%">
+<col width="5%">
 <col width="6%">
 <col width="6%">
 <col width="6%">
 <col width="7%">
 <col width="8%">
-<col width="6%">
-<col width="6%">
+<col width="5%">
+<col width="5%">
 </colgroup>
 <thead><tr class="header">
 <th align="left">Variable</th>
@@ -355,6 +382,22 @@ descriptive statistics for details on covariates).</p>
 <td align="center"></td>
 </tr>
 <tr class="odd">
+<td align="left">contract</td>
+<td align="center">confounder</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">x</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
 <td align="left">edu_year</td>
 <td align="center">exposure</td>
 <td align="center">x</td>
@@ -370,7 +413,7 @@ descriptive statistics for details on covariates).</p>
 <td align="center"></td>
 <td align="center"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">gender</td>
 <td align="center">confounder</td>
 <td align="center"></td>
@@ -386,7 +429,7 @@ descriptive statistics for details on covariates).</p>
 <td align="center"></td>
 <td align="center"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">immigrant</td>
 <td align="center">confounder</td>
 <td align="center"></td>
@@ -402,8 +445,24 @@ descriptive statistics for details on covariates).</p>
 <td align="center"></td>
 <td align="center"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">income</td>
+<td align="center">mediator</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">x</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">x</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">job_stability_t</td>
 <td align="center">mediator</td>
 <td align="center"></td>
 <td align="center"></td>
@@ -435,20 +494,20 @@ descriptive statistics for details on covariates).</p>
 <td align="center"></td>
 </tr>
 <tr class="even">
-<td align="left">religion</td>
-<td align="center">mediator</td>
+<td align="left">pref</td>
+<td align="center">nco</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center">x</td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
 </tr>
 <tr class="odd">
 <td align="left">urban</td>
@@ -473,15 +532,15 @@ descriptive statistics for details on covariates).</p>
 </h3>
 <table class="table">
 <colgroup>
-<col width="15%">
+<col width="13%">
 <col width="8%">
 <col width="12%">
 <col width="8%">
-<col width="12%">
+<col width="13%">
 <col width="8%">
-<col width="12%">
+<col width="13%">
 <col width="8%">
-<col width="12%">
+<col width="13%">
 </colgroup>
 <thead><tr class="header">
 <th align="left">Term</th>
@@ -497,118 +556,118 @@ descriptive statistics for details on covariates).</p>
 <tbody>
 <tr class="odd">
 <td align="left">edu_year</td>
-<td align="center">-0.047***</td>
+<td align="center">-0.122***</td>
 <td align="center">-0.115***</td>
-<td align="center">0.057***</td>
-<td align="center">-0.152***</td>
-<td align="center">-0.054***</td>
-<td align="center">-0.124***</td>
-<td align="center">-0.054***</td>
-<td align="center">-0.124***</td>
+<td align="center">0.060***</td>
+<td align="center">-0.016</td>
+<td align="center">-0.080***</td>
+<td align="center">-0.031*</td>
+<td align="center">-0.080***</td>
+<td align="center">-0.020</td>
 </tr>
 <tr class="even">
 <td align="left"> </td>
+<td align="center">(0.015)</td>
+<td align="center">(0.015)</td>
+<td align="center">(0.014)</td>
+<td align="center">(0.015)</td>
 <td align="center">(0.013)</td>
-<td align="center">(0.011)</td>
+<td align="center">(0.014)</td>
 <td align="center">(0.013)</td>
-<td align="center">(0.011)</td>
-<td align="center">(0.013)</td>
-<td align="center">(0.010)</td>
-<td align="center">(0.013)</td>
-<td align="center">(0.010)</td>
+<td align="center">(0.014)</td>
 </tr>
 <tr class="odd">
 <td align="left">age</td>
-<td align="center">0.066***</td>
-<td align="center">0.058***</td>
+<td align="center">0.070***</td>
+<td align="center">0.057***</td>
 <td align="center"></td>
 <td align="center"></td>
-<td align="center">0.079***</td>
-<td align="center">0.072***</td>
-<td align="center">0.079***</td>
-<td align="center">0.072***</td>
+<td align="center">0.095***</td>
+<td align="center">0.095***</td>
+<td align="center">0.096***</td>
+<td align="center">0.095***</td>
 </tr>
 <tr class="even">
 <td align="left"> </td>
 <td align="center">(0.004)</td>
+<td align="center">(0.005)</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">(0.003)</td>
 <td align="center">(0.004)</td>
-<td align="center"></td>
-<td align="center"></td>
 <td align="center">(0.003)</td>
-<td align="center">(0.003)</td>
-<td align="center">(0.003)</td>
-<td align="center">(0.003)</td>
+<td align="center">(0.004)</td>
 </tr>
 <tr class="odd">
 <td align="left">genderMale</td>
-<td align="center">-0.046</td>
-<td align="center">0.092</td>
+<td align="center">0.181*</td>
+<td align="center">-0.349***</td>
 <td align="center"></td>
 <td align="center"></td>
-<td align="center">-0.037</td>
-<td align="center">0.058</td>
-<td align="center">-0.037</td>
-<td align="center">0.058</td>
+<td align="center">0.179*</td>
+<td align="center">-0.467***</td>
+<td align="center">0.190*</td>
+<td align="center">-0.404***</td>
 </tr>
 <tr class="even">
 <td align="left"> </td>
-<td align="center">(0.083)</td>
-<td align="center">(0.080)</td>
+<td align="center">(0.085)</td>
+<td align="center">(0.087)</td>
 <td align="center"></td>
 <td align="center"></td>
-<td align="center">(0.082)</td>
-<td align="center">(0.079)</td>
-<td align="center">(0.082)</td>
-<td align="center">(0.079)</td>
+<td align="center">(0.087)</td>
+<td align="center">(0.090)</td>
+<td align="center">(0.085)</td>
+<td align="center">(0.089)</td>
 </tr>
 <tr class="odd">
 <td align="left">immigrantYes</td>
-<td align="center">0.121</td>
-<td align="center">0.640***</td>
+<td align="center">-0.246+</td>
+<td align="center">-0.336*</td>
 <td align="center"></td>
 <td align="center"></td>
-<td align="center">0.098</td>
-<td align="center">0.631***</td>
-<td align="center">0.098</td>
-<td align="center">0.631***</td>
+<td align="center">-0.172</td>
+<td align="center">-0.284*</td>
+<td align="center">-0.243+</td>
+<td align="center">-0.366*</td>
 </tr>
 <tr class="even">
 <td align="left"> </td>
-<td align="center">(0.124)</td>
 <td align="center">(0.128)</td>
+<td align="center">(0.140)</td>
 <td align="center"></td>
 <td align="center"></td>
-<td align="center">(0.124)</td>
-<td align="center">(0.128)</td>
-<td align="center">(0.124)</td>
-<td align="center">(0.128)</td>
+<td align="center">(0.131)</td>
+<td align="center">(0.144)</td>
+<td align="center">(0.129)</td>
+<td align="center">(0.142)</td>
 </tr>
 <tr class="odd">
 <td align="left">urbanUrban</td>
-<td align="center">-0.128</td>
-<td align="center">-0.614***</td>
+<td align="center">0.121</td>
+<td align="center">0.052</td>
 <td align="center"></td>
 <td align="center"></td>
-<td align="center">-0.136</td>
-<td align="center">-0.481***</td>
-<td align="center">-0.136</td>
-<td align="center">-0.481***</td>
+<td align="center">0.238*</td>
+<td align="center">0.200+</td>
+<td align="center">0.175+</td>
+<td align="center">0.178+</td>
 </tr>
 <tr class="even">
 <td align="left"> </td>
-<td align="center">(0.091)</td>
-<td align="center">(0.088)</td>
+<td align="center">(0.094)</td>
+<td align="center">(0.101)</td>
 <td align="center"></td>
 <td align="center"></td>
-<td align="center">(0.091)</td>
-<td align="center">(0.086)</td>
-<td align="center">(0.091)</td>
-<td align="center">(0.086)</td>
+<td align="center">(0.096)</td>
+<td align="center">(0.103)</td>
+<td align="center">(0.094)</td>
+<td align="center">(0.102)</td>
 </tr>
 <tr class="odd">
 <td align="left">birth_control</td>
-<td align="center">-0.103</td>
-<td align="center">-0.263**</td>
+<td align="center">0.133</td>
+<td align="center">0.012</td>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
@@ -618,8 +677,8 @@ descriptive statistics for details on covariates).</p>
 </tr>
 <tr class="even">
 <td align="left"> </td>
-<td align="center">(0.095)</td>
-<td align="center">(0.095)</td>
+<td align="center">(0.103)</td>
+<td align="center">(0.111)</td>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
@@ -629,8 +688,8 @@ descriptive statistics for details on covariates).</p>
 </tr>
 <tr class="odd">
 <td align="left">income</td>
-<td align="center">0.000*</td>
-<td align="center">0.000***</td>
+<td align="center">0.000</td>
+<td align="center">0.000**</td>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
@@ -651,8 +710,8 @@ descriptive statistics for details on covariates).</p>
 </tr>
 <tr class="odd">
 <td align="left">married</td>
-<td align="center">0.456***</td>
-<td align="center">0.345***</td>
+<td align="center">0.703***</td>
+<td align="center">0.792***</td>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
@@ -662,146 +721,102 @@ descriptive statistics for details on covariates).</p>
 </tr>
 <tr class="even">
 <td align="left"> </td>
+<td align="center">(0.122)</td>
+<td align="center">(0.123)</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">job_stability_t</td>
+<td align="center">0.285***</td>
+<td align="center">0.518***</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left"> </td>
+<td align="center">(0.047)</td>
+<td align="center">(0.049)</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">contractTemporary</td>
+<td align="center">0.710***</td>
+<td align="center">0.670***</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">0.772***</td>
+<td align="center">0.800***</td>
+<td align="center">0.804***</td>
+<td align="center">0.785***</td>
+</tr>
+<tr class="even">
+<td align="left"> </td>
+<td align="center">(0.110)</td>
+<td align="center">(0.111)</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">(0.112)</td>
+<td align="center">(0.113)</td>
+<td align="center">(0.110)</td>
+<td align="center">(0.111)</td>
+</tr>
+<tr class="odd">
+<td align="left">contractPermanent</td>
+<td align="center">0.893***</td>
+<td align="center">0.290*</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">1.116***</td>
+<td align="center">0.743***</td>
+<td align="center">1.093***</td>
+<td align="center">0.643***</td>
+</tr>
+<tr class="even">
+<td align="left"> </td>
+<td align="center">(0.114)</td>
+<td align="center">(0.118)</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">(0.113)</td>
 <td align="center">(0.117)</td>
-<td align="center">(0.101)</td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
+<td align="center">(0.111)</td>
+<td align="center">(0.116)</td>
 </tr>
 <tr class="odd">
-<td align="left">religionMuslim</td>
-<td align="center">0.059</td>
-<td align="center">0.061</td>
+<td align="left">pref</td>
+<td align="center">0.581***</td>
+<td align="center">0.544***</td>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
+<td align="center">0.578***</td>
+<td align="center">0.499***</td>
 </tr>
 <tr class="even">
 <td align="left"> </td>
-<td align="center">(0.151)</td>
-<td align="center">(0.162)</td>
+<td align="center">(0.042)</td>
+<td align="center">(0.046)</td>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-</tr>
-<tr class="odd">
-<td align="left">religionHindu</td>
-<td align="center">-0.611**</td>
-<td align="center">-1.040***</td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-</tr>
-<tr class="even">
-<td align="left"> </td>
-<td align="center">(0.222)</td>
-<td align="center">(0.171)</td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-</tr>
-<tr class="odd">
-<td align="left">religionBuddhist</td>
-<td align="center">0.230</td>
-<td align="center">-0.026</td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-</tr>
-<tr class="even">
-<td align="left"> </td>
-<td align="center">(0.222)</td>
-<td align="center">(0.203)</td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-</tr>
-<tr class="odd">
-<td align="left">religionJewish</td>
-<td align="center">0.130</td>
-<td align="center">0.147</td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-</tr>
-<tr class="even">
-<td align="left"> </td>
-<td align="center">(0.215)</td>
-<td align="center">(0.234)</td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-</tr>
-<tr class="odd">
-<td align="left">religionUnaffiliated</td>
-<td align="center">-0.468***</td>
-<td align="center">-0.134</td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-</tr>
-<tr class="even">
-<td align="left"> </td>
-<td align="center">(0.096)</td>
-<td align="center">(0.091)</td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-</tr>
-<tr class="odd">
-<td align="left">religionOther</td>
-<td align="center">-0.350*</td>
-<td align="center">-0.349+</td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-</tr>
-<tr class="even">
-<td align="left"> </td>
-<td align="center">(0.167)</td>
-<td align="center">(0.186)</td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
+<td align="center">(0.042)</td>
+<td align="center">(0.047)</td>
 </tr>
 <tr class="odd">
 <td align="left">Num.Obs.</td>
@@ -816,14 +831,14 @@ descriptive statistics for details on covariates).</p>
 </tr>
 <tr class="even">
 <td align="left">R2</td>
-<td align="center">0.153</td>
-<td align="center">0.153</td>
+<td align="center">0.227</td>
+<td align="center">0.192</td>
 <td align="center">0.004</td>
-<td align="center">0.040</td>
-<td align="center">0.142</td>
+<td align="center">0.000</td>
+<td align="center">0.183</td>
 <td align="center">0.140</td>
-<td align="center">0.142</td>
-<td align="center">0.140</td>
+<td align="center">0.213</td>
+<td align="center">0.159</td>
 </tr>
 </tbody>
 </table>
@@ -839,14 +854,127 @@ dConfOn (descendant of a confounder on a back-door path); dConfOff
 on treatment); NCO (neutral control on outcome).</li>
 <li>p-value legend: + &lt; 0.1, * &lt; 0.05, ** &lt; 0.01, *** &lt;
 0.001.</li>
-<li>Controls (minimal): {age, class, gender, immigrant, urban}.</li>
-<li>Controls (canonical): {age, class, gender, immigrant, urban}.</li>
+<li>Controls (minimal): {age, class, contract, gender, immigrant,
+urban}.</li>
+<li>Controls (canonical): {age, class, contract, gender, immigrant,
+pref, urban}.</li>
 </ul>
 <div class="figure">
 <img src="estimand-recovery_files/figure-html/dwplot-1.png" class="r-plt" alt="*Visualizing the effect of estimand recovery*" width="768"><p class="caption">
 <em>Visualizing the effect of estimand recovery</em>
 </p>
 </div>
+<p>In some cases, the target estimand is the average controlled direct
+effect. <code>DAGassist</code> supports recovering the controlled direct
+effect using sequential g-estimation via integration with the
+<code>DirectEffects</code> R package.</p>
+<p>Using the prior example, we can use <code>DAGassist</code> to
+estimate the effect of years of education on a person’s number of
+children, except through birth control, income, and marital status.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mattblackwell.github.io/DirectEffects/" class="external-link">DirectEffects</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; Registered S3 method overwritten by 'DirectEffects':</span></span>
+<span><span class="co">#&gt;   method    from     </span></span>
+<span><span class="co">#&gt;   vcov.seqg DAGassist</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">dag_model</span>,</span>
+<span>          formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">children</span> <span class="op">~</span> <span class="va">edu_year</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">class</span> <span class="op">+</span> <span class="va">gender</span> <span class="op">+</span> </span>
+<span>                         <span class="va">immigrant</span> <span class="op">+</span> <span class="va">urban</span> <span class="op">+</span> <span class="va">birth_control</span> <span class="op">+</span> <span class="va">income</span> <span class="op">+</span> </span>
+<span>                         <span class="va">married</span> <span class="op">+</span> <span class="va">job_stability_t</span> <span class="op">+</span> <span class="va">contract</span> <span class="op">+</span> <span class="va">pref</span>, data <span class="op">=</span> <span class="va">dat</span><span class="op">)</span>,</span>
+<span>          estimand <span class="op">=</span> <span class="st">"ACDE"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; DAGassist Report: </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Roles:</span></span>
+<span><span class="co">#&gt; variable         role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO</span></span>
+<span><span class="co">#&gt; edu_year         exposure    x                                                                        </span></span>
+<span><span class="co">#&gt; children         outcome           x                                                                  </span></span>
+<span><span class="co">#&gt; age              confounder              x                                                            </span></span>
+<span><span class="co">#&gt; class            confounder              x                                                            </span></span>
+<span><span class="co">#&gt; contract         confounder              x                                                            </span></span>
+<span><span class="co">#&gt; gender           confounder              x                                                            </span></span>
+<span><span class="co">#&gt; immigrant        confounder              x                                                            </span></span>
+<span><span class="co">#&gt; urban            confounder              x                                                            </span></span>
+<span><span class="co">#&gt; birth_control    mediator                      x               x                                      </span></span>
+<span><span class="co">#&gt; income           mediator                      x               x                                      </span></span>
+<span><span class="co">#&gt; job_stability_t  mediator                      x                                                      </span></span>
+<span><span class="co">#&gt; married          mediator                      x               x                                      </span></span>
+<span><span class="co">#&gt; pref             nco                                                                               x  </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;  (!) Bad controls in your formula: {birth_control, income, married, job_stability_t}</span></span>
+<span><span class="co">#&gt; Minimal controls 1: {age, class, contract, gender, immigrant, urban}</span></span>
+<span><span class="co">#&gt; Canonical controls: {age, class, contract, gender, immigrant, pref, urban}</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Formulas:</span></span>
+<span><span class="co">#&gt;   original:  children ~ edu_year + age + class + gender + immigrant + urban +     birth_control + income + married + job_stability_t + contract +     pref</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ACDE setup:</span></span>
+<span><span class="co">#&gt;   FE-collinear dropped: (none)</span></span>
+<span><span class="co">#&gt;   Formulas (sequential_g):</span></span>
+<span><span class="co">#&gt;    - Original: children ~ edu_year + age + class + gender + immigrant + urban + contract + pref | job_stability_t | birth_control + income + married</span></span>
+<span><span class="co">#&gt;    - Minimal 1: children ~ edu_year + age + class + contract + gender + immigrant + urban | job_stability_t | birth_control + income + married</span></span>
+<span><span class="co">#&gt;    - Canonical: children ~ edu_year + age + class + contract + gender + immigrant + pref + urban | job_stability_t | birth_control + income + married</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Model comparison:</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+</span></span>
+<span><span class="co">#&gt; |                   | Original  | Minimal 1 | Canonical | Original (ACDE) | Minimal 1 (ACDE) | Canonical (ACDE) |</span></span>
+<span><span class="co">#&gt; +===================+===========+===========+===========+=================+==================+==================+</span></span>
+<span><span class="co">#&gt; | edu_year          | -0.122*** | -0.080*** | -0.080*** | -0.084***       | -0.083***        | -0.084***        |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+</span></span>
+<span><span class="co">#&gt; |                   | (0.015)   | (0.013)   | (0.013)   | (0.010)         | (0.010)          | (0.010)          |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+</span></span>
+<span><span class="co">#&gt; | age               | 0.070***  | 0.095***  | 0.096***  | 0.077***        | 0.076***         | 0.077***         |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+</span></span>
+<span><span class="co">#&gt; |                   | (0.004)   | (0.003)   | (0.003)   | (0.003)         | (0.003)          | (0.003)          |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+</span></span>
+<span><span class="co">#&gt; | genderMale        | 0.181*    | 0.179*    | 0.190*    | 0.185*          | 0.174*           | 0.185*           |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+</span></span>
+<span><span class="co">#&gt; |                   | (0.085)   | (0.087)   | (0.085)   | (0.085)         | (0.086)          | (0.085)          |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+</span></span>
+<span><span class="co">#&gt; | immigrantYes      | -0.246+   | -0.172    | -0.243+   | -0.237*         | -0.166           | -0.237*          |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+</span></span>
+<span><span class="co">#&gt; |                   | (0.128)   | (0.131)   | (0.129)   | (0.115)         | (0.116)          | (0.115)          |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+</span></span>
+<span><span class="co">#&gt; | urbanUrban        | 0.121     | 0.238*    | 0.175+    | 0.156+          | 0.224*           | 0.156+           |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+</span></span>
+<span><span class="co">#&gt; |                   | (0.094)   | (0.096)   | (0.094)   | (0.090)         | (0.092)          | (0.090)          |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+</span></span>
+<span><span class="co">#&gt; | birth_control     | 0.133     |           |           |                 |                  |                  |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+</span></span>
+<span><span class="co">#&gt; |                   | (0.103)   |           |           |                 |                  |                  |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+</span></span>
+<span><span class="co">#&gt; | income            | 0.000     |           |           |                 |                  |                  |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+</span></span>
+<span><span class="co">#&gt; |                   | (0.000)   |           |           |                 |                  |                  |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+</span></span>
+<span><span class="co">#&gt; | married           | 0.703***  |           |           |                 |                  |                  |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+</span></span>
+<span><span class="co">#&gt; |                   | (0.122)   |           |           |                 |                  |                  |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+</span></span>
+<span><span class="co">#&gt; | job_stability_t   | 0.285***  |           |           |                 |                  |                  |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+</span></span>
+<span><span class="co">#&gt; |                   | (0.047)   |           |           |                 |                  |                  |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+</span></span>
+<span><span class="co">#&gt; | contractTemporary | 0.710***  | 0.772***  | 0.804***  | 0.792***        | 0.766***         | 0.792***         |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+</span></span>
+<span><span class="co">#&gt; |                   | (0.110)   | (0.112)   | (0.110)   | (0.102)         | (0.103)          | (0.102)          |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+</span></span>
+<span><span class="co">#&gt; | contractPermanent | 0.893***  | 1.116***  | 1.093***  | 1.055***        | 1.091***         | 1.055***         |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+</span></span>
+<span><span class="co">#&gt; |                   | (0.114)   | (0.113)   | (0.111)   | (0.102)         | (0.104)          | (0.102)          |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+</span></span>
+<span><span class="co">#&gt; | pref              | 0.581***  |           | 0.578***  | 0.577***        |                  | 0.577***         |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+</span></span>
+<span><span class="co">#&gt; |                   | (0.042)   |           | (0.042)   | (0.046)         |                  | (0.046)          |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+</span></span>
+<span><span class="co">#&gt; | Num.Obs.          | 5000      | 5000      | 5000      | 5000            | 5000             | 5000             |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-----------------+------------------+------------------+</span></span>
+<span><span class="co">#&gt; | R2                | 0.227     | 0.183     | 0.213     |                 |                  |                  |</span></span>
+<span><span class="co">#&gt; +===================+===========+===========+===========+=================+==================+==================+</span></span>
+<span><span class="co">#&gt; | + p &lt; 0.1, * p &lt; 0.05, ** p &lt; 0.01, *** p &lt; 0.001                                                             |</span></span>
+<span><span class="co">#&gt; +===================+===========+===========+===========+=================+==================+==================+ </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome</span></span></code></pre></div>
 </div>
 </div>
 </div>

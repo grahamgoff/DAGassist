@@ -333,46 +333,26 @@
   descA <- .dagassist_safe_descendants(dag, exp_nm)
   ancY  <- .dagassist_safe_ancestors(dag, out_nm)
   
-  if (is.null(acde$z) && length(m_terms) > 1) {
-    
-    # candidates are mediators that are post-treatment and affect Y,
-    # and are ancestors of at least one other mediator in m_terms
-    candZ0 <- m_terms[vapply(m_terms, function(v) {
-      if (!(v %in% descA)) return(FALSE)
-      if (!(v %in% ancY))  return(FALSE)
-      
-      dv <- .dagassist_safe_descendants(dag, v)
-      any(setdiff(m_terms, v) %in% dv)
-    }, logical(1))]
-    
-    # drop any candidate that is a descendant of another candidate
-    candZ <- candZ0
-    if (length(candZ0) > 1) {
-      candZ <- candZ0[!vapply(candZ0, function(v) {
-        others <- setdiff(candZ0, v)
-        any(v %in% unlist(lapply(others, function(w) .dagassist_safe_descendants(dag, w))))
-      }, logical(1))]
-    }
-    # remove promoted-Z from mediator block
-    if (length(candZ)) {
-      m_terms <- setdiff(m_terms, candZ)
-    }
-  }
   #  compute ancM using the final mediator set
   ancM <- unique(unlist(lapply(m_terms, function(m) .dagassist_safe_ancestors(dag, m))))
   
-  # exclude mediator terms from candidates and don't let exposure in
-  # but grab z vals from the original; minimal will auto-omit otherwise
-  rhs_pool <- unique(c(rhs_terms, rhs_terms_orig))
-  cand <- setdiff(rhs_pool, c(exp_nm, m_terms))
+  # define intermediate confounders according to Acharya, Blackwell and Sen (2016)
+  # Z are post-treatment covariates affected by A (treatment) that affect both M and Y:
+  #  i.e., Z ∈ Desc(A) ∩ Anc(M) ∩ Anc(Y)
+  # and  exclude A, Y, and the mediator(s) themselves
+  nodes <- names(dag)
+  
+  cand <- setdiff(nodes, c(exp_nm, out_nm, m_terms))
   
   z_auto <- intersect(cand, descA)
   z_auto <- intersect(z_auto, ancY)
   z_auto <- intersect(z_auto, ancM)
   
-  # also drop anything that is descendant of mediator (post-mediator)
+  # drop post-mediator nodes
   descM <- unique(unlist(lapply(m_terms, function(m) .dagassist_safe_descendants(dag, m))))
   z_auto <- setdiff(z_auto, descM)
+  
+  z_auto <- unique(z_auto)
   
   # user override
   if (!is.null(acde$z)) z_terms <- unique(as.character(acde$z)) else z_terms <- z_auto
@@ -475,12 +455,27 @@
   de_args <- x$settings$directeffects_args
   if (is.null(de_args)) de_args <- list()
   
-  out <- mods
-  for (nm in names(mods)) {
-    # skip already-derived models
-    if (grepl("\\((ATE|ATT|ACDE)\\)\\s*$", nm, ignore.case = TRUE)) next
+  nms <- names(mods)
+  if (!length(nms)) return(mods)
+  
+  # helpers
+  base_of <- function(nm) sub("\\s*\\((ATE|ATT|ACDE|CDE)\\)\\s*$", "", nm, ignore.case = TRUE)
+  is_acde <- function(nm) grepl("\\((ACDE|CDE)\\)\\s*$", nm, ignore.case = TRUE)
+  is_weighted <- function(nm) grepl("\\((ATE|ATT)\\)\\s*$", nm, ignore.case = TRUE)
+  
+  # --- 1) Fit ACDE for each BASE spec (Original / Minimal k / Canonical / etc.) ---
+  base_specs <- unique(base_of(nms[!is_acde(nms)]))
+  # keep only bases that actually exist as a base column
+  base_specs <- base_specs[base_specs %in% nms]
+  
+  acde_fits <- list()
+  
+  for (b in base_specs) {
+    # don't refit if it's already present
+    acde_name <- paste0(b, " ", .dagassist_model_name_labels("ACDE"))
+    if (acde_name %in% nms) next
     
-    base_fml <- .dagassist_formula_for_model_name(x, nm)
+    base_fml <- .dagassist_formula_for_model_name(x, b)
     if (is.null(base_fml)) next
     
     f_acde <- .dagassist_build_acde_formula(base_fml, x, acde)
@@ -498,16 +493,43 @@
       fit <- .safe_fit(DirectEffects::sequential_g, f_acde, data, de_args)
     }
     
-    #attach metadata for console printing later
+    # attach metadata for console printing later
     if (!inherits(fit, "DAGassist_fit_error")) {
       attr(fit, "dagassist_estimand") <- "ACDE"
-      attr(fit, "dagassist_acde_spec") <- nm
+      attr(fit, "dagassist_acde_spec") <- b
       attr(fit, "dagassist_acde_formula") <- f_acde
-      attr(fit, "dagassist_fe_collinear_dropped") <- attr(f_acde, "dagassist_fe_collinear_dropped", exact = TRUE)
+      attr(fit, "dagassist_fe_collinear_dropped") <- attr(
+        f_acde, "dagassist_fe_collinear_dropped", exact = TRUE
+      )
     }
     
-    out[[paste0(nm, " ", .dagassist_model_name_labels("ACDE"))]] <- fit
+    acde_fits[[b]] <- fit
   }
+  
+  if (!length(acde_fits)) return(mods)
+  
+  # --- 2) Determine where to insert each ACDE column: after the last column
+  #         belonging to that base spec (raw + any ATE/ATT columns) ---
+  insert_after <- integer(0)
+  for (b in names(acde_fits)) {
+    idxs <- which(base_of(nms) == b & !is_acde(nms))
+    if (!length(idxs)) next
+    insert_after[b] <- max(idxs)
+  }
+  
+  # --- 3) Rebuild list with ACDE interleaved ---
+  out <- list()
+  for (i in seq_along(nms)) {
+    nm <- nms[[i]]
+    out[[nm]] <- mods[[nm]]
+    
+    b <- base_of(nm)
+    if (!is.na(insert_after[b]) && i == insert_after[b] && !is.null(acde_fits[[b]])) {
+      acde_name <- paste0(b, " ", .dagassist_model_name_labels("ACDE"))
+      out[[acde_name]] <- acde_fits[[b]]
+    }
+  }
+  
   out
 }
 

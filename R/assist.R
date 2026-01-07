@@ -235,8 +235,13 @@ DAGassist <- function(dag,
     stop("show='models' requires a model specification (formula or engine call).", call. = FALSE)
   }
   
-  # Ensure default to raw when no estimand arg is passed
-  estimand <- match.arg(estimand)
+  #ensure default to raw when no estimand arg is passed
+  #and llow multiple estimands (e.g., c("ATE","ACDE"))
+  if (is.null(estimand)) {
+    estimand <- "raw"
+  } else {
+    estimand <- match.arg(estimand, several.ok = TRUE)
+  }
   
   estimand_requested <- estimand
   estimand <- .dagassist_normalize_estimand(estimand)

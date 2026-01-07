@@ -192,12 +192,10 @@ in the comparison table <strong>in addition</strong> to the user's original and 
 
 <dt id="arg-estimand">estimand<a class="anchor" aria-label="anchor" href="#arg-estimand"></a></dt>
 <dd><p>Character; causal estimand. Currently only
-supported for <code>type = "console"</code>. One of <code>"raw"</code> (default), <code>"ATE"</code>, <code>"ATT"</code>, or <code>"ACDE"</code>.
-For <em>binary treatments</em>, when <code>"ATE"</code> or <code>"ATT"</code>, the console print method will compute
-inverse-probability weights via the <span class="pkg">WeightIt</span> package and add weighted
-versions of each comparison model as additional columns. <em>Continuous treatments</em> link
-to the <span class="pkg">twangContinuous</span> package. For models with mediators, <code>"ACDE"</code> links to
-the <span class="pkg">DirectEffects</span> to for a controlled direct effect via sequential g-estimation.</p></dd>
+supported for <code>type = "console"</code>. One of <code>"raw"</code> (default), <code>"ATE"</code>, <code>"ATT"</code>, or <code>"ACDE"</code>;
+uses the <span class="pkg">WeightIt</span> package to add weighted versions of each comparison
+model as additional columns. For models with mediators, <code>"ACDE"</code> links
+to the <span class="pkg">DirectEffects</span> to for a controlled direct effect via sequential g-estimation.</p></dd>
 
 
 <dt id="arg-engine-args">engine_args<a class="anchor" aria-label="anchor" href="#arg-engine-args"></a></dt>

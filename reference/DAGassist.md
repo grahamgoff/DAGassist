@@ -170,13 +170,10 @@ DAGassist(
 
   Character; causal estimand. Currently only supported for
   `type = "console"`. One of `"raw"` (default), `"ATE"`, `"ATT"`, or
-  `"ACDE"`. For *binary treatments*, when `"ATE"` or `"ATT"`, the
-  console print method will compute inverse-probability weights via the
-  WeightIt package and add weighted versions of each comparison model as
-  additional columns. *Continuous treatments* link to the
-  twangContinuous package. For models with mediators, `"ACDE"` links to
-  the DirectEffects to for a controlled direct effect via sequential
-  g-estimation.
+  `"ACDE"`; uses the WeightIt package to add weighted versions of each
+  comparison model as additional columns. For models with mediators,
+  `"ACDE"` links to the DirectEffects to for a controlled direct effect
+  via sequential g-estimation.
 
 - engine_args:
 

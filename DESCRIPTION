@@ -49,7 +49,6 @@ Suggests:
     testthat (>= 3.0.0),
     tidyverse,
     DiagrammeR,
-    twangContinuous,
     WeightIt,
     DirectEffects
 VignetteBuilder: 

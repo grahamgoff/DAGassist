@@ -112,12 +112,10 @@ This parameter only suppresses factor \strong{output}--they are still included i
 in the comparison table \strong{in addition} to the user's original and DAG-derived models.}
 
 \item{estimand}{Character; causal estimand. Currently only
-supported for \code{type = "console"}. One of \code{"raw"} (default), \code{"ATE"}, \code{"ATT"}, or \code{"ACDE"}.
-For \emph{binary treatments}, when \code{"ATE"} or \code{"ATT"}, the console print method will compute
-inverse-probability weights via the \pkg{WeightIt} package and add weighted
-versions of each comparison model as additional columns. \emph{Continuous treatments} link
-to the \pkg{twangContinuous} package. For models with mediators, \code{"ACDE"} links to
-the \pkg{DirectEffects} to for a controlled direct effect via sequential g-estimation.}
+supported for \code{type = "console"}. One of \code{"raw"} (default), \code{"ATE"}, \code{"ATT"}, or \code{"ACDE"};
+uses the \pkg{WeightIt} package to add weighted versions of each comparison
+model as additional columns. For models with mediators, \code{"ACDE"} links
+to the \pkg{DirectEffects} to for a controlled direct effect via sequential g-estimation.}
 
 \item{engine_args}{Named list of extra arguments forwarded to \code{engine(...)}.
 If \code{formula} is an engine call, arguments from the call are merged with

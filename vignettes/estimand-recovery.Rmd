@@ -710,19 +710,6 @@ ggdag_status(dag_model,
 
 The DAG above visualizes a common social science question: how does education affect fertility (Morgan and Winship, 17-19)? The DAG model encodes a plausible, but not exhaustive, set of covariates. In the report below, `DAGassist` classifies variables by their causal roles, reestimates the model with DAG-consistent adjustment sets, and recovers the `ATE` using weights. 
 
-Note: estimand recovery for binary treatments requires `WeightIt`, and continuous treatments require `twangContinuous`. The below model has years of education as its treatment and therefore uses `twangContinuous` (see descriptive statistics for details on covariates). 
-
-```{r dag-table, results='asis', message=FALSE}
-library(twangContinuous)
-
-DAGassist(dag_model,
-          formula = lm(children ~ edu_year + age + class + gender + 
-                         immigrant + urban + birth_control + income + 
-                         married + job_stability_t + contract + pref, data = dat),
-          estimand = "ATE",
-          bivariate = TRUE,
-          type="txt")
-```
 
 ```{r dwplot, echo=FALSE, warning=FALSE, fig.width=8, fig.height=5, fig.cap="*Visualizing the effect of estimand recovery*"}
 DAGassist(dag_model,

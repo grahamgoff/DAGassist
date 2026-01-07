@@ -1026,6 +1026,156 @@
   invisible(NULL)
 }
 
+## effect summaries via marginaleffects
+# currently only works for console
+
+.dagassist_print_effect_summaries <- function(report, mods_full,
+                                              only_weighted = TRUE,
+                                              continuous_scale = c("IQR")) {
+  continuous_scale <- match.arg(continuous_scale)
+  
+  if (is.null(mods_full) || !length(mods_full)) return(invisible(NULL))
+  
+  if (!requireNamespace("marginaleffects", quietly = TRUE)) {
+    cat("\nEffect summaries (response scale):\n")
+    cat("  {marginaleffects} not installed. Install it to enable interpretable ATE summaries.\n")
+    return(invisible(NULL))
+  }
+  
+  # Identify exposure (DAGassist currently treats the “first” exposure as primary in printing)
+  exp_nm <- get_by_role(report$roles, "exposure")
+  if (is.na(exp_nm) || !nzchar(exp_nm)) {
+    cat("\nEffect summaries (response scale):\n")
+    cat("  Could not identify the exposure variable for marginal effects.\n")
+    return(invisible(NULL))
+  }
+  
+  # Filter to (ATE) models to reduce clutter (Denly’s pipeline focuses on weighted estimands)
+  mods_use <- mods_full
+  if (isTRUE(only_weighted) && length(names(mods_use))) {
+    keep <- grepl("\\(ATE\\)$", names(mods_use))
+    mods_use <- mods_use[keep]
+  }
+  
+  if (!length(mods_use)) return(invisible(NULL))
+  
+  rows_all <- list()
+  
+  for (nm in names(mods_use)) {
+    m <- mods_use[[nm]]
+    if (inherits(m, "DAGassist_fit_error")) next
+    
+    # Try to get the analytic sample’s exposure vector (best alignment with estimation)
+    mf <- tryCatch(stats::model.frame(m), error = function(e) NULL)
+    
+    exp_vec <- NULL
+    if (!is.null(mf) && exp_nm %in% names(mf)) {
+      exp_vec <- mf[[exp_nm]]
+    } else if (!is.null(report$.__data) && exp_nm %in% names(report$.__data)) {
+      exp_vec <- report$.__data[[exp_nm]]
+    }
+    
+    if (is.null(exp_vec)) next
+    
+    # Heuristic: treat low-unique numeric treatments as categorical (cutpoints)
+    # This matches Denly’s “interpretable movement between cutpoints” idea.
+    exp_kind <- "continuous"
+    if (is.factor(exp_vec) || is.character(exp_vec)) {
+      exp_kind <- "categorical"
+    } else if (is.numeric(exp_vec)) {
+      u <- sort(unique(exp_vec[!is.na(exp_vec)]))
+      if (length(u) <= 10) exp_kind <- "categorical"
+    }
+    
+    # Use the model’s own vcov (fixest/glm/etc.) so SEs match the fitted model
+    V <- tryCatch(stats::vcov(m), error = function(e) NULL)
+    
+    if (identical(exp_kind, "categorical")) {
+      # Adjacent-level comparisons (0->1, 1->2, ...) to preserve cutpoint interpretability
+      lv <- sort(unique(exp_vec[!is.na(exp_vec)]))
+      
+      if (length(lv) < 2) next
+      
+      for (i in seq_len(length(lv) - 1)) {
+        a <- lv[i]
+        b <- lv[i + 1]
+        
+        # Force a two-level contrast for avg_comparisons
+        vars <- setNames(list(c(a, b)), exp_nm)
+        
+        ac <- tryCatch(
+          marginaleffects::avg_comparisons(
+            m,
+            variables = vars,
+            type = "response",
+            vcov = V
+          ),
+          error = function(e) NULL
+        )
+        if (is.null(ac) || !nrow(ac)) next
+        
+        # Keep a compact row
+        rows_all[[length(rows_all) + 1L]] <- data.frame(
+          model = nm,
+          estimand = "ATE (response)",
+          contrast = paste0(exp_nm, ": ", a, " -> ", b),
+          estimate = ac$estimate[1],
+          std.error = ac$std.error[1],
+          conf.low = if ("conf.low" %in% names(ac)) ac$conf.low[1] else NA_real_,
+          conf.high = if ("conf.high" %in% names(ac)) ac$conf.high[1] else NA_real_,
+          p.value = if ("p.value" %in% names(ac)) ac$p.value[1] else NA_real_,
+          stringsAsFactors = FALSE
+        )
+      }
+    } else {
+      # Continuous: avg slope on response scale, then scale by IQR
+      sl <- tryCatch(
+        marginaleffects::avg_slopes(
+          m,
+          variables = exp_nm,
+          type = "response",
+          vcov = V
+        ),
+        error = function(e) NULL
+      )
+      if (is.null(sl) || !nrow(sl)) next
+      
+      iqr <- NA_real_
+      if (identical(continuous_scale, "IQR")) {
+        qs <- tryCatch(stats::quantile(exp_vec, probs = c(.25, .75), na.rm = TRUE, type = 7), error = function(e) NULL)
+        if (!is.null(qs) && length(qs) == 2) iqr <- unname(qs[2] - qs[1])
+      }
+      if (!is.finite(iqr) || iqr == 0) next
+      
+      rows_all[[length(rows_all) + 1L]] <- data.frame(
+        model = nm,
+        estimand = "ATE (response)",
+        contrast = paste0(exp_nm, ": +IQR (", format(iqr, digits = 4), ")"),
+        estimate = sl$estimate[1] * iqr,
+        std.error = sl$std.error[1] * iqr,
+        conf.low = if ("conf.low" %in% names(sl)) sl$conf.low[1] * iqr else NA_real_,
+        conf.high = if ("conf.high" %in% names(sl)) sl$conf.high[1] * iqr else NA_real_,
+        p.value = if ("p.value" %in% names(sl)) sl$p.value[1] else NA_real_,
+        stringsAsFactors = FALSE
+      )
+    }
+  }
+  
+  if (!length(rows_all)) return(invisible(NULL))
+  
+  out <- do.call(rbind, rows_all)
+  
+  # Apply labels_map to the exposure name inside contrast strings, if present
+  labmap <- report$labels_map
+  if (is.character(labmap) && length(labmap) && exp_nm %in% names(labmap)) {
+    out$contrast <- gsub(exp_nm, unname(labmap[[exp_nm]]), out$contrast, fixed = TRUE)
+  }
+  
+  cat("\nEffect summaries (response scale):\n")
+  print(out, row.names = FALSE)
+  invisible(out)
+}
+
 #### helps find the exposure and outcome names 
 #### used for the note on DAG-derived additions when imply = TRUE
 ###IN:

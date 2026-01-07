@@ -1072,6 +1072,8 @@ print.DAGassist_report <- function(x, ...) {
       coef_rename = x$labels_map,
       coef_omit = coef_omit
     )
+    #interpretable effects report for weighted estimands
+    .dagassist_print_effect_summaries(x, mods_full, only_weighted = TRUE, continuous_scale = "IQR")
     
     if (identical(show, "all")) {
       if (isTRUE(verbose)) {

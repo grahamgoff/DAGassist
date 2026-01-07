@@ -2,25 +2,47 @@
 #
 # Estimand recovery helpers
 
-.dagassist_exposure_kind <- function(Tvar) {
-  if (is.logical(Tvar)) return("binary")
+.dagassist_exposure_kind <- function(Tvar,
+                                     max_categorical_unique = 10L,
+                                     integer_tol = sqrt(.Machine$double.eps)) {
+  if (is.null(Tvar)) return("unsupported")
   
-  if (is.factor(Tvar)) {
-    if (nlevels(Tvar) == 2L) return("binary")
+  v <- stats::na.omit(Tvar)
+  if (!length(v)) return("unsupported")
+  
+  # logical -> binary
+  if (is.logical(v)) return("binary")
+  
+  # character -> categorical
+  if (is.character(v)) v <- factor(v)
+  
+  # factor -> binary vs categorical
+  if (is.factor(v)) {
+    k <- nlevels(v)
+    if (k == 2L) return("binary")
+    if (k >= 3L) return("categorical")
     return("unsupported")
   }
   
-  if (is.numeric(Tvar)) {
-    u <- sort(unique(stats::na.omit(Tvar)))
-    if (length(u) >= 3L) return("continuous")
-    if (length(u) == 2L && all(u %in% c(0, 1))) return("binary")
-    return("unsupported")  # e.g., 1/2 coding -> require recode to 0/1
+  # numeric/integer -> binary vs categorical vs continuous
+  if (is.numeric(v) || inherits(v, "integer")) {
+    u <- sort(unique(v))
+    k <- length(u)
+    
+    if (k == 2L && all(u %in% c(0, 1))) return("binary")
+    
+    # "coded categories" heuristic: small unique & integer-like values
+    integer_like <- all(abs(u - round(u)) < integer_tol)
+    if (k >= 3L && k <= max_categorical_unique && integer_like) {
+      return("categorical")
+    }
+    
+    if (k >= 3L) return("continuous")
   }
   
   "unsupported"
 }
 
-# Allow user to write stop_method or stop.method; normalize to twangContinuous’s stop.method
 .dagassist_normalize_weights_args <- function(args) {
   if (is.null(args)) return(list())
   if (!is.list(args)) stop("`weights_args` must be a list.", call. = FALSE)
@@ -558,36 +580,21 @@
   # normalize and read weight args 
   wargs <- .dagassist_normalize_weights_args(x$settings$weights_args)
   
-  if (identical(kind, "binary")) {
+  if (kind %in% c("binary", "categorical", "continuous")) {
     if (!requireNamespace("WeightIt", quietly = TRUE)) {
       stop(
-        "Estimand recovery for binary exposures requires the 'WeightIt' package.\n",
+        "Estimand recovery requires the 'WeightIt' package.\n",
         "Install it (install.packages('WeightIt')) or set estimand = 'raw'.",
-        call. = FALSE
-      )
-    }
-  } else if (identical(kind, "continuous")) {
-    if (!requireNamespace("WeightIt", quietly = TRUE)) {
-      stop(
-        "Estimand recovery for continuous exposures requires the 'WeightIt' package.\n",
-        "Install it (install.packages('WeightIt')) or set estimand = 'raw'.",
-        call. = FALSE
-      )
-    }
-    if (!identical(est, "ATE")) {
-      stop(
-        "For continuous exposures, DAGassist currently supports estimand = 'ATE' only.\n",
-        "Set estimand = 'ATE' (or 'raw').",
         call. = FALSE
       )
     }
   } else {
-    # helpful error
     u <- try(sort(unique(stats::na.omit(Tvar))), silent = TRUE)
     stop(
-      "Estimand recovery supports either:\n",
-      "  * Binary exposures (0/1 numeric, logical, or 2-level factor), or\n",
-      "  * Continuous numeric exposures (>= 3 unique values).\n\n",
+      "Estimand recovery supports:\n",
+      "  * Binary exposures (0/1 numeric, logical, or 2-level factor)\n",
+      "  * Categorical exposures (factor/character or small-unique integer-like codes)\n",
+      "  * Continuous numeric exposures\n\n",
       "Exposure '", exp_nm, "' is class: ", paste(class(Tvar), collapse = "/"),
       if (!inherits(u, "try-error")) paste0("\nObserved values (unique): ", paste(u, collapse = ", ")) else "",
       "\n\nPlease recode it or set estimand = 'raw'.",
@@ -607,58 +614,56 @@
     f_treat <- stats::as.formula(paste(exp_nm, "~ 1"))
   }
   
-  # Compute weights via the appropriate backend
-  if (identical(kind, "binary")) {
-    # filter user-provided args to what weightit() actually accepts
-    fa <- .dagassist_filter_args(wargs, WeightIt::weightit)
-    if (length(fa$drop)) {
-      warning(
-        "Ignoring these weights_args for WeightIt::weightit(): ",
-        paste(fa$drop, collapse = ", "),
-        call. = FALSE
-      )
-    }
-    
-    wtobj <- do.call(
-      WeightIt::weightit,
-      c(
-        list(
-          formula = f_treat,
-          data = data,
-          method = "ps",
-          estimand = est
-        ),
-        fa$keep
-      )
+  # --- WeightIt backend for binary/categorical/continuous ---
+  # Optional: allow DAGassist-specific args in weights_args (not passed to WeightIt)
+  trim_at <- wargs[["trim_at"]]   # e.g., 0.99 to cap at 99th percentile
+  wargs[["trim_at"]] <- NULL
+  
+  # For categorical-coded numerics, WeightIt behaves best if treatment is a factor
+  data_wt <- data
+  if (identical(kind, "categorical") && !is.factor(data_wt[[exp_nm]])) {
+    data_wt[[exp_nm]] <- factor(data_wt[[exp_nm]], ordered = TRUE)
+  }
+  
+  # Filter user-provided args to what WeightIt::weightit() accepts
+  fa <- .dagassist_filter_args(wargs, WeightIt::weightit)
+  if (length(fa$drop)) {
+    warning(
+      "Ignoring these weights_args for WeightIt::weightit(): ",
+      paste(fa$drop, collapse = ", "),
+      call. = FALSE
     )
-    
-    w <- wtobj$weights
-    
-  } else if (identical(kind, "continuous")) {
-    # filter user-provided args to what weightit actually accepts
-    fa <- .dagassist_filter_args(wargs, WeightIt::weightit)
-    if (length(fa$drop)) {
-      warning(
-        "Ignoring these weights_args for WeightIt::weightit(): ",
-        paste(fa$drop, collapse = ", "),
-        call. = FALSE
-      )
-    }
-    
-    wtobj <- do.call(
-      WeightIt::weightit,
-      c(
-        list(
-          formula  = f_treat,
-          data     = data,
-          method   = "ps", #glm alias
-          estimand = est # doesn't fail for ATT for continuous; ignores 
-        ),
-        fa$keep
-      )
+  }
+  
+  # WeightIt: method="glm" supports binary, multi-category, and continuous treatments
+  # (continuous is GPS-style under the hood)
+  wtobj <- do.call(
+    WeightIt::weightit,
+    c(
+      list(
+        formula  = f_treat,
+        data     = data_wt,
+        method   = "glm",
+        estimand = est
+      ),
+      fa$keep
     )
-    
-    w <- wtobj$weights
+  )
+  
+  w <- wtobj$weights
+  
+  # trim and cap weights
+  if (!is.null(trim_at)) {
+    if (!is.numeric(trim_at) || length(trim_at) != 1L || trim_at <= 0 || trim_at >= 1) {
+      stop("weights_args$trim_at must be a single number in (0, 1).", call. = FALSE)
+    }
+    # Prefer WeightIt::trim if available for numeric weights
+    if (requireNamespace("WeightIt", quietly = TRUE) && "trim" %in% getNamespaceExports("WeightIt")) {
+      w <- WeightIt::trim(w, at = trim_at)
+    } else {
+      cap <- as.numeric(stats::quantile(w, probs = trim_at, na.rm = TRUE, names = FALSE))
+      w <- pmin(w, cap)
+    }
   }
   
   if (length(w) != nrow(data)) {
@@ -669,6 +674,23 @@
       call. = FALSE
     )
   }
+  
+  #diagnostics: effective sample size and extreme weights
+  w_ok <- stats::na.omit(w)
+  w_summary <- stats::quantile(
+    w_ok,
+    probs = c(0, 0.01, 0.05, 0.5, 0.95, 0.99, 1),
+    names = TRUE
+  )
+  
+  ess <- NA_real_
+  if (requireNamespace("WeightIt", quietly = TRUE) && "ESS" %in% getNamespaceExports("WeightIt")) {
+    ess <- tryCatch(WeightIt::ESS(w_ok), error = function(e) NA_real_)
+  }
+  
+  attr(wtobj, "dagassist_weight_summary") <- w_summary
+  attr(wtobj, "dagassist_ess") <- ess
+  attr(wtobj, "dagassist_trim_at") <- trim_at
   
   # engine and engine_args from DAGassist() call, stored in settings
   engine <- x$settings$engine

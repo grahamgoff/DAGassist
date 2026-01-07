@@ -24,10 +24,7 @@
 .dagassist_normalize_weights_args <- function(args) {
   if (is.null(args)) return(list())
   if (!is.list(args)) stop("`weights_args` must be a list.", call. = FALSE)
-  
-  if ("stop_method" %in% names(args) && !"stop.method" %in% names(args)) {
-    names(args)[names(args) == "stop_method"] <- "stop.method"
-  }
+
   args
 }
 
@@ -570,10 +567,10 @@
       )
     }
   } else if (identical(kind, "continuous")) {
-    if (!requireNamespace("twangContinuous", quietly = TRUE)) {
+    if (!requireNamespace("WeightIt", quietly = TRUE)) {
       stop(
-        "Estimand recovery for continuous exposures requires the 'twangContinuous' package.\n",
-        "Install it (install.packages('twangContinuous')) or set estimand = 'raw'.",
+        "Estimand recovery for continuous exposures requires the 'WeightIt' package.\n",
+        "Install it (install.packages('WeightIt')) or set estimand = 'raw'.",
         call. = FALSE
       )
     }
@@ -638,25 +635,30 @@
     w <- wtobj$weights
     
   } else if (identical(kind, "continuous")) {
-    # filter args to what ps.cont() accepts
-    fa <- .dagassist_filter_args(wargs, twangContinuous::ps.cont)
+    # filter user-provided args to what weightit actually accepts
+    fa <- .dagassist_filter_args(wargs, WeightIt::weightit)
     if (length(fa$drop)) {
       warning(
-        "Ignoring these weights_args for twangContinuous::ps.cont(): ",
+        "Ignoring these weights_args for WeightIt::weightit(): ",
         paste(fa$drop, collapse = ", "),
         call. = FALSE
       )
     }
     
-    psobj <- do.call(
-      twangContinuous::ps.cont,
-      c(list(formula = f_treat, data = data), fa$keep)
+    wtobj <- do.call(
+      WeightIt::weightit,
+      c(
+        list(
+          formula  = f_treat,
+          data     = data,
+          method   = "ps", #glm alias
+          estimand = est # doesn't fail for ATT for continuous; ignores 
+        ),
+        fa$keep
+      )
     )
     
-    # Use the same stop.method if user provided it; else twangContinuous default ("wcor")
-    stop_method <- if (!is.null(fa$keep[["stop.method"]])) fa$keep[["stop.method"]] else "wcor"
-    
-    w <- twangContinuous::get.weights(psobj, stop.method = stop_method, withSampW = TRUE)
+    w <- wtobj$weights
   }
   
   if (length(w) != nrow(data)) {

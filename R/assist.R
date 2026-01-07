@@ -71,12 +71,10 @@
 #'    e.g. `exclude = c("nco", "nct")`; each requested variant is fitted and shown
 #'    as a separate "Canon. (-...)" column in the console/model exports.
 #' @param estimand Character; causal estimand. Currently only
-#'    supported for `type = "console"`. One of `"raw"` (default), `"ATE"`, `"ATT"`, or `"ACDE"`.
-#'    For *binary treatments*, when `"ATE"` or `"ATT"`, the console print method will compute 
-#'    inverse-probability weights via the \pkg{WeightIt} package and add weighted 
-#'    versions of each comparison model as additional columns. *Continuous treatments* link
-#'    to the \pkg{twangContinuous} package. For models with mediators, `"ACDE"` links to
-#'    the \pkg{DirectEffects} to for a controlled direct effect via sequential g-estimation.
+#'    supported for `type = "console"`. One of `"raw"` (default), `"ATE"`, `"ATT"`, or `"ACDE"`;
+#'    uses the \pkg{WeightIt} package to add weighted versions of each comparison
+#'    model as additional columns. For models with mediators, `"ACDE"` links 
+#'    to the \pkg{DirectEffects} to for a controlled direct effect via sequential g-estimation.
 #' @param weights_args List; parameters for weighting package. `DAGassist` is agnostic
 #'    and passes list directly to the respective weighting package 
 #' @param auto_acde Logical; if `TRUE` (default), automates handling conflicts between specifications
@@ -1074,6 +1072,8 @@ print.DAGassist_report <- function(x, ...) {
       coef_rename = x$labels_map,
       coef_omit = coef_omit
     )
+    #interpretable effects report for weighted estimands
+    .dagassist_print_effect_summaries(x, mods_full, only_weighted = TRUE, continuous_scale = "IQR")
     
     if (identical(show, "all")) {
       if (isTRUE(verbose)) {

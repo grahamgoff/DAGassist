@@ -980,6 +980,66 @@
   invisible(NULL)
 }
 
+# Simple ESS (no dependency): (sum w)^2 / sum(w^2)
+.dagassist_ess <- function(w) {
+  w <- w[is.finite(w)]
+  if (!length(w)) return(NA_real_)
+  (sum(w)^2) / sum(w^2)
+}
+
+.dagassist_print_weight_diagnostics <- function(mods_full,
+                                                ess_warn_frac = 0.50,
+                                                extreme_ratio = 20) {
+  if (is.null(mods_full) || !length(mods_full) || is.null(names(mods_full))) return(invisible(NULL))
+  
+  keep <- grepl("\\((ATE|ATT)\\)\\s*$", names(mods_full), ignore.case = TRUE)
+  mods_use <- mods_full[keep]
+  if (!length(mods_use)) return(invisible(NULL))
+  
+  cat("\nWeight diagnostics:\n")
+  
+  for (nm in names(mods_use)) {
+    m <- mods_use[[nm]]
+    if (inherits(m, "DAGassist_fit_error")) next
+    
+    w <- tryCatch(stats::weights(m), error = function(e) NULL)
+    if (is.null(w)) {
+      cat("  ", nm, ": (could not extract weights)\n", sep = "")
+      next
+    }
+    
+    w_ok <- w[is.finite(w)]
+    n <- length(w_ok)
+    ess <- .dagassist_ess(w_ok)
+    ess_frac <- if (is.finite(ess) && n > 0) ess / n else NA_real_
+    
+    w_min <- suppressWarnings(min(w_ok, na.rm = TRUE))
+    w_med <- suppressWarnings(stats::median(w_ok, na.rm = TRUE))
+    w_max <- suppressWarnings(max(w_ok, na.rm = TRUE))
+    
+    cat(sprintf(
+      "  %s: ESS = %s (%s%% of N); min/med/max = %s / %s / %s\n",
+      nm,
+      ifelse(is.finite(ess), format(round(ess, 1)), "NA"),
+      ifelse(is.finite(ess_frac), format(round(100 * ess_frac, 0)), "NA"),
+      format(signif(w_min, 4)),
+      format(signif(w_med, 4)),
+      format(signif(w_max, 4))
+    ))
+    
+    # Constraint warnings (non-fatal)
+    if (is.finite(ess_frac) && ess_frac < ess_warn_frac) {
+      warning(sprintf("Low overlap suggested for %s: ESS is %.0f%% of N.", nm, 100 * ess_frac), call. = FALSE)
+    }
+    if (is.finite(w_max) && is.finite(w_med) && w_med > 0 && w_max > extreme_ratio * w_med) {
+      warning(sprintf("Extreme weights suggested for %s: max weight > %dx median.", nm, extreme_ratio), call. = FALSE)
+    }
+  }
+  
+  cat("  Note: IPW/GPS here assumes a point (single-shot) treatment. For time-varying treatments/confounding, use MSM/time-varying IPW.\n")
+  invisible(NULL)
+}
+
 #print ACDE metadata once 
 # Expects ACDE fits to carry attributes set in weights.R.
 .dagassist_print_acde_console_info <- function(mods) {
@@ -1078,7 +1138,6 @@
     if (is.null(exp_vec)) next
     
     # Heuristic: treat low-unique numeric treatments as categorical (cutpoints)
-    # This matches Denly’s “interpretable movement between cutpoints” idea.
     exp_kind <- "continuous"
     if (is.factor(exp_vec) || is.character(exp_vec)) {
       exp_kind <- "categorical"
@@ -1092,7 +1151,17 @@
     
     if (identical(exp_kind, "categorical")) {
       # Adjacent-level comparisons (0->1, 1->2, ...) to preserve cutpoint interpretability
-      lv <- sort(unique(exp_vec[!is.na(exp_vec)]))
+      if (is.factor(exp_vec)) {
+        # keep declared level order, but drop unused levels in the analytic sample
+        present <- unique(as.character(exp_vec[!is.na(exp_vec)]))
+        lv <- levels(exp_vec)
+        lv <- lv[lv %in% present]
+      } else {
+        # numeric-coded categories or character: enforce a deterministic order
+        lv <- sort(unique(exp_vec[!is.na(exp_vec)]))
+      }
+      
+      if (length(lv) < 2) next
       
       if (length(lv) < 2) next
       
@@ -1100,8 +1169,10 @@
         a <- lv[i]
         b <- lv[i + 1]
         
-        # Force a two-level contrast for avg_comparisons
-        vars <- setNames(list(c(a, b)), exp_nm)
+        a_use <- if (is.factor(exp_vec)) as.character(a) else a
+        b_use <- if (is.factor(exp_vec)) as.character(b) else b
+        
+        vars <- setNames(list(c(a_use, b_use)), exp_nm)
         
         ac <- tryCatch(
           marginaleffects::avg_comparisons(

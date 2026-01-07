@@ -1074,6 +1074,8 @@ print.DAGassist_report <- function(x, ...) {
     )
     #interpretable effects report for weighted estimands
     .dagassist_print_effect_summaries(x, mods_full, only_weighted = TRUE, continuous_scale = "IQR")
+    #print weight diagnostics
+    if (isTRUE(verbose)) .dagassist_print_weight_diagnostics(mods_full)
     
     if (identical(show, "all")) {
       if (isTRUE(verbose)) {

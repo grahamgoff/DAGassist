@@ -2,25 +2,47 @@
 #
 # Estimand recovery helpers
 
-.dagassist_exposure_kind <- function(Tvar) {
-  if (is.logical(Tvar)) return("binary")
+.dagassist_exposure_kind <- function(Tvar,
+                                     max_categorical_unique = 10L,
+                                     integer_tol = sqrt(.Machine$double.eps)) {
+  if (is.null(Tvar)) return("unsupported")
   
-  if (is.factor(Tvar)) {
-    if (nlevels(Tvar) == 2L) return("binary")
+  v <- stats::na.omit(Tvar)
+  if (!length(v)) return("unsupported")
+  
+  # logical -> binary
+  if (is.logical(v)) return("binary")
+  
+  # character -> categorical
+  if (is.character(v)) v <- factor(v)
+  
+  # factor -> binary vs categorical
+  if (is.factor(v)) {
+    k <- nlevels(v)
+    if (k == 2L) return("binary")
+    if (k >= 3L) return("categorical")
     return("unsupported")
   }
   
-  if (is.numeric(Tvar)) {
-    u <- sort(unique(stats::na.omit(Tvar)))
-    if (length(u) >= 3L) return("continuous")
-    if (length(u) == 2L && all(u %in% c(0, 1))) return("binary")
-    return("unsupported")  # e.g., 1/2 coding -> require recode to 0/1
+  # numeric/integer -> binary vs categorical vs continuous
+  if (is.numeric(v) || inherits(v, "integer")) {
+    u <- sort(unique(v))
+    k <- length(u)
+    
+    if (k == 2L && all(u %in% c(0, 1))) return("binary")
+    
+    # "coded categories" heuristic: small unique & integer-like values
+    integer_like <- all(abs(u - round(u)) < integer_tol)
+    if (k >= 3L && k <= max_categorical_unique && integer_like) {
+      return("categorical")
+    }
+    
+    if (k >= 3L) return("continuous")
   }
   
   "unsupported"
 }
 
-# Allow user to write stop_method or stop.method; normalize to twangContinuous’s stop.method
 .dagassist_normalize_weights_args <- function(args) {
   if (is.null(args)) return(list())
   if (!is.list(args)) stop("`weights_args` must be a list.", call. = FALSE)
@@ -311,46 +333,26 @@
   descA <- .dagassist_safe_descendants(dag, exp_nm)
   ancY  <- .dagassist_safe_ancestors(dag, out_nm)
   
-  if (is.null(acde$z) && length(m_terms) > 1) {
-    
-    # candidates are mediators that are post-treatment and affect Y,
-    # and are ancestors of at least one other mediator in m_terms
-    candZ0 <- m_terms[vapply(m_terms, function(v) {
-      if (!(v %in% descA)) return(FALSE)
-      if (!(v %in% ancY))  return(FALSE)
-      
-      dv <- .dagassist_safe_descendants(dag, v)
-      any(setdiff(m_terms, v) %in% dv)
-    }, logical(1))]
-    
-    # drop any candidate that is a descendant of another candidate
-    candZ <- candZ0
-    if (length(candZ0) > 1) {
-      candZ <- candZ0[!vapply(candZ0, function(v) {
-        others <- setdiff(candZ0, v)
-        any(v %in% unlist(lapply(others, function(w) .dagassist_safe_descendants(dag, w))))
-      }, logical(1))]
-    }
-    # remove promoted-Z from mediator block
-    if (length(candZ)) {
-      m_terms <- setdiff(m_terms, candZ)
-    }
-  }
   #  compute ancM using the final mediator set
   ancM <- unique(unlist(lapply(m_terms, function(m) .dagassist_safe_ancestors(dag, m))))
   
-  # exclude mediator terms from candidates and don't let exposure in
-  # but grab z vals from the original; minimal will auto-omit otherwise
-  rhs_pool <- unique(c(rhs_terms, rhs_terms_orig))
-  cand <- setdiff(rhs_pool, c(exp_nm, m_terms))
+  # define intermediate confounders according to Acharya, Blackwell and Sen (2016)
+  # Z are post-treatment covariates affected by A (treatment) that affect both M and Y:
+  #  i.e., Z ∈ Desc(A) ∩ Anc(M) ∩ Anc(Y)
+  # and  exclude A, Y, and the mediator(s) themselves
+  nodes <- names(dag)
+  
+  cand <- setdiff(nodes, c(exp_nm, out_nm, m_terms))
   
   z_auto <- intersect(cand, descA)
   z_auto <- intersect(z_auto, ancY)
   z_auto <- intersect(z_auto, ancM)
   
-  # also drop anything that is descendant of mediator (post-mediator)
+  # drop post-mediator nodes
   descM <- unique(unlist(lapply(m_terms, function(m) .dagassist_safe_descendants(dag, m))))
   z_auto <- setdiff(z_auto, descM)
+  
+  z_auto <- unique(z_auto)
   
   # user override
   if (!is.null(acde$z)) z_terms <- unique(as.character(acde$z)) else z_terms <- z_auto
@@ -453,12 +455,27 @@
   de_args <- x$settings$directeffects_args
   if (is.null(de_args)) de_args <- list()
   
-  out <- mods
-  for (nm in names(mods)) {
-    # skip already-derived models
-    if (grepl("\\((ATE|ATT|ACDE)\\)\\s*$", nm, ignore.case = TRUE)) next
+  nms <- names(mods)
+  if (!length(nms)) return(mods)
+  
+  # helpers
+  base_of <- function(nm) sub("\\s*\\((ATE|ATT|ACDE|CDE)\\)\\s*$", "", nm, ignore.case = TRUE)
+  is_acde <- function(nm) grepl("\\((ACDE|CDE)\\)\\s*$", nm, ignore.case = TRUE)
+  is_weighted <- function(nm) grepl("\\((ATE|ATT)\\)\\s*$", nm, ignore.case = TRUE)
+  
+  # --- 1) Fit ACDE for each BASE spec (Original / Minimal k / Canonical / etc.) ---
+  base_specs <- unique(base_of(nms[!is_acde(nms)]))
+  # keep only bases that actually exist as a base column
+  base_specs <- base_specs[base_specs %in% nms]
+  
+  acde_fits <- list()
+  
+  for (b in base_specs) {
+    # don't refit if it's already present
+    acde_name <- paste0(b, " ", .dagassist_model_name_labels("ACDE"))
+    if (acde_name %in% nms) next
     
-    base_fml <- .dagassist_formula_for_model_name(x, nm)
+    base_fml <- .dagassist_formula_for_model_name(x, b)
     if (is.null(base_fml)) next
     
     f_acde <- .dagassist_build_acde_formula(base_fml, x, acde)
@@ -476,16 +493,43 @@
       fit <- .safe_fit(DirectEffects::sequential_g, f_acde, data, de_args)
     }
     
-    #attach metadata for console printing later
+    # attach metadata for console printing later
     if (!inherits(fit, "DAGassist_fit_error")) {
       attr(fit, "dagassist_estimand") <- "ACDE"
-      attr(fit, "dagassist_acde_spec") <- nm
+      attr(fit, "dagassist_acde_spec") <- b
       attr(fit, "dagassist_acde_formula") <- f_acde
-      attr(fit, "dagassist_fe_collinear_dropped") <- attr(f_acde, "dagassist_fe_collinear_dropped", exact = TRUE)
+      attr(fit, "dagassist_fe_collinear_dropped") <- attr(
+        f_acde, "dagassist_fe_collinear_dropped", exact = TRUE
+      )
     }
     
-    out[[paste0(nm, " ", .dagassist_model_name_labels("ACDE"))]] <- fit
+    acde_fits[[b]] <- fit
   }
+  
+  if (!length(acde_fits)) return(mods)
+  
+  # --- 2) Determine where to insert each ACDE column: after the last column
+  #         belonging to that base spec (raw + any ATE/ATT columns) ---
+  insert_after <- integer(0)
+  for (b in names(acde_fits)) {
+    idxs <- which(base_of(nms) == b & !is_acde(nms))
+    if (!length(idxs)) next
+    insert_after[b] <- max(idxs)
+  }
+  
+  # --- 3) Rebuild list with ACDE interleaved ---
+  out <- list()
+  for (i in seq_along(nms)) {
+    nm <- nms[[i]]
+    out[[nm]] <- mods[[nm]]
+    
+    b <- base_of(nm)
+    if (!is.na(insert_after[b]) && i == insert_after[b] && !is.null(acde_fits[[b]])) {
+      acde_name <- paste0(b, " ", .dagassist_model_name_labels("ACDE"))
+      out[[acde_name]] <- acde_fits[[b]]
+    }
+  }
+  
   out
 }
 
@@ -558,36 +602,21 @@
   # normalize and read weight args 
   wargs <- .dagassist_normalize_weights_args(x$settings$weights_args)
   
-  if (identical(kind, "binary")) {
+  if (kind %in% c("binary", "categorical", "continuous")) {
     if (!requireNamespace("WeightIt", quietly = TRUE)) {
       stop(
-        "Estimand recovery for binary exposures requires the 'WeightIt' package.\n",
+        "Estimand recovery requires the 'WeightIt' package.\n",
         "Install it (install.packages('WeightIt')) or set estimand = 'raw'.",
-        call. = FALSE
-      )
-    }
-  } else if (identical(kind, "continuous")) {
-    if (!requireNamespace("WeightIt", quietly = TRUE)) {
-      stop(
-        "Estimand recovery for continuous exposures requires the 'WeightIt' package.\n",
-        "Install it (install.packages('WeightIt')) or set estimand = 'raw'.",
-        call. = FALSE
-      )
-    }
-    if (!identical(est, "ATE")) {
-      stop(
-        "For continuous exposures, DAGassist currently supports estimand = 'ATE' only.\n",
-        "Set estimand = 'ATE' (or 'raw').",
         call. = FALSE
       )
     }
   } else {
-    # helpful error
     u <- try(sort(unique(stats::na.omit(Tvar))), silent = TRUE)
     stop(
-      "Estimand recovery supports either:\n",
-      "  * Binary exposures (0/1 numeric, logical, or 2-level factor), or\n",
-      "  * Continuous numeric exposures (>= 3 unique values).\n\n",
+      "Estimand recovery supports:\n",
+      "  * Binary exposures (0/1 numeric, logical, or 2-level factor)\n",
+      "  * Categorical exposures (factor/character or small-unique integer-like codes)\n",
+      "  * Continuous numeric exposures\n\n",
       "Exposure '", exp_nm, "' is class: ", paste(class(Tvar), collapse = "/"),
       if (!inherits(u, "try-error")) paste0("\nObserved values (unique): ", paste(u, collapse = ", ")) else "",
       "\n\nPlease recode it or set estimand = 'raw'.",
@@ -607,58 +636,56 @@
     f_treat <- stats::as.formula(paste(exp_nm, "~ 1"))
   }
   
-  # Compute weights via the appropriate backend
-  if (identical(kind, "binary")) {
-    # filter user-provided args to what weightit() actually accepts
-    fa <- .dagassist_filter_args(wargs, WeightIt::weightit)
-    if (length(fa$drop)) {
-      warning(
-        "Ignoring these weights_args for WeightIt::weightit(): ",
-        paste(fa$drop, collapse = ", "),
-        call. = FALSE
-      )
-    }
-    
-    wtobj <- do.call(
-      WeightIt::weightit,
-      c(
-        list(
-          formula = f_treat,
-          data = data,
-          method = "ps",
-          estimand = est
-        ),
-        fa$keep
-      )
+  # --- WeightIt backend for binary/categorical/continuous ---
+  # Optional: allow DAGassist-specific args in weights_args (not passed to WeightIt)
+  trim_at <- wargs[["trim_at"]]   # e.g., 0.99 to cap at 99th percentile
+  wargs[["trim_at"]] <- NULL
+  
+  # For categorical-coded numerics, WeightIt behaves best if treatment is a factor
+  data_wt <- data
+  if (identical(kind, "categorical") && !is.factor(data_wt[[exp_nm]])) {
+    data_wt[[exp_nm]] <- factor(data_wt[[exp_nm]], ordered = TRUE)
+  }
+  
+  # Filter user-provided args to what WeightIt::weightit() accepts
+  fa <- .dagassist_filter_args(wargs, WeightIt::weightit)
+  if (length(fa$drop)) {
+    warning(
+      "Ignoring these weights_args for WeightIt::weightit(): ",
+      paste(fa$drop, collapse = ", "),
+      call. = FALSE
     )
-    
-    w <- wtobj$weights
-    
-  } else if (identical(kind, "continuous")) {
-    # filter user-provided args to what weightit actually accepts
-    fa <- .dagassist_filter_args(wargs, WeightIt::weightit)
-    if (length(fa$drop)) {
-      warning(
-        "Ignoring these weights_args for WeightIt::weightit(): ",
-        paste(fa$drop, collapse = ", "),
-        call. = FALSE
-      )
-    }
-    
-    wtobj <- do.call(
-      WeightIt::weightit,
-      c(
-        list(
-          formula  = f_treat,
-          data     = data,
-          method   = "ps", #glm alias
-          estimand = est # doesn't fail for ATT for continuous; ignores 
-        ),
-        fa$keep
-      )
+  }
+  
+  # WeightIt: method="glm" supports binary, multi-category, and continuous treatments
+  # (continuous is GPS-style under the hood)
+  wtobj <- do.call(
+    WeightIt::weightit,
+    c(
+      list(
+        formula  = f_treat,
+        data     = data_wt,
+        method   = "glm",
+        estimand = est
+      ),
+      fa$keep
     )
-    
-    w <- wtobj$weights
+  )
+  
+  w <- wtobj$weights
+  
+  # trim and cap weights
+  if (!is.null(trim_at)) {
+    if (!is.numeric(trim_at) || length(trim_at) != 1L || trim_at <= 0 || trim_at >= 1) {
+      stop("weights_args$trim_at must be a single number in (0, 1).", call. = FALSE)
+    }
+    # Prefer WeightIt::trim if available for numeric weights
+    if (requireNamespace("WeightIt", quietly = TRUE) && "trim" %in% getNamespaceExports("WeightIt")) {
+      w <- WeightIt::trim(w, at = trim_at)
+    } else {
+      cap <- as.numeric(stats::quantile(w, probs = trim_at, na.rm = TRUE, names = FALSE))
+      w <- pmin(w, cap)
+    }
   }
   
   if (length(w) != nrow(data)) {
@@ -669,6 +696,23 @@
       call. = FALSE
     )
   }
+  
+  #diagnostics: effective sample size and extreme weights
+  w_ok <- stats::na.omit(w)
+  w_summary <- stats::quantile(
+    w_ok,
+    probs = c(0, 0.01, 0.05, 0.5, 0.95, 0.99, 1),
+    names = TRUE
+  )
+  
+  ess <- NA_real_
+  if (requireNamespace("WeightIt", quietly = TRUE) && "ESS" %in% getNamespaceExports("WeightIt")) {
+    ess <- tryCatch(WeightIt::ESS(w_ok), error = function(e) NA_real_)
+  }
+  
+  attr(wtobj, "dagassist_weight_summary") <- w_summary
+  attr(wtobj, "dagassist_ess") <- ess
+  attr(wtobj, "dagassist_trim_at") <- trim_at
   
   # engine and engine_args from DAGassist() call, stored in settings
   engine <- x$settings$engine

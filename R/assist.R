@@ -238,9 +238,7 @@ DAGassist <- function(dag,
   #ensure default to raw when no estimand arg is passed
   #and llow multiple estimands (e.g., c("ATE","ACDE"))
   .allowed_estimands <- c("raw", "none", "ATE", "ATT", "ACDE", "CDE")
-  
-  # If user did not supply the argument, default to raw (do NOT treat the
-  # function's formal default vector as a multi-estimand request).
+  # if estimand=NULL, default to raw. do not default to multi-estimand
   if (missing(estimand) || is.null(estimand) || length(estimand) == 0L) {
     estimand <- "raw"
   } else {

@@ -241,7 +241,7 @@ without aborting the whole pipeline.
 }
 
 \examples{
-\dontshow{if (requireNamespace("dagitty", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (requireNamespace("dagitty", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 \dontshow{set.seed(1)}
 \dontshow{
 # Build the DAG directly with dagitty

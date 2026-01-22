@@ -26,7 +26,7 @@ bad controls, rather than the minimal/canonical set of good controls
 flag bad controls (mediator/collider/desc of Y) among a candidate set
 }
 \examples{
-\dontshow{if (requireNamespace("dagitty", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (requireNamespace("dagitty", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 d <- ggdag::dagify(
 Y ~ X + M + Z,
 M ~ X + Z,

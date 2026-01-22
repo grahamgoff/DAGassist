@@ -147,6 +147,7 @@
   if ("ATE" %in% ests) {
     wlab <- .dagassist_model_name_labels("ATE")
     for (nm in names(model_formulas)) {
+      if (identical(nm, "Original")) next
       model_formulas[[paste0(nm, " ", wlab)]] <- model_formulas[[nm]]
     }
   }
@@ -154,6 +155,7 @@
   if ("ATT" %in% ests) {
     wlab <- .dagassist_model_name_labels("ATT")
     for (nm in names(model_formulas)) {
+      if (identical(nm, "Original")) next
       model_formulas[[paste0(nm, " ", wlab)]] <- model_formulas[[nm]]
     }
   }
@@ -1179,7 +1181,8 @@
             m,
             variables = vars,
             type = "response",
-            vcov = V
+            vcov = V,
+            wts = wts_use
           ),
           error = function(e) NULL
         )

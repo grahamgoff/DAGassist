@@ -735,7 +735,17 @@
     
     # Fit weighted version of THIS model on THIS model’s CC data
     engine_args_w <- utils::modifyList(engine_args, list(weights = w))
-    fit_w <- .safe_fit(engine, fml, data_cc, engine_args_w)
+    #specifically suppress binomial warning, which won't be caught in the prior
+    #warning suppression. it may be classed as a message or something.
+    fit_w <- withCallingHandlers(
+      .safe_fit(engine, fml, data_cc, engine_args_w),
+      warning = function(wrn) {
+        msg <- conditionMessage(wrn)
+        if (grepl("non-integer #successes in a binomial glm", msg, fixed = TRUE)) {
+          invokeRestart("muffleWarning")
+        }
+      }
+    )
     
     # IMPORTANT: for the model comparison table, store marginaleffects output
     # (response-scale average comparisons) rather than the weighted log-odds model.

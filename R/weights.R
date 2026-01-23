@@ -691,16 +691,20 @@
       )
     }
     
-    wtobj <- do.call(
-      WeightIt::weightit,
-      c(
-        list(
-          formula  = f_treat,
-          data     = data_wt,
-          method   = "glm",
-          estimand = est
-        ),
-        fa$keep
+    # run weightit, but keep its warnings out of the dagassist console to 
+    # reduce clutter and confusion
+    wtobj <- suppressWarnings(
+      do.call(
+        WeightIt::weightit,
+        c(
+          list(
+            formula  = f_treat,
+            data     = data_wt,
+            method   = "glm",
+            estimand = est
+          ),
+          fa$keep
+        )
       )
     )
     

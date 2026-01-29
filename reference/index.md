@@ -17,6 +17,9 @@ Helper functions that can be useful on their own.
   set
 - [`classify_nodes()`](https://grahamgoff.github.io/DAGassist/reference/classify_nodes.md)
   : Classify DAG nodes
+- [`seqg_formula()`](https://grahamgoff.github.io/DAGassist/reference/seqg_formula.md)
+  : Build a DirectEffects::sequential_g() formula from a DAG (and
+  optionally a base model formula)
 
 ## Internal functions
 

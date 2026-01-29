@@ -23,7 +23,7 @@ DAGassist(
   omit_intercept = TRUE,
   omit_factors = TRUE,
   bivariate = FALSE,
-  estimand = c("raw", "none", "ATE", "ATT", "ACDE", "CDE"),
+  estimand = c("raw", "none", "SATE", "SATT", "SACDE", "SCDE"),
   engine_args = list(),
   weights_args = list(),
   auto_acde = TRUE,
@@ -112,9 +112,9 @@ This parameter only suppresses factor \strong{output}--they are still included i
 in the comparison table \strong{in addition} to the user's original and DAG-derived models.}
 
 \item{estimand}{Character; causal estimand. Currently only
-supported for \code{type = "console"}. One of \code{"raw"} (default), \code{"ATE"}, \code{"ATT"}, or \code{"ACDE"};
+supported for \code{type = "console"}. One of \code{"raw"} (default), \code{"SATE"}, \code{"SATT"}, or \code{"SACDE"};
 uses the \pkg{WeightIt} package to add weighted versions of each comparison
-model as additional columns. For models with mediators, \code{"ACDE"} links
+model as additional columns. For models with mediators, \code{"SACDE"} links
 to the \pkg{DirectEffects} to for a controlled direct effect via sequential g-estimation.}
 
 \item{engine_args}{Named list of extra arguments forwarded to \code{engine(...)}.
@@ -128,7 +128,7 @@ and passes list directly to the respective weighting package}
 and estimand arguments. Fails gracefully with a helpful error when users specify ACDE estimand
 for a model without mediators.}
 
-\item{acde}{List; options for the controlled direct effect workflow (estimands \code{"ACDE"}/\code{"CDE"}).
+\item{acde}{List; options for the controlled direct effect workflow (estimands \code{"SACDE"}/\code{"SCDE"}).
 Users can override parts of the sequential g-estimation specification with named elements:
 \code{m} (mediators), \code{x} (baseline covariates), \code{z} (intermediate covariates),
 \code{fe} (fixed-effects variables), \code{fe_as_factor} (wrap \code{fe} as \code{factor()}), and

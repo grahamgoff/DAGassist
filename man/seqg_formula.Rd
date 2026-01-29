@@ -65,5 +65,5 @@ Returns a formula of the form \code{Y ~ A + X | Z | M} required by
 }
 
 If \code{formula} is provided, \code{X} is (by default) constrained to the RHS terms that
-appear in that base formula (mirroring DAGassist’s current ACDE construction).
+appear in that base formula (mirroring DAGassist's current ACDE construction).
 }

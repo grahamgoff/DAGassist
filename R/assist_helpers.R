@@ -144,24 +144,24 @@
   # Add derived formula rows for requested estimands (ATE/ATT/ACDE)
   ests <- .dagassist_normalize_estimand(report$settings$estimand)
   
-  if ("ATE" %in% ests) {
-    wlab <- .dagassist_model_name_labels("ATE")
+  if ("SATE" %in% ests) {
+    wlab <- .dagassist_model_name_labels("SATE")
     for (nm in names(model_formulas)) {
       if (identical(nm, "Original")) next
       model_formulas[[paste0(nm, " ", wlab)]] <- model_formulas[[nm]]
     }
   }
   
-  if ("ATT" %in% ests) {
-    wlab <- .dagassist_model_name_labels("ATT")
+  if ("SATT" %in% ests) {
+    wlab <- .dagassist_model_name_labels("SATT")
     for (nm in names(model_formulas)) {
       if (identical(nm, "Original")) next
       model_formulas[[paste0(nm, " ", wlab)]] <- model_formulas[[nm]]
     }
   }
   
-  if ("ACDE" %in% ests) {
-    alab <- .dagassist_model_name_labels("ACDE")
+  if ("SACDE" %in% ests) {
+    alab <- .dagassist_model_name_labels("SACDE")
     for (nm in names(model_formulas)) {
       nm_acde <- paste0(nm, " ", alab)
       # build sequential_g formula from base model formula
@@ -626,9 +626,9 @@
   if (length(sets) == 1L) return(sets[[1L]])
   
   #fallback if multiple canonical sets are ever returned
-  lens       <- vapply(sets, length, integer(1))
+  lens <- vapply(sets, length, integer(1))
   candidates <- sets[lens == min(lens)]
-  keys       <- vapply(candidates, function(s) paste(s, collapse = "|"), character(1))
+  keys <- vapply(candidates, function(s) paste(s, collapse = "|"), character(1))
   candidates[[order(keys)[1]]]
 }
 ###helpers to enable intercept and factor row suppression
@@ -995,7 +995,7 @@
   #fail fast if the model list is missing or unnamed
   if (is.null(mods_full) || !length(mods_full) || is.null(names(mods_full))) return(invisible(NULL))
   # only print diagnostics for weighted columns. identify weighted cols by col name 
-  keep <- grepl("\\((ATE|ATT)\\)\\s*$", names(mods_full), ignore.case = TRUE)
+  keep <- grepl("\\((SATE|SATT)\\)\\s*$", names(mods_full), ignore.case = TRUE)
   mods_use <- mods_full[keep]
   if (!length(mods_use)) return(invisible(NULL))
   # header for the diagnostics block
@@ -1208,7 +1208,7 @@
   
   if (!requireNamespace("marginaleffects", quietly = TRUE)) {
     cat("\nEffect summaries (response scale):\n")
-    cat("  {marginaleffects} not installed. Install it to enable interpretable ATE summaries.\n")
+    cat("  {marginaleffects} not installed. Install it to enable interpretable SATE summaries.\n")
     return(invisible(NULL))
   }
   
@@ -1223,7 +1223,7 @@
   # Filter to (ATE) models to reduce clutter (Denly’s pipeline focuses on weighted estimands)
   mods_use <- mods_full
   if (isTRUE(only_weighted) && length(names(mods_use))) {
-    keep <- grepl("\\(ATE\\)$", names(mods_use))
+    keep <- grepl("\\(SATE\\)$", names(mods_use))
     mods_use <- mods_use[keep]
   }
   
@@ -1237,6 +1237,18 @@
     
     # Try to get the analytic sample’s exposure vector (best alignment with estimation)
     mf <- tryCatch(stats::model.frame(m), error = function(e) NULL)
+    
+    # weights for marginaleffects averaging (only if the model actually has weights)
+    wts_use <- tryCatch(stats::weights(m), error = function(e) NULL)
+    if (is.null(wts_use) || !length(wts_use)) {
+      wts_use <- NULL
+    } else {
+      wts_use <- as.numeric(wts_use)
+      # drop unusable or trivial weights
+      if (all(!is.finite(wts_use)) || all(wts_use == 1)) wts_use <- NULL
+      # if we have a model.frame, enforce alignment
+      if (!is.null(mf) && length(wts_use) != nrow(mf)) wts_use <- NULL
+    }
     
     exp_vec <- NULL
     if (!is.null(mf) && exp_nm %in% names(mf)) {
@@ -1299,7 +1311,7 @@
         # Keep a compact row
         rows_all[[length(rows_all) + 1L]] <- data.frame(
           model = nm,
-          estimand = "ATE (response)",
+          estimand = "SATE (response)",
           contrast = paste0(exp_nm, ": ", a, " -> ", b),
           estimate = ac$estimate[1],
           std.error = ac$std.error[1],
@@ -1331,7 +1343,7 @@
       
       rows_all[[length(rows_all) + 1L]] <- data.frame(
         model = nm,
-        estimand = "ATE (response)",
+        estimand = "SATE (response)",
         contrast = paste0(exp_nm, ": +IQR (", format(iqr, digits = 4), ")"),
         estimate = sl$estimate[1] * iqr,
         std.error = sl$std.error[1] * iqr,

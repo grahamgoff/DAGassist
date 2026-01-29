@@ -69,10 +69,10 @@
 .dagassist_formula_for_model_name <- function(x, model_name) {
   
   # detect derived suffix
-  is_weighted <- grepl("\\((ATE|ATT)\\)\\s*$", model_name, ignore.case = TRUE)
-  is_acde <- grepl("\\((ACDE|CDE)\\)\\s*$", model_name, ignore.case = TRUE)
+  is_weighted <- grepl("\\((SATE|SATT)\\)\\s*$", model_name, ignore.case = TRUE)
+  is_acde <- grepl("\\((SACDE|SCDE)\\)\\s*$", model_name, ignore.case = TRUE)
   
-  base_name <- sub("\\s*\\((ATE|ATT|ACDE|CDE)\\)\\s*$", "", model_name, ignore.case = TRUE)
+  base_name <- sub("\\s*\\((SATE|SATT|SACDE|SCDE)\\)\\s*$", "", model_name, ignore.case = TRUE)
   
   # If ACDE model label, build sequential_g formula from the *base* model formula
   if (is_acde) {
@@ -167,17 +167,17 @@
   if (is.null(estimand)) return("RAW")
   est <- toupper(as.character(estimand))
   est <- match.arg(est,
-                   choices = c("RAW","NONE","ATE","ATT","ACDE","CDE"),
+                   choices = c("RAW","NONE","SATE","SATT","SACDE","SCDE"),
                    several.ok = TRUE)
   est[est == "NONE"] <- "RAW"
-  est[est == "CDE"]  <- "ACDE"
+  est[est == "SCDE"]  <- "SACDE"
   unique(est)
 }
 
 # ---- Normalize ACDE spec list ----
 .dagassist_normalize_acde_spec <- function(acde) {
   if (is.null(acde)) acde <- list()
-  if (!is.list(acde)) stop("`acde` must be a list.", call. = FALSE)
+  if (!is.list(acde)) stop("`sacde` must be a list.", call. = FALSE)
   defaults <- list(
     m = NULL,                 # mediators (character)
     x = NULL,                 # baseline covariates override (character)
@@ -210,7 +210,7 @@
   ests <- unique(.dagassist_normalize_estimand(estimand))
   
   # ACDE/CDE requires at least one mediator in the DAG / formula
-  wants_acde <- any(ests %in% c("ACDE", "CDE"))
+  wants_acde <- any(ests %in% c("SACDE", "SCDE"))
   if (isTRUE(wants_acde)) {
     has_med <- FALSE
     if (!is.null(roles)) {
@@ -224,11 +224,11 @@
     if (!isTRUE(has_med)) {
       stop(
         paste0(
-          "You requested estimand = 'ACDE' (alias: 'CDE'), but no mediator node(s) were detected in your DAG ",
+          "You requested estimand = 'SACDE' (alias: 'SCDE'), but no mediator node(s) were detected in your DAG ",
           "for this exposure/outcome pair.\n",
-          "ACDE/CDE is only defined when at least one mediator exists.\n\n",
+          "SACDE/SCDE is only defined when at least one mediator exists.\n\n",
           "Fix options:\n",
-          "  1) Use estimand = 'ATE'/'ATT' for total effects (when no mediators are present), OR\n",
+          "  1) Use estimand = 'SATE'/'SATT' for total effects (when no mediators are present), OR\n",
           "  2) Use estimand = 'RAW' to report the naive regression output.\n"
         ),
         call. = FALSE
@@ -238,7 +238,7 @@
   # allow ATE/ATT if formula includes mediators; will omit automatically
   if (!isTRUE(auto_acde)) return(estimand)
   
-  wants_total <- any(ests %in% c("ATE", "ATT"))
+  wants_total <- any(ests %in% c("SATE", "SATT"))
   if (!isTRUE(wants_total)) return(estimand)
   
   controls_mediator <- .dagassist_formula_controls_mediator(
@@ -299,7 +299,7 @@
 # Build sequential_g formula (y ~ A + X | Z | M)
 .dagassist_build_acde_formula <- function(base_fml, x, acde) {
   if (is.null(x$dag)) {
-    stop("ACDE requires storing the evaluated DAG on the report as `x$dag`.", call. = FALSE)
+    stop("SACDE requires storing the evaluated DAG on the report as `x$dag`.", call. = FALSE)
   }
   dag <- x$dag
   exp_nm <- get_by_role(x$roles, "exposure")
@@ -308,7 +308,7 @@
   # mediators
   m_terms <- .dagassist_infer_acde_mediators(x, acde)
   if (!length(m_terms)) {
-    stop("ACDE requested, but no mediator(s) could be inferred. Provide acde = list(m = c('M1','M2')).",
+    stop("SACDE requested, but no mediator(s) could be inferred. Provide sacde = list(m = c('M1','M2')).",
          call. = FALSE)
   }
   
@@ -338,7 +338,7 @@
   
   # define intermediate confounders according to Acharya, Blackwell and Sen (2016)
   # Z are post-treatment covariates affected by A (treatment) that affect both M and Y:
-  #  i.e., Z ∈ Desc(A) ∩ Anc(M) ∩ Anc(Y)
+  #  i.e., Z in Desc(A) intersect Anc(M) intersect Anc(Y)
   # and  exclude A, Y, and the mediator(s) themselves
   nodes <- names(dag)
   
@@ -375,7 +375,7 @@
   # if no mediators at this point, helpful error code
   if (!length(m_terms)) {
     stop(
-      "ACDE requested, but mediator terms are empty after internal filtering. ",
+      "SACDE requested, but mediator terms are empty after internal filtering. ",
       "This usually happens when DAGassist was called without `data=` (so `x$.__data` is NULL). ",
       "Either (i) call DAGassist(..., data = <your data.frame>), or (ii) provide `acde = list(m = ...)`.",
       call. = FALSE
@@ -434,7 +434,7 @@
 .dagassist_add_acde_models <- function(x, mods) {
   if (!requireNamespace("DirectEffects", quietly = TRUE)) {
     stop(
-      "Estimand recovery for ACDE/CDE requires the 'DirectEffects' package.\n",
+      "Estimand recovery for SACDE/SCDE requires the 'DirectEffects' package.\n",
       "Install it (install.packages('DirectEffects')) or set estimand = 'raw'.",
       call. = FALSE
     )
@@ -444,7 +444,7 @@
   if (is.null(data)) {
     stop(
       "Original data not found on the report object.\n",
-      "ACDE requires calling DAGassist() with the `data` argument.",
+      "SACDE requires calling DAGassist() with the `data` argument.",
       call. = FALSE
     )
   }
@@ -459,9 +459,9 @@
   if (!length(nms)) return(mods)
   
   # helpers
-  base_of <- function(nm) sub("\\s*\\((ATE|ATT|ACDE|CDE)\\)\\s*$", "", nm, ignore.case = TRUE)
-  is_acde <- function(nm) grepl("\\((ACDE|CDE)\\)\\s*$", nm, ignore.case = TRUE)
-  is_weighted <- function(nm) grepl("\\((ATE|ATT)\\)\\s*$", nm, ignore.case = TRUE)
+  base_of <- function(nm) sub("\\s*\\((SATE|SATT|SACDE|SCDE)\\)\\s*$", "", nm, ignore.case = TRUE)
+  is_acde <- function(nm) grepl("\\((SACDE|SCDE)\\)\\s*$", nm, ignore.case = TRUE)
+  is_weighted <- function(nm) grepl("\\((SATE|SATT)\\)\\s*$", nm, ignore.case = TRUE)
   
   # --- 1) Fit ACDE for each BASE spec (Original / Minimal k / Canonical / etc.) ---
   base_specs <- unique(base_of(nms[!is_acde(nms)]))
@@ -472,7 +472,7 @@
   
   for (b in base_specs) {
     # don't refit if it's already present
-    acde_name <- paste0(b, " ", .dagassist_model_name_labels("ACDE"))
+    acde_name <- paste0(b, " ", .dagassist_model_name_labels("SACDE"))
     if (acde_name %in% nms) next
     
     base_fml <- .dagassist_formula_for_model_name(x, b)
@@ -495,7 +495,7 @@
     
     # attach metadata for console printing later
     if (!inherits(fit, "DAGassist_fit_error")) {
-      attr(fit, "dagassist_estimand") <- "ACDE"
+      attr(fit, "dagassist_estimand") <- "SACDE"
       attr(fit, "dagassist_acde_spec") <- b
       attr(fit, "dagassist_acde_formula") <- f_acde
       attr(fit, "dagassist_fe_collinear_dropped") <- attr(
@@ -525,7 +525,7 @@
     
     b <- base_of(nm)
     if (!is.na(insert_after[b]) && i == insert_after[b] && !is.null(acde_fits[[b]])) {
-      acde_name <- paste0(b, " ", .dagassist_model_name_labels("ACDE"))
+      acde_name <- paste0(b, " ", .dagassist_model_name_labels("SACDE"))
       out[[acde_name]] <- acde_fits[[b]]
     }
   }
@@ -539,12 +539,12 @@
   if (!length(ests) || identical(ests, "RAW")) return(mods)
   
   out <- mods
-  # weights first (ATE/ATT)
-  if ("ATE" %in% ests) out <- .dagassist_add_weighted_models(x, out, estimand = "ATE")
-  if ("ATT" %in% ests) out <- .dagassist_add_weighted_models(x, out, estimand = "ATT")
+  # weights first (SATE/SATT)
+  if ("SATE" %in% ests) out <- .dagassist_add_weighted_models(x, out, estimand = "SATE")
+  if ("SATT" %in% ests) out <- .dagassist_add_weighted_models(x, out, estimand = "SATT")
   
   # ACDE last
-  if ("ACDE" %in% ests) out <- .dagassist_add_acde_models(x, out)
+  if ("SACDE" %in% ests) out <- .dagassist_add_acde_models(x, out)
   
   out
 }
@@ -560,7 +560,7 @@
   )
   
   # Weighting only applies to total-effect estimands
-  ests <- intersect(ests, c("ATE", "ATT"))
+  ests <- intersect(ests, c("SATE", "SATT"))
   if (!length(ests)) return(mods)
   est <- ests[1L]
   
@@ -727,7 +727,7 @@
       stop(
         "WeightIt returned ", length(w), " weights for data with ",
         nrow(data_cc), " rows.\n",
-        "This indicates a mismatch between the analytic sample and WeightIt’s internal sample.\n",
+        "This indicates a mismatch between the analytic sample and WeightIt's internal sample.\n",
         "Inspect the treatment model and missingness in controls.",
         call. = FALSE
       )
@@ -776,12 +776,12 @@
       }
       
       # Preserve metadata for diagnostics/debugging
-      attr(me, "dagassist_estimand")      <- est
-      attr(me, "dagassist_weightit")      <- wtobj
+      attr(me, "dagassist_estimand") <- est
+      attr(me, "dagassist_weightit") <- wtobj
       attr(me, "dagassist_treat_formula") <- f_treat
-      attr(me, "dagassist_trim_at")       <- trim_at
-      attr(me, "dagassist_weights")       <- w
-      attr(me, "dagassist_weighted_fit")  <- fit_w
+      attr(me, "dagassist_trim_at") <- trim_at
+      attr(me, "dagassist_weights") <- w
+      attr(me, "dagassist_weighted_fit") <- fit_w
     }
     
     me
@@ -811,10 +811,10 @@
   est <- toupper(as.character(estimand))
   switch(
     est,
-    ATE  = "(ATE)",
-    ATT  = "(ATT)",
-    ACDE = "(ACDE)",
-    CDE  = "(ACDE)",   # alias
+    ATE  = "(SATE)",
+    ATT  = "(SATT)",
+    ACDE = "(SACDE)",
+    CDE  = "(SACDE)",   # alias
     RAW  = "",
     NONE = "",
     ""
@@ -861,7 +861,7 @@
   )
   
   paste0(
-    "ACDE fit aborted before calling DirectEffects::sequential_g().\n\n",
+    "SACDE fit aborted before calling DirectEffects::sequential_g().\n\n",
     "Reason:\n",
     "  At least one mediator is non-numeric (factor/character/logical).\n",
     "  DirectEffects::sequential_g() can throw `subscript out of bounds` in this case, ",
@@ -874,6 +874,6 @@
     "  2) One-hot encode multi-category mediators into numeric dummy columns, then pass\n",
     "     those dummy names explicitly via `acde = list(m = c(\"M1\",\"M2\", ...))`. \n",
     "     Either ensure your DAG nodes match those column names, or use imply = FALSE to prevent mismatch issues. \n",
-    "  3) Exclude the categorical mediator(s) from ACDE by explicitly setting `acde$m`.\n"
+    "  3) Exclude the categorical mediator(s) from SACDE by explicitly setting `sacde$m`.\n"
   )
 }

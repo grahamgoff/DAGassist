@@ -9,7 +9,7 @@
 #' - `M` are mediators (blip-down model terms).
 #'
 #' If `formula` is provided, `X` is (by default) constrained to the RHS terms that
-#' appear in that base formula (mirroring DAGassist’s current ACDE construction).
+#' appear in that base formula (mirroring DAGassist's current ACDE construction).
 #'
 #' @param dag A `dagitty` object (or a character DAGitty string).
 #' @param formula Optional base formula (or an engine call like `fixest::feols(...)`).
@@ -107,13 +107,13 @@ seqg_formula <- function(
   
   if (!length(m_terms)) {
     stop(
-      "No mediators inferred. Provide `m = c('M1','M2', ...)` or ensure mediators exist on the DAG path Desc(A) ∩ Anc(Y).",
+      "No mediators inferred. Provide `m = c('M1','M2', ...)` or ensure mediators exist on the DAG path intersect(Desc(A), Anc(Y)).",
       call. = FALSE
     )
   }
   
   # ---- Infer intermediate covariates Z ----
-  # Z ∈ Desc(A) ∩ Anc(M) ∩ Anc(Y), excluding A/Y/M and post-mediator nodes
+  # Z in Desc(A) intersect Anc(M) intersect Anc(Y), excluding A/Y/M and post-mediator nodes
   ancY  <- safe_anc(Y)
   ancM  <- unique(unlist(lapply(m_terms, safe_anc)))
   descA <- setdiff(safe_desc(A), A)
@@ -190,7 +190,7 @@ seqg_formula <- function(
     }
   }
   
-  # ---- If data is supplied, drop terms that don’t resolve to data columns ----
+  # ---- If data is supplied, drop terms that don't resolve to data columns ----
   if (is.data.frame(data)) {
     data_names <- names(data)
     x_terms <- .dagassist_terms_must_use_data(x_terms, data_names)

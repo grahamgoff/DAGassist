@@ -691,6 +691,17 @@
       )
     }
     
+    #changed internal and display terminology from ATE->SATE; cannot pass
+    #directly to weigtit, which does not recognize an SATE estimand parameter
+    #will probably need to change this bandaid later when I add EV and ATE is a valid 
+    #parameter. 
+    est_wt <- switch(
+      toupper(est),
+      SATE = "ATE",
+      SATT = "ATT",
+      toupper(est)
+    )
+    
     # run weightit, but keep its warnings out of the dagassist console to 
     # reduce clutter and confusion
     wtobj <- suppressWarnings(
@@ -698,10 +709,10 @@
         WeightIt::weightit,
         c(
           list(
-            formula  = f_treat,
-            data     = data_wt,
-            method   = "glm",
-            estimand = est
+            formula = f_treat,
+            data = data_wt,
+            method = "glm",
+            estimand = est_wt
           ),
           fa$keep
         )

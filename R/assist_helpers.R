@@ -144,22 +144,24 @@
   # Add derived formula rows for requested estimands (ATE/ATT/ACDE)
   ests <- .dagassist_normalize_estimand(report$settings$estimand)
   
-  if ("ATE" %in% ests) {
-    wlab <- .dagassist_model_name_labels("ATE")
+  if ("SATE" %in% ests) {
+    wlab <- .dagassist_model_name_labels("SATE")
     for (nm in names(model_formulas)) {
+      if (identical(nm, "Original")) next
       model_formulas[[paste0(nm, " ", wlab)]] <- model_formulas[[nm]]
     }
   }
   
-  if ("ATT" %in% ests) {
-    wlab <- .dagassist_model_name_labels("ATT")
+  if ("SATT" %in% ests) {
+    wlab <- .dagassist_model_name_labels("SATT")
     for (nm in names(model_formulas)) {
+      if (identical(nm, "Original")) next
       model_formulas[[paste0(nm, " ", wlab)]] <- model_formulas[[nm]]
     }
   }
   
-  if ("ACDE" %in% ests) {
-    alab <- .dagassist_model_name_labels("ACDE")
+  if ("SACDE" %in% ests) {
+    alab <- .dagassist_model_name_labels("SACDE")
     for (nm in names(model_formulas)) {
       nm_acde <- paste0(nm, " ", alab)
       # build sequential_g formula from base model formula
@@ -624,9 +626,9 @@
   if (length(sets) == 1L) return(sets[[1L]])
   
   #fallback if multiple canonical sets are ever returned
-  lens       <- vapply(sets, length, integer(1))
+  lens <- vapply(sets, length, integer(1))
   candidates <- sets[lens == min(lens)]
-  keys       <- vapply(candidates, function(s) paste(s, collapse = "|"), character(1))
+  keys <- vapply(candidates, function(s) paste(s, collapse = "|"), character(1))
   candidates[[order(keys)[1]]]
 }
 ###helpers to enable intercept and factor row suppression
@@ -990,53 +992,161 @@
 .dagassist_print_weight_diagnostics <- function(mods_full,
                                                 ess_warn_frac = 0.50,
                                                 extreme_ratio = 20) {
+  #fail fast if the model list is missing or unnamed
   if (is.null(mods_full) || !length(mods_full) || is.null(names(mods_full))) return(invisible(NULL))
-  
-  keep <- grepl("\\((ATE|ATT)\\)\\s*$", names(mods_full), ignore.case = TRUE)
+  # only print diagnostics for weighted columns. identify weighted cols by col name 
+  keep <- grepl("\\((SATE|SATT)\\)\\s*$", names(mods_full), ignore.case = TRUE)
   mods_use <- mods_full[keep]
   if (!length(mods_use)) return(invisible(NULL))
-  
+  # header for the diagnostics block
   cat("\nWeight diagnostics:\n")
+  cat("  legend: w range is min..max by group; ess is kish effective n; flags mark low ess or extreme weights.\n")
   
+  #helper to split a treatment vector into control vs treated indices.
+  #structured to handle logical / 0-1 numeric / factors without assuming labels
+  .split_treat <- function(tr) {
+    # return null if treatment is missing
+    if (is.null(tr) || !length(tr)) return(NULL)
+    # if treatment is logical, false = control, true = treated
+    if (is.logical(tr)) {
+      return(list(control = which(tr %in% FALSE), treated = which(tr %in% TRUE)))
+    }
+    # if treatment is numeric/integer, prefer 0/1, else min vs max as a fallback
+    if (is.numeric(tr) || inherits(tr, "integer")) {
+      u <- sort(unique(tr))
+      if (length(u) >= 2) {
+        # common case: 0 = control, 1 = treated
+        if (all(u %in% c(0, 1))) {
+          return(list(control = which(tr == 0), treated = which(tr == 1)))
+        }
+        # fallback: smallest value = control, largest value = treated
+        return(list(control = which(tr == min(u)), treated = which(tr == max(u))))
+      }
+    }
+    #for factor/character treatment, coerce to factor, then pick levels
+    if (is.character(tr)) tr <- factor(tr)
+    if (is.factor(tr)) {
+      lv <- levels(tr)
+      if (length(lv) >= 2) {
+        # if levels are literally "0"/"1", use those
+        if ("0" %in% lv && "1" %in% lv) {
+          return(list(control = which(tr == "0"), treated = which(tr == "1")))
+        }
+        #otherwise, first level = control, second level = treated
+        return(list(control = which(tr == lv[1]), treated = which(tr == lv[2])))
+      }
+    }
+    NULL #cannot split into groups if nothing matched
+  }
+  
+  #helper done-resume normal processing
   for (nm in names(mods_use)) {
+    # grab the object for this weighted column
     m <- mods_use[[nm]]
+    # skip placeholder error objects
     if (inherits(m, "DAGassist_fit_error")) next
-    
-    w <- tryCatch(stats::weights(m), error = function(e) NULL)
+  
+    ## EXTRACT WEIGHTS
+    # prefer dagassist attributes because weighted columns may be marginaleffects objects
+    w <- attr(m, "dagassist_weights", exact = TRUE)
+    # if weights attribute missing, try pulling them from a saved weightit object
+    if (is.null(w)) {
+      wtobj <- attr(m, "dagassist_weightit", exact = TRUE)
+      if (!is.null(wtobj) && is.list(wtobj) && "weights" %in% names(wtobj)) {
+        w <- wtobj$weights
+      }
+    }
+    # final fallback: try stats::weights() for actual model objects
+    if (is.null(w)) {
+      w <- tryCatch(stats::weights(m), error = function(e) NULL)
+    }
+    # if still missing, helpful warning and continue
     if (is.null(w)) {
       cat("  ", nm, ": (could not extract weights)\n", sep = "")
       next
     }
-    
+
+    ## keep only finite weights (drop na/inf)
     w_ok <- w[is.finite(w)]
     n <- length(w_ok)
-    ess <- .dagassist_ess(w_ok)
-    ess_frac <- if (is.finite(ess) && n > 0) ess / n else NA_real_
+    # if nothing finite, print and move on
+    if (!n) {
+      cat("  ", nm, ": (no finite weights)\n", sep = "")
+      next
+    }
     
+    ## overall summaries
+    # ess uses kish ess: (sum w)^2 / sum(w^2)
+    ess_all <- .dagassist_ess(w_ok)
+    # ess as a fraction of n  
+    ess_frac <- if (is.finite(ess_all) && n > 0) ess_all / n else NA_real_
+    # overall weight range + median (median is used for the "extreme" flag)
     w_min <- suppressWarnings(min(w_ok, na.rm = TRUE))
     w_med <- suppressWarnings(stats::median(w_ok, na.rm = TRUE))
     w_max <- suppressWarnings(max(w_ok, na.rm = TRUE))
     
-    cat(sprintf(
-      "  %s: ESS = %s (%s%% of N); min/med/max = %s / %s / %s\n",
-      nm,
-      ifelse(is.finite(ess), format(round(ess, 1)), "NA"),
-      ifelse(is.finite(ess_frac), format(round(100 * ess_frac, 0)), "NA"),
-      format(signif(w_min, 4)),
-      format(signif(w_med, 4)),
-      format(signif(w_max, 4))
-    ))
-    
-    # Constraint warnings (non-fatal)
-    if (is.finite(ess_frac) && ess_frac < ess_warn_frac) {
-      warning(sprintf("Low overlap suggested for %s: ESS is %.0f%% of N.", nm, 100 * ess_frac), call. = FALSE)
+    ## by-group summaries
+    # weightit stores the treatment vector as wtobj$treat for binary treatments
+    wtobj <- attr(m, "dagassist_weightit", exact = TRUE)
+    tr <- NULL
+    if (!is.null(wtobj) && is.list(wtobj) && "treat" %in% names(wtobj)) {
+      tr <- wtobj$treat
     }
+    # only attempt a split if data/weight col lengths align
+    grp <- NULL
+    if (!is.null(tr) && length(tr) == length(w)) {
+      grp <- .split_treat(tr)
+    }
+    
+    # small inline flags with warnings suppressed to keep console clean
+    #low_ess: ess is less than ess_warn_frac * n
+    #extreme_w: max weight is huge relative to median weight
+    flags <- character(0)
+    if (is.finite(ess_frac) && ess_frac < ess_warn_frac) flags <- c(flags, "LOW_ESS")
     if (is.finite(w_max) && is.finite(w_med) && w_med > 0 && w_max > extreme_ratio * w_med) {
-      warning(sprintf("Extreme weights suggested for %s: max weight > %dx median.", nm, extreme_ratio), call. = FALSE)
+      flags <- c(flags, "EXTREME_W")
+    }
+    flag_str <- if (length(flags)) paste0(" [", paste(flags, collapse = ","), "]") else ""
+    
+    if (!is.null(grp) && length(grp$control) && length(grp$treated)) {
+      # split weights into control vs treated
+      wc <- w[grp$control]; wt <- w[grp$treated]
+      # keep finite weights within each group
+      wc_ok <- wc[is.finite(wc)]; wt_ok <- wt[is.finite(wt)]
+      # group-specific ess
+      ess_c <- .dagassist_ess(wc_ok)
+      ess_t <- .dagassist_ess(wt_ok)
+      # one tight line per weighted model (ranges + ess)
+      cat(sprintf(
+        "  %s: w range treated=%s..%s control=%s..%s | ess treated=%s/%d control=%s/%d | ess(all)=%s/%d%s\n",
+        nm,
+        format(signif(min(wt_ok, na.rm = TRUE), 4)),
+        format(signif(max(wt_ok, na.rm = TRUE), 4)),
+        format(signif(min(wc_ok, na.rm = TRUE), 4)),
+        format(signif(max(wc_ok, na.rm = TRUE), 4)),
+        ifelse(is.finite(ess_t), format(round(ess_t, 1)), "NA"), length(wt_ok),
+        ifelse(is.finite(ess_c), format(round(ess_c, 1)), "NA"), length(wc_ok),
+        ifelse(is.finite(ess_all), format(round(ess_all, 1)), "NA"), n,
+        flag_str
+      ))
+    } else {
+      # fallback: no clean treated/control split, so only print overall range + overall ess
+      cat(sprintf(
+        "  %s: w range=%s..%s | ess(all)=%s/%d (%s%% of n)%s\n",
+        nm,
+        format(signif(w_min, 4)),
+        format(signif(w_max, 4)),
+        ifelse(is.finite(ess_all), format(round(ess_all, 1)), "NA"),
+        n,
+        ifelse(is.finite(ess_frac), format(round(100 * ess_frac, 0)), "NA"),
+        flag_str
+      ))
     }
   }
   
+  # keep your original note, but don’t overdo it
   cat("  Note: IPW/GPS here assumes a point (single-shot) treatment. For time-varying treatments/confounding, use MSM/time-varying IPW.\n")
+  
   invisible(NULL)
 }
 
@@ -1098,7 +1208,7 @@
   
   if (!requireNamespace("marginaleffects", quietly = TRUE)) {
     cat("\nEffect summaries (response scale):\n")
-    cat("  {marginaleffects} not installed. Install it to enable interpretable ATE summaries.\n")
+    cat("  {marginaleffects} not installed. Install it to enable interpretable SATE summaries.\n")
     return(invisible(NULL))
   }
   
@@ -1113,7 +1223,7 @@
   # Filter to (ATE) models to reduce clutter (Denly’s pipeline focuses on weighted estimands)
   mods_use <- mods_full
   if (isTRUE(only_weighted) && length(names(mods_use))) {
-    keep <- grepl("\\(ATE\\)$", names(mods_use))
+    keep <- grepl("\\(SATE\\)$", names(mods_use))
     mods_use <- mods_use[keep]
   }
   
@@ -1127,6 +1237,18 @@
     
     # Try to get the analytic sample’s exposure vector (best alignment with estimation)
     mf <- tryCatch(stats::model.frame(m), error = function(e) NULL)
+    
+    # weights for marginaleffects averaging (only if the model actually has weights)
+    wts_use <- tryCatch(stats::weights(m), error = function(e) NULL)
+    if (is.null(wts_use) || !length(wts_use)) {
+      wts_use <- NULL
+    } else {
+      wts_use <- as.numeric(wts_use)
+      # drop unusable or trivial weights
+      if (all(!is.finite(wts_use)) || all(wts_use == 1)) wts_use <- NULL
+      # if we have a model.frame, enforce alignment
+      if (!is.null(mf) && length(wts_use) != nrow(mf)) wts_use <- NULL
+    }
     
     exp_vec <- NULL
     if (!is.null(mf) && exp_nm %in% names(mf)) {
@@ -1179,7 +1301,8 @@
             m,
             variables = vars,
             type = "response",
-            vcov = V
+            vcov = V,
+            wts = wts_use
           ),
           error = function(e) NULL
         )
@@ -1188,7 +1311,7 @@
         # Keep a compact row
         rows_all[[length(rows_all) + 1L]] <- data.frame(
           model = nm,
-          estimand = "ATE (response)",
+          estimand = "SATE (response)",
           contrast = paste0(exp_nm, ": ", a, " -> ", b),
           estimate = ac$estimate[1],
           std.error = ac$std.error[1],
@@ -1220,7 +1343,7 @@
       
       rows_all[[length(rows_all) + 1L]] <- data.frame(
         model = nm,
-        estimand = "ATE (response)",
+        estimand = "SATE (response)",
         contrast = paste0(exp_nm, ": +IQR (", format(iqr, digits = 4), ")"),
         estimate = sl$estimate[1] * iqr,
         std.error = sl$std.error[1] * iqr,

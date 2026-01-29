@@ -71,16 +71,16 @@
 #'    e.g. `exclude = c("nco", "nct")`; each requested variant is fitted and shown
 #'    as a separate "Canon. (-...)" column in the console/model exports.
 #' @param estimand Character; causal estimand. Currently only
-#'    supported for `type = "console"`. One of `"raw"` (default), `"ATE"`, `"ATT"`, or `"ACDE"`;
+#'    supported for `type = "console"`. One of `"raw"` (default), `"SATE"`, `"SATT"`, or `"SACDE"`;
 #'    uses the \pkg{WeightIt} package to add weighted versions of each comparison
-#'    model as additional columns. For models with mediators, `"ACDE"` links 
+#'    model as additional columns. For models with mediators, `"SACDE"` links 
 #'    to the \pkg{DirectEffects} to for a controlled direct effect via sequential g-estimation.
 #' @param weights_args List; parameters for weighting package. `DAGassist` is agnostic
 #'    and passes list directly to the respective weighting package 
 #' @param auto_acde Logical; if `TRUE` (default), automates handling conflicts between specifications
 #'    and estimand arguments. Fails gracefully with a helpful error when users specify ACDE estimand
 #'    for a model without mediators.
-#' @param acde List; options for the controlled direct effect workflow (estimands `"ACDE"`/`"CDE"`).
+#' @param acde List; options for the controlled direct effect workflow (estimands `"SACDE"`/`"SCDE"`).
 #'   Users can override parts of the sequential g-estimation specification with named elements:
 #'   `m` (mediators), `x` (baseline covariates), `z` (intermediate covariates),
 #'   `fe` (fixed-effects variables), `fe_as_factor` (wrap `fe` as `factor()`), and
@@ -219,7 +219,7 @@ DAGassist <- function(dag,
                       omit_intercept = TRUE,
                       omit_factors = TRUE,
                       bivariate = FALSE,
-                      estimand = c("raw", "none", "ATE", "ATT", "ACDE", "CDE"),
+                      estimand = c("raw", "none", "SATE", "SATT", "SACDE", "SCDE"),
                       engine_args = list(),
                       weights_args = list(),
                       auto_acde = TRUE,
@@ -237,10 +237,8 @@ DAGassist <- function(dag,
   
   #ensure default to raw when no estimand arg is passed
   #and llow multiple estimands (e.g., c("ATE","ACDE"))
-  .allowed_estimands <- c("raw", "none", "ATE", "ATT", "ACDE", "CDE")
-  
-  # If user did not supply the argument, default to raw (do NOT treat the
-  # function's formal default vector as a multi-estimand request).
+  .allowed_estimands <- c("raw", "none", "SATE", "SATT", "SACDE", "SCDE")
+  # if estimand=NULL, default to raw. do not default to multi-estimand
   if (missing(estimand) || is.null(estimand) || length(estimand) == 0L) {
     estimand <- "raw"
   } else {
@@ -905,7 +903,7 @@ print.DAGassist_report <- function(x, ...) {
     if (!identical(x$settings$show, "all") && !identical(x$settings$show, "models")) {
       if (isTRUE(verbose)) {
         cat(
-          "\nRoles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome\n",
+          "\nRoles legend: Exp. = exposure/treatment; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome\n",
           sep = ""
         )
       } else {

@@ -716,7 +716,7 @@ DAGassist(dag_model,
           formula = lm(children ~ edu_year + age + class + gender + 
                          immigrant + urban + birth_control + income + 
                          married + job_stability_t + contract + pref, data = dat),
-          estimand = "ATE",
+          estimand = "SATE",
           bivariate = TRUE,
           type="dwplot")
 ```
@@ -732,6 +732,6 @@ DAGassist(dag_model,
           formula = lm(children ~ edu_year + age + class + gender + 
                          immigrant + urban + birth_control + income + 
                          married + job_stability_t + contract + pref, data = dat),
-          estimand = "ACDE")
+          estimand = "SACDE")
 ```
 

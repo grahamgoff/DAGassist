@@ -69,10 +69,10 @@
 .dagassist_formula_for_model_name <- function(x, model_name) {
   
   # detect derived suffix
-  is_weighted <- grepl("\\((ATE|ATT)\\)\\s*$", model_name, ignore.case = TRUE)
-  is_acde <- grepl("\\((ACDE|CDE)\\)\\s*$", model_name, ignore.case = TRUE)
+  is_weighted <- grepl("\\((SATE|SATT)\\)\\s*$", model_name, ignore.case = TRUE)
+  is_acde <- grepl("\\((SACDE|SCDE)\\)\\s*$", model_name, ignore.case = TRUE)
   
-  base_name <- sub("\\s*\\((ATE|ATT|ACDE|CDE)\\)\\s*$", "", model_name, ignore.case = TRUE)
+  base_name <- sub("\\s*\\((SATE|SATT|SACDE|SCDE)\\)\\s*$", "", model_name, ignore.case = TRUE)
   
   # If ACDE model label, build sequential_g formula from the *base* model formula
   if (is_acde) {
@@ -167,17 +167,17 @@
   if (is.null(estimand)) return("RAW")
   est <- toupper(as.character(estimand))
   est <- match.arg(est,
-                   choices = c("RAW","NONE","ATE","ATT","ACDE","CDE"),
+                   choices = c("RAW","NONE","SATE","SATT","SACDE","SCDE"),
                    several.ok = TRUE)
   est[est == "NONE"] <- "RAW"
-  est[est == "CDE"]  <- "ACDE"
+  est[est == "SCDE"]  <- "SACDE"
   unique(est)
 }
 
 # ---- Normalize ACDE spec list ----
 .dagassist_normalize_acde_spec <- function(acde) {
   if (is.null(acde)) acde <- list()
-  if (!is.list(acde)) stop("`acde` must be a list.", call. = FALSE)
+  if (!is.list(acde)) stop("`sacde` must be a list.", call. = FALSE)
   defaults <- list(
     m = NULL,                 # mediators (character)
     x = NULL,                 # baseline covariates override (character)
@@ -210,7 +210,7 @@
   ests <- unique(.dagassist_normalize_estimand(estimand))
   
   # ACDE/CDE requires at least one mediator in the DAG / formula
-  wants_acde <- any(ests %in% c("ACDE", "CDE"))
+  wants_acde <- any(ests %in% c("SACDE", "SCDE"))
   if (isTRUE(wants_acde)) {
     has_med <- FALSE
     if (!is.null(roles)) {
@@ -224,11 +224,11 @@
     if (!isTRUE(has_med)) {
       stop(
         paste0(
-          "You requested estimand = 'ACDE' (alias: 'CDE'), but no mediator node(s) were detected in your DAG ",
+          "You requested estimand = 'SACDE' (alias: 'SCDE'), but no mediator node(s) were detected in your DAG ",
           "for this exposure/outcome pair.\n",
-          "ACDE/CDE is only defined when at least one mediator exists.\n\n",
+          "SACDE/SCDE is only defined when at least one mediator exists.\n\n",
           "Fix options:\n",
-          "  1) Use estimand = 'ATE'/'ATT' for total effects (when no mediators are present), OR\n",
+          "  1) Use estimand = 'SATE'/'SATT' for total effects (when no mediators are present), OR\n",
           "  2) Use estimand = 'RAW' to report the naive regression output.\n"
         ),
         call. = FALSE
@@ -238,7 +238,7 @@
   # allow ATE/ATT if formula includes mediators; will omit automatically
   if (!isTRUE(auto_acde)) return(estimand)
   
-  wants_total <- any(ests %in% c("ATE", "ATT"))
+  wants_total <- any(ests %in% c("SATE", "SATT"))
   if (!isTRUE(wants_total)) return(estimand)
   
   controls_mediator <- .dagassist_formula_controls_mediator(
@@ -299,7 +299,7 @@
 # Build sequential_g formula (y ~ A + X | Z | M)
 .dagassist_build_acde_formula <- function(base_fml, x, acde) {
   if (is.null(x$dag)) {
-    stop("ACDE requires storing the evaluated DAG on the report as `x$dag`.", call. = FALSE)
+    stop("SACDE requires storing the evaluated DAG on the report as `x$dag`.", call. = FALSE)
   }
   dag <- x$dag
   exp_nm <- get_by_role(x$roles, "exposure")
@@ -308,7 +308,7 @@
   # mediators
   m_terms <- .dagassist_infer_acde_mediators(x, acde)
   if (!length(m_terms)) {
-    stop("ACDE requested, but no mediator(s) could be inferred. Provide acde = list(m = c('M1','M2')).",
+    stop("SACDE requested, but no mediator(s) could be inferred. Provide sacde = list(m = c('M1','M2')).",
          call. = FALSE)
   }
   
@@ -338,7 +338,7 @@
   
   # define intermediate confounders according to Acharya, Blackwell and Sen (2016)
   # Z are post-treatment covariates affected by A (treatment) that affect both M and Y:
-  #  i.e., Z ∈ Desc(A) ∩ Anc(M) ∩ Anc(Y)
+  #  i.e., Z in Desc(A) intersect Anc(M) intersect Anc(Y)
   # and  exclude A, Y, and the mediator(s) themselves
   nodes <- names(dag)
   
@@ -375,7 +375,7 @@
   # if no mediators at this point, helpful error code
   if (!length(m_terms)) {
     stop(
-      "ACDE requested, but mediator terms are empty after internal filtering. ",
+      "SACDE requested, but mediator terms are empty after internal filtering. ",
       "This usually happens when DAGassist was called without `data=` (so `x$.__data` is NULL). ",
       "Either (i) call DAGassist(..., data = <your data.frame>), or (ii) provide `acde = list(m = ...)`.",
       call. = FALSE
@@ -434,7 +434,7 @@
 .dagassist_add_acde_models <- function(x, mods) {
   if (!requireNamespace("DirectEffects", quietly = TRUE)) {
     stop(
-      "Estimand recovery for ACDE/CDE requires the 'DirectEffects' package.\n",
+      "Estimand recovery for SACDE/SCDE requires the 'DirectEffects' package.\n",
       "Install it (install.packages('DirectEffects')) or set estimand = 'raw'.",
       call. = FALSE
     )
@@ -444,7 +444,7 @@
   if (is.null(data)) {
     stop(
       "Original data not found on the report object.\n",
-      "ACDE requires calling DAGassist() with the `data` argument.",
+      "SACDE requires calling DAGassist() with the `data` argument.",
       call. = FALSE
     )
   }
@@ -459,9 +459,9 @@
   if (!length(nms)) return(mods)
   
   # helpers
-  base_of <- function(nm) sub("\\s*\\((ATE|ATT|ACDE|CDE)\\)\\s*$", "", nm, ignore.case = TRUE)
-  is_acde <- function(nm) grepl("\\((ACDE|CDE)\\)\\s*$", nm, ignore.case = TRUE)
-  is_weighted <- function(nm) grepl("\\((ATE|ATT)\\)\\s*$", nm, ignore.case = TRUE)
+  base_of <- function(nm) sub("\\s*\\((SATE|SATT|SACDE|SCDE)\\)\\s*$", "", nm, ignore.case = TRUE)
+  is_acde <- function(nm) grepl("\\((SACDE|SCDE)\\)\\s*$", nm, ignore.case = TRUE)
+  is_weighted <- function(nm) grepl("\\((SATE|SATT)\\)\\s*$", nm, ignore.case = TRUE)
   
   # --- 1) Fit ACDE for each BASE spec (Original / Minimal k / Canonical / etc.) ---
   base_specs <- unique(base_of(nms[!is_acde(nms)]))
@@ -472,7 +472,7 @@
   
   for (b in base_specs) {
     # don't refit if it's already present
-    acde_name <- paste0(b, " ", .dagassist_model_name_labels("ACDE"))
+    acde_name <- paste0(b, " ", .dagassist_model_name_labels("SACDE"))
     if (acde_name %in% nms) next
     
     base_fml <- .dagassist_formula_for_model_name(x, b)
@@ -495,7 +495,7 @@
     
     # attach metadata for console printing later
     if (!inherits(fit, "DAGassist_fit_error")) {
-      attr(fit, "dagassist_estimand") <- "ACDE"
+      attr(fit, "dagassist_estimand") <- "SACDE"
       attr(fit, "dagassist_acde_spec") <- b
       attr(fit, "dagassist_acde_formula") <- f_acde
       attr(fit, "dagassist_fe_collinear_dropped") <- attr(
@@ -525,7 +525,7 @@
     
     b <- base_of(nm)
     if (!is.na(insert_after[b]) && i == insert_after[b] && !is.null(acde_fits[[b]])) {
-      acde_name <- paste0(b, " ", .dagassist_model_name_labels("ACDE"))
+      acde_name <- paste0(b, " ", .dagassist_model_name_labels("SACDE"))
       out[[acde_name]] <- acde_fits[[b]]
     }
   }
@@ -539,32 +539,33 @@
   if (!length(ests) || identical(ests, "RAW")) return(mods)
   
   out <- mods
-  # weights first (ATE/ATT)
-  if ("ATE" %in% ests) out <- .dagassist_add_weighted_models(x, out, estimand = "ATE")
-  if ("ATT" %in% ests) out <- .dagassist_add_weighted_models(x, out, estimand = "ATT")
+  # weights first (SATE/SATT)
+  if ("SATE" %in% ests) out <- .dagassist_add_weighted_models(x, out, estimand = "SATE")
+  if ("SATT" %in% ests) out <- .dagassist_add_weighted_models(x, out, estimand = "SATT")
   
   # ACDE last
-  if ("ACDE" %in% ests) out <- .dagassist_add_acde_models(x, out)
+  if ("SACDE" %in% ests) out <- .dagassist_add_acde_models(x, out)
   
   out
 }
 
 
 # Add weighted versions of each model column (ATE/ATT) using WeightIt
+# Key fix: compute weights *per model spec* (Minimal k vs Canonical, etc.)
+# and do NOT create "Original (ATE)" or "Original (ATT)" columns.
 .dagassist_add_weighted_models <- function(x, mods, estimand = NULL) {
-  # Use the estimand requested by the caller (ATE vs ATT). If not provided,
-  # fall back to whatever is stored on the report object.
+  
   ests <- .dagassist_normalize_estimand(
     if (!is.null(estimand)) estimand else x$settings$estimand
   )
   
-  # Weighting only applies to ATE/ATT. ACDE is handled elsewhere.
-  ests <- intersect(ests, c("ATE", "ATT"))
+  # Weighting only applies to total-effect estimands
+  ests <- intersect(ests, c("SATE", "SATT"))
   if (!length(ests)) return(mods)
   est <- ests[1L]
   
-  data <- x$.__data
-  if (is.null(data)) {
+  data0 <- x$.__data
+  if (is.null(data0)) {
     stop(
       "Original data not found on the report object.\n",
       "Estimand recovery requires calling DAGassist() with the `data` argument.",
@@ -573,10 +574,8 @@
   }
   
   exp_nm <- get_by_role(x$roles, "exposure")
+  out_nm <- get_by_role(x$roles, "outcome")
   
-  # only support a single binary exposure for estimand recovery. this will mostly
-  # apply to diff in diff. may need to add support to picking one exposure to 
-  # weight on (likely, the non-time one) after researching
   if (length(exp_nm) != 1L || is.na(exp_nm) || !nzchar(exp_nm)) {
     stop(
       "Estimand recovery currently supports exactly one exposure node.\n",
@@ -588,7 +587,7 @@
     )
   }
   
-  if (!exp_nm %in% names(data)) {
+  if (!exp_nm %in% names(data0)) {
     stop(
       "Exposure variable '", exp_nm, "' was identified in the DAG but not found in `data`.\n",
       "Please check that the DAG node names and data column names match.",
@@ -596,128 +595,30 @@
     )
   }
   
-  Tvar <- data[[exp_nm]]
-  kind <- .dagassist_exposure_kind(Tvar)
-  
-  # normalize and read weight args 
+  # Weight args: user-configurable, but filtered to WeightIt::weightit() formals
   wargs <- .dagassist_normalize_weights_args(x$settings$weights_args)
-  
-  if (kind %in% c("binary", "categorical", "continuous")) {
-    if (!requireNamespace("WeightIt", quietly = TRUE)) {
-      stop(
-        "Estimand recovery requires the 'WeightIt' package.\n",
-        "Install it (install.packages('WeightIt')) or set estimand = 'raw'.",
-        call. = FALSE
-      )
-    }
-  } else {
-    u <- try(sort(unique(stats::na.omit(Tvar))), silent = TRUE)
-    stop(
-      "Estimand recovery supports:\n",
-      "  * Binary exposures (0/1 numeric, logical, or 2-level factor)\n",
-      "  * Categorical exposures (factor/character or small-unique integer-like codes)\n",
-      "  * Continuous numeric exposures\n\n",
-      "Exposure '", exp_nm, "' is class: ", paste(class(Tvar), collapse = "/"),
-      if (!inherits(u, "try-error")) paste0("\nObserved values (unique): ", paste(u, collapse = ", ")) else "",
-      "\n\nPlease recode it or set estimand = 'raw'.",
-      call. = FALSE
-    )
-  }
-  
-  # choose controls for the treatment model
-  controls <- .dagassist_treatment_controls(x, exp_nm)
-  
-  # build treatment model: exposure ~ controls
-  if (length(controls)) {
-    rhs    <- paste(controls, collapse = " + ")
-    f_treat <- stats::as.formula(paste(exp_nm, "~", rhs))
-  } else {
-    # no controls: simple treated vs not-treated
-    f_treat <- stats::as.formula(paste(exp_nm, "~ 1"))
-  }
-  
-  # --- WeightIt backend for binary/categorical/continuous ---
-  # Optional: allow DAGassist-specific args in weights_args (not passed to WeightIt)
-  trim_at <- wargs[["trim_at"]]   # e.g., 0.99 to cap at 99th percentile
+  trim_at <- wargs[["trim_at"]]          # DAGassist-specific (optional)
   wargs[["trim_at"]] <- NULL
   
-  # For categorical-coded numerics, WeightIt behaves best if treatment is a factor
-  data_wt <- data
-  if (identical(kind, "categorical") && !is.factor(data_wt[[exp_nm]])) {
-    data_wt[[exp_nm]] <- factor(data_wt[[exp_nm]], ordered = TRUE)
-  }
-  
-  # Filter user-provided args to what WeightIt::weightit() accepts
-  fa <- .dagassist_filter_args(wargs, WeightIt::weightit)
-  if (length(fa$drop)) {
-    warning(
-      "Ignoring these weights_args for WeightIt::weightit(): ",
-      paste(fa$drop, collapse = ", "),
-      call. = FALSE
-    )
-  }
-  
-  # WeightIt: method="glm" supports binary, multi-category, and continuous treatments
-  # (continuous is GPS-style under the hood)
-  wtobj <- do.call(
-    WeightIt::weightit,
-    c(
-      list(
-        formula  = f_treat,
-        data     = data_wt,
-        method   = "glm",
-        estimand = est
-      ),
-      fa$keep
-    )
-  )
-  
-  w <- wtobj$weights
-  
-  # trim and cap weights
-  if (!is.null(trim_at)) {
-    if (!is.numeric(trim_at) || length(trim_at) != 1L || trim_at <= 0 || trim_at >= 1) {
-      stop("weights_args$trim_at must be a single number in (0, 1).", call. = FALSE)
-    }
-    # Prefer WeightIt::trim if available for numeric weights
-    if (requireNamespace("WeightIt", quietly = TRUE) && "trim" %in% getNamespaceExports("WeightIt")) {
-      w <- WeightIt::trim(w, at = trim_at)
-    } else {
-      cap <- as.numeric(stats::quantile(w, probs = trim_at, na.rm = TRUE, names = FALSE))
-      w <- pmin(w, cap)
-    }
-  }
-  
-  if (length(w) != nrow(data)) {
+  ##dependency checks for the ATE dependencies
+  if (!requireNamespace("WeightIt", quietly = TRUE)) {
     stop(
-      "WeightIt returned ", length(w), " weights for data with ",
-      nrow(data), " rows.\n",
-      "Please inspect the WeightIt object and your treatment model.",
+      "Estimand recovery requires the 'WeightIt' package.\n",
+      "Install it (install.packages('WeightIt')) or set estimand = 'raw'.",
       call. = FALSE
     )
   }
   
-  #diagnostics: effective sample size and extreme weights
-  w_ok <- stats::na.omit(w)
-  w_summary <- stats::quantile(
-    w_ok,
-    probs = c(0, 0.01, 0.05, 0.5, 0.95, 0.99, 1),
-    names = TRUE
-  )
-  
-  ess <- NA_real_
-  if (requireNamespace("WeightIt", quietly = TRUE) && "ESS" %in% getNamespaceExports("WeightIt")) {
-    ess <- tryCatch(WeightIt::ESS(w_ok), error = function(e) NA_real_)
+  if (!requireNamespace("marginaleffects", quietly = TRUE)) {
+    stop(
+      "Estimand recovery requires the 'marginaleffects' package.\n",
+      "Install it (install.packages('marginaleffects')) or set estimand = 'raw'.",
+      call. = FALSE
+    )
   }
   
-  attr(wtobj, "dagassist_weight_summary") <- w_summary
-  attr(wtobj, "dagassist_ess") <- ess
-  attr(wtobj, "dagassist_trim_at") <- trim_at
-  
-  # engine and engine_args from DAGassist() call, stored in settings
   engine <- x$settings$engine
   engine_args <- x$settings$engine_args
-  
   if (is.null(engine)) {
     stop(
       "Modeling engine not found on the report object.\n",
@@ -725,44 +626,206 @@
       call. = FALSE
     )
   }
-  
   if (!is.list(engine_args)) engine_args <- list()
   
-  # add weights to engine_args (weights override any existing entry)
-  engine_args_w <- utils::modifyList(engine_args, list(weights = w))
-  
-  # fit weighted versions for each model using the same engine 
-  weighted_mods <- list()
-  for (nm in names(mods)) {
-    fml <- .dagassist_formula_for_model_name(x, nm)
-    if (is.null(fml)) next
-    fit_w <- .safe_fit(engine, fml, data, engine_args_w)
-    weighted_mods[[nm]] <- fit_w
+  # --- helper: compute weights and fit one weighted spec on complete-case data ---
+  .fit_weighted_one <- function(model_name) {
+    
+    # Do NOT produce "Original (ATE)/(ATT)" columns
+    if (identical(model_name, "Original")) return(NULL)
+    
+    fml <- .dagassist_formula_for_model_name(x, model_name)
+    if (is.null(fml)) return(NULL)
+    
+    # Controls for the treatment model come from *this model's* RHS (minus X and Y)
+    rhs <- .rhs_terms_safe(fml)
+    controls <- setdiff(rhs, c(exp_nm, out_nm))
+    controls <- intersect(controls, names(data0))
+    controls <- unique(controls)
+    
+    # Build treatment formula: X ~ controls (or ~1 if none)
+    if (length(controls)) {
+      f_treat <- stats::as.formula(paste(exp_nm, "~", paste(controls, collapse = " + ")))
+    } else {
+      f_treat <- stats::as.formula(paste(exp_nm, "~ 1"))
+    }
+    
+    # Build complete-case analytic data for THIS spec.
+    # Use variables needed for treatment + outcome model evaluation.
+    base_fml <- .strip_fixest_parts(fml)$base
+    vars_need <- unique(c(all.vars(base_fml), exp_nm, out_nm, controls))
+    vars_need <- intersect(vars_need, names(data0))
+    
+    data_cc <- stats::na.omit(data0[, vars_need, drop = FALSE])
+    if (!nrow(data_cc)) return(NULL)
+    
+    # Determine exposure kind on this model's analytic sample
+    kind <- .dagassist_exposure_kind(data_cc[[exp_nm]])
+    if (!kind %in% c("binary", "categorical", "continuous")) {
+      u <- try(sort(unique(stats::na.omit(data_cc[[exp_nm]]))), silent = TRUE)
+      stop(
+        "Estimand recovery supports:\n",
+        "  * Binary exposures (0/1 numeric, logical, or 2-level factor)\n",
+        "  * Categorical exposures (factor/character or small-unique integer-like codes)\n",
+        "  * Continuous numeric exposures\n\n",
+        "Exposure '", exp_nm, "' is class: ", paste(class(data_cc[[exp_nm]]), collapse = "/"),
+        if (!inherits(u, "try-error")) paste0("\nObserved values (unique): ", paste(u, collapse = ", ")) else "",
+        "\n\nPlease recode it or set estimand = 'raw'.",
+        call. = FALSE
+      )
+    }
+    
+    # WeightIt sometimes behaves better with ordered factors for categorical-coded numerics
+    data_wt <- data_cc
+    if (identical(kind, "categorical") && !is.factor(data_wt[[exp_nm]])) {
+      data_wt[[exp_nm]] <- factor(data_wt[[exp_nm]], ordered = TRUE)
+    }
+    
+    # Filter args -> only those accepted by WeightIt::weightit()
+    fa <- .dagassist_filter_args(wargs, WeightIt::weightit)
+    if (length(fa$drop)) {
+      warning(
+        "Ignoring these weights_args for WeightIt::weightit(): ",
+        paste(fa$drop, collapse = ", "),
+        call. = FALSE
+      )
+    }
+    
+    #changed internal and display terminology from ATE->SATE; cannot pass
+    #directly to weigtit, which does not recognize an SATE estimand parameter
+    #will probably need to change this bandaid later when I add EV and ATE is a valid 
+    #parameter. 
+    est_wt <- switch(
+      toupper(est),
+      SATE = "ATE",
+      SATT = "ATT",
+      toupper(est)
+    )
+    
+    # run weightit, but keep its warnings out of the dagassist console to 
+    # reduce clutter and confusion
+    wtobj <- suppressWarnings(
+      do.call(
+        WeightIt::weightit,
+        c(
+          list(
+            formula = f_treat,
+            data = data_wt,
+            method = "glm",
+            estimand = est_wt
+          ),
+          fa$keep
+        )
+      )
+    )
+    
+    w <- wtobj$weights
+    
+    # Optional trimming/capping
+    if (!is.null(trim_at)) {
+      if (!is.numeric(trim_at) || length(trim_at) != 1L || trim_at <= 0 || trim_at >= 1) {
+        stop("weights_args$trim_at must be a single number in (0, 1).", call. = FALSE)
+      }
+      if ("trim" %in% getNamespaceExports("WeightIt")) {
+        w <- WeightIt::trim(w, at = trim_at)
+      } else {
+        cap <- as.numeric(stats::quantile(w, probs = trim_at, na.rm = TRUE, names = FALSE))
+        w <- pmin(w, cap)
+      }
+    }
+    
+    if (length(w) != nrow(data_cc)) {
+      stop(
+        "WeightIt returned ", length(w), " weights for data with ",
+        nrow(data_cc), " rows.\n",
+        "This indicates a mismatch between the analytic sample and WeightIt's internal sample.\n",
+        "Inspect the treatment model and missingness in controls.",
+        call. = FALSE
+      )
+    }
+    
+    # Fit weighted version of THIS model on THIS model’s CC data
+    engine_args_w <- utils::modifyList(engine_args, list(weights = w))
+    #specifically suppress binomial warning, which won't be caught in the prior
+    #warning suppression. it may be classed as a message or something.
+    fit_w <- withCallingHandlers(
+      .safe_fit(engine, fml, data_cc, engine_args_w),
+      warning = function(wrn) {
+        msg <- conditionMessage(wrn)
+        if (grepl("non-integer #successes in a binomial glm", msg, fixed = TRUE)) {
+          invokeRestart("muffleWarning")
+        }
+      }
+    )
+    
+    # IMPORTANT: for the model comparison table, store marginaleffects output
+    # (response-scale average comparisons) rather than the weighted log-odds model.
+    me <- tryCatch(
+      marginaleffects::avg_comparisons(
+        fit_w,
+        type = "response",
+        wts  = w
+      ),
+      error = function(e) fit_w
+    )
+    
+    if (!inherits(me, "DAGassist_fit_error")) {
+      # If exposure is multi-level, avg_comparisons can return multiple contrasts.
+      # Keep only the first exposure contrast so the comparison table stays stable.
+      if ("term" %in% names(me) && any(me$term == exp_nm)) {
+        rows_exp <- which(me$term == exp_nm)
+        if (length(rows_exp) > 1L) {
+          me <- me[setdiff(seq_len(nrow(me)), rows_exp[-1L]), , drop = FALSE]
+          warning(
+            sprintf(
+              "Exposure '%s' has >2 levels; keeping only the first contrast in the (%s) column. To obtain all contrasts, call marginaleffects::avg_comparisons(attr(<this column object>, 'dagassist_weighted_fit'), type='response', wts=attr(<this column object>, 'dagassist_weights')).",
+              exp_nm, est
+            ),
+            call. = FALSE
+          )
+        }
+      }
+      
+      # Preserve metadata for diagnostics/debugging
+      attr(me, "dagassist_estimand") <- est
+      attr(me, "dagassist_weightit") <- wtobj
+      attr(me, "dagassist_treat_formula") <- f_treat
+      attr(me, "dagassist_trim_at") <- trim_at
+      attr(me, "dagassist_weights") <- w
+      attr(me, "dagassist_weighted_fit") <- fit_w
+    }
+    
+    me
   }
   
-  est_label <- paste0(" (", est, ")")
-  mods_out  <- list()
+  # Compute weighted fit per spec
+  weighted_mods <- list()
+  for (nm in names(mods)) {
+    fit_w <- .fit_weighted_one(nm)
+    if (!is.null(fit_w)) weighted_mods[[nm]] <- fit_w
+  }
   
+  # Splice weighted columns in directly after their base column
+  est_label <- paste0(" (", est, ")")
+  mods_out <- list()
   for (nm in names(mods)) {
     mods_out[[nm]] <- mods[[nm]]
     if (!is.null(weighted_mods[[nm]])) {
-      new_name <- paste0(nm, est_label)
-      mods_out[[new_name]] <- weighted_mods[[nm]]
+      mods_out[[paste0(nm, est_label)]] <- weighted_mods[[nm]]
     }
   }
   
   mods_out
 }
-
 #labels for weight columns
 .dagassist_model_name_labels <- function(estimand) {
   est <- toupper(as.character(estimand))
   switch(
     est,
-    ATE  = "(ATE)",
-    ATT  = "(ATT)",
-    ACDE = "(ACDE)",
-    CDE  = "(ACDE)",   # alias
+    ATE  = "(SATE)",
+    ATT  = "(SATT)",
+    ACDE = "(SACDE)",
+    CDE  = "(SACDE)",   # alias
     RAW  = "",
     NONE = "",
     ""
@@ -809,7 +872,7 @@
   )
   
   paste0(
-    "ACDE fit aborted before calling DirectEffects::sequential_g().\n\n",
+    "SACDE fit aborted before calling DirectEffects::sequential_g().\n\n",
     "Reason:\n",
     "  At least one mediator is non-numeric (factor/character/logical).\n",
     "  DirectEffects::sequential_g() can throw `subscript out of bounds` in this case, ",
@@ -822,6 +885,6 @@
     "  2) One-hot encode multi-category mediators into numeric dummy columns, then pass\n",
     "     those dummy names explicitly via `acde = list(m = c(\"M1\",\"M2\", ...))`. \n",
     "     Either ensure your DAG nodes match those column names, or use imply = FALSE to prevent mismatch issues. \n",
-    "  3) Exclude the categorical mediator(s) from ACDE by explicitly setting `acde$m`.\n"
+    "  3) Exclude the categorical mediator(s) from SACDE by explicitly setting `sacde$m`.\n"
   )
 }

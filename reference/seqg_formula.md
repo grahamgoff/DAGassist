@@ -14,7 +14,7 @@ where:
 - `M` are mediators (blip-down model terms).
 
 If `formula` is provided, `X` is (by default) constrained to the RHS
-terms that appear in that base formula (mirroring DAGassist’s current
+terms that appear in that base formula (mirroring DAGassist's current
 ACDE construction).
 
 ## Usage

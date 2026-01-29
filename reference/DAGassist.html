@@ -68,7 +68,7 @@ XLSX, plain text). It also supports passing a <strong>single engine call</strong
 <span>  omit_intercept <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  omit_factors <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  bivariate <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  estimand <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"raw"</span>, <span class="st">"none"</span>, <span class="st">"ATE"</span>, <span class="st">"ATT"</span>, <span class="st">"ACDE"</span>, <span class="st">"CDE"</span><span class="op">)</span>,</span>
+<span>  estimand <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"raw"</span>, <span class="st">"none"</span>, <span class="st">"SATE"</span>, <span class="st">"SATT"</span>, <span class="st">"SACDE"</span>, <span class="st">"SCDE"</span><span class="op">)</span>,</span>
 <span>  engine_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  weights_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  auto_acde <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -192,9 +192,9 @@ in the comparison table <strong>in addition</strong> to the user's original and 
 
 <dt id="arg-estimand">estimand<a class="anchor" aria-label="anchor" href="#arg-estimand"></a></dt>
 <dd><p>Character; causal estimand. Currently only
-supported for <code>type = "console"</code>. One of <code>"raw"</code> (default), <code>"ATE"</code>, <code>"ATT"</code>, or <code>"ACDE"</code>;
+supported for <code>type = "console"</code>. One of <code>"raw"</code> (default), <code>"SATE"</code>, <code>"SATT"</code>, or <code>"SACDE"</code>;
 uses the <span class="pkg">WeightIt</span> package to add weighted versions of each comparison
-model as additional columns. For models with mediators, <code>"ACDE"</code> links
+model as additional columns. For models with mediators, <code>"SACDE"</code> links
 to the <span class="pkg">DirectEffects</span> to for a controlled direct effect via sequential g-estimation.</p></dd>
 
 
@@ -216,7 +216,7 @@ for a model without mediators.</p></dd>
 
 
 <dt id="arg-acde">acde<a class="anchor" aria-label="anchor" href="#arg-acde"></a></dt>
-<dd><p>List; options for the controlled direct effect workflow (estimands <code>"ACDE"</code>/<code>"CDE"</code>).
+<dd><p>List; options for the controlled direct effect workflow (estimands <code>"SACDE"</code>/<code>"SCDE"</code>).
 Users can override parts of the sequential g-estimation specification with named elements:
 <code>m</code> (mediators), <code>x</code> (baseline covariates), <code>z</code> (intermediate covariates),
 <code>fe</code> (fixed-effects variables), <code>fe_as_factor</code> (wrap <code>fe</code> as <code><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor()</a></code>), and
@@ -440,7 +440,7 @@ exporters in <code>report_*</code> modules.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> A         nco                                                                               x  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> B         nco                                                                               x  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Roles legend: Exp. = exposure/treatment; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

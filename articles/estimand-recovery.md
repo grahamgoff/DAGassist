@@ -39,9 +39,6 @@ using a simulated dataset.
 | contract   | factor  | Temporary:1905 Permanent:1810 Informal:1285             |
 | edu_degree | factor  | HS_grad:1610 Some_college:1390 BA:975 (Other):1025      |
 
-    #> Warning: Removed 1 row containing missing values or values outside the scale range
-    #> (`geom_dag_point()`).
-
 ![\*Example: The Causal Effects of Family Background and Life Course
 Events on Fertility
 Patterns\*](estimand-recovery_files/figure-html/example-dag-1.png)

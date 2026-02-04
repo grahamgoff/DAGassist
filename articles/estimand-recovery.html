@@ -247,9 +247,7 @@ using a simulated dataset.</p>
 <td align="left">HS_grad:1610 Some_college:1390 BA:975 (Other):1025</td>
 </tr>
 </tbody>
-</table></details><pre><code><span><span class="co">#&gt; Warning: Removed 1 row containing missing values or values outside the scale range</span></span>
-<span><span class="co">#&gt; (`geom_dag_point()`).</span></span></code></pre>
-<div class="figure">
+</table></details><div class="figure">
 <img src="estimand-recovery_files/figure-html/example-dag-1.png" class="r-plt" alt="*Example: The Causal Effects of Family Background and Life Course Events on Fertility Patterns*" width="768"><p class="caption">
 <em>Example: The Causal Effects of Family Background and Life Course
 Events on Fertility Patterns</em>
@@ -273,7 +271,7 @@ effect using sequential g-estimation via integration with the
 <p>Using the prior example, we can use <code>DAGassist</code> to
 estimate the effect of years of education on a person’s number of
 children, except through birth control, income, and marital status.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mattblackwell.github.io/DirectEffects/" class="external-link">DirectEffects</a></span><span class="op">)</span></span>
 <span><span class="co">#&gt; Registered S3 method overwritten by 'DirectEffects':</span></span>
 <span><span class="co">#&gt;   method    from     </span></span>

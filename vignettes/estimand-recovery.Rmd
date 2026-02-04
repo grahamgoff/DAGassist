@@ -612,7 +612,7 @@ knitr::kable(tabs$categorical, align = "l")
 ```
 </details>
 
-```{r example-dag, echo=FALSE, message=FALSE, fig.width=8, fig.height=5, fig.cap="*Example: The Causal Effects of Family Background and Life Course Events on Fertility Patterns*"}
+```{r example-dag, echo=FALSE, message=FALSE, fig.width=8, fig.height=5, warning=FALSE, fig.cap="*Example: The Causal Effects of Family Background and Life Course Events on Fertility Patterns*"}
 library(dagitty)
 library(ggdag)
 library(tidyverse)

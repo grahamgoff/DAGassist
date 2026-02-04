@@ -1,56 +1,56 @@
 # weights.R
 #
 # Estimand recovery helpers
-
 .dagassist_exposure_kind <- function(Tvar,
                                      max_categorical_unique = 10L,
                                      integer_tol = sqrt(.Machine$double.eps)) {
+  ##is treatment binary, categorical, or unsupported?
+  #if treatment is null, fail gracefully
   if (is.null(Tvar)) return("unsupported")
-  
+  #also, if null after dropping nas
   v <- stats::na.omit(Tvar)
   if (!length(v)) return("unsupported")
-  
-  # logical -> binary
+  # logical -> binary 
   if (is.logical(v)) return("binary")
-  
   # character -> categorical
   if (is.character(v)) v <- factor(v)
-  
   # factor -> binary vs categorical
   if (is.factor(v)) {
     k <- nlevels(v)
-    if (k == 2L) return("binary")
-    if (k >= 3L) return("categorical")
-    return("unsupported")
+    if (k == 2L) return("binary") #if 2 level factor, treat as binary
+    if (k >= 3L) return("categorical") #if more than 2, categorical
+    return("unsupported") #else, fail
   }
-  
+  ##is treatment continuous or binary?
   # numeric/integer -> binary vs categorical vs continuous
   if (is.numeric(v) || inherits(v, "integer")) {
     u <- sort(unique(v))
     k <- length(u)
-    
+    #scan for 1s and 0s for binary classification
     if (k == 2L && all(u %in% c(0, 1))) return("binary")
-    
     # "coded categories" heuristic: small unique & integer-like values
     integer_like <- all(abs(u - round(u)) < integer_tol)
     if (k >= 3L && k <= max_categorical_unique && integer_like) {
       return("categorical")
     }
-    
+    #after filtering for other types, code as continuous if more than 3 unique
     if (k >= 3L) return("continuous")
   }
-  
+  #if none of the above apply, fail
   "unsupported"
 }
 
+#filter out incorrect weights args
 .dagassist_normalize_weights_args <- function(args) {
+  #return empty list if null
   if (is.null(args)) return(list())
+  #if non-empty and not a list, helpful fail
   if (!is.list(args)) stop("`weights_args` must be a list.", call. = FALSE)
-
+  #return val
   args
 }
 
-# Keep only args that are formal arguments of `fun`; return list(keep=..., drop=...)
+#keep only args that match internal formal arguments; return list(keep=..., drop=...)
 .dagassist_filter_args <- function(args, fun) {
   if (length(args) == 0L) return(list(keep = list(), drop = character(0)))
   
@@ -67,11 +67,10 @@
 }
 
 .dagassist_formula_for_model_name <- function(x, model_name) {
-  
-  # detect derived suffix
+  #parse model name for estimand type
   is_weighted <- grepl("\\((SATE|SATT)\\)\\s*$", model_name, ignore.case = TRUE)
   is_acde <- grepl("\\((SACDE|SCDE)\\)\\s*$", model_name, ignore.case = TRUE)
-  
+  #strip away the estimand notation to get the baseline model name
   base_name <- sub("\\s*\\((SATE|SATT|SACDE|SCDE)\\)\\s*$", "", model_name, ignore.case = TRUE)
   
   # If ACDE model label, build sequential_g formula from the *base* model formula
@@ -133,7 +132,6 @@
   
   NULL
 }
-
 
 # Choose controls for the treatment model
 .dagassist_treatment_controls <- function(x, exposure) {
@@ -652,11 +650,30 @@
     
     # Build complete-case analytic data for THIS spec.
     # Use variables needed for treatment + outcome model evaluation.
+    # Build complete-case analytic data for THIS spec.
+    # Keep vars needed for treatment + outcome + clustering.
     base_fml <- .strip_fixest_parts(fml)$base
     vars_need <- unique(c(all.vars(base_fml), exp_nm, out_nm, controls))
+    
+    # --- keep cluster vars if cluster is a formula or a column name ---
+    cluster_vars <- character(0)
+    
+    if ("cluster" %in% names(engine_args)) {
+      cl <- engine_args$cluster
+      if (inherits(cl, "formula")) cluster_vars <- all.vars(cl)
+      if (is.character(cl) && length(cl) == 1L) cluster_vars <- cl
+    }
+    if ("clusters" %in% names(engine_args)) {
+      cl <- engine_args$clusters
+      if (inherits(cl, "formula")) cluster_vars <- c(cluster_vars, all.vars(cl))
+      if (is.character(cl) && length(cl) == 1L) cluster_vars <- c(cluster_vars, cl)
+    }
+    
+    vars_need <- unique(c(vars_need, cluster_vars))
     vars_need <- intersect(vars_need, names(data0))
     
     data_cc <- stats::na.omit(data0[, vars_need, drop = FALSE])
+    
     if (!nrow(data_cc)) return(NULL)
     
     # Determine exposure kind on this model's analytic sample

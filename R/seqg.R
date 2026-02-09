@@ -663,14 +663,29 @@ glance.dagassist_seqg <- function(x, ...) {
     )
   }
   
-  # Create centered and squared mediator columns inside data_cc
+  # Create centered mediator columns; add squared term ONLY when mediator is non-binary
   m_poly_terms <- character(0)
+  
   for (m in m_terms) {
-    mc  <- paste0(m, "_c")
-    mc2 <- paste0(m, "_c2")
-    data_cc[[mc]]  <- data_cc[[m]] - mean(data_cc[[m]], na.rm = TRUE)
-    data_cc[[mc2]] <- data_cc[[mc]]^2
-    m_poly_terms <- c(m_poly_terms, mc, mc2)
+    x <- data_cc[[m]]
+    
+    # unique non-missing support
+    u <- unique(x[is.finite(x)])
+    k <- length(u)
+    
+    # drop constant mediators entirely (they contribute nothing and can cause singularity noise)
+    if (k <= 1L) next
+    
+    mc <- paste0(m, "_c")
+    data_cc[[mc]] <- x - mean(x, na.rm = TRUE)
+    m_poly_terms <- c(m_poly_terms, mc)
+    
+    # only include quadratic term for genuinely multi-valued mediators
+    if (k > 2L) {
+      mc2 <- paste0(m, "_c2")
+      data_cc[[mc2]] <- data_cc[[mc]]^2
+      m_poly_terms <- c(m_poly_terms, mc2)
+    }
   }
   
   # Rebuild seqg formula: same blocks, but mediator block uses poly terms
@@ -759,9 +774,16 @@ glance.dagassist_seqg <- function(x, ...) {
     attr(V_w,   "df") <- df_cl
     
   } else {
-    # No cluster requested: use DirectEffects default (two-stage) variance
-    V_raw <- stats::vcov(seqg_raw)
-    V_w   <- stats::vcov(seqg_w)
+    # No cluster requested:
+    # Don't rely on vcov.seqg being registered; use our two-stage sandwich via
+    # "individual clusters" (matches DirectEffects default in .validate_vcov()).
+    n_raw <- .seqg_n(seqg_raw)
+    n_w   <- .seqg_n(seqg_w)
+    
+    V_raw <- .dagassist_vcov_seqg_clustered(seqg_raw, cluster = seq_len(n_raw),
+                                            type = "CR0", hc = "HC1")
+    V_w   <- .dagassist_vcov_seqg_clustered(seqg_w,   cluster = seq_len(n_w),
+                                            type = "CR0", hc = "HC1")
   }
   
   # Wrap models (use robust n)

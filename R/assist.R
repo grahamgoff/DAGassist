@@ -1,14 +1,12 @@
-#' Generate a (console/LaTeX/word/excel/txt) report classifying nodes and comparing models
+#' Generate and/or export report classifying nodes and comparing models
 #'
 #' `DAGassist()` validates a DAG + model specification, classifies node roles,
 #' builds minimal and canonical adjustment sets, fits comparable models, and
 #' renders a compact report in several formats (console, LaTeX fragment, DOCX,
-#' XLSX, plain text). It also supports passing a **single engine call** (e.g.
-#' `feols(Y ~ X + Z | fe, data = df)`) instead of a plain formula.
+#' XLSX, plain text). It also supports recovering new estimands, such as the
+#' sample average treatment effect (SATE) or the sample average controlled direct 
+#' effect (SACDE).
 #' 
-#' In addition to tabular export formats, you can create a dot-whisker plot
-#' (via `type = "dwplot"` or `type = "dotwhisker"`) for the model comparison.
-#'
 #' @param dag A **dagitty** object (see [dagitty::dagitty()]).
 #' @param formula Either (a) a standard model formula `Y ~ X + ...`, or
 #'   (b) a single **engine call** such as `feols(Y ~ X + Z | fe, data = df, ...)`.

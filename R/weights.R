@@ -1,56 +1,56 @@
 # weights.R
 #
 # Estimand recovery helpers
-
 .dagassist_exposure_kind <- function(Tvar,
                                      max_categorical_unique = 10L,
                                      integer_tol = sqrt(.Machine$double.eps)) {
+  ##is treatment binary, categorical, or unsupported?
+  #if treatment is null, fail gracefully
   if (is.null(Tvar)) return("unsupported")
-  
+  #also, if null after dropping nas
   v <- stats::na.omit(Tvar)
   if (!length(v)) return("unsupported")
-  
-  # logical -> binary
+  # logical -> binary 
   if (is.logical(v)) return("binary")
-  
   # character -> categorical
   if (is.character(v)) v <- factor(v)
-  
   # factor -> binary vs categorical
   if (is.factor(v)) {
     k <- nlevels(v)
-    if (k == 2L) return("binary")
-    if (k >= 3L) return("categorical")
-    return("unsupported")
+    if (k == 2L) return("binary") #if 2 level factor, treat as binary
+    if (k >= 3L) return("categorical") #if more than 2, categorical
+    return("unsupported") #else, fail
   }
-  
+  ##is treatment continuous or binary?
   # numeric/integer -> binary vs categorical vs continuous
   if (is.numeric(v) || inherits(v, "integer")) {
     u <- sort(unique(v))
     k <- length(u)
-    
+    #scan for 1s and 0s for binary classification
     if (k == 2L && all(u %in% c(0, 1))) return("binary")
-    
     # "coded categories" heuristic: small unique & integer-like values
     integer_like <- all(abs(u - round(u)) < integer_tol)
     if (k >= 3L && k <= max_categorical_unique && integer_like) {
       return("categorical")
     }
-    
+    #after filtering for other types, code as continuous if more than 3 unique
     if (k >= 3L) return("continuous")
   }
-  
+  #if none of the above apply, fail
   "unsupported"
 }
 
+#filter out incorrect weights args
 .dagassist_normalize_weights_args <- function(args) {
+  #return empty list if null
   if (is.null(args)) return(list())
+  #if non-empty and not a list, helpful fail
   if (!is.list(args)) stop("`weights_args` must be a list.", call. = FALSE)
-
+  #return val
   args
 }
 
-# Keep only args that are formal arguments of `fun`; return list(keep=..., drop=...)
+#keep only args that match internal formal arguments; return list(keep=..., drop=...)
 .dagassist_filter_args <- function(args, fun) {
   if (length(args) == 0L) return(list(keep = list(), drop = character(0)))
   
@@ -67,11 +67,10 @@
 }
 
 .dagassist_formula_for_model_name <- function(x, model_name) {
-  
-  # detect derived suffix
+  #parse model name for estimand type
   is_weighted <- grepl("\\((SATE|SATT)\\)\\s*$", model_name, ignore.case = TRUE)
   is_acde <- grepl("\\((SACDE|SCDE)\\)\\s*$", model_name, ignore.case = TRUE)
-  
+  #strip away the estimand notation to get the baseline model name
   base_name <- sub("\\s*\\((SATE|SATT|SACDE|SCDE)\\)\\s*$", "", model_name, ignore.case = TRUE)
   
   # If ACDE model label, build sequential_g formula from the *base* model formula
@@ -133,7 +132,6 @@
   
   NULL
 }
-
 
 # Choose controls for the treatment model
 .dagassist_treatment_controls <- function(x, exposure) {
@@ -296,255 +294,16 @@
   terms
 }
 
-# Build sequential_g formula (y ~ A + X | Z | M)
-.dagassist_build_acde_formula <- function(base_fml, x, acde) {
-  if (is.null(x$dag)) {
-    stop("SACDE requires storing the evaluated DAG on the report as `x$dag`.", call. = FALSE)
-  }
-  dag <- x$dag
-  exp_nm <- get_by_role(x$roles, "exposure")
-  out_nm <- get_by_role(x$roles, "outcome")
-  
-  # mediators
-  m_terms <- .dagassist_infer_acde_mediators(x, acde)
-  if (!length(m_terms)) {
-    stop("SACDE requested, but no mediator(s) could be inferred. Provide sacde = list(m = c('M1','M2')).",
-         call. = FALSE)
-  }
-  
-  # strip fixest/random-effects tails from base formula (sequential_g uses | separators)
-  sp <- .strip_fixest_parts(base_fml)
-  base <- sp$base
-  
-  rhs_terms <- .rhs_terms_safe(base)  # term labels (includes exposure if present)
-  rhs_terms <- unique(rhs_terms)
-  ## sequential g is structured as (original|intermediate confounders|mediators)
-  ## here, i initially coded all mediators as coming in the third category,
-  ## which always led to an empty intermediate confounders set
-  ## instead, need to differentiate simple mediators from mediators that are ancestors
-  ## of other mediators. the latter will go in the middle bucket as intermediate confounders
-  # rhs_terms is for the current base formula (Original/Minimal/Canonical).
-  # mediators must come from the original model, or min/can will auto-drop and crash
-  sp_orig <- .strip_fixest_parts(x$formulas$original)
-  rhs_terms_orig <- unique(.rhs_terms_safe(sp_orig$base))
-  
-  m_terms <- intersect(m_terms, rhs_terms_orig)
-  
-  descA <- .dagassist_safe_descendants(dag, exp_nm)
-  ancY  <- .dagassist_safe_ancestors(dag, out_nm)
-  
-  #  compute ancM using the final mediator set
-  ancM <- unique(unlist(lapply(m_terms, function(m) .dagassist_safe_ancestors(dag, m))))
-  
-  # define intermediate confounders according to Acharya, Blackwell and Sen (2016)
-  # Z are post-treatment covariates affected by A (treatment) that affect both M and Y:
-  #  i.e., Z in Desc(A) intersect Anc(M) intersect Anc(Y)
-  # and  exclude A, Y, and the mediator(s) themselves
-  nodes <- names(dag)
-  
-  cand <- setdiff(nodes, c(exp_nm, out_nm, m_terms))
-  
-  z_auto <- intersect(cand, descA)
-  z_auto <- intersect(z_auto, ancY)
-  z_auto <- intersect(z_auto, ancM)
-  
-  # drop post-mediator nodes
-  descM <- unique(unlist(lapply(m_terms, function(m) .dagassist_safe_descendants(dag, m))))
-  z_auto <- setdiff(z_auto, descM)
-  
-  z_auto <- unique(z_auto)
-  
-  # user override
-  if (!is.null(acde$z)) z_terms <- unique(as.character(acde$z)) else z_terms <- z_auto
-  #force exclude exposure from z
-  z_terms <- setdiff(z_terms, exp_nm)
-  # X: everything else (excluding exposure, mediators, Z)
-  x_auto <- setdiff(rhs_terms, c(exp_nm, m_terms, z_terms))
-  if (!is.null(acde$x)) x_terms <- unique(as.character(acde$x)) else x_terms <- x_auto
-  #only validate term existence against data if DAGassist has a data.frame stored.
-  #in most cases, this will not be used because most users will just include
-  #data arg inside regression call
-  data_names <- NULL
-  if (!is.null(x$.__data) && is.data.frame(x$.__data)) {
-    data_names <- names(x$.__data)
-    # Drop non-data term strings 
-    x_terms <- .dagassist_terms_must_use_data(x_terms, data_names)
-    z_terms <- .dagassist_terms_must_use_data(z_terms, data_names)
-    m_terms <- .dagassist_terms_must_use_data(m_terms, data_names)
-  }
-  # if no mediators at this point, helpful error code
-  if (!length(m_terms)) {
-    stop(
-      "SACDE requested, but mediator terms are empty after internal filtering. ",
-      "This usually happens when DAGassist was called without `data=` (so `x$.__data` is NULL). ",
-      "Either (i) call DAGassist(..., data = <your data.frame>), or (ii) provide `acde = list(m = ...)`.",
-      call. = FALSE
-    )
-  }
-  
-  fe_vars <- .dagassist_extract_fe_vars(base_fml)
-  if (!is.null(acde$fe) && length(acde$fe)) {
-    # allow user override: accept vars or terms; coerce to character and merge
-    fe_vars <- unique(c(fe_vars, as.character(acde$fe)))
-  }
-  #strip any weird junk from acde internal params
-  fe_vars <- setdiff(fe_vars, c("TRUE","FALSE","T","F","1","0"))
-  if (length(fe_vars)) {
-    if (isTRUE(acde$fe_as_factor)) {
-      fe_terms <- .dagassist_factorize_plain_terms(fe_vars, data_names = data_names)
-    } else {
-      fe_terms <- fe_vars
-    }
-    x_terms <- unique(c(x_terms, fe_terms))
-  }
-  # Drop any baseline/intermediate covariates that are collinear with FE
-  # (e.g., time-invariant within unit when unit FE are included).
-  #fixest does this automatically and gracefully; DirectEffects does not. without
-  #something like this, collinearity breaks seqg
-  ##dropped_fe must exist even if no FE or it breaks
-  dropped_fe <- character(0)
-  if (length(fe_vars)) {
-    dx <- .dagassist_drop_terms_collinear_with_fe(x_terms, x$.__data, fe_vars)
-    x_terms <- dx$keep
-    
-    dz <- .dagassist_drop_terms_collinear_with_fe(z_terms, x$.__data, fe_vars)
-    z_terms <- dz$keep
-    
-    # collect for printer method
-    dropped_fe <- unique(c(dx$dropped, dz$dropped))
-  }
-  # Build text formula
-  # First block always includes exposure; append X if any
-  block1 <- paste(c(exp_nm, x_terms), collapse = " + ")
-  if (!nzchar(block1)) block1 <- exp_nm
-  ##set to 0 instead of 1 because 1 trips singularity in first stage, causing summary() to fail
-  blockZ <- if (length(z_terms)) paste(z_terms, collapse = " + ") else "0"
-  blockM <- paste(m_terms, collapse = " + ")
-  
-  f_txt <- paste0(out_nm, " ~ ", block1, " | ", blockZ, " | ", blockM)
-  #cache for printer later
-  f_acde <- stats::as.formula(f_txt, env = environment(base_fml))
-  attr(f_acde, "dagassist_fe_collinear_dropped") <- dropped_fe
-  # store mediator terms for guardrails 
-  attr(f_acde, "dagassist_acde_m_terms") <- m_terms
-  f_acde
-}
-
-# ---- Add ACDE models (sequential g-estimation) ----
-.dagassist_add_acde_models <- function(x, mods) {
-  if (!requireNamespace("DirectEffects", quietly = TRUE)) {
-    stop(
-      "Estimand recovery for SACDE/SCDE requires the 'DirectEffects' package.\n",
-      "Install it (install.packages('DirectEffects')) or set estimand = 'raw'.",
-      call. = FALSE
-    )
-  }
-  
-  data <- x$.__data
-  if (is.null(data)) {
-    stop(
-      "Original data not found on the report object.\n",
-      "SACDE requires calling DAGassist() with the `data` argument.",
-      call. = FALSE
-    )
-  }
-  
-  acde <- .dagassist_normalize_acde_spec(x$settings$acde)
-  
-  # args for sequential_g (user-supplied)
-  de_args <- x$settings$directeffects_args
-  if (is.null(de_args)) de_args <- list()
-  
-  nms <- names(mods)
-  if (!length(nms)) return(mods)
-  
-  # helpers
-  base_of <- function(nm) sub("\\s*\\((SATE|SATT|SACDE|SCDE)\\)\\s*$", "", nm, ignore.case = TRUE)
-  is_acde <- function(nm) grepl("\\((SACDE|SCDE)\\)\\s*$", nm, ignore.case = TRUE)
-  is_weighted <- function(nm) grepl("\\((SATE|SATT)\\)\\s*$", nm, ignore.case = TRUE)
-  
-  # --- 1) Fit ACDE for each BASE spec (Original / Minimal k / Canonical / etc.) ---
-  base_specs <- unique(base_of(nms[!is_acde(nms)]))
-  # keep only bases that actually exist as a base column
-  base_specs <- base_specs[base_specs %in% nms]
-  
-  acde_fits <- list()
-  
-  for (b in base_specs) {
-    # don't refit if it's already present
-    acde_name <- paste0(b, " ", .dagassist_model_name_labels("SACDE"))
-    if (acde_name %in% nms) next
-    
-    base_fml <- .dagassist_formula_for_model_name(x, b)
-    if (is.null(base_fml)) next
-    
-    f_acde <- .dagassist_build_acde_formula(base_fml, x, acde)
-    
-    # guardrail for categorical mediators
-    m_terms <- attr(f_acde, "dagassist_acde_m_terms", exact = TRUE)
-    guard_msg <- .dagassist_acde_guard_mediators(data, m_terms)
-    
-    if (!is.null(guard_msg)) {
-      fit <- structure(
-        list(error = guard_msg, formula = f_acde),
-        class = "DAGassist_fit_error"
-      )
-    } else {
-      fit <- .safe_fit(DirectEffects::sequential_g, f_acde, data, de_args)
-    }
-    
-    # attach metadata for console printing later
-    if (!inherits(fit, "DAGassist_fit_error")) {
-      attr(fit, "dagassist_estimand") <- "SACDE"
-      attr(fit, "dagassist_acde_spec") <- b
-      attr(fit, "dagassist_acde_formula") <- f_acde
-      attr(fit, "dagassist_fe_collinear_dropped") <- attr(
-        f_acde, "dagassist_fe_collinear_dropped", exact = TRUE
-      )
-    }
-    
-    acde_fits[[b]] <- fit
-  }
-  
-  if (!length(acde_fits)) return(mods)
-  
-  # --- 2) Determine where to insert each ACDE column: after the last column
-  #         belonging to that base spec (raw + any ATE/ATT columns) ---
-  insert_after <- integer(0)
-  for (b in names(acde_fits)) {
-    idxs <- which(base_of(nms) == b & !is_acde(nms))
-    if (!length(idxs)) next
-    insert_after[b] <- max(idxs)
-  }
-  
-  # --- 3) Rebuild list with ACDE interleaved ---
-  out <- list()
-  for (i in seq_along(nms)) {
-    nm <- nms[[i]]
-    out[[nm]] <- mods[[nm]]
-    
-    b <- base_of(nm)
-    if (!is.na(insert_after[b]) && i == insert_after[b] && !is.null(acde_fits[[b]])) {
-      acde_name <- paste0(b, " ", .dagassist_model_name_labels("SACDE"))
-      out[[acde_name]] <- acde_fits[[b]]
-    }
-  }
-  
-  out
-}
-
 # add whichever estimands are requested
 .dagassist_add_estimand_models <- function(x, mods) {
   ests <- .dagassist_normalize_estimand(x$settings$estimand)
   if (!length(ests) || identical(ests, "RAW")) return(mods)
   
   out <- mods
-  # weights first (SATE/SATT)
   if ("SATE" %in% ests) out <- .dagassist_add_weighted_models(x, out, estimand = "SATE")
   if ("SATT" %in% ests) out <- .dagassist_add_weighted_models(x, out, estimand = "SATT")
   
-  # ACDE last
-  if ("SACDE" %in% ests) out <- .dagassist_add_acde_models(x, out)
+  if ("SACDE" %in% ests) out <- .dagassist_add_sacde_models(x, out)
   
   out
 }
@@ -652,11 +411,30 @@
     
     # Build complete-case analytic data for THIS spec.
     # Use variables needed for treatment + outcome model evaluation.
+    # Build complete-case analytic data for THIS spec.
+    # Keep vars needed for treatment + outcome + clustering.
     base_fml <- .strip_fixest_parts(fml)$base
     vars_need <- unique(c(all.vars(base_fml), exp_nm, out_nm, controls))
+    
+    # --- keep cluster vars if cluster is a formula or a column name ---
+    cluster_vars <- character(0)
+    
+    if ("cluster" %in% names(engine_args)) {
+      cl <- engine_args$cluster
+      if (inherits(cl, "formula")) cluster_vars <- all.vars(cl)
+      if (is.character(cl) && length(cl) == 1L) cluster_vars <- cl
+    }
+    if ("clusters" %in% names(engine_args)) {
+      cl <- engine_args$clusters
+      if (inherits(cl, "formula")) cluster_vars <- c(cluster_vars, all.vars(cl))
+      if (is.character(cl) && length(cl) == 1L) cluster_vars <- c(cluster_vars, cl)
+    }
+    
+    vars_need <- unique(c(vars_need, cluster_vars))
     vars_need <- intersect(vars_need, names(data0))
     
     data_cc <- stats::na.omit(data0[, vars_need, drop = FALSE])
+    
     if (!nrow(data_cc)) return(NULL)
     
     # Determine exposure kind on this model's analytic sample
@@ -817,17 +595,18 @@
   
   mods_out
 }
+
 #labels for weight columns
 .dagassist_model_name_labels <- function(estimand) {
   est <- toupper(as.character(estimand))
   switch(
     est,
-    ATE  = "(SATE)",
-    ATT  = "(SATT)",
-    ACDE = "(SACDE)",
-    CDE  = "(SACDE)",   # alias
-    RAW  = "",
-    NONE = "",
+    SATE      = "(SATE)",
+    SATT      = "(SATT)",
+    SACDE     = "(SACDE)",
+    SEQG_RAW  = "(seqg raw)",
+    RAW       = "",
+    NONE      = "",
     ""
   )
 }
@@ -887,4 +666,22 @@
     "     Either ensure your DAG nodes match those column names, or use imply = FALSE to prevent mismatch issues. \n",
     "  3) Exclude the categorical mediator(s) from SACDE by explicitly setting `sacde$m`.\n"
   )
+}
+
+.dagassist_parse_seqg_formula <- function(f_seqg) {
+  # f_seqg is like: Y ~ (block1) | (blockZ) | (blockM)
+  txt <- paste(deparse(f_seqg), collapse = "")
+  txt <- gsub("\\s+", " ", txt)
+  parts <- strsplit(txt, "\\|", fixed = FALSE)[[1]]
+  parts <- trimws(parts)
+  
+  # parts[1] is "Y ~ block1"
+  y_and_x <- strsplit(parts[1], "~", fixed = TRUE)[[1]]
+  y <- trimws(y_and_x[1])
+  block1 <- trimws(y_and_x[2])
+  
+  blockZ <- if (length(parts) >= 2) trimws(parts[2]) else "0"
+  blockM <- if (length(parts) >= 3) trimws(parts[3]) else stop("seqg formula missing mediator block")
+  
+  list(y = y, block1 = block1, blockZ = blockZ, blockM = blockM)
 }

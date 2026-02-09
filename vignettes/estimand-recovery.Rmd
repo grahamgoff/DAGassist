@@ -1,6 +1,7 @@
 ---
 title: "Recovering Estimands with DAGassist"
 output: rmarkdown::html_vignette
+bibliography: library.bib
 vignette: >
   %\VignetteIndexEntry{estimand-recovery}
   %\VignetteEngine{knitr::rmarkdown}
@@ -43,7 +44,7 @@ has_dotwhisker <- tryCatch({
 library(DAGassist)
 ```
 
-Researchers often include control variables to block backdoor paths. Many interpret the resulting treatment coefficient as the `average treatment effect (ATE)`. However, linear regression and generalized linear model methods do not recover ATE by default. Instead, they recover weighted strata-specific averages (Chattopadhyay and Zubizarreta 2024). To bridge this gap, DAGassist automates estimand recovery by constructing weights that align estimation with a user-specified target estimand. This vignette illustrates the workflow using a simulated dataset.
+Researchers often include control variables to block backdoor paths. Many interpret the resulting treatment coefficient as the `average treatment effect (ATE)`. However, linear regression and generalized linear model methods do not recover ATE by default. Instead, they recover weighted strata-specific averages [@ChattopadhyayZubizarreta2024]. To bridge this gap, DAGassist automates estimand recovery by constructing weights that align estimation with a user-specified target estimand. This vignette illustrates the workflow using a simulated dataset.
 
 <details>
 <summary><strong>Dataset summary statistics (click to expand)</strong></summary>
@@ -612,7 +613,7 @@ knitr::kable(tabs$categorical, align = "l")
 ```
 </details>
 
-```{r example-dag, echo=FALSE, message=FALSE, fig.width=8, fig.height=5, fig.cap="*Example: The Causal Effects of Family Background and Life Course Events on Fertility Patterns*"}
+```{r example-dag, echo=FALSE, message=FALSE, fig.width=8, fig.height=5, warning=FALSE, fig.cap="*Example: The Causal Effects of Family Background and Life Course Events on Fertility Patterns*"}
 library(dagitty)
 library(ggdag)
 library(tidyverse)
@@ -708,7 +709,7 @@ ggdag_status(dag_model,
 
 ```
 
-The DAG above visualizes a common social science question: how does education affect fertility (Morgan and Winship, 17-19)? The DAG model encodes a plausible, but not exhaustive, set of covariates. In the report below, `DAGassist` classifies variables by their causal roles, reestimates the model with DAG-consistent adjustment sets, and recovers the `ATE` using weights. 
+The DAG above visualizes a common social science question: how does education affect fertility [@MorganWinship2015, pp. 17-19]? The DAG model encodes a plausible, but not exhaustive, set of covariates. In the report below, `DAGassist` classifies variables by their causal roles, reestimates the model with DAG-consistent adjustment sets, and recovers the `ATE` using weights. 
 
 
 ```{r dwplot, echo=FALSE, warning=FALSE, fig.width=8, fig.height=5, fig.cap="*Visualizing the effect of estimand recovery*"}

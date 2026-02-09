@@ -2,7 +2,7 @@
 % Please edit documentation in R/assist.R
 \name{DAGassist}
 \alias{DAGassist}
-\title{Generate a (console/LaTeX/word/excel/txt) report classifying nodes and comparing models}
+\title{Generate and/or export report classifying nodes and comparing models}
 \usage{
 DAGassist(
   dag,
@@ -162,13 +162,11 @@ and any filtered canonical formulas.
 \code{DAGassist()} validates a DAG + model specification, classifies node roles,
 builds minimal and canonical adjustment sets, fits comparable models, and
 renders a compact report in several formats (console, LaTeX fragment, DOCX,
-XLSX, plain text). It also supports passing a \strong{single engine call} (e.g.
-\code{feols(Y ~ X + Z | fe, data = df)}) instead of a plain formula.
+XLSX, plain text). It also supports recovering new estimands, such as the
+sample average treatment effect (SATE) or the sample average controlled direct
+effect (SACDE).
 }
 \details{
-In addition to tabular export formats, you can create a dot-whisker plot
-(via \code{type = "dwplot"} or \code{type = "dotwhisker"}) for the model comparison.
-
 \strong{Engine-call parsing.} If \code{formula} is a call (e.g., \code{feols(Y ~ X | fe, data=df)}),
 DAGassist extracts the engine function, formula, data argument, and any additional
 engine arguments directly from that call; these are merged with \code{engine}/\code{engine_args}

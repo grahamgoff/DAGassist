@@ -433,7 +433,7 @@ glance.dagassist_seqg <- function(x, ...) {
 # optional sanity check: coefficients should match
 .check_stage2_match <- function(seqg_obj) {
   lm2 <- .seqg_stage2_lm(seqg_obj)
-  ok <- isTRUE(all.equal(unname(coef(lm2)), unname(coef(seqg_obj)), tolerance = 1e-8))
+  ok <- isTRUE(all.equal(unname(stats::coef(lm2)), unname(stats::coef(seqg_obj)), tolerance = 1e-8))
   if (!ok) warning("Stage-2 lm coefficients do not match seqg coefficients (check contrasts / aliased columns).")
   invisible(ok)
 }

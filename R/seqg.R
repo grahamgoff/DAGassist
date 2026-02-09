@@ -74,8 +74,8 @@ glance.dagassist_seqg <- function(x, ...) {
   tl <- attr(object$terms$M, "term.labels")
   if (length(tl) == 0) stop("No mediator terms found in object$terms$M")
   
-  f_med <- as.formula(paste("~", paste(tl, collapse = " + ")))
-  MM <- model.matrix(f_med, data = dat)
+  f_med <- stats::as.formula(paste("~", paste(tl, collapse = " + ")))
+  MM <- stats::model.matrix(f_med, data = dat)
   
   if ("(Intercept)" %in% colnames(MM)) {
     MM <- MM[, colnames(MM) != "(Intercept)", drop = FALSE]
@@ -162,8 +162,8 @@ glance.dagassist_seqg <- function(x, ...) {
   if (G < 2) stop("Need at least 2 clusters")
   
   # residuals
-  e2 <- as.numeric(residuals(object))
-  e1 <- as.numeric(residuals(object$first_mod))
+  e2 <- as.numeric(stats::residuals(object))
+  e1 <- as.numeric(stats::residuals(object$first_mod))
   
   # stage weights (usually identical when passed via sequential_g(weights=...),
   # but we read them separately to be safe)
@@ -294,9 +294,9 @@ glance.dagassist_seqg <- function(x, ...) {
 .validate_vcov <- function(object) { 
   
   cat("=== Validation: Checking two-stage variance formula ===\n\n")
-  V_default <- vcov(object)
+  V_default <- stats::vcov(object)
   se_default <- sqrt(diag(V_default))
-  n <- length(residuals(object))
+  n <- length(stats::residuals(object))
   cluster_individual <- 1:n
   V_ours <- .dagassist_vcov_seqg_clustered(object, cluster_individual, type = "CR0", hc = "HC1")
   se_ours <- sqrt(diag(V_ours))
@@ -321,17 +321,17 @@ glance.dagassist_seqg <- function(x, ...) {
                                    conf_level = 0.95) {
   vcov_cl <- .dagassist_vcov_seqg_clustered(seq_g_obj, cluster, type = type, hc = hc)
   
-  beta <- coef(seq_g_obj)
+  beta <- stats::coef(seq_g_obj)
   se_cl <- sqrt(diag(vcov_cl))
-  se_orig <- sqrt(diag(vcov(seq_g_obj)))
+  se_orig <- sqrt(diag(stats::vcov(seq_g_obj)))
   
   G <- nlevels(as.factor(cluster))
   df_adj <- G - 1
   
   t_stat <- beta / se_cl
-  p_val <- 2 * pt(-abs(t_stat), df = df_adj)
+  p_val <- 2 * stats::pt(-abs(t_stat), df = df_adj)
   
-  ci_mult <- qt(1 - (1 - conf_level) / 2, df = df_adj)
+  ci_mult <- stats::qt(1 - (1 - conf_level) / 2, df = df_adj)
   ci_lo <- beta - ci_mult * se_cl
   ci_hi <- beta + ci_mult * se_cl
   
@@ -345,7 +345,7 @@ glance.dagassist_seqg <- function(x, ...) {
       p_value = p_val,
       ci_lower = ci_lo,
       ci_upper = ci_hi,
-      n_obs = length(residuals(seq_g_obj)),
+      n_obs = length(stats::residuals(seq_g_obj)),
       n_clusters = G,
       df = df_adj,
       conf_level = conf_level,

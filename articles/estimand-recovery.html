@@ -68,11 +68,10 @@
 Many interpret the resulting treatment coefficient as the
 <code>average treatment effect (ATE)</code>. However, linear regression
 and generalized linear model methods do not recover ATE by default.
-Instead, they recover weighted strata-specific averages (Chattopadhyay
-and Zubizarreta 2024). To bridge this gap, DAGassist automates estimand
-recovery by constructing weights that align estimation with a
-user-specified target estimand. This vignette illustrates the workflow
-using a simulated dataset.</p>
+Instead, they recover weighted strata-specific averages <span class="citation">(Chattopadhyay and Zubizarreta 2024)</span>. To bridge
+this gap, DAGassist automates estimand recovery by constructing weights
+that align estimation with a user-specified target estimand. This
+vignette illustrates the workflow using a simulated dataset.</p>
 <details><summary><strong>Dataset summary statistics (click to expand)</strong>
 </summary><table class="table">
 <colgroup>
@@ -254,11 +253,12 @@ Events on Fertility Patterns</em>
 </p>
 </div>
 <p>The DAG above visualizes a common social science question: how does
-education affect fertility (Morgan and Winship, 17-19)? The DAG model
-encodes a plausible, but not exhaustive, set of covariates. In the
-report below, <code>DAGassist</code> classifies variables by their
-causal roles, reestimates the model with DAG-consistent adjustment sets,
-and recovers the <code>ATE</code> using weights.</p>
+education affect fertility <span class="citation">(Morgan and Winship
+2015, 17–19)</span>? The DAG model encodes a plausible, but not
+exhaustive, set of covariates. In the report below,
+<code>DAGassist</code> classifies variables by their causal roles,
+reestimates the model with DAG-consistent adjustment sets, and recovers
+the <code>ATE</code> using weights.</p>
 <div class="figure">
 <img src="estimand-recovery_files/figure-html/dwplot-1.png" class="r-plt" alt="*Visualizing the effect of estimand recovery*" width="768"><p class="caption">
 <em>Visualizing the effect of estimand recovery</em>
@@ -273,9 +273,6 @@ estimate the effect of years of education on a person’s number of
 children, except through birth control, income, and marital status.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mattblackwell.github.io/DirectEffects/" class="external-link">DirectEffects</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; Registered S3 method overwritten by 'DirectEffects':</span></span>
-<span><span class="co">#&gt;   method    from     </span></span>
-<span><span class="co">#&gt;   vcov.seqg DAGassist</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">dag_model</span>,</span>
 <span>          formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">children</span> <span class="op">~</span> <span class="va">edu_year</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">class</span> <span class="op">+</span> <span class="va">gender</span> <span class="op">+</span> </span>
@@ -307,74 +304,79 @@ children, except through birth control, income, and marital status.</p>
 <span><span class="co">#&gt; Formulas:</span></span>
 <span><span class="co">#&gt;   original:  children ~ edu_year + age + class + gender + immigrant + urban +     birth_control + income + married + job_stability_t + contract +     pref</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ACDE setup:</span></span>
-<span><span class="co">#&gt;   FE-collinear dropped: (none)</span></span>
-<span><span class="co">#&gt;   Formulas (sequential_g):</span></span>
-<span><span class="co">#&gt;    - Original: children ~ edu_year + age + class + gender + immigrant + urban + contract + pref | 0 | birth_control + income + married + job_stability_t</span></span>
-<span><span class="co">#&gt;    - Minimal 1: children ~ edu_year + age + class + contract + gender + immigrant + urban | 0 | birth_control + income + married + job_stability_t</span></span>
-<span><span class="co">#&gt;    - Canonical: children ~ edu_year + age + class + contract + gender + immigrant + pref + urban | 0 | birth_control + income + married + job_stability_t</span></span>
-<span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Model comparison:</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+------------+-----------+------------+</span></span>
-<span><span class="co">#&gt; |                   | Original  | Original  | Minimal 1 | Minimal 1  | Canonical | Canonical  |</span></span>
-<span><span class="co">#&gt; +===================+===========+===========+===========+============+===========+============+</span></span>
-<span><span class="co">#&gt; | edu_year          | -0.122*** | -0.122*** | -0.080*** | -0.121***  | -0.080*** | -0.122***  |</span></span>
-<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+------------+-----------+------------+</span></span>
-<span><span class="co">#&gt; |                   | (0.015)   | (0.010)   | (0.013)   | (0.010)    | (0.013)   | (0.010)    |</span></span>
-<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+------------+-----------+------------+</span></span>
-<span><span class="co">#&gt; | age               | 0.070***  | 0.070***  | 0.095***  | 0.070***   | 0.096***  | 0.070***   |</span></span>
-<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+------------+-----------+------------+</span></span>
-<span><span class="co">#&gt; |                   | (0.004)   | (0.003)   | (0.003)   | (0.003)    | (0.003)   | (0.003)    |</span></span>
-<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+------------+-----------+------------+</span></span>
-<span><span class="co">#&gt; | genderMale        | 0.181*    | 0.181*    | 0.179*    | 0.171*     | 0.190*    | 0.181*     |</span></span>
-<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+------------+-----------+------------+</span></span>
-<span><span class="co">#&gt; |                   | (0.085)   | (0.085)   | (0.087)   | (0.086)    | (0.085)   | (0.085)    |</span></span>
-<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+------------+-----------+------------+</span></span>
-<span><span class="co">#&gt; | immigrantYes      | -0.246+   | -0.246*   | -0.172    | -0.175     | -0.243+   | -0.246*    |</span></span>
-<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+------------+-----------+------------+</span></span>
-<span><span class="co">#&gt; |                   | (0.128)   | (0.116)   | (0.131)   | (0.118)    | (0.129)   | (0.116)    |</span></span>
-<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+------------+-----------+------------+</span></span>
-<span><span class="co">#&gt; | urbanUrban        | 0.121     | 0.121     | 0.238*    | 0.190*     | 0.175+    | 0.121      |</span></span>
-<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+------------+-----------+------------+</span></span>
-<span><span class="co">#&gt; |                   | (0.094)   | (0.090)   | (0.096)   | (0.092)    | (0.094)   | (0.090)    |</span></span>
-<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+------------+-----------+------------+</span></span>
-<span><span class="co">#&gt; | birth_control     | 0.133     |           |           |            |           |            |</span></span>
-<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+------------+-----------+------------+</span></span>
-<span><span class="co">#&gt; |                   | (0.103)   |           |           |            |           |            |</span></span>
-<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+------------+-----------+------------+</span></span>
-<span><span class="co">#&gt; | income            | 0.000     |           |           |            |           |            |</span></span>
-<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+------------+-----------+------------+</span></span>
-<span><span class="co">#&gt; |                   | (0.000)   |           |           |            |           |            |</span></span>
-<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+------------+-----------+------------+</span></span>
-<span><span class="co">#&gt; | married           | 0.703***  |           |           |            |           |            |</span></span>
-<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+------------+-----------+------------+</span></span>
-<span><span class="co">#&gt; |                   | (0.122)   |           |           |            |           |            |</span></span>
-<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+------------+-----------+------------+</span></span>
-<span><span class="co">#&gt; | job_stability_t   | 0.285***  |           |           |            |           |            |</span></span>
-<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+------------+-----------+------------+</span></span>
-<span><span class="co">#&gt; |                   | (0.047)   |           |           |            |           |            |</span></span>
-<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+------------+-----------+------------+</span></span>
-<span><span class="co">#&gt; | contractTemporary | 0.710***  | 0.710***  | 0.772***  | 0.685***   | 0.804***  | 0.710***   |</span></span>
-<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+------------+-----------+------------+</span></span>
-<span><span class="co">#&gt; |                   | (0.110)   | (0.102)   | (0.112)   | (0.103)    | (0.110)   | (0.102)    |</span></span>
-<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+------------+-----------+------------+</span></span>
-<span><span class="co">#&gt; | contractPermanent | 0.893***  | 0.893***  | 1.116***  | 0.932***   | 1.093***  | 0.893***   |</span></span>
-<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+------------+-----------+------------+</span></span>
-<span><span class="co">#&gt; |                   | (0.114)   | (0.102)   | (0.113)   | (0.104)    | (0.111)   | (0.102)    |</span></span>
-<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+------------+-----------+------------+</span></span>
-<span><span class="co">#&gt; | pref              | 0.581***  | 0.581***  |           |            | 0.578***  | 0.581***   |</span></span>
-<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+------------+-----------+------------+</span></span>
-<span><span class="co">#&gt; |                   | (0.042)   | (0.046)   |           |            | (0.042)   | (0.046)    |</span></span>
-<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+------------+-----------+------------+</span></span>
-<span><span class="co">#&gt; | Num.Obs.          | 5000      | 5000      | 5000      | 5000       | 5000      | 5000       |</span></span>
-<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+------------+-----------+------------+</span></span>
-<span><span class="co">#&gt; | R2                | 0.227     |           | 0.183     |            | 0.213     |            |</span></span>
-<span><span class="co">#&gt; +===================+===========+===========+===========+============+===========+============+</span></span>
-<span><span class="co">#&gt; | + p &lt; 0.1, * p &lt; 0.05, ** p &lt; 0.01, *** p &lt; 0.001                                           |</span></span>
-<span><span class="co">#&gt; +===================+===========+===========+===========+============+===========+============+ </span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; |                   | Original  | Minimal 1 | Canonical | Raw (SACDE) | Weighted (SACDE) |</span></span>
+<span><span class="co">#&gt; +===================+===========+===========+===========+=============+==================+</span></span>
+<span><span class="co">#&gt; | edu_year          | -0.122*** | -0.080*** | -0.080*** | -0.117***   | -0.127***        |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; |                   | (0.015)   | (0.013)   | (0.013)   | (0.010)     | (0.012)          |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; | age               | 0.070***  | 0.095***  | 0.096***  | 0.070***    | 0.058***         |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; |                   | (0.004)   | (0.003)   | (0.003)   | (0.003)     | (0.004)          |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; | genderMale        | 0.181*    | 0.179*    | 0.190*    | 0.186*      | 0.166+           |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; |                   | (0.085)   | (0.087)   | (0.085)   | (0.085)     | (0.092)          |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; | immigrantYes      | -0.246+   | -0.172    | -0.243+   | -0.228*     | -0.320*          |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; |                   | (0.128)   | (0.131)   | (0.129)   | (0.116)     | (0.128)          |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; | urbanUrban        | 0.121     | 0.238*    | 0.175+    | 0.126       | 0.123            |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; |                   | (0.094)   | (0.096)   | (0.094)   | (0.090)     | (0.098)          |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; | birth_control     | 0.133     |           |           |             |                  |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; |                   | (0.103)   |           |           |             |                  |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; | income            | 0.000     |           |           |             |                  |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; |                   | (0.000)   |           |           |             |                  |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; | married           | 0.703***  |           |           |             |                  |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; |                   | (0.122)   |           |           |             |                  |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; | job_stability_t   | 0.285***  |           |           |             |                  |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; |                   | (0.047)   |           |           |             |                  |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; | contractTemporary | 0.710***  | 0.772***  | 0.804***  | 0.701***    | 0.643***         |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; |                   | (0.110)   | (0.112)   | (0.110)   | (0.102)     | (0.109)          |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; | contractPermanent | 0.893***  | 1.116***  | 1.093***  | 0.868***    | 0.914***         |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; |                   | (0.114)   | (0.113)   | (0.111)   | (0.102)     | (0.114)          |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; | pref              | 0.581***  |           | 0.578***  | 0.581***    | 0.638***         |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; |                   | (0.042)   |           | (0.042)   | (0.046)     | (0.049)          |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; | Num.Obs.          | 5000      | 5000      | 5000      | 5000        | 5000             |</span></span>
+<span><span class="co">#&gt; +-------------------+-----------+-----------+-----------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; | R2                | 0.227     | 0.183     | 0.213     |             |                  |</span></span>
+<span><span class="co">#&gt; +===================+===========+===========+===========+=============+==================+</span></span>
+<span><span class="co">#&gt; | + p &lt; 0.1, * p &lt; 0.05, ** p &lt; 0.01, *** p &lt; 0.001                                      |</span></span>
+<span><span class="co">#&gt; +===================+===========+===========+===========+=============+==================+ </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome</span></span></code></pre></div>
+<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
+<div id="ref-ChattopadhyayZubizarreta2024" class="csl-entry">
+Chattopadhyay, Ambarish, and José R. Zubizarreta. 2024.
+<span>“Causation, Comparison, and Regression.”</span> <em>Harvard Data
+Science Review</em> 6: 1–28. <a href="https://doi.org/10.1162/99608f92.87c6125f" class="external-link">https://doi.org/10.1162/99608f92.87c6125f</a>.
+</div>
+<div id="ref-MorganWinship2015" class="csl-entry">
+Morgan, Stephen L., and Christopher Winship. 2015. <em>Counterfactuals
+and Causal Inference: Methods and Principles for Social Research</em>.
+Cambridge University Press.
+</div>
+</div>
   </main>
 </div>
 

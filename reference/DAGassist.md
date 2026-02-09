@@ -1,11 +1,11 @@
-# Generate a (console/LaTeX/word/excel/txt) report classifying nodes and comparing models
+# Generate and/or export report classifying nodes and comparing models
 
 `DAGassist()` validates a DAG + model specification, classifies node
 roles, builds minimal and canonical adjustment sets, fits comparable
 models, and renders a compact report in several formats (console, LaTeX
-fragment, DOCX, XLSX, plain text). It also supports passing a **single
-engine call** (e.g. `feols(Y ~ X + Z | fe, data = df)`) instead of a
-plain formula.
+fragment, DOCX, XLSX, plain text). It also supports recovering new
+estimands, such as the sample average treatment effect (SATE) or the
+sample average controlled direct effect (SACDE).
 
 ## Usage
 
@@ -243,10 +243,6 @@ outputs, and printed for `type="console"`. The list contains:
 - `verbose`, `imply` - flags as provided.
 
 ## Details
-
-In addition to tabular export formats, you can create a dot-whisker plot
-(via `type = "dwplot"` or `type = "dotwhisker"`) for the model
-comparison.
 
 **Engine-call parsing.** If `formula` is a call (e.g.,
 `feols(Y ~ X | fe, data=df)`), DAGassist extracts the engine function,

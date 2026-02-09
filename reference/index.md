@@ -5,8 +5,7 @@
 The primary pipeline function to generate reports.
 
 - [`DAGassist()`](https://grahamgoff.github.io/DAGassist/reference/DAGassist.md)
-  : Generate a (console/LaTeX/word/excel/txt) report classifying nodes
-  and comparing models
+  : Generate and/or export report classifying nodes and comparing models
 
 ## Useful supplements
 

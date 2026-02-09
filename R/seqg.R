@@ -572,6 +572,14 @@ glance.dagassist_seqg <- function(x, ...) {
 
 
 .dagassist_add_sacde_models <- function(x, mods) {
+  ##functions for helpful fail if error gets passed to vcov helper
+  .is_fit_error <- function(obj) inherits(obj, "DAGassist_fit_error")
+  .fit_error_msg <- function(obj) {
+    if (!is.null(obj$error)) return(obj$error)     # <-- THIS is what .safe_fit stores
+    if (!is.null(obj$message)) return(obj$message)
+    "Fit failed (no message captured)."
+  }
+  
   if (!requireNamespace("DirectEffects", quietly = TRUE)) {
     stop("SACDE requires the 'DirectEffects' package.", call. = FALSE)
   }
@@ -685,6 +693,15 @@ glance.dagassist_seqg <- function(x, ...) {
   # Fit raw seqg (Raw (SACDE))
   seqg_raw <- .safe_fit(DirectEffects::sequential_g, f_seqg, data_cc, de_args)
   
+  if (.is_fit_error(seqg_raw)) {
+    stop(
+      "SACDE raw sequential_g estimation failed.\n\n",
+      "Underlying error: ", .fit_error_msg(seqg_raw), "\n\n",
+      "seqg formula:\n  ", paste(deparse(f_seqg), collapse = ""),
+      call. = FALSE
+    )
+  }
+  
   # WeightIt on same complete-case sample; do NOT weight on mediators (they are not in f_treat)
   wtobj <- suppressWarnings(
     do.call(
@@ -710,26 +727,46 @@ glance.dagassist_seqg <- function(x, ...) {
     c(de_args, list(weights = w))
   )
   
-  # Cluster vector aligned to seqg design matrix rows
-  if (length(cluster_vars)) {
-    cl0 <- cluster_vars[1]
-    idx <- match(rownames(seqg_w$X), rownames(data_cc))
-    cl_vec <- data_cc[[cl0]][idx]
-  } else {
-    cl_vec <- rep(1L, nrow(seqg_w$X))
+  if (.is_fit_error(seqg_w)) {
+    stop(
+      "SACDE weighted sequential_g estimation failed.\n\n",
+      "Underlying error: ", .fit_error_msg(seqg_w), "\n\n",
+      "seqg formula:\n  ", paste(deparse(f_seqg), collapse = ""),
+      call. = FALSE
+    )
   }
   
-  # Clustered CR2 vcov (use the actual function name)
-  V_raw <- vcov_seqg_clustered(seqg_raw, cluster = cl_vec, type = "CR2")
-  V_w   <- vcov_seqg_clustered(seqg_w,   cluster = cl_vec, type = "CR2")
+  #robust n for seqg objects. previously, would crash if there was not a cluster argument
+  .seqg_n <- function(obj) {
+    X <- obj$X
+    if (!is.null(X) && !is.null(dim(X))) return(nrow(X))
+    # fallback: residuals length is always n
+    length(stats::residuals(obj))
+  }
   
-  df_cl <- nlevels(as.factor(cl_vec)) - 1
-  attr(V_raw, "df") <- df_cl
-  attr(V_w,   "df") <- df_cl
+  if (length(cluster_vars)) {
+    cl0 <- cluster_vars[1]
+    
+    # align cluster to the rows used by sequential_g
+    idx <- match(rownames(seqg_w$X), rownames(data_cc))
+    cl_vec <- data_cc[[cl0]][idx]
+    
+    V_raw <- .dagassist_vcov_seqg_clustered(seqg_raw, cluster = cl_vec, type = "CR2")
+    V_w   <- .dagassist_vcov_seqg_clustered(seqg_w,   cluster = cl_vec, type = "CR2")
+    
+    df_cl <- nlevels(as.factor(cl_vec)) - 1
+    attr(V_raw, "df") <- df_cl
+    attr(V_w,   "df") <- df_cl
+    
+  } else {
+    # No cluster requested: use DirectEffects default (two-stage) variance
+    V_raw <- stats::vcov(seqg_raw)
+    V_w   <- stats::vcov(seqg_w)
+  }
   
-  # Wrap into dagassist_seqg objects
-  m_raw <- .dagassist_wrap_seqg(coef(seqg_raw), V_raw, nobs = nrow(seqg_raw$X), df_resid = NA_integer_)
-  m_w   <- .dagassist_wrap_seqg(coef(seqg_w),   V_w,   nobs = nrow(seqg_w$X),   df_resid = NA_integer_)
+  # Wrap models (use robust n)
+  m_raw <- .dagassist_wrap_seqg(stats::coef(seqg_raw), V_raw, nobs = .seqg_n(seqg_raw))
+  m_w   <- .dagassist_wrap_seqg(stats::coef(seqg_w),   V_w,   nobs = .seqg_n(seqg_w))
   
   # Insert exactly two columns after Canonical (SATE) if present, else after Canonical
   insert_after <- if ("Canonical (SATE)" %in% names(mods)) "Canonical (SATE)" else "Canonical"

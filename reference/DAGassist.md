@@ -168,12 +168,27 @@ DAGassist(
 
 - estimand:
 
-  Character; causal estimand. Currently only supported for
-  `type = "console"`. One of `"raw"` (default), `"SATE"`, `"SATT"`, or
-  `"SACDE"`; uses the WeightIt package to add weighted versions of each
-  comparison model as additional columns. For models with mediators,
-  `"SACDE"` links to the DirectEffects to for a controlled direct effect
-  via sequential g-estimation.
+  Character; causal estimand for the *reported columns* in the console
+  output. One of `"raw"` (default), `"SATE"`, `"SATT"`, `"SACDE"` (alias
+  `"SCDE"`), or `"none"`.
+
+  - `"raw"`: reports the naive regression fits implied by the supplied
+    engine/formulas.
+
+  - `"SATE"` / `"SATT"`: adds inverse-probability weighted versions of
+    each comparison model (via WeightIt) to target the *sample* ATE/ATT
+    rather than the OLS implicit estimand.
+
+  - `"SACDE"` / `"SCDE"`: for DAGs with mediator(s), adds **two**
+    sequential g-estimation columns: (i) **Raw (SACDE)**: the unweighted
+    DirectEffects sequential-g estimator, which—because the second stage
+    is linear regression with controls—targets a *conditional-variance
+    weighted* average of unit-level controlled direct effects (not a
+    sample-average CDE). (ii) **Weighted (SACDE)**: re-runs sequential-g
+    with IPW weights (estimated *without conditioning on mediators*) so
+    the second-stage regression recovers the **sample average controlled
+    direct effect (SACDE)** rather than the regression-weighted
+    estimand.
 
 - engine_args:
 
@@ -183,8 +198,14 @@ DAGassist(
 
 - weights_args:
 
-  List; parameters for weighting package. `DAGassist` is agnostic and
-  passes list directly to the respective weighting package
+  List; arguments forwarded to WeightIt when computing IPW weights for
+  `"SATE"`/`"SATT"` and for the **Weighted (SACDE)** refit. For SACDE,
+  DAGassist estimates weights on the complete-case sample using the
+  *baseline covariates* from the sequential-g block-1 specification
+  (excluding mediator terms), by default via
+  `WeightIt::weightit(..., method = "glm", estimand = "ATE")`. If
+  `trim_at` is supplied, weights are winsorized at the requested
+  quantile before refitting sequential-g.
 
 - auto_acde:
 
@@ -211,36 +232,85 @@ DAGassist(
 
 ## Value
 
-An object of class `"DAGassist_report"`, invisibly for file and plot
-outputs, and printed for `type="console"`. The list contains:
+A `DAGassist_report` object (a named list) returned invisibly for
+file/plot outputs and printed for `type = "console"`.
 
-- `validation` - result from `validate_spec(...)` which verifies
-  acyclicity and X/Y declarations.
+The object contains:
 
-- `roles` - raw roles data.frame from `classify_nodes(...)` (logic
-  columns).
+- validation:
 
-- `roles_display` - roles grid after labeling/renaming for exporters.
+  List. Output of `validate_spec()`: DAG validity + exposure/outcome
+  checks.
 
-- `bad_in_user` - variables in the user's RHS that are
-  `MED`/`COL`/`dOut`/`dMed`/`dCol`.
+- roles:
 
-- `controls_minimal` - (legacy) one minimal set (character vector).
+  `data.frame`. Raw node-role flags from
+  [`classify_nodes()`](https://grahamgoff.github.io/DAGassist/reference/classify_nodes.md).
 
-- `controls_minimal_all` - list of all minimal sets (character vectors).
+- roles_display:
 
-- `controls_canonical` - canonical set (character vector; may be empty).
+  `data.frame`. Roles table formatted for printing/export.
 
-- `controls_canonical_excl` - named list of filtered canonical sets
-  (e.g. `$nco`, `$nct`) when `exclude` is used.
+- labels_map:
 
-- `formulas` - list with `original`, `minimal`, `minimal_list`,
-  `canonical`, and any filtered canonical formulas.
+  Named character vector. Variable → display label map used in
+  tables/plots.
 
-- `models` - list with fitted models `original`, `minimal`,
-  `minimal_list`, `canonical`, and any filtered canonical models.
+- controls_minimal:
 
-- `verbose`, `imply` - flags as provided.
+  Character vector. (Legacy) One minimal adjustment set.
+
+- controls_minimal_all:
+
+  List of character vectors. All minimal adjustment sets.
+
+- controls_canonical:
+
+  Character vector. Canonical adjustment set (possibly empty).
+
+- controls_canonical_excl:
+
+  Named list. Filtered canonical sets created by `exclude`.
+
+- conditions:
+
+  List. Parsed conditional statements from the DAG (if any).
+
+- formulas:
+
+  List. User formula plus DAG-derived formula variants
+  (minimal/canonical/etc.).
+
+- models:
+
+  List. Fitted models for each formula variant (including minimal-list
+  fits).
+
+- bad_in_user:
+
+  Character vector. RHS terms classified as mediator/collider/etc.
+
+- unevaluated:
+
+  Character vector. Terms carried through but not evaluated by the
+  engine.
+
+- unevaluated_str:
+
+  Character scalar. Pretty-printed version of `unevaluated`.
+
+- settings:
+
+  List. Print/export settings, including `coef_omit` and `show`.
+
+- .\_\_data:
+
+  `data.frame` or `NULL`. The data used to fit models (stored for
+  downstream helpers).
+
+For file outputs (`type = "latex"`, `"docx"`, `"xlsx"`, `"txt"`,
+`"dotwhisker"`), the returned object includes attribute `file`, the
+normalized output path.
 
 ## Details
 
@@ -313,6 +383,16 @@ for minimal/canonical adjustment sets.
 `{rmarkdown}` + **pandoc** (DOCX), `{writexl}` (XLSX),
 `{dotwhisker}`/`{ggplot2}` for plotting.
 
+**Raw vs Weighted SACDE.** The unweighted sequential-g estimator in
+DirectEffects uses linear regression in its second stage. By the
+Frisch–Waugh–Lovell theorem, this implies an estimand that is weighted
+by the conditional variance of the (residualized) exposure given
+controls—i.e., a regression-weighted average of unit-level effects, not
+a sample-average controlled direct effect. DAGassist therefore reports
+both the raw sequential-g result and a weighted sequential-g refit
+(using WeightIt IPW weights estimated without mediators) to target the
+*sample average* controlled direct effect.
+
 ## Interpreting the output
 
 See the vignette articles for worked examples on generating roles-only,
@@ -342,130 +422,28 @@ for the console printer, and the helper exporters in `report_*` modules.
 ## Examples
 
 ``` r
-# generate a console DAGassist report
-DAGassist(dag = g, 
-          formula = lm(Y ~ X + Z + C + M, data = df))
-#> DAGassist Report: 
-#> 
-#> Roles:
-#> variable  role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
-#> X         exposure    x                                                                        
-#> Y         outcome           x                                                                  
-#> Z         confounder              x                                                            
-#> M         mediator                      x                                                      
-#> C         collider                           x    x     x                                      
-#> 
-#>  (!) Bad controls in your formula: {C, M}
-#> Minimal controls 1: {Z}
-#> Canonical controls: {Z}
-#> 
-#> Formulas:
-#>   original:  Y ~ X + Z + C + M
-#> 
-#> Model comparison:
-#> 
-#> +----------+----------+-----------+-----------+
-#> |          | Original | Minimal 1 | Canonical |
-#> +==========+==========+===========+===========+
-#> | X        | 0.467*** | 1.306***  | 1.306***  |
-#> +----------+----------+-----------+-----------+
-#> |          | (0.122)  | (0.098)   | (0.098)   |
-#> +----------+----------+-----------+-----------+
-#> | Z        | 0.185+   | 0.235+    | 0.235+    |
-#> +----------+----------+-----------+-----------+
-#> |          | (0.102)  | (0.127)   | (0.127)   |
-#> +----------+----------+-----------+-----------+
-#> | C        | 0.368*** |           |           |
-#> +----------+----------+-----------+-----------+
-#> |          | (0.076)  |           |           |
-#> +----------+----------+-----------+-----------+
-#> | M        | 0.512*** |           |           |
-#> +----------+----------+-----------+-----------+
-#> |          | (0.077)  |           |           |
-#> +----------+----------+-----------+-----------+
-#> | Num.Obs. | 150      | 150       | 150       |
-#> +----------+----------+-----------+-----------+
-#> | R2       | 0.806    | 0.693     | 0.693     |
-#> +==========+==========+===========+===========+
-#> | + p < 0.1, * p < 0.05, ** p < 0.01, *** p   |
-#> | < 0.001                                     |
-#> +==========+==========+===========+===========+ 
-#> 
-#> Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome
+if (requireNamespace("dagitty", quietly = TRUE)) {
+  g <- dagitty::dagitty("dag { Z -> X; X -> M; X -> Y; M -> Y; Z -> Y }")
+  dagitty::exposures(g) <- "X"; dagitty::outcomes(g) <- "Y"
+  n <- 300
+  Z <- rnorm(n); X <- 0.8*Z + rnorm(n)
+  M <- 0.9*X + rnorm(n)
+  Y <- 0.7*X + 0.6*M + 0.3*Z + rnorm(n)
+  df <- data.frame(Z, X, M, Y)
 
-# generate a LaTeX DAGassist report in console
-DAGassist(dag = g, 
-          formula = lm(Y ~ X + Z + C + M, data = df),
-          type = "latex")
-#> % --------------------- DAGassist LaTeX fragment ---------------------
-#> % Requires: \usepackage{tabularray} \UseTblrLibrary{booktabs,siunitx,talltblr}
-#> \begingroup\footnotesize
-#> \begingroup\setlength{\emergencystretch}{3em}
-#> % needs \usepackage{graphicx} for \rotatebox
-#> \begin{longtblr}[presep=0pt, postsep=0pt, caption={DAGassist Report:}, label={tab:dagassist}]%
-#> {width=\textwidth,colsep=1.5pt,rowsep=0pt,abovesep=0pt,belowsep=0pt,column{3}={colsep=6pt},colspec={X[35,l]X[15,l]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]}}
-#> \toprule
-#> Variable & Role & \rotatebox[origin=c]{60}{Exp.} & \rotatebox[origin=c]{60}{Out.} & \rotatebox[origin=c]{60}{CON} & \rotatebox[origin=c]{60}{MED} & \rotatebox[origin=c]{60}{COL} & \rotatebox[origin=c]{60}{dOut} & \rotatebox[origin=c]{60}{dMed} & \rotatebox[origin=c]{60}{dCol} & \rotatebox[origin=c]{60}{dConfOn} & \rotatebox[origin=c]{60}{dConfOff} & \rotatebox[origin=c]{60}{NCT} & \rotatebox[origin=c]{60}{NCO} \\
-#> \midrule
-#> C & collider &  &  &  &  & x & x & x &  &  &  &  &  \\
-#> M & mediator &  &  &  & x &  &  &  &  &  &  &  &  \\
-#> X & exposure & x &  &  &  &  &  &  &  &  &  &  &  \\
-#> Y & outcome &  & x &  &  &  &  &  &  &  &  &  &  \\
-#> Z & confounder &  &  & x &  &  &  &  &  &  &  &  &  \\
-#> \bottomrule
-#> \end{longtblr}
-#> \endgroup
-#> % no vertical glue between tables
-#> \nointerlineskip
-#> \begin{longtblr}[presep=0pt,postsep=0pt,%% tabularray outer open
-#> entry=none,label=none,
-#> note{}={+ p \num{< 0.1}, * p \num{< 0.05}, ** p \num{< 0.01}, *** p \num{< 0.001}},
-#> ]                     %% tabularray outer close
-#> {                     %% tabularray inner open
-#> colspec={X[]X[]X[]X[]},
-#> hline{2}={1-4}{solid, black, 0.05em},
-#> hline{10}={1-4}{solid, black, 0.05em},
-#> hline{1}={1-4}{solid, black, 0.1em},
-#> hline{12}={1-4}{solid, black, 0.1em},
-#> column{2-4}={}{halign=c},
-#> column{1}={}{halign=l},
-#> }                     %% tabularray inner close
-#> & Original & Minimal 1 & Canonical \\
-#> X & \num{0.467}*** & \num{1.306}*** & \num{1.306}*** \\
-#> & (\num{0.122}) & (\num{0.098}) & (\num{0.098}) \\
-#> Z & \num{0.185}+ & \num{0.235}+ & \num{0.235}+ \\
-#> & (\num{0.102}) & (\num{0.127}) & (\num{0.127}) \\
-#> C & \num{0.368}*** &  &  \\
-#> & (\num{0.076}) &  &  \\
-#> M & \num{0.512}*** &  &  \\
-#> & (\num{0.077}) &  &  \\
-#> Num.Obs. & \num{150} & \num{150} & \num{150} \\
-#> R2 & \num{0.806} & \num{0.693} & \num{0.693} \\
-#> \end{longtblr}
-#> \par\endgroup
-#> \addtocounter{table}{-1}
-#> \vspace{1em}
-#> \footnotesize
-#> \noindent\textit{Controls (minimal):} {Z}\\
-#> \textit{Controls (canonical):} {Z}
-#> \\
-#> \scriptsize
-#> \textit{Roles legend:} Exp. (exposure); Out. (outcome); CON (confounder); MED (mediator); COL (collider); dOut (proper descendant of Y); dMed (proper descendant of any mediator); dCol (proper descendant of any collider); dConfOn (descendant of a confounder on a back-door path); dConfOff (descendant of a confounder off a back-door path); NCT (neutral control on treatment); NCO (neutral control on outcome). 
+  # 1) Core: DAG-derived specs + engine-call parsing
+  r <- DAGassist(g, lm(Y ~ X + Z + M, data = df))
 
-# generate just the roles table in the console
-DAGassist(dag = g, 
-          show = "roles")
-#> DAGassist Report: 
-#> 
-#> Roles:
-#> variable  role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
-#> X         exposure    x                                                                        
-#> Y         outcome           x                                                                  
-#> Z         confounder              x                                                            
-#> M         mediator                      x                                                      
-#> C         collider                           x    x     x                                      
-#> A         nco                                                                               x  
-#> B         nco                                                                               x  
-#> 
-#> Roles legend: Exp. = exposure/treatment; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome
+  # 2) Target sample-average estimands via weighting
+  r2 <- DAGassist(g, lm(Y ~ X + Z + M, data = df), estimand = "SATE")
+
+  # 3) Mediator case: Raw sequential-g vs Weighted SACDE
+  r3 <- DAGassist(g, lm(Y ~ X + Z + M, data = df), estimand = "SACDE")
+
+  # 4) File export (LaTeX fragment)
+  # \donttest{
+    out <- file.path(tempdir(), "dagassist_report.tex")
+    DAGassist(g, lm(Y ~ X + Z + M, data = df), type = "latex", out = out)
+  # }
+}
 ```

@@ -59,13 +59,26 @@
 </div>
 <!-- badges: start -->
 
-<p><strong>An all-in-one DAG-driven robustness check.</strong> Classify variables by causal role, compute the smallest and largest permissible back-door adjustment sets, and compare the significance of models.</p>
-<hr>
+<div class="section level2">
+<h2 id="an-all-in-one-dag-driven-robustness-check-generate-publication-quality-reports-that-classify-variables-by-causal-role-compare-the-significance-of-dag-derived-models-and-explicitly-target-estimands">
+<strong>An all-in-one DAG-driven robustness check.</strong> Generate publication-quality reports that classify variables by causal role, compare the significance of DAG-derived models, and explicitly target estimands.<a class="anchor" aria-label="anchor" href="#an-all-in-one-dag-driven-robustness-check-generate-publication-quality-reports-that-classify-variables-by-causal-role-compare-the-significance-of-dag-derived-models-and-explicitly-target-estimands"></a>
+</h2>
+</div>
+<div class="section level2">
+<h2 id="what-dagassist-does">What <code>DAGassist</code> does:<a class="anchor" aria-label="anchor" href="#what-dagassist-does"></a>
+</h2>
+<ul>
+<li>Classifies covariates by causal role (confounder, mediator, collider, descendants, neutral controls, etc.).</li>
+<li>Automates the reestimation of models using DAG-derived adjustment sets.</li>
+<li>Targets explicit estimands to facilitate transparent comparison between models.</li>
+<li>Produces publication-grade reports in multiple formats (LaTeX/Word/Excel/markdown/plain text + dotwhisker).</li>
+<li>Provides weight diagnostics to evaluate positivity and effective sample sizes.</li>
+</ul>
 <p>See the <a href="https://grahamgoff.github.io/DAGassist/articles/quick-tour.html">Quick Tour</a> vignette for a 10 minute start-to-finish guide on how to use <code>DAGassist</code> to identify causal roles, create reports, and interpret the results.</p>
-<p>See the <a href="https://grahamgoff.github.io/DAGassist/articles/making-reports.html">Making Reports</a> vignette for details on producing publication-quality <code>DAGassist</code> reports in <code>LaTex</code>, <code>Word</code>, <code>Excel</code>, and <code>plain text</code>.</p>
-<p>See the <a href="https://grahamgoff.github.io/DAGassist/articles/get-started.html">Parameter Guide</a> vignette for examples of how to get the most out of <code>DAGassist</code>.</p>
+<p>See the <a href="https://grahamgoff.github.io/DAGassist/articles/making-reports.html">Making Reports</a> vignette for details on producing publication-quality <code>DAGassist</code> reports in <code>LaTex</code>, <code>Word</code>, <code>Excel</code>, and <code>plain text</code>. See the <a href="https://grahamgoff.github.io/DAGassist/articles/get-started.html">Parameter Guide</a> vignette for examples of how to get the most out of <code>DAGassist</code>.</p>
 <p>See the <a href="https://grahamgoff.github.io/DAGassist/articles/compatibility.html">Supported Models</a> vignette for documentation on what engines <code>DAGassist</code> supports.</p>
-<p>See the <a href="%22https://grahamgoff.github.io/DAGassist/articles/ecosystem.html%22">Ecosystem Guide</a> for how <code>DAGassist</code> fits in the R DAG ecosystem—and a diagram of the packages it integrates with.</p>
+<p>See the <a href="https://grahamgoff.github.io/DAGassist/articles/ecosystem.html">Ecosystem Guide</a> for how <code>DAGassist</code> fits in the R DAG ecosystem—and a diagram of the packages it integrates with.</p>
+</div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -106,36 +119,40 @@
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Model comparison:</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; +---+-----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |   | Original  | Minimal 1 | Canonical |</span></span>
-<span><span class="co">#&gt; +===+===========+===========+===========+</span></span>
-<span><span class="co">#&gt; | X | 0.452***  | 1.256***  | 1.256***  |</span></span>
-<span><span class="co">#&gt; +---+-----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |   | (0.032)   | (0.027)   | (0.026)   |</span></span>
-<span><span class="co">#&gt; +---+-----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; | M | 0.514***  |           |           |</span></span>
-<span><span class="co">#&gt; +---+-----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |   | (0.021)   |           |           |</span></span>
-<span><span class="co">#&gt; +---+-----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; | C | 0.343***  |           |           |</span></span>
-<span><span class="co">#&gt; +---+-----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |   | (0.019)   |           |           |</span></span>
-<span><span class="co">#&gt; +---+-----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; | Z | 0.249***  | 0.311***  | 0.309***  |</span></span>
-<span><span class="co">#&gt; +---+-----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |   | (0.027)   | (0.034)   | (0.033)   |</span></span>
-<span><span class="co">#&gt; +---+-----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; | A | 0.152***  |           | 0.187***  |</span></span>
-<span><span class="co">#&gt; +---+-----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |   | (0.021)   |           | (0.026)   |</span></span>
-<span><span class="co">#&gt; +---+-----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; | B | -0.069*** |           | -0.057*   |</span></span>
-<span><span class="co">#&gt; +---+-----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |   | (0.021)   |           | (0.026)   |</span></span>
-<span><span class="co">#&gt; +===+===========+===========+===========+</span></span>
-<span><span class="co">#&gt; | + p &lt; 0.1, * p &lt; 0.05, ** p &lt; 0.01,   |</span></span>
-<span><span class="co">#&gt; | *** p &lt; 0.001                         |</span></span>
-<span><span class="co">#&gt; +===+===========+===========+===========+ </span></span>
+<span><span class="co">#&gt; +----------+-----------+-----------+-----------+</span></span>
+<span><span class="co">#&gt; |          | Original  | Minimal 1 | Canonical |</span></span>
+<span><span class="co">#&gt; +==========+===========+===========+===========+</span></span>
+<span><span class="co">#&gt; | X        | 0.452***  | 1.256***  | 1.256***  |</span></span>
+<span><span class="co">#&gt; +----------+-----------+-----------+-----------+</span></span>
+<span><span class="co">#&gt; |          | (0.032)   | (0.027)   | (0.026)   |</span></span>
+<span><span class="co">#&gt; +----------+-----------+-----------+-----------+</span></span>
+<span><span class="co">#&gt; | M        | 0.514***  |           |           |</span></span>
+<span><span class="co">#&gt; +----------+-----------+-----------+-----------+</span></span>
+<span><span class="co">#&gt; |          | (0.021)   |           |           |</span></span>
+<span><span class="co">#&gt; +----------+-----------+-----------+-----------+</span></span>
+<span><span class="co">#&gt; | C        | 0.343***  |           |           |</span></span>
+<span><span class="co">#&gt; +----------+-----------+-----------+-----------+</span></span>
+<span><span class="co">#&gt; |          | (0.019)   |           |           |</span></span>
+<span><span class="co">#&gt; +----------+-----------+-----------+-----------+</span></span>
+<span><span class="co">#&gt; | Z        | 0.249***  | 0.311***  | 0.309***  |</span></span>
+<span><span class="co">#&gt; +----------+-----------+-----------+-----------+</span></span>
+<span><span class="co">#&gt; |          | (0.027)   | (0.034)   | (0.033)   |</span></span>
+<span><span class="co">#&gt; +----------+-----------+-----------+-----------+</span></span>
+<span><span class="co">#&gt; | A        | 0.152***  |           | 0.187***  |</span></span>
+<span><span class="co">#&gt; +----------+-----------+-----------+-----------+</span></span>
+<span><span class="co">#&gt; |          | (0.021)   |           | (0.026)   |</span></span>
+<span><span class="co">#&gt; +----------+-----------+-----------+-----------+</span></span>
+<span><span class="co">#&gt; | B        | -0.069*** |           | -0.057*   |</span></span>
+<span><span class="co">#&gt; +----------+-----------+-----------+-----------+</span></span>
+<span><span class="co">#&gt; |          | (0.021)   |           | (0.026)   |</span></span>
+<span><span class="co">#&gt; +----------+-----------+-----------+-----------+</span></span>
+<span><span class="co">#&gt; | Num.Obs. | 2000      | 2000      | 2000      |</span></span>
+<span><span class="co">#&gt; +----------+-----------+-----------+-----------+</span></span>
+<span><span class="co">#&gt; | R2       | 0.818     | 0.706     | 0.714     |</span></span>
+<span><span class="co">#&gt; +==========+===========+===========+===========+</span></span>
+<span><span class="co">#&gt; | + p &lt; 0.1, * p &lt; 0.05, ** p &lt; 0.01, *** p &lt;  |</span></span>
+<span><span class="co">#&gt; | 0.001                                        |</span></span>
+<span><span class="co">#&gt; +==========+===========+===========+===========+ </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome</span></span>
 <span></span>
@@ -146,7 +163,7 @@
 <code class="sourceCode R"><span><span class="fu">DAGassist</span><span class="fu">::</span><span class="fu"><a href="reference/DAGassist.html">DAGassist</a></span><span class="op">(</span>dag <span class="op">=</span> <span class="va">dag_model</span>,</span>
 <span>          formula <span class="op">=</span> <span class="fu">feols</span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">M</span> <span class="op">+</span> <span class="va">C</span> <span class="op">+</span> <span class="va">Z</span> <span class="op">+</span> <span class="va">A</span> <span class="op">+</span> <span class="va">B</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span>,</span>
 <span>          type <span class="op">=</span> <span class="st">"dotwhisker"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-dotwhisker-1.png" width="100%"></p>
+<p><img src="reference/figures/README-dotwhisker-1.png" alt="" width="100%"></p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">

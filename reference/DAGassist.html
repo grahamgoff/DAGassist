@@ -194,11 +194,18 @@ in the comparison table <strong>in addition</strong> to the user's original and 
 
 
 <dt id="arg-estimand">estimand<a class="anchor" aria-label="anchor" href="#arg-estimand"></a></dt>
-<dd><p>Character; causal estimand. Currently only
-supported for <code>type = "console"</code>. One of <code>"raw"</code> (default), <code>"SATE"</code>, <code>"SATT"</code>, or <code>"SACDE"</code>;
-uses the <span class="pkg">WeightIt</span> package to add weighted versions of each comparison
-model as additional columns. For models with mediators, <code>"SACDE"</code> links
-to the <span class="pkg">DirectEffects</span> to for a controlled direct effect via sequential g-estimation.</p></dd>
+<dd><p>Character; causal estimand for the <em>reported columns</em> in the console output.
+One of <code>"raw"</code> (default), <code>"SATE"</code>, <code>"SATT"</code>, <code>"SACDE"</code> (alias <code>"SCDE"</code>), or <code>"none"</code>.</p><ul><li><p><code>"raw"</code>: reports the naive regression fits implied by the supplied engine/formulas.</p></li>
+<li><p><code>"SATE"</code> / <code>"SATT"</code>: adds inverse-probability weighted versions of each comparison model
+(via <span class="pkg">WeightIt</span>) to target the <em>sample</em> ATE/ATT rather than the OLS implicit estimand.</p></li>
+<li><p><code>"SACDE"</code> / <code>"SCDE"</code>: for DAGs with mediator(s), adds <strong>two</strong> sequential g-estimation columns:
+(i) <strong>Raw (SACDE)</strong>: the unweighted <span class="pkg">DirectEffects</span> sequential-g estimator, which—because
+the second stage is linear regression with controls—targets a <em>conditional-variance weighted</em>
+average of unit-level controlled direct effects (not a sample-average CDE).
+(ii) <strong>Weighted (SACDE)</strong>: re-runs sequential-g with IPW weights (estimated <em>without conditioning
+on mediators</em>) so the second-stage regression recovers the <strong>sample average controlled direct
+effect (SACDE)</strong> rather than the regression-weighted estimand.</p></li>
+</ul></dd>
 
 
 <dt id="arg-engine-args">engine_args<a class="anchor" aria-label="anchor" href="#arg-engine-args"></a></dt>
@@ -208,8 +215,12 @@ If <code>formula</code> is an engine call, arguments from the call are merged wi
 
 
 <dt id="arg-weights-args">weights_args<a class="anchor" aria-label="anchor" href="#arg-weights-args"></a></dt>
-<dd><p>List; parameters for weighting package. <code>DAGassist</code> is agnostic
-and passes list directly to the respective weighting package</p></dd>
+<dd><p>List; arguments forwarded to <span class="pkg">WeightIt</span> when computing IPW weights for
+<code>"SATE"</code>/<code>"SATT"</code> and for the <strong>Weighted (SACDE)</strong> refit.
+For SACDE, DAGassist estimates weights on the complete-case sample using the <em>baseline covariates</em>
+from the sequential-g block-1 specification (excluding mediator terms), by default via
+<code>WeightIt::weightit(..., method = "glm", estimand = "ATE")</code>. If <code>trim_at</code> is supplied, weights
+are winsorized at the requested quantile before refitting sequential-g.</p></dd>
 
 
 <dt id="arg-auto-acde">auto_acde<a class="anchor" aria-label="anchor" href="#arg-auto-acde"></a></dt>
@@ -234,22 +245,60 @@ variance estimator options).</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>An object of class <code>"DAGassist_report"</code>, invisibly for file and plot
-outputs, and printed for <code>type="console"</code>. The list contains:</p><ul><li><p><code>validation</code> - result from <code>validate_spec(...)</code> which verifies acyclicity and X/Y declarations.</p></li>
-<li><p><code>roles</code> - raw roles data.frame from <code>classify_nodes(...)</code> (logic columns).</p></li>
-<li><p><code>roles_display</code> - roles grid after labeling/renaming for exporters.</p></li>
-<li><p><code>bad_in_user</code> - variables in the user's RHS that are <code>MED</code>/<code>COL</code>/<code>dOut</code>/<code>dMed</code>/<code>dCol</code>.</p></li>
-<li><p><code>controls_minimal</code> - (legacy) one minimal set (character vector).</p></li>
-<li><p><code>controls_minimal_all</code> - list of all minimal sets (character vectors).</p></li>
-<li><p><code>controls_canonical</code> - canonical set (character vector; may be empty).</p></li>
-<li><p><code>controls_canonical_excl</code> - named list of filtered canonical sets
-(e.g. <code>$nco</code>, <code>$nct</code>) when <code>exclude</code> is used.</p></li>
-<li><p><code>formulas</code> - list with <code>original</code>, <code>minimal</code>, <code>minimal_list</code>, <code>canonical</code>,
-and any filtered canonical formulas.</p></li>
-<li><p><code>models</code> - list with fitted models <code>original</code>, <code>minimal</code>, <code>minimal_list</code>,
-<code>canonical</code>, and any filtered canonical models.</p></li>
-<li><p><code>verbose</code>, <code>imply</code> - flags as provided.</p></li>
-</ul></div>
+    <p>A <code>DAGassist_report</code> object (a named list) returned invisibly for file/plot
+outputs and printed for <code>type = "console"</code>.</p>
+<p>The object contains:</p><dl><dt>validation</dt>
+<dd><p>List. Output of <code>validate_spec()</code>: DAG validity + exposure/outcome checks.</p></dd>
+
+<dt>roles</dt>
+<dd><p><code>data.frame</code>. Raw node-role flags from <code><a href="classify_nodes.html">classify_nodes()</a></code>.</p></dd>
+
+<dt>roles_display</dt>
+<dd><p><code>data.frame</code>. Roles table formatted for printing/export.</p></dd>
+
+<dt>labels_map</dt>
+<dd><p>Named character vector. Variable → display label map used in tables/plots.</p></dd>
+
+<dt>controls_minimal</dt>
+<dd><p>Character vector. (Legacy) One minimal adjustment set.</p></dd>
+
+<dt>controls_minimal_all</dt>
+<dd><p>List of character vectors. All minimal adjustment sets.</p></dd>
+
+<dt>controls_canonical</dt>
+<dd><p>Character vector. Canonical adjustment set (possibly empty).</p></dd>
+
+<dt>controls_canonical_excl</dt>
+<dd><p>Named list. Filtered canonical sets created by <code>exclude</code>.</p></dd>
+
+<dt>conditions</dt>
+<dd><p>List. Parsed conditional statements from the DAG (if any).</p></dd>
+
+<dt>formulas</dt>
+<dd><p>List. User formula plus DAG-derived formula variants (minimal/canonical/etc.).</p></dd>
+
+<dt>models</dt>
+<dd><p>List. Fitted models for each formula variant (including minimal-list fits).</p></dd>
+
+<dt>bad_in_user</dt>
+<dd><p>Character vector. RHS terms classified as mediator/collider/etc.</p></dd>
+
+<dt>unevaluated</dt>
+<dd><p>Character vector. Terms carried through but not evaluated by the engine.</p></dd>
+
+<dt>unevaluated_str</dt>
+<dd><p>Character scalar. Pretty-printed version of <code>unevaluated</code>.</p></dd>
+
+<dt>settings</dt>
+<dd><p>List. Print/export settings, including <code>coef_omit</code> and <code>show</code>.</p></dd>
+
+<dt>.__data</dt>
+<dd><p><code>data.frame</code> or <code>NULL</code>. The data used to fit models (stored for downstream helpers).</p></dd>
+
+
+</dl><p>For file outputs (<code>type = "latex"</code>, <code>"docx"</code>, <code>"xlsx"</code>, <code>"txt"</code>, <code>"dotwhisker"</code>),
+the returned object includes attribute <code>file</code>, the normalized output path.</p>
+    </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p><strong>Engine-call parsing.</strong> If <code>formula</code> is a call (e.g., <code>feols(Y ~ X | fe, data=df)</code>),
@@ -288,6 +337,13 @@ it uses <code>tabularray</code> long tables and will include any requested Canon
 </ul><p><strong>Dependencies.</strong> Core requires <code>{dagitty}</code>. Optional enhancements: <code>{modelsummary}</code>
 (pretty tables), <code>{broom}</code> (fallback tidying), <code>{rmarkdown}</code> + <strong>pandoc</strong> (DOCX),
 <code>{writexl}</code> (XLSX), <code>{dotwhisker}</code>/<code>{ggplot2}</code> for plotting.</p>
+<p><strong>Raw vs Weighted SACDE.</strong>
+The unweighted sequential-g estimator in <span class="pkg">DirectEffects</span> uses linear regression in its second stage.
+By the Frisch–Waugh–Lovell theorem, this implies an estimand that is weighted by the conditional variance
+of the (residualized) exposure given controls—i.e., a regression-weighted average of unit-level effects,
+not a sample-average controlled direct effect. DAGassist therefore reports both the raw sequential-g
+result and a weighted sequential-g refit (using <span class="pkg">WeightIt</span> IPW weights estimated without mediators)
+to target the <em>sample average</em> controlled direct effect.</p>
     </div>
     <div class="section level2">
     <h2 id="interpreting-the-output">Interpreting the output<a class="anchor" aria-label="anchor" href="#interpreting-the-output"></a></h2>
@@ -316,132 +372,30 @@ exporters in <code>report_*</code> modules.</p></div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># generate a console DAGassist report</span></span></span>
-<span class="r-in"><span><span class="fu">DAGassist</span><span class="op">(</span>dag <span class="op">=</span> <span class="va">g</span>, </span></span>
-<span class="r-in"><span>          formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">Z</span> <span class="op">+</span> <span class="va">C</span> <span class="op">+</span> <span class="va">M</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> DAGassist Report: </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Roles:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> variable  role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> X         exposure    x                                                                        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Y         outcome           x                                                                  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Z         confounder              x                                                            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> M         mediator                      x                                                      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> C         collider                           x    x     x                                      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  (!) Bad controls in your formula: {C, M}</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Minimal controls 1: {Z}</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Canonical controls: {Z}</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Formulas:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   original:  Y ~ X + Z + C + M</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Model comparison:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +----------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |          | Original | Minimal 1 | Canonical |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +==========+==========+===========+===========+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | X        | 0.467*** | 1.306***  | 1.306***  |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +----------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |          | (0.122)  | (0.098)   | (0.098)   |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +----------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | Z        | 0.185+   | 0.235+    | 0.235+    |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +----------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |          | (0.102)  | (0.127)   | (0.127)   |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +----------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | C        | 0.368*** |           |           |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +----------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |          | (0.076)  |           |           |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +----------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | M        | 0.512*** |           |           |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +----------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |          | (0.077)  |           |           |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +----------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | Num.Obs. | 150      | 150       | 150       |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +----------+----------+-----------+-----------+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | R2       | 0.806    | 0.693     | 0.693     |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +==========+==========+===========+===========+</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | + p &lt; 0.1, * p &lt; 0.05, ** p &lt; 0.01, *** p   |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> | &lt; 0.001                                     |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> +==========+==========+===========+===========+ </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome</span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"dagitty"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="va">g</span> <span class="op">&lt;-</span> <span class="fu">dagitty</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/dagitty/man/dagitty.html" class="external-link">dagitty</a></span><span class="op">(</span><span class="st">"dag { Z -&gt; X; X -&gt; M; X -&gt; Y; M -&gt; Y; Z -&gt; Y }"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu">dagitty</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/dagitty/man/VariableStatus.html" class="external-link">exposures</a></span><span class="op">(</span><span class="va">g</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="st">"X"</span>; <span class="fu">dagitty</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/dagitty/man/VariableStatus.html" class="external-link">outcomes</a></span><span class="op">(</span><span class="va">g</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="st">"Y"</span></span></span>
+<span class="r-in"><span>  <span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">300</span></span></span>
+<span class="r-in"><span>  <span class="va">Z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span>; <span class="va">X</span> <span class="op">&lt;-</span> <span class="fl">0.8</span><span class="op">*</span><span class="va">Z</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">M</span> <span class="op">&lt;-</span> <span class="fl">0.9</span><span class="op">*</span><span class="va">X</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">Y</span> <span class="op">&lt;-</span> <span class="fl">0.7</span><span class="op">*</span><span class="va">X</span> <span class="op">+</span> <span class="fl">0.6</span><span class="op">*</span><span class="va">M</span> <span class="op">+</span> <span class="fl">0.3</span><span class="op">*</span><span class="va">Z</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span><span class="va">Z</span>, <span class="va">X</span>, <span class="va">M</span>, <span class="va">Y</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># generate a LaTeX DAGassist report in console</span></span></span>
-<span class="r-in"><span><span class="fu">DAGassist</span><span class="op">(</span>dag <span class="op">=</span> <span class="va">g</span>, </span></span>
-<span class="r-in"><span>          formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">Z</span> <span class="op">+</span> <span class="va">C</span> <span class="op">+</span> <span class="va">M</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>          type <span class="op">=</span> <span class="st">"latex"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> % --------------------- DAGassist LaTeX fragment ---------------------</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> % Requires: \usepackage{tabularray} \UseTblrLibrary{booktabs,siunitx,talltblr}</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> \begingroup\footnotesize</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> \begingroup\setlength{\emergencystretch}{3em}</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> % needs \usepackage{graphicx} for \rotatebox</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> \begin{longtblr}[presep=0pt, postsep=0pt, caption={DAGassist Report:}, label={tab:dagassist}]%</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> {width=\textwidth,colsep=1.5pt,rowsep=0pt,abovesep=0pt,belowsep=0pt,column{3}={colsep=6pt},colspec={X[35,l]X[15,l]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]X[8,c]}}</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> \toprule</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Variable &amp; Role &amp; \rotatebox[origin=c]{60}{Exp.} &amp; \rotatebox[origin=c]{60}{Out.} &amp; \rotatebox[origin=c]{60}{CON} &amp; \rotatebox[origin=c]{60}{MED} &amp; \rotatebox[origin=c]{60}{COL} &amp; \rotatebox[origin=c]{60}{dOut} &amp; \rotatebox[origin=c]{60}{dMed} &amp; \rotatebox[origin=c]{60}{dCol} &amp; \rotatebox[origin=c]{60}{dConfOn} &amp; \rotatebox[origin=c]{60}{dConfOff} &amp; \rotatebox[origin=c]{60}{NCT} &amp; \rotatebox[origin=c]{60}{NCO} \\</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> \midrule</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> C &amp; collider &amp;  &amp;  &amp;  &amp;  &amp; x &amp; x &amp; x &amp;  &amp;  &amp;  &amp;  &amp;  \\</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> M &amp; mediator &amp;  &amp;  &amp;  &amp; x &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  \\</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> X &amp; exposure &amp; x &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  \\</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Y &amp; outcome &amp;  &amp; x &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  \\</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Z &amp; confounder &amp;  &amp;  &amp; x &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  &amp;  \\</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> \bottomrule</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> \end{longtblr}</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> \endgroup</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> % no vertical glue between tables</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> \nointerlineskip</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> \begin{longtblr}[presep=0pt,postsep=0pt,%% tabularray outer open</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> entry=none,label=none,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> note{}={+ p \num{&lt; 0.1}, * p \num{&lt; 0.05}, ** p \num{&lt; 0.01}, *** p \num{&lt; 0.001}},</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ]                     %% tabularray outer close</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> {                     %% tabularray inner open</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> colspec={X[]X[]X[]X[]},</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> hline{2}={1-4}{solid, black, 0.05em},</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> hline{10}={1-4}{solid, black, 0.05em},</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> hline{1}={1-4}{solid, black, 0.1em},</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> hline{12}={1-4}{solid, black, 0.1em},</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> column{2-4}={}{halign=c},</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> column{1}={}{halign=l},</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> }                     %% tabularray inner close</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &amp; Original &amp; Minimal 1 &amp; Canonical \\</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> X &amp; \num{0.467}*** &amp; \num{1.306}*** &amp; \num{1.306}*** \\</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &amp; (\num{0.122}) &amp; (\num{0.098}) &amp; (\num{0.098}) \\</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Z &amp; \num{0.185}+ &amp; \num{0.235}+ &amp; \num{0.235}+ \\</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &amp; (\num{0.102}) &amp; (\num{0.127}) &amp; (\num{0.127}) \\</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> C &amp; \num{0.368}*** &amp;  &amp;  \\</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &amp; (\num{0.076}) &amp;  &amp;  \\</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> M &amp; \num{0.512}*** &amp;  &amp;  \\</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &amp; (\num{0.077}) &amp;  &amp;  \\</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Num.Obs. &amp; \num{150} &amp; \num{150} &amp; \num{150} \\</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> R2 &amp; \num{0.806} &amp; \num{0.693} &amp; \num{0.693} \\</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> \end{longtblr}</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> \par\endgroup</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> \addtocounter{table}{-1}</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> \vspace{1em}</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> \footnotesize</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> \noindent\textit{Controls (minimal):} {Z}\\</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> \textit{Controls (canonical):} {Z}</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> \\</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> \scriptsize</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> \textit{Roles legend:} Exp. (exposure); Out. (outcome); CON (confounder); MED (mediator); COL (collider); dOut (proper descendant of Y); dMed (proper descendant of any mediator); dCol (proper descendant of any collider); dConfOn (descendant of a confounder on a back-door path); dConfOff (descendant of a confounder off a back-door path); NCT (neutral control on treatment); NCO (neutral control on outcome). </span>
+<span class="r-in"><span>  <span class="co"># 1) Core: DAG-derived specs + engine-call parsing</span></span></span>
+<span class="r-in"><span>  <span class="va">r</span> <span class="op">&lt;-</span> <span class="fu">DAGassist</span><span class="op">(</span><span class="va">g</span>, <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">Z</span> <span class="op">+</span> <span class="va">M</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># generate just the roles table in the console</span></span></span>
-<span class="r-in"><span><span class="fu">DAGassist</span><span class="op">(</span>dag <span class="op">=</span> <span class="va">g</span>, </span></span>
-<span class="r-in"><span>          show <span class="op">=</span> <span class="st">"roles"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> DAGassist Report: </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Roles:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> variable  role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> X         exposure    x                                                                        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Y         outcome           x                                                                  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Z         confounder              x                                                            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> M         mediator                      x                                                      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> C         collider                           x    x     x                                      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> A         nco                                                                               x  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> B         nco                                                                               x  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Roles legend: Exp. = exposure/treatment; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome</span>
+<span class="r-in"><span>  <span class="co"># 2) Target sample-average estimands via weighting</span></span></span>
+<span class="r-in"><span>  <span class="va">r2</span> <span class="op">&lt;-</span> <span class="fu">DAGassist</span><span class="op">(</span><span class="va">g</span>, <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">Z</span> <span class="op">+</span> <span class="va">M</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span>, estimand <span class="op">=</span> <span class="st">"SATE"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="co"># 3) Mediator case: Raw sequential-g vs Weighted SACDE</span></span></span>
+<span class="r-in"><span>  <span class="va">r3</span> <span class="op">&lt;-</span> <span class="fu">DAGassist</span><span class="op">(</span><span class="va">g</span>, <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">Z</span> <span class="op">+</span> <span class="va">M</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span>, estimand <span class="op">=</span> <span class="st">"SACDE"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="co"># 4) File export (LaTeX fragment)</span></span></span>
+<span class="r-in"><span>  <span class="co"># \donttest{</span></span></span>
+<span class="r-in"><span>    <span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"dagassist_report.tex"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="fu">DAGassist</span><span class="op">(</span><span class="va">g</span>, <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">Z</span> <span class="op">+</span> <span class="va">M</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span>, type <span class="op">=</span> <span class="st">"latex"</span>, out <span class="op">=</span> <span class="va">out</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="co"># }</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

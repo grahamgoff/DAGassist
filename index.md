@@ -1,6 +1,11 @@
 # DAGassist
 
-## **An all-in-one DAG-driven robustness check.** Generate publication-quality reports that classify variables by causal role, compare the significance of DAG-derived models, and explicitly target estimands.
+**An all-in-one DAG-driven robustness check.** Generate
+publication-quality reports that classify variables by causal role,
+compare the significance of DAG-derived models, and explicitly target
+estimands.
+
+------------------------------------------------------------------------
 
 ## What `DAGassist` does:
 

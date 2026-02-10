@@ -13,7 +13,12 @@ status](https://www.r-pkg.org/badges/version/DAGassist)](https://cran.r-project.
 maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://lifecycle.r-lib.org/articles/stages.html)
 <!-- badges: end -->
 
-## **An all-in-one DAG-driven robustness check.** Generate publication-quality reports that classify variables by causal role, compare the significance of DAG-derived models, and explicitly target estimands.
+**An all-in-one DAG-driven robustness check.** Generate
+publication-quality reports that classify variables by causal role,
+compare the significance of DAG-derived models, and explicitly target
+estimands.
+
+------------------------------------------------------------------------
 
 ## What `DAGassist` does:
 

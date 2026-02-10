@@ -111,18 +111,31 @@ This parameter only suppresses factor \strong{output}--they are still included i
 \item{bivariate}{Logical; if \code{TRUE}, include a bivariate (exposure-only) specification
 in the comparison table \strong{in addition} to the user's original and DAG-derived models.}
 
-\item{estimand}{Character; causal estimand. Currently only
-supported for \code{type = "console"}. One of \code{"raw"} (default), \code{"SATE"}, \code{"SATT"}, or \code{"SACDE"};
-uses the \pkg{WeightIt} package to add weighted versions of each comparison
-model as additional columns. For models with mediators, \code{"SACDE"} links
-to the \pkg{DirectEffects} to for a controlled direct effect via sequential g-estimation.}
+\item{estimand}{Character; causal estimand for the \emph{reported columns} in the console output.
+One of \code{"raw"} (default), \code{"SATE"}, \code{"SATT"}, \code{"SACDE"} (alias \code{"SCDE"}), or \code{"none"}.
+\itemize{
+\item \code{"raw"}: reports the naive regression fits implied by the supplied engine/formulas.
+\item \code{"SATE"} / \code{"SATT"}: adds inverse-probability weighted versions of each comparison model
+(via \pkg{WeightIt}) to target the \emph{sample} ATE/ATT rather than the OLS implicit estimand.
+\item \code{"SACDE"} / \code{"SCDE"}: for DAGs with mediator(s), adds \strong{two} sequential g-estimation columns:
+(i) \strong{Raw (SACDE)}: the unweighted \pkg{DirectEffects} sequential-g estimator, which—because
+the second stage is linear regression with controls—targets a \emph{conditional-variance weighted}
+average of unit-level controlled direct effects (not a sample-average CDE).
+(ii) \strong{Weighted (SACDE)}: re-runs sequential-g with IPW weights (estimated \emph{without conditioning
+on mediators}) so the second-stage regression recovers the \strong{sample average controlled direct
+effect (SACDE)} rather than the regression-weighted estimand.
+}}
 
 \item{engine_args}{Named list of extra arguments forwarded to \code{engine(...)}.
 If \code{formula} is an engine call, arguments from the call are merged with
 \code{engine_args} (call values take precedence).}
 
-\item{weights_args}{List; parameters for weighting package. \code{DAGassist} is agnostic
-and passes list directly to the respective weighting package}
+\item{weights_args}{List; arguments forwarded to \pkg{WeightIt} when computing IPW weights for
+\code{"SATE"}/\code{"SATT"} and for the \strong{Weighted (SACDE)} refit.
+For SACDE, DAGassist estimates weights on the complete-case sample using the \emph{baseline covariates}
+from the sequential-g block-1 specification (excluding mediator terms), by default via
+\code{WeightIt::weightit(..., method = "glm", estimand = "ATE")}. If \code{trim_at} is supplied, weights
+are winsorized at the requested quantile before refitting sequential-g.}
 
 \item{auto_acde}{Logical; if \code{TRUE} (default), automates handling conflicts between specifications
 and estimand arguments. Fails gracefully with a helpful error when users specify ACDE estimand
@@ -139,24 +152,31 @@ when \code{estimand} includes \code{"ACDE"}/\code{"CDE"} (e.g., simulation/boots
 variance estimator options).}
 }
 \value{
-An object of class \code{"DAGassist_report"}, invisibly for file and plot
-outputs, and printed for \code{type="console"}. The list contains:
-\itemize{
-\item \code{validation} - result from \code{validate_spec(...)} which verifies acyclicity and X/Y declarations.
-\item \code{roles} - raw roles data.frame from \code{classify_nodes(...)} (logic columns).
-\item \code{roles_display} - roles grid after labeling/renaming for exporters.
-\item \code{bad_in_user} - variables in the user's RHS that are \code{MED}/\code{COL}/\code{dOut}/\code{dMed}/\code{dCol}.
-\item \code{controls_minimal} - (legacy) one minimal set (character vector).
-\item \code{controls_minimal_all} - list of all minimal sets (character vectors).
-\item \code{controls_canonical} - canonical set (character vector; may be empty).
-\item \code{controls_canonical_excl} - named list of filtered canonical sets
-(e.g. \verb{$nco}, \verb{$nct}) when \code{exclude} is used.
-\item \code{formulas} - list with \code{original}, \code{minimal}, \code{minimal_list}, \code{canonical},
-and any filtered canonical formulas.
-\item \code{models} - list with fitted models \code{original}, \code{minimal}, \code{minimal_list},
-\code{canonical}, and any filtered canonical models.
-\item \code{verbose}, \code{imply} - flags as provided.
+A \code{DAGassist_report} object (a named list) returned invisibly for file/plot
+outputs and printed for \code{type = "console"}.
+
+The object contains:
+\describe{
+\item{validation}{List. Output of \code{validate_spec()}: DAG validity + exposure/outcome checks.}
+\item{roles}{\code{data.frame}. Raw node-role flags from \code{classify_nodes()}.}
+\item{roles_display}{\code{data.frame}. Roles table formatted for printing/export.}
+\item{labels_map}{Named character vector. Variable → display label map used in tables/plots.}
+\item{controls_minimal}{Character vector. (Legacy) One minimal adjustment set.}
+\item{controls_minimal_all}{List of character vectors. All minimal adjustment sets.}
+\item{controls_canonical}{Character vector. Canonical adjustment set (possibly empty).}
+\item{controls_canonical_excl}{Named list. Filtered canonical sets created by \code{exclude}.}
+\item{conditions}{List. Parsed conditional statements from the DAG (if any).}
+\item{formulas}{List. User formula plus DAG-derived formula variants (minimal/canonical/etc.).}
+\item{models}{List. Fitted models for each formula variant (including minimal-list fits).}
+\item{bad_in_user}{Character vector. RHS terms classified as mediator/collider/etc.}
+\item{unevaluated}{Character vector. Terms carried through but not evaluated by the engine.}
+\item{unevaluated_str}{Character scalar. Pretty-printed version of \code{unevaluated}.}
+\item{settings}{List. Print/export settings, including \code{coef_omit} and \code{show}.}
+\item{.__data}{\code{data.frame} or \code{NULL}. The data used to fit models (stored for downstream helpers).}
 }
+
+For file outputs (\code{type = "latex"}, \code{"docx"}, \code{"xlsx"}, \code{"txt"}, \code{"dotwhisker"}),
+the returned object includes attribute \code{file}, the normalized output path.
 }
 \description{
 \code{DAGassist()} validates a DAG + model specification, classifies node roles,
@@ -214,6 +234,14 @@ it uses \code{tabularray} long tables and will include any requested Canon. (-NC
 \strong{Dependencies.} Core requires \code{{dagitty}}. Optional enhancements: \code{{modelsummary}}
 (pretty tables), \code{{broom}} (fallback tidying), \code{{rmarkdown}} + \strong{pandoc} (DOCX),
 \code{{writexl}} (XLSX), \code{{dotwhisker}}/\code{{ggplot2}} for plotting.
+
+\strong{Raw vs Weighted SACDE.}
+The unweighted sequential-g estimator in \pkg{DirectEffects} uses linear regression in its second stage.
+By the Frisch–Waugh–Lovell theorem, this implies an estimand that is weighted by the conditional variance
+of the (residualized) exposure given controls—i.e., a regression-weighted average of unit-level effects,
+not a sample-average controlled direct effect. DAGassist therefore reports both the raw sequential-g
+result and a weighted sequential-g refit (using \pkg{WeightIt} IPW weights estimated without mediators)
+to target the \emph{sample average} controlled direct effect.
 }
 \section{Interpreting the output}{
 
@@ -239,34 +267,31 @@ without aborting the whole pipeline.
 }
 
 \examples{
-\dontshow{if (requireNamespace("dagitty", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 \dontshow{set.seed(1)}
-\dontshow{
-# Build the DAG directly with dagitty
-g <- dagitty::dagitty("dag { Z -> X; X -> M; X -> Y; M -> Y; Z -> Y; A -> Y; B -> Y; X -> C; Y -> C }")
-dagitty::exposures(g) <- "X"; dagitty::outcomes(g) <- "Y"
+if (requireNamespace("dagitty", quietly = TRUE)) {
+  g <- dagitty::dagitty("dag { Z -> X; X -> M; X -> Y; M -> Y; Z -> Y }")
+  dagitty::exposures(g) <- "X"; dagitty::outcomes(g) <- "Y"
+  n <- 300
+  Z <- rnorm(n); X <- 0.8*Z + rnorm(n)
+  M <- 0.9*X + rnorm(n)
+  Y <- 0.7*X + 0.6*M + 0.3*Z + rnorm(n)
+  df <- data.frame(Z, X, M, Y)
 
-n <- 150
-A <- rnorm(n); B <- rnorm(n); Z <- rnorm(n)
-X <- 0.8*Z + rnorm(n)
-M <- 0.9*X + rnorm(n)
-Y <- 0.7*X + 0.6*M + 0.3*Z + 0.2*A - 0.1*B + rnorm(n)
-C <- 0.5*X + 0.4*Y + rnorm(n)
-df <- data.frame(A,B,Z,X,M,Y,C)
+  # 1) Core: DAG-derived specs + engine-call parsing
+  r <- DAGassist(g, lm(Y ~ X + Z + M, data = df))
+
+  # 2) Target sample-average estimands via weighting
+  r2 <- DAGassist(g, lm(Y ~ X + Z + M, data = df), estimand = "SATE")
+
+  # 3) Mediator case: Raw sequential-g vs Weighted SACDE
+  r3 <- DAGassist(g, lm(Y ~ X + Z + M, data = df), estimand = "SACDE")
+
+  # 4) File export (LaTeX fragment)
+  \donttest{
+    out <- file.path(tempdir(), "dagassist_report.tex")
+    DAGassist(g, lm(Y ~ X + Z + M, data = df), type = "latex", out = out)
+  }
 }
-# generate a console DAGassist report
-DAGassist(dag = g, 
-          formula = lm(Y ~ X + Z + C + M, data = df))
-
-# generate a LaTeX DAGassist report in console
-DAGassist(dag = g, 
-          formula = lm(Y ~ X + Z + C + M, data = df),
-          type = "latex")
-
-# generate just the roles table in the console
-DAGassist(dag = g, 
-          show = "roles")
-\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=print.DAGassist_report]{print.DAGassist_report()}} for the console printer, and the helper

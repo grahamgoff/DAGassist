@@ -359,6 +359,9 @@
   trim_at <- wargs[["trim_at"]]          # DAGassist-specific (optional)
   wargs[["trim_at"]] <- NULL
   
+  #stabilize by default
+  if (is.null(wargs[["stabilize"]])) wargs[["stabilize"]] <- TRUE
+  
   ##dependency checks for the ATE dependencies
   if (!requireNamespace("WeightIt", quietly = TRUE)) {
     stop(
@@ -393,16 +396,51 @@
     # Do NOT produce "Original (ATE)/(ATT)" columns
     if (identical(model_name, "Original")) return(NULL)
     
-    fml <- .dagassist_formula_for_model_name(x, model_name)
-    if (is.null(fml)) return(NULL)
+    # ---- DAG-based controls for weighting (match manual workflow) ----
+    # NOTE: eval_all "extras" (e.g., eu/japan/...) are intentionally NOT used for
+    # the treatment model. Those are nuisance regressors, not DAG-approved adjusters.
     
-    # Controls for the treatment model come from *this model's* RHS (minus X and Y)
-    rhs <- .rhs_terms_safe(fml)
-    controls <- setdiff(rhs, c(exp_nm, out_nm))
-    controls <- intersect(controls, names(data0))
-    controls <- unique(controls)
+    # Identify the DAG control set for this model column
+    controls <- character(0)
     
-    # Build treatment formula: X ~ controls (or ~1 if none)
+    if (identical(model_name, "Bivariate")) {
+      controls <- character(0)
+      
+    } else if (identical(model_name, "Canonical")) {
+      controls <- x$controls_canonical
+      
+    } else if (grepl("^Minimal\\s+[0-9]+$", model_name)) {
+      idx <- as.integer(sub("^Minimal\\s+", "", model_name))
+      if (length(x$controls_minimal_all) && idx <= length(x$controls_minimal_all)) {
+        controls <- x$controls_minimal_all[[idx]]
+      } else {
+        controls <- x$controls_minimal
+      }
+      
+    } else if (identical(model_name, "Canon. (-NCT)")) {
+      controls <- x$controls_canonical_excl[["nct"]]
+      
+    } else if (identical(model_name, "Canon. (-NCO)")) {
+      controls <- x$controls_canonical_excl[["nco"]]
+      
+    } else if (grepl("^Canonical\\s*\\((.+)\\)$", model_name)) {
+      # fallback for any other canonical-excl labels
+      nm <- sub("^Canonical\\s*\\((.+)\\)$", "\\1", model_name)
+      controls <- x$controls_canonical_excl[[nm]]
+      
+    } else {
+      # default: try to use the model formula mapping as last resort
+      # but still avoid pulling eval_all RHS into weighting
+      controls <- character(0)
+    }
+    
+    controls <- unique(intersect(controls, names(data0)))
+    
+    # Build the regression formula for the weighted refit using only DAG controls
+    # (preserves fixest tails / random-effects via .build_formula_with_controls)
+    fml <- .build_formula_with_controls(x$formulas$original, exp_nm, out_nm, controls)
+    
+    # Treatment model formula: X ~ controls (or ~1 if none)
     if (length(controls)) {
       f_treat <- stats::as.formula(paste(exp_nm, "~", paste(controls, collapse = " + ")))
     } else {
@@ -413,12 +451,31 @@
     # Use variables needed for treatment + outcome model evaluation.
     # Build complete-case analytic data for THIS spec.
     # Keep vars needed for treatment + outcome + clustering.
-    base_fml <- .strip_fixest_parts(fml)$base
+    # fixed to include fixest tail vars so refits with FE don't fail.
+    sp <- .strip_fixest_parts(fml)
+    base_fml <- sp$base
+    
+    # vars from base part (y, x's, etc.)
     vars_need <- unique(c(all.vars(base_fml), exp_nm, out_nm, controls))
     
-    # --- keep cluster vars if cluster is a formula or a column name ---
-    cluster_vars <- character(0)
+    # vars from fixest tail (e.g., FE like `year + province`, IV parts, etc.)
+    # We parse each top-level '|' segment as "~ <segment>" and take all.vars.
+    s_full <- paste(deparse(fml, width.cutoff = 500L), collapse = " ")
+    parts  <- .split_top_level(s_full, sep = "|")
+    tail_vars <- character(0)
+    if (length(parts) >= 2L) {
+      tails <- trimws(parts[-1])
+      for (tt in tails) {
+        # Protect against empty pieces
+        if (!nzchar(tt)) next
+        f_tt <- stats::as.formula(paste("~", tt), env = environment(fml))
+        tail_vars <- c(tail_vars, all.vars(f_tt))
+      }
+    }
+    vars_need <- unique(c(vars_need, tail_vars))
     
+    # keep cluster vars too
+    cluster_vars <- character(0)
     if ("cluster" %in% names(engine_args)) {
       cl <- engine_args$cluster
       if (inherits(cl, "formula")) cluster_vars <- all.vars(cl)
@@ -429,10 +486,9 @@
       if (inherits(cl, "formula")) cluster_vars <- c(cluster_vars, all.vars(cl))
       if (is.character(cl) && length(cl) == 1L) cluster_vars <- c(cluster_vars, cl)
     }
-    
     vars_need <- unique(c(vars_need, cluster_vars))
-    vars_need <- intersect(vars_need, names(data0))
     
+    vars_need <- intersect(vars_need, names(data0))
     data_cc <- stats::na.omit(data0[, vars_need, drop = FALSE])
     
     if (!nrow(data_cc)) return(NULL)
@@ -541,8 +597,7 @@
     me <- tryCatch(
       marginaleffects::avg_comparisons(
         fit_w,
-        type = "response",
-        wts  = w
+        type = "response"
       ),
       error = function(e) fit_w
     )

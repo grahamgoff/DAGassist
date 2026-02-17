@@ -950,8 +950,8 @@ print.DAGassist_report <- function(x, ...) {
         cat("Minimal controls 1: {}\n")
       }
       cat("Canonical controls: ", .format_set(x$controls_canonical), "\n", sep = "")
-      
-      if (length(x$unevaluated)) {
+      #fixed to suppress when eval_all = TRUE
+      if (!isTRUE(x$settings$eval_all) && length(x$unevaluated)) {
         cat("\nNote: The following regressors, which are included in the below ",
             "models, were not evaluated by DAGassist because they are not nodes in the DAG:\n  {",
             x$unevaluated_str, "}\n", sep = "")

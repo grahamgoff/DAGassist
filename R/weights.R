@@ -435,14 +435,28 @@
     }
     
     controls <- unique(intersect(controls, names(data0)))
+  
+    # Build the regression formula for the weighted refit.
+    # Use DAG controls for the treatment model, but allow eval_all extras in the outcome model.
+    rhs_extras <- character(0)
+    if (isTRUE(x$settings$eval_all)) {
+      rhs_extras <- setdiff(.rhs_terms_safe(x$formulas$original), x$roles$variable)
+      rhs_extras <- intersect(rhs_extras, names(data0))   # safety: only vars in data
+    }
     
-    # Build the regression formula for the weighted refit using only DAG controls
-    # (preserves fixest tails / random-effects via .build_formula_with_controls)
-    fml <- .build_formula_with_controls(x$formulas$original, exp_nm, out_nm, controls)
+    controls_out <- unique(c(controls, rhs_extras))
     
-    # Treatment model formula: X ~ controls (or ~1 if none)
-    if (length(controls)) {
-      f_treat <- stats::as.formula(paste(exp_nm, "~", paste(controls, collapse = " + ")))
+    fml <- .build_formula_with_controls(x$formulas$original, exp_nm, out_nm, controls_out)
+    
+    #treatment model formula: X ~ controls (or ~1 if none)
+    #if eval_all=TRUE, include non-DAG terms in the weights model
+    controls_treat <- controls
+    if (isTRUE(x$settings$eval_all)) {
+      controls_treat <- controls_out
+    }
+    
+    if (length(controls_treat)) {
+      f_treat <- stats::as.formula(paste(exp_nm, "~", paste(controls_treat, collapse = " + ")))
     } else {
       f_treat <- stats::as.formula(paste(exp_nm, "~ 1"))
     }
@@ -456,7 +470,7 @@
     base_fml <- sp$base
     
     # vars from base part (y, x's, etc.)
-    vars_need <- unique(c(all.vars(base_fml), exp_nm, out_nm, controls))
+    vars_need <- unique(c(all.vars(base_fml), exp_nm, out_nm, controls_treat))
     
     # vars from fixest tail (e.g., FE like `year + province`, IV parts, etc.)
     # We parse each top-level '|' segment as "~ <segment>" and take all.vars.
@@ -577,6 +591,33 @@
         call. = FALSE
       )
     }
+    
+    #if clusters were captured as a full-length vector, subset to complete case rows
+    #this is specifically for lmrobust which throws errors if there is any
+    #missingness because it stores cluster as its own full length vector
+    .subset_cluster_vec <- function(cl, data_cc) {
+      if (is.null(cl)) return(cl)
+      if (!is.atomic(cl) || length(cl) <= 1L) return(cl)
+      
+      rn <- rownames(data_cc)
+      idx <- suppressWarnings(as.integer(rn))
+      
+      # only subset when it looks like the vector corresponds to the original data0 rows
+      if (!anyNA(idx) && length(cl) >= max(idx)) {
+        return(cl[idx])
+      }
+      cl
+    }
+    
+    if ("clusters" %in% names(engine_args)) {
+      engine_args$clusters <- .subset_cluster_vec(engine_args$clusters, data_cc)
+    }
+    if ("cluster" %in% names(engine_args)) {
+      engine_args$cluster <- .subset_cluster_vec(engine_args$cluster, data_cc)
+    }
+    
+    # Fit weighted version of THIS model on THIS model’s CC data
+    engine_args_w <- utils::modifyList(engine_args, list(weights = w))
     
     # Fit weighted version of THIS model on THIS model’s CC data
     engine_args_w <- utils::modifyList(engine_args, list(weights = w))

@@ -331,6 +331,7 @@ DAGassist <- function(dag,
     report$settings <- list(
       omit_intercept = isTRUE(omit_intercept),
       omit_factors = isTRUE(omit_factors),
+      eval_all = isTRUE(eval_all),
       show = show
     )
     report$.__data <- if (!is.null(data)) data else NULL
@@ -722,6 +723,7 @@ DAGassist <- function(dag,
   report$settings <- list(
     omit_intercept = isTRUE(omit_intercept),
     omit_factors = isTRUE(omit_factors),
+    eval_all = isTRUE(eval_all),
     show = show,
     exclude = exclude,
     engine = engine,

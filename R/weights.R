@@ -644,19 +644,39 @@
     )
     
     if (!inherits(me, "DAGassist_fit_error")) {
-      # If exposure is multi-level, avg_comparisons can return multiple contrasts.
-      # Keep only the first exposure contrast so the comparison table stays stable.
+      #when exposure is multi-level avg_comparisons returns multiple contrasts
+      #modified to keep all exposure contrasts and rename them to the model's 
+      #coefficient names so they align with the table modelsummary rows 
+      #that will be automatically set up via the raw models (e.g., X1, X2 for a 3-level factor).
       if ("term" %in% names(me) && any(me$term == exp_nm)) {
         rows_exp <- which(me$term == exp_nm)
+        
         if (length(rows_exp) > 1L) {
-          me <- me[setdiff(seq_len(nrow(me)), rows_exp[-1L]), , drop = FALSE]
-          warning(
-            sprintf(
-              "Exposure '%s' has >2 levels; keeping only the first contrast in the (%s) column. To obtain all contrasts, call marginaleffects::avg_comparisons(attr(<this column object>, 'dagassist_weighted_fit'), type='response', wts=attr(<this column object>, 'dagassist_weights')).",
-              exp_nm, est
-            ),
-            call. = FALSE
-          )
+          exp_coef_names <- character(0)
+          
+          # lmer/glmer: fixed effects live in fixef()
+          if (inherits(fit_w, "merMod")) {
+            exp_coef_names <- names(lme4::fixef(fit_w))
+          } else {
+            # fallback: try coef() names for other engines
+            exp_coef_names <- tryCatch(names(stats::coef(fit_w)), error = function(e) character(0))
+          }
+          
+          exp_coef_names <- exp_coef_names[grepl(paste0("^", exp_nm), exp_coef_names)]
+          
+          if (length(exp_coef_names) == length(rows_exp)) {
+            me$term[rows_exp] <- exp_coef_names
+          } else {
+            # last-resort: make terms unique so nothing is silently dropped
+            me$term[rows_exp] <- paste0(exp_nm, "__", seq_along(rows_exp))
+            warning(
+              sprintf(
+                "Exposure '%s' has >2 levels and DAGassist could not map all contrasts to coefficient names; using generic labels in the (%s) column.",
+                exp_nm, est
+              ),
+              call. = FALSE
+            )
+          }
         }
       }
       

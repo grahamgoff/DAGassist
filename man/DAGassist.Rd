@@ -26,6 +26,7 @@ DAGassist(
   estimand = c("raw", "none", "SATE", "SATT", "SACDE", "SCDE"),
   engine_args = list(),
   weights_args = list(),
+  wts_omit = NULL,
   auto_acde = TRUE,
   acde = list(),
   directeffects_args = list()
@@ -136,6 +137,11 @@ For SACDE, DAGassist estimates weights on the complete-case sample using the \em
 from the sequential-g block-1 specification (excluding mediator terms), by default via
 \code{WeightIt::weightit(..., method = "glm", estimand = "ATE")}. If \code{trim_at} is supplied, weights
 are winsorized at the requested quantile before refitting sequential-g.}
+
+\item{wts_omit}{Character vector (or single string) of terms to omit from the
+\strong{weighting (treatment) model} even when \code{eval_all = TRUE}. Useful for
+keeping non-DAG fixed effects in the outcome model while preventing them from
+entering the propensity/weight model.}
 
 \item{auto_acde}{Logical; if \code{TRUE} (default), automates handling conflicts between specifications
 and estimand arguments. Fails gracefully with a helpful error when users specify ACDE estimand

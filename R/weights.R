@@ -441,7 +441,16 @@
     rhs_extras <- character(0)
     if (isTRUE(x$settings$eval_all)) {
       rhs_extras <- setdiff(.rhs_terms_safe(x$formulas$original), x$roles$variable)
-      rhs_extras <- intersect(rhs_extras, names(data0))   # safety: only vars in data
+      
+      # keep transformed terms (e.g., factor(x), poly(x,2)) as long as their symbols exist in data
+      rhs_extras <- rhs_extras[vapply(
+        rhs_extras,
+        function(tt) {
+          vv <- tryCatch(all.vars(stats::as.formula(paste0("~", tt))), error = function(e) character(0))
+          length(vv) > 0 && all(vv %in% names(data0))
+        },
+        logical(1)
+      )]
     }
     
     controls_out <- unique(c(controls, rhs_extras))
@@ -453,6 +462,19 @@
     controls_treat <- controls
     if (isTRUE(x$settings$eval_all)) {
       controls_treat <- controls_out
+    }
+    
+    #wts_omit = keep terms in outcome model but omit them from weighting formula
+    wts_omit <- x$settings$wts_omit
+    if (is.character(wts_omit) && length(wts_omit)) {
+      # drop any control term that contains an omitted token as a word component
+      # (e.g., drops "year", "factor(year)", "i(year)", "year:treated", etc.)
+      pats <- paste0(
+        "\\b(",
+        paste(vapply(wts_omit, .escape_regex, character(1)), collapse = "|"),
+        ")\\b"
+      )
+      controls_treat <- controls_treat[!grepl(pats, controls_treat)]
     }
     
     if (length(controls_treat)) {
@@ -632,14 +654,24 @@
         }
       }
     )
-    
-    # IMPORTANT: for the model comparison table, store marginaleffects output
-    # (response-scale average comparisons) rather than the weighted log-odds model.
+    #restrict output to the exposure only because high-dimensional FE terms 
+    #make marginaleffects hang
     me <- tryCatch(
-      marginaleffects::avg_comparisons(
-        fit_w,
-        type = "response"
-      ),
+      {
+        if (identical(kind, "continuous")) {
+          marginaleffects::avg_slopes(
+            fit_w,
+            variables = exp_nm,
+            type = "response"
+          )
+        } else {
+          marginaleffects::avg_comparisons(
+            fit_w,
+            variables = exp_nm,
+            type = "response"
+          )
+        }
+      },
       error = function(e) fit_w
     )
     

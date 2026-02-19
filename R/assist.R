@@ -61,6 +61,10 @@
 #'    convenience covariates) in the minimal and canonical formulas. 
 #'    When `FALSE` (default), RHS terms not present as DAG nodes are dropped 
 #'    from those derived formulas.
+#' @param wts_omit Character vector (or single string) of terms to omit from the
+#'   **weighting (treatment) model** even when `eval_all = TRUE`. Useful for
+#'   keeping non-DAG fixed effects in the outcome model while preventing them from 
+#'   entering the propensity/weight model.
 #' @param bivariate Logical; if `TRUE`, include a bivariate (exposure-only) specification
 #'    in the comparison table **in addition** to the user's original and DAG-derived models.
 #' @param exclude Optional character vector to remove neutral controls from the canonical set.
@@ -246,6 +250,7 @@ DAGassist <- function(dag,
                       estimand = c("raw", "none", "SATE", "SATT", "SACDE", "SCDE"),
                       engine_args = list(),
                       weights_args = list(),
+                      wts_omit = NULL,
                       auto_acde = TRUE,
                       acde = list(),
                       directeffects_args = list()) {
@@ -724,6 +729,7 @@ DAGassist <- function(dag,
     omit_intercept = isTRUE(omit_intercept),
     omit_factors = isTRUE(omit_factors),
     eval_all = isTRUE(eval_all),
+    wts_omit = wts_omit,
     show = show,
     exclude = exclude,
     engine = engine,

@@ -693,12 +693,30 @@
   }
 }
 
-# Get RHS term labels from the pre-| part so fixest doesn't confuse terms
+##get RHS term labels from the pre-| part so fixest doesn't confuse terms
+#patched to handle glmer fe calls
 .rhs_terms_safe <- function(fml) {
   base <- .strip_fixest_parts(fml)$base
-  attr(stats::terms(base), "term.labels")
+  tl   <- attr(stats::terms(base), "term.labels")
+  
+  # Drop random-effects bar terms (glmer/lmer), because terms() de-parens them
+  # into "1 | group" and eval_all later pastes them back incorrectly.
+  rhs <- tryCatch(base[[3L]], error = function(e) NULL)
+  if (!is.null(rhs)) {
+    bars <- .collect_bar_calls(rhs)
+    if (length(bars)) {
+      bar_txt <- vapply(
+        bars,
+        function(x) paste(deparse(x), collapse = " "),
+        character(1)
+      )
+      norm <- function(x) gsub("\\s+", "", x)
+      tl <- tl[!norm(tl) %in% norm(bar_txt)]
+    }
+  }
+  
+  tl
 }
-
 
 ###return ALL minimal adjustment sets as a list 
 ##IN
@@ -929,6 +947,43 @@
     if (!is.null(coef_omit)) {
       args$coef_omit <- coef_omit
     }
+    
+    # ---- FIX: modelsummary bug for estimatr::lm_robust with clusters ----
+    # modelsummary's internal glance handler can create a length-nobs "se_type" vector
+    # (e.g., "by: WC011" repeated), which crashes when inserted into 1-row GOF df.
+    # Patch the internal method in-session to drop se_type and use broom::glance.
+    
+    if (requireNamespace("modelsummary", quietly = TRUE) &&
+        requireNamespace("broom", quietly = TRUE)) {
+      
+      ms_ns <- asNamespace("modelsummary")
+      
+      if (exists("glance_custom_internal.lm_robust", envir = ms_ns, inherits = FALSE)) {
+        
+        patched_glance_lm_robust <- function(model,
+                                             vcov_type = NULL,
+                                             gof = NULL,
+                                             gof_function = NULL) {
+          g <- broom::glance(model)
+          
+          # Ensure it's a 1-row data.frame
+          if (!is.data.frame(g)) g <- as.data.frame(g)
+          if (nrow(g) != 1L) g <- g[1, , drop = FALSE]
+          
+          # Drop se_type entirely (this is the crash source)
+          if ("se_type" %in% names(g)) g$se_type <- NULL
+          
+          g
+        }
+        
+        utils::assignInNamespace(
+          x = "glance_custom_internal.lm_robust",
+          value = patched_glance_lm_robust,
+          ns = "modelsummary"
+        )
+      }
+    }
+    
     tab <- do.call(modelsummary::msummary, args)
     cat("\nModel comparison:\n")
     #handle either vector or object
@@ -1000,7 +1055,7 @@
   if (!length(mods_use)) return(invisible(NULL))
   # header for the diagnostics block
   cat("\nWeight diagnostics:\n")
-  cat("  legend: w range is min..max by group; ess is kish effective n; flags mark low ess or extreme weights.\n")
+  cat("  legend: w range reports the min-max weights by group; ESS is kish effective sample size.\n")
   
   #helper to split a treatment vector into control vs treated indices.
   #structured to handle logical / 0-1 numeric / factors without assuming labels
@@ -1011,17 +1066,13 @@
     if (is.logical(tr)) {
       return(list(control = which(tr %in% FALSE), treated = which(tr %in% TRUE)))
     }
-    # if treatment is numeric/integer, prefer 0/1, else min vs max as a fallback
+    # if treatment is numeric/integer, ONLY split when it is truly 0/1-coded
     if (is.numeric(tr) || inherits(tr, "integer")) {
       u <- sort(unique(tr))
-      if (length(u) >= 2) {
-        # common case: 0 = control, 1 = treated
-        if (all(u %in% c(0, 1))) {
-          return(list(control = which(tr == 0), treated = which(tr == 1)))
-        }
-        # fallback: smallest value = control, largest value = treated
-        return(list(control = which(tr == min(u)), treated = which(tr == max(u))))
+      if (length(u) >= 2 && all(u %in% c(0, 1))) {
+        return(list(control = which(tr == 0), treated = which(tr == 1)))
       }
+      return(NULL)
     }
     #for factor/character treatment, coerce to factor, then pick levels
     if (is.character(tr)) tr <- factor(tr)
@@ -1130,23 +1181,16 @@
         flag_str
       ))
     } else {
-      # fallback: no clean treated/control split, so only print overall range + overall ess
       cat(sprintf(
-        "  %s: w range=%s..%s | ess(all)=%s/%d (%s%% of n)%s\n",
+        "  %s: w range=%s..%s | ESS (weighted)=%s%s\n",
         nm,
         format(signif(w_min, 4)),
         format(signif(w_max, 4)),
-        ifelse(is.finite(ess_all), format(round(ess_all, 1)), "NA"),
-        n,
-        ifelse(is.finite(ess_frac), format(round(100 * ess_frac, 0)), "NA"),
+        ifelse(is.finite(ess_all), format(round(ess_all, 2)), "NA"),
         flag_str
       ))
     }
   }
-  
-  # keep your original note, but don’t overdo it
-  cat("  Note: IPW/GPS here assumes a point (single-shot) treatment. For time-varying treatments/confounding, use MSM/time-varying IPW.\n")
-  
   invisible(NULL)
 }
 
@@ -1301,8 +1345,7 @@
             m,
             variables = vars,
             type = "response",
-            vcov = V,
-            wts = wts_use
+            vcov = V
           ),
           error = function(e) NULL
         )

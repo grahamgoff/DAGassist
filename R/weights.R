@@ -359,6 +359,9 @@
   trim_at <- wargs[["trim_at"]]          # DAGassist-specific (optional)
   wargs[["trim_at"]] <- NULL
   
+  #stabilize by default
+  if (is.null(wargs[["stabilize"]])) wargs[["stabilize"]] <- TRUE
+  
   ##dependency checks for the ATE dependencies
   if (!requireNamespace("WeightIt", quietly = TRUE)) {
     stop(
@@ -393,18 +396,89 @@
     # Do NOT produce "Original (ATE)/(ATT)" columns
     if (identical(model_name, "Original")) return(NULL)
     
-    fml <- .dagassist_formula_for_model_name(x, model_name)
-    if (is.null(fml)) return(NULL)
+    # ---- DAG-based controls for weighting (match manual workflow) ----
+    # NOTE: eval_all "extras" (e.g., eu/japan/...) are intentionally NOT used for
+    # the treatment model. Those are nuisance regressors, not DAG-approved adjusters.
     
-    # Controls for the treatment model come from *this model's* RHS (minus X and Y)
-    rhs <- .rhs_terms_safe(fml)
-    controls <- setdiff(rhs, c(exp_nm, out_nm))
-    controls <- intersect(controls, names(data0))
-    controls <- unique(controls)
+    # Identify the DAG control set for this model column
+    controls <- character(0)
     
-    # Build treatment formula: X ~ controls (or ~1 if none)
-    if (length(controls)) {
-      f_treat <- stats::as.formula(paste(exp_nm, "~", paste(controls, collapse = " + ")))
+    if (identical(model_name, "Bivariate")) {
+      controls <- character(0)
+      
+    } else if (identical(model_name, "Canonical")) {
+      controls <- x$controls_canonical
+      
+    } else if (grepl("^Minimal\\s+[0-9]+$", model_name)) {
+      idx <- as.integer(sub("^Minimal\\s+", "", model_name))
+      if (length(x$controls_minimal_all) && idx <= length(x$controls_minimal_all)) {
+        controls <- x$controls_minimal_all[[idx]]
+      } else {
+        controls <- x$controls_minimal
+      }
+      
+    } else if (identical(model_name, "Canon. (-NCT)")) {
+      controls <- x$controls_canonical_excl[["nct"]]
+      
+    } else if (identical(model_name, "Canon. (-NCO)")) {
+      controls <- x$controls_canonical_excl[["nco"]]
+      
+    } else if (grepl("^Canonical\\s*\\((.+)\\)$", model_name)) {
+      # fallback for any other canonical-excl labels
+      nm <- sub("^Canonical\\s*\\((.+)\\)$", "\\1", model_name)
+      controls <- x$controls_canonical_excl[[nm]]
+      
+    } else {
+      # default: try to use the model formula mapping as last resort
+      # but still avoid pulling eval_all RHS into weighting
+      controls <- character(0)
+    }
+    
+    controls <- unique(intersect(controls, names(data0)))
+  
+    # Build the regression formula for the weighted refit.
+    # Use DAG controls for the treatment model, but allow eval_all extras in the outcome model.
+    rhs_extras <- character(0)
+    if (isTRUE(x$settings$eval_all)) {
+      rhs_extras <- setdiff(.rhs_terms_safe(x$formulas$original), x$roles$variable)
+      
+      # keep transformed terms (e.g., factor(x), poly(x,2)) as long as their symbols exist in data
+      rhs_extras <- rhs_extras[vapply(
+        rhs_extras,
+        function(tt) {
+          vv <- tryCatch(all.vars(stats::as.formula(paste0("~", tt))), error = function(e) character(0))
+          length(vv) > 0 && all(vv %in% names(data0))
+        },
+        logical(1)
+      )]
+    }
+    
+    controls_out <- unique(c(controls, rhs_extras))
+    
+    fml <- .build_formula_with_controls(x$formulas$original, exp_nm, out_nm, controls_out)
+    
+    #treatment model formula: X ~ controls (or ~1 if none)
+    #if eval_all=TRUE, include non-DAG terms in the weights model
+    controls_treat <- controls
+    if (isTRUE(x$settings$eval_all)) {
+      controls_treat <- controls_out
+    }
+    
+    #wts_omit = keep terms in outcome model but omit them from weighting formula
+    wts_omit <- x$settings$wts_omit
+    if (is.character(wts_omit) && length(wts_omit)) {
+      # drop any control term that contains an omitted token as a word component
+      # (e.g., drops "year", "factor(year)", "i(year)", "year:treated", etc.)
+      pats <- paste0(
+        "\\b(",
+        paste(vapply(wts_omit, .escape_regex, character(1)), collapse = "|"),
+        ")\\b"
+      )
+      controls_treat <- controls_treat[!grepl(pats, controls_treat)]
+    }
+    
+    if (length(controls_treat)) {
+      f_treat <- stats::as.formula(paste(exp_nm, "~", paste(controls_treat, collapse = " + ")))
     } else {
       f_treat <- stats::as.formula(paste(exp_nm, "~ 1"))
     }
@@ -413,12 +487,31 @@
     # Use variables needed for treatment + outcome model evaluation.
     # Build complete-case analytic data for THIS spec.
     # Keep vars needed for treatment + outcome + clustering.
-    base_fml <- .strip_fixest_parts(fml)$base
-    vars_need <- unique(c(all.vars(base_fml), exp_nm, out_nm, controls))
+    # fixed to include fixest tail vars so refits with FE don't fail.
+    sp <- .strip_fixest_parts(fml)
+    base_fml <- sp$base
     
-    # --- keep cluster vars if cluster is a formula or a column name ---
+    # vars from base part (y, x's, etc.)
+    vars_need <- unique(c(all.vars(base_fml), exp_nm, out_nm, controls_treat))
+    
+    # vars from fixest tail (e.g., FE like `year + province`, IV parts, etc.)
+    # We parse each top-level '|' segment as "~ <segment>" and take all.vars.
+    s_full <- paste(deparse(fml, width.cutoff = 500L), collapse = " ")
+    parts  <- .split_top_level(s_full, sep = "|")
+    tail_vars <- character(0)
+    if (length(parts) >= 2L) {
+      tails <- trimws(parts[-1])
+      for (tt in tails) {
+        # Protect against empty pieces
+        if (!nzchar(tt)) next
+        f_tt <- stats::as.formula(paste("~", tt), env = environment(fml))
+        tail_vars <- c(tail_vars, all.vars(f_tt))
+      }
+    }
+    vars_need <- unique(c(vars_need, tail_vars))
+    
+    # keep cluster vars too
     cluster_vars <- character(0)
-    
     if ("cluster" %in% names(engine_args)) {
       cl <- engine_args$cluster
       if (inherits(cl, "formula")) cluster_vars <- all.vars(cl)
@@ -429,10 +522,9 @@
       if (inherits(cl, "formula")) cluster_vars <- c(cluster_vars, all.vars(cl))
       if (is.character(cl) && length(cl) == 1L) cluster_vars <- c(cluster_vars, cl)
     }
-    
     vars_need <- unique(c(vars_need, cluster_vars))
-    vars_need <- intersect(vars_need, names(data0))
     
+    vars_need <- intersect(vars_need, names(data0))
     data_cc <- stats::na.omit(data0[, vars_need, drop = FALSE])
     
     if (!nrow(data_cc)) return(NULL)
@@ -522,6 +614,33 @@
       )
     }
     
+    #if clusters were captured as a full-length vector, subset to complete case rows
+    #this is specifically for lmrobust which throws errors if there is any
+    #missingness because it stores cluster as its own full length vector
+    .subset_cluster_vec <- function(cl, data_cc) {
+      if (is.null(cl)) return(cl)
+      if (!is.atomic(cl) || length(cl) <= 1L) return(cl)
+      
+      rn <- rownames(data_cc)
+      idx <- suppressWarnings(as.integer(rn))
+      
+      # only subset when it looks like the vector corresponds to the original data0 rows
+      if (!anyNA(idx) && length(cl) >= max(idx)) {
+        return(cl[idx])
+      }
+      cl
+    }
+    
+    if ("clusters" %in% names(engine_args)) {
+      engine_args$clusters <- .subset_cluster_vec(engine_args$clusters, data_cc)
+    }
+    if ("cluster" %in% names(engine_args)) {
+      engine_args$cluster <- .subset_cluster_vec(engine_args$cluster, data_cc)
+    }
+    
+    # Fit weighted version of THIS model on THIS model’s CC data
+    engine_args_w <- utils::modifyList(engine_args, list(weights = w))
+    
     # Fit weighted version of THIS model on THIS model’s CC data
     engine_args_w <- utils::modifyList(engine_args, list(weights = w))
     #specifically suppress binomial warning, which won't be caught in the prior
@@ -535,32 +654,61 @@
         }
       }
     )
-    
-    # IMPORTANT: for the model comparison table, store marginaleffects output
-    # (response-scale average comparisons) rather than the weighted log-odds model.
+    #restrict output to the exposure only because high-dimensional FE terms 
+    #make marginaleffects hang
     me <- tryCatch(
-      marginaleffects::avg_comparisons(
-        fit_w,
-        type = "response",
-        wts  = w
-      ),
+      {
+        if (identical(kind, "continuous")) {
+          marginaleffects::avg_slopes(
+            fit_w,
+            variables = exp_nm,
+            type = "response"
+          )
+        } else {
+          marginaleffects::avg_comparisons(
+            fit_w,
+            variables = exp_nm,
+            type = "response"
+          )
+        }
+      },
       error = function(e) fit_w
     )
     
     if (!inherits(me, "DAGassist_fit_error")) {
-      # If exposure is multi-level, avg_comparisons can return multiple contrasts.
-      # Keep only the first exposure contrast so the comparison table stays stable.
+      #when exposure is multi-level avg_comparisons returns multiple contrasts
+      #modified to keep all exposure contrasts and rename them to the model's 
+      #coefficient names so they align with the table modelsummary rows 
+      #that will be automatically set up via the raw models (e.g., X1, X2 for a 3-level factor).
       if ("term" %in% names(me) && any(me$term == exp_nm)) {
         rows_exp <- which(me$term == exp_nm)
+        
         if (length(rows_exp) > 1L) {
-          me <- me[setdiff(seq_len(nrow(me)), rows_exp[-1L]), , drop = FALSE]
-          warning(
-            sprintf(
-              "Exposure '%s' has >2 levels; keeping only the first contrast in the (%s) column. To obtain all contrasts, call marginaleffects::avg_comparisons(attr(<this column object>, 'dagassist_weighted_fit'), type='response', wts=attr(<this column object>, 'dagassist_weights')).",
-              exp_nm, est
-            ),
-            call. = FALSE
-          )
+          exp_coef_names <- character(0)
+          
+          # lmer/glmer: fixed effects live in fixef()
+          if (inherits(fit_w, "merMod")) {
+            exp_coef_names <- names(lme4::fixef(fit_w))
+          } else {
+            # fallback: try coef() names for other engines
+            exp_coef_names <- tryCatch(names(stats::coef(fit_w)), error = function(e) character(0))
+          }
+          
+          exp_coef_names <- exp_coef_names[grepl(paste0("^", exp_nm), exp_coef_names)]
+          
+          if (length(exp_coef_names) == length(rows_exp)) {
+            me$term[rows_exp] <- exp_coef_names
+          } else {
+            # last-resort: make terms unique so nothing is silently dropped
+            me$term[rows_exp] <- paste0(exp_nm, "__", seq_along(rows_exp))
+            warning(
+              sprintf(
+                "Exposure '%s' has >2 levels and DAGassist could not map all contrasts to coefficient names; using generic labels in the (%s) column.",
+                exp_nm, est
+              ),
+              call. = FALSE
+            )
+          }
         }
       }
       

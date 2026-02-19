@@ -51,7 +51,8 @@ Suggests:
     DiagrammeR,
     marginaleffects,
     WeightIt,
-    DirectEffects
+    DirectEffects,
+    lme4
 VignetteBuilder: 
     knitr
 Config/Needs/website: pkgdown, rmarkdown, DiagrammeR, htmltools

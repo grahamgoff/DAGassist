@@ -131,8 +131,10 @@ df <- data.frame(A, B, Z, X, M, Y, C)
 Simply provide a `dagitty()` object and a regression call and `DAGassist` will create a report classifying variables by causal role, and compare the specified regression to minimal and canonical models. 
 
 ```{r run}
-DAGassist::DAGassist(dag = dag_model, 
-          formula = feols(Y ~ X + M + C + Z + A + B, data = df))
+DAGassist(dag = dag_model, 
+          formula = feols(Y ~ X + M + C + Z + A + B, data = df),
+          estimand = c("SATE", "SACDE")
+)
 
 # note: this example uses a test DAG and dataset, which was created
 # silently for the sake of brevity.
@@ -140,8 +142,10 @@ DAGassist::DAGassist(dag = dag_model,
 
 Optionally, users can generate visual output via dotwhisker plots:
 
-```{r dotwhisker, eval=has_dotwhisker, warning=FALSE}
-DAGassist::DAGassist(dag = dag_model,
+```{r dotwhisker, eval=has_dotwhisker, warning=FALSE, echo=FALSE}
+DAGassist(dag = dag_model, 
           formula = feols(Y ~ X + M + C + Z + A + B, data = df),
-          type = "dotwhisker")
+          estimand = c("SATE", "SACDE"),
+          type = "dotwhisker"
+)
 ```

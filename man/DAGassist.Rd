@@ -52,7 +52,7 @@ DAG (must be unique).}
 \item{engine}{Modeling function, default \link[stats:lm]{stats::lm}. Ignored if \code{formula}
 is a single engine call (in that case the function is taken from the call).}
 
-\item{labels}{Optional variable labels (named character vector or data.frame).}
+\item{labels}{List; optional variable labels (named character vector or data.frame).}
 
 \item{verbose}{Logical (default \code{TRUE}). Controls verbosity in the console
 printer (formulas + notes).}
@@ -64,7 +64,7 @@ or the plotting types \code{"dwplot"}/\code{"dotwhisker"}.
 For \code{type = "latex"}, if no \verb{out=} is supplied, a LaTeX fragment is printed
 to the console instead of being written to disk.}
 
-\item{show}{Which sections to include in the output. One of \code{"all"} (default),
+\item{show}{Character vector or list; specify which sections to include in the output. One of \code{"all"} (default),
 \code{"roles"} (only the roles grid), or \code{"models"} (only the model comparison table/plot).
 This makes it possible to generate and export just roles or just comparisons.}
 
@@ -81,7 +81,7 @@ when omitted, the plot is rendered within RStudio.
 Ignored for \code{type="console"}.
 }}
 
-\item{imply}{Logical; default \code{FALSE}. Specifies \strong{evaluation scope.}
+\item{imply}{Logical; default \code{FALSE}. Specifies evaluation scope.
 \itemize{
 \item If \code{FALSE} (default): restrict DAG evaluation to variables \strong{named in the formula}
 (prune the DAG to exposure, outcome, and RHS terms). Roles/sets/bad-controls are
@@ -92,15 +92,15 @@ minimal/canonical sets. The roles table shows all DAG nodes, and the printout
 notes any variables added beyond your RHS. Essentially, it fits the formula to the DAG.
 }}
 
-\item{eval_all}{Logical; default \code{FALSE}.  When \code{TRUE}, keep \strong{all original RHS terms}
+\item{eval_all}{Logical; default \code{FALSE}. When \code{TRUE}, keep all original RHS terms
 that are not in the DAG (e.g., fixed effects, interactions, splines,
 convenience covariates) in the minimal and canonical formulas.
 When \code{FALSE} (default), RHS terms not present as DAG nodes are dropped
 from those derived formulas.}
 
-\item{exclude}{Optional character vector to remove neutral controls from the canonical set.
+\item{exclude}{Character vector or list; remove neutral controls from the canonical set.
 Recognized values are \code{"nct"} (drop \emph{neutral-on-treatment} controls) and
-\code{"nco"} (drop \emph{neutral-on-outcome} controls). You can supply one or both,
+\code{"nco"} (drop \emph{neutral-on-outcome} controls). Users can supply one or both,
 e.g. \code{exclude = c("nco", "nct")}; each requested variant is fitted and shown
 as a separate "Canon. (-...)" column in the console/model exports.}
 
@@ -110,7 +110,7 @@ as a separate "Canon. (-...)" column in the console/model exports.}
 This parameter only suppresses factor \strong{output}--they are still included in the regression.}
 
 \item{bivariate}{Logical; if \code{TRUE}, include a bivariate (exposure-only) specification
-in the comparison table \strong{in addition} to the user's original and DAG-derived models.}
+in the comparison table in addition to the user's original and DAG-derived models.}
 
 \item{estimand}{Character; causal estimand for the \emph{reported columns} in the console output.
 One of \code{"raw"} (default), \code{"SATE"}, \code{"SATT"}, \code{"SACDE"} (alias \code{"SCDE"}), or \code{"none"}.
@@ -138,10 +138,9 @@ from the sequential-g block-1 specification (excluding mediator terms), by defau
 \code{WeightIt::weightit(..., method = "glm", estimand = "ATE")}. If \code{trim_at} is supplied, weights
 are winsorized at the requested quantile before refitting sequential-g.}
 
-\item{wts_omit}{Character vector (or single string) of terms to omit from the
-\strong{weighting (treatment) model} even when \code{eval_all = TRUE}. Useful for
-keeping non-DAG fixed effects in the outcome model while preventing them from
-entering the propensity/weight model.}
+\item{wts_omit}{Character vector; terms to omit from the weighting (treatment)
+model even when \code{eval_all = TRUE}. Useful for keeping non-DAG fixed effects
+in the outcome model while preventing them from entering the propensity/weight model.}
 
 \item{auto_acde}{Logical; if \code{TRUE} (default), automates handling conflicts between specifications
 and estimand arguments. Fails gracefully with a helpful error when users specify ACDE estimand
@@ -188,7 +187,7 @@ the returned object includes attribute \code{file}, the normalized output path.
 \code{DAGassist()} validates a DAG + model specification, classifies node roles,
 builds minimal and canonical adjustment sets, fits comparable models, and
 renders a compact report in several formats (console, LaTeX fragment, DOCX,
-XLSX, plain text). It also supports recovering new estimands, such as the
+XLSX, plain text). It also supports recovering target estimands, such as the
 sample average treatment effect (SATE) or the sample average controlled direct
 effect (SACDE).
 }

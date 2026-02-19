@@ -1,9 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# DAGassist <a href='https://grahamgoff.github.io/DAGassist/'><img src='man/figures/logo.png' class='home-logo' align="right" height="200" alt='DAGassist hex logo'/></a>
-
-<!-- badges: start -->
+# DAGassist <a href='https://grahamgoff.github.io/DAGassist/'><img src='man/figures/logo.png' class='home-logo' align="right" width="200pt" alt='DAGassist hex logo'/></a>
 
 [![R-CMD-check](https://github.com/grahamgoff/DAGassist/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/grahamgoff/DAGassist/actions/workflows/R-CMD-check.yaml)
 [![pages-build-deployment](https://github.com/grahamgoff/DAGassist/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/grahamgoff/DAGassist/actions/workflows/pages/pages-build-deployment)
@@ -11,7 +9,6 @@
 status](https://www.r-pkg.org/badges/version/DAGassist)](https://cran.r-project.org/package=DAGassist)
 [![Lifecycle:
 maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://lifecycle.r-lib.org/articles/stages.html)
-<!-- badges: end -->
 
 **An all-in-one DAG-driven robustness check.** Generate
 publication-quality reports that classify variables by causal role,
@@ -32,28 +29,6 @@ estimands.
   (LaTeX/Word/Excel/markdown/plain text + dotwhisker).
 - Provides weight diagnostics to evaluate positivity and effective
   sample sizes.
-
-See the [Quick
-Tour](https://grahamgoff.github.io/DAGassist/articles/quick-tour.html)
-vignette for a 10 minute start-to-finish guide on how to use `DAGassist`
-to identify causal roles, create reports, and interpret the results.
-
-See the [Making
-Reports](https://grahamgoff.github.io/DAGassist/articles/making-reports.html)
-vignette for details on producing publication-quality `DAGassist`
-reports in `LaTex`, `Word`, `Excel`, and `plain text`. See the
-[Parameter
-Guide](https://grahamgoff.github.io/DAGassist/articles/get-started.html)
-vignette for examples of how to get the most out of `DAGassist`.
-
-See the [Supported
-Models](https://grahamgoff.github.io/DAGassist/articles/compatibility.html)
-vignette for documentation on what engines `DAGassist` supports.
-
-See the [Ecosystem
-Guide](https://grahamgoff.github.io/DAGassist/articles/ecosystem.html)
-for how `DAGassist` fits in the R DAG ecosystem—and a diagram of the
-packages it integrates with.
 
 ## Installation
 
@@ -143,9 +118,6 @@ DAGassist(dag = dag_model,
 #>   Canonical (SATE): w range=0.02283..339.7 | ESS (weighted)=64.48 [LOW_ESS,EXTREME_W]
 #> 
 #> Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome
-
-# note: this example uses a test DAG and dataset, which was created
-# silently for the sake of brevity.
 ```
 
 Optionally, users can generate visual output via dotwhisker plots:

@@ -2,37 +2,9 @@ url: https://grahamgoff.github.io/DAGassist/
 template:
   bootstrap: 5
   bslib:
-    bootswatch: darkly
+    primary: "#00612E"
 
 favicon: man/figures/logo.png
-
-development:
-  mode: auto
-
-navbar:
-  structure:
-    left:  [home, articles, reference, news]
-    right: [github]
-  components:
-    github:
-      icon: fab fa-github
-      href: https://github.com/grahamgoff/DAGassist
-      aria-label: GitHub 
-    
-articles:
-  - title: "Tutorials"
-    contents:
-      - quick-tour
-      - get-started
-  - title: "How-to Guides"
-    contents:
-      - making-reports
-      - compatibility
-      - estimand-recovery
-  - title: "Extended Documentation"
-    contents:
-      - articles/ecosystem
-      - articles/theoretical-scaffolding
       
 reference:
   - title: "Main function"

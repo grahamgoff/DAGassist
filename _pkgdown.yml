@@ -47,7 +47,6 @@ reference:
     contents:
       - bad_controls_in
       - classify_nodes
-      - seqg_formula
 
   - title: "Internal functions"
     desc: >

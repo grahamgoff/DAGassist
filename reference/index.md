@@ -5,7 +5,8 @@
 The primary pipeline function to generate reports.
 
 - [`DAGassist()`](https://grahamgoff.github.io/DAGassist/reference/DAGassist.md)
-  : Generate and/or export report classifying nodes and comparing models
+  : Generate and/or export report that classifies nodes, compares
+  models, and (optionally) target causal estimands.
 
 ## Useful supplements
 

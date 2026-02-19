@@ -93,8 +93,10 @@
 </h2>
 <p>Simply provide a <code>dagitty()</code> object and a regression call and <code>DAGassist</code> will create a report classifying variables by causal role, and compare the specified regression to minimal and canonical models.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">DAGassist</span><span class="fu">::</span><span class="fu"><a href="reference/DAGassist.html">DAGassist</a></span><span class="op">(</span>dag <span class="op">=</span> <span class="va">dag_model</span>, </span>
-<span>          formula <span class="op">=</span> <span class="fu">feols</span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">M</span> <span class="op">+</span> <span class="va">C</span> <span class="op">+</span> <span class="va">Z</span> <span class="op">+</span> <span class="va">A</span> <span class="op">+</span> <span class="va">B</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="reference/DAGassist.html">DAGassist</a></span><span class="op">(</span>dag <span class="op">=</span> <span class="va">dag_model</span>, </span>
+<span>          formula <span class="op">=</span> <span class="fu">feols</span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">M</span> <span class="op">+</span> <span class="va">C</span> <span class="op">+</span> <span class="va">Z</span> <span class="op">+</span> <span class="va">A</span> <span class="op">+</span> <span class="va">B</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span>,</span>
+<span>          estimand <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"SATE"</span>, <span class="st">"SACDE"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span><span class="co">#&gt; DAGassist Report: </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Roles:</span></span>
@@ -116,50 +118,50 @@
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Model comparison:</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; +----------+-----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |          | Original  | Minimal 1 | Canonical |</span></span>
-<span><span class="co">#&gt; +==========+===========+===========+===========+</span></span>
-<span><span class="co">#&gt; | X        | 0.452***  | 1.256***  | 1.256***  |</span></span>
-<span><span class="co">#&gt; +----------+-----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |          | (0.032)   | (0.027)   | (0.026)   |</span></span>
-<span><span class="co">#&gt; +----------+-----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; | M        | 0.514***  |           |           |</span></span>
-<span><span class="co">#&gt; +----------+-----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |          | (0.021)   |           |           |</span></span>
-<span><span class="co">#&gt; +----------+-----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; | C        | 0.343***  |           |           |</span></span>
-<span><span class="co">#&gt; +----------+-----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |          | (0.019)   |           |           |</span></span>
-<span><span class="co">#&gt; +----------+-----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; | Z        | 0.249***  | 0.311***  | 0.309***  |</span></span>
-<span><span class="co">#&gt; +----------+-----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |          | (0.027)   | (0.034)   | (0.033)   |</span></span>
-<span><span class="co">#&gt; +----------+-----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; | A        | 0.152***  |           | 0.187***  |</span></span>
-<span><span class="co">#&gt; +----------+-----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |          | (0.021)   |           | (0.026)   |</span></span>
-<span><span class="co">#&gt; +----------+-----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; | B        | -0.069*** |           | -0.057*   |</span></span>
-<span><span class="co">#&gt; +----------+-----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; |          | (0.021)   |           | (0.026)   |</span></span>
-<span><span class="co">#&gt; +----------+-----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; | Num.Obs. | 2000      | 2000      | 2000      |</span></span>
-<span><span class="co">#&gt; +----------+-----------+-----------+-----------+</span></span>
-<span><span class="co">#&gt; | R2       | 0.818     | 0.706     | 0.714     |</span></span>
-<span><span class="co">#&gt; +==========+===========+===========+===========+</span></span>
-<span><span class="co">#&gt; | + p &lt; 0.1, * p &lt; 0.05, ** p &lt; 0.01, *** p &lt;  |</span></span>
-<span><span class="co">#&gt; | 0.001                                        |</span></span>
-<span><span class="co">#&gt; +==========+===========+===========+===========+ </span></span>
+<span><span class="co">#&gt; +----------+-----------+-----------+------------------+-----------+------------------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; |          | Original  | Minimal 1 | Minimal 1 (SATE) | Canonical | Canonical (SATE) | Raw (SACDE) | Weighted (SACDE) |</span></span>
+<span><span class="co">#&gt; +==========+===========+===========+==================+===========+==================+=============+==================+</span></span>
+<span><span class="co">#&gt; | X        | 0.452***  | 1.256***  | 1.084***         | 1.256***  | 1.097***         | 0.719***    | 0.620***         |</span></span>
+<span><span class="co">#&gt; +----------+-----------+-----------+------------------+-----------+------------------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; |          | (0.032)   | (0.027)   | (0.018)          | (0.026)   | (0.018)          | (0.023)     | (0.037)          |</span></span>
+<span><span class="co">#&gt; +----------+-----------+-----------+------------------+-----------+------------------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; | M        | 0.514***  |           |                  |           |                  |             |                  |</span></span>
+<span><span class="co">#&gt; +----------+-----------+-----------+------------------+-----------+------------------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; |          | (0.021)   |           |                  |           |                  |             |                  |</span></span>
+<span><span class="co">#&gt; +----------+-----------+-----------+------------------+-----------+------------------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; | C        | 0.343***  |           |                  |           |                  |             |                  |</span></span>
+<span><span class="co">#&gt; +----------+-----------+-----------+------------------+-----------+------------------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; |          | (0.019)   |           |                  |           |                  |             |                  |</span></span>
+<span><span class="co">#&gt; +----------+-----------+-----------+------------------+-----------+------------------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; | Z        | 0.249***  | 0.311***  |                  | 0.309***  |                  | 0.294***    | 0.440***         |</span></span>
+<span><span class="co">#&gt; +----------+-----------+-----------+------------------+-----------+------------------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; |          | (0.027)   | (0.034)   |                  | (0.033)   |                  | (0.029)     | (0.043)          |</span></span>
+<span><span class="co">#&gt; +----------+-----------+-----------+------------------+-----------+------------------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; | A        | 0.152***  |           |                  | 0.187***  |                  | 0.180***    | 0.188***         |</span></span>
+<span><span class="co">#&gt; +----------+-----------+-----------+------------------+-----------+------------------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; |          | (0.021)   |           |                  | (0.026)   |                  | (0.023)     | (0.036)          |</span></span>
+<span><span class="co">#&gt; +----------+-----------+-----------+------------------+-----------+------------------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; | B        | -0.069*** |           |                  | -0.057*   |                  | -0.078***   | -0.099**         |</span></span>
+<span><span class="co">#&gt; +----------+-----------+-----------+------------------+-----------+------------------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; |          | (0.021)   |           |                  | (0.026)   |                  | (0.023)     | (0.038)          |</span></span>
+<span><span class="co">#&gt; +----------+-----------+-----------+------------------+-----------+------------------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; | Num.Obs. | 2000      | 2000      | 2000             | 2000      | 2000             | 2000        | 2000             |</span></span>
+<span><span class="co">#&gt; +----------+-----------+-----------+------------------+-----------+------------------+-------------+------------------+</span></span>
+<span><span class="co">#&gt; | R2       | 0.818     | 0.706     | 0.655            | 0.714     | 0.664            |             |                  |</span></span>
+<span><span class="co">#&gt; +==========+===========+===========+==================+===========+==================+=============+==================+</span></span>
+<span><span class="co">#&gt; | + p &lt; 0.1, * p &lt; 0.05, ** p &lt; 0.01, *** p &lt; 0.001                                                                   |</span></span>
+<span><span class="co">#&gt; +==========+===========+===========+==================+===========+==================+=============+==================+ </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Weight diagnostics:</span></span>
+<span><span class="co">#&gt;   legend: w range reports the min-max weights by group; ESS is kish effective sample size.</span></span>
+<span><span class="co">#&gt;   Minimal 1 (SATE): w range=0.024..371.8 | ESS (weighted)=56.15 [LOW_ESS,EXTREME_W]</span></span>
+<span><span class="co">#&gt;   Canonical (SATE): w range=0.02283..339.7 | ESS (weighted)=64.48 [LOW_ESS,EXTREME_W]</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome</span></span>
 <span></span>
 <span><span class="co"># note: this example uses a test DAG and dataset, which was created</span></span>
 <span><span class="co"># silently for the sake of brevity.</span></span></code></pre></div>
 <p>Optionally, users can generate visual output via dotwhisker plots:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">DAGassist</span><span class="fu">::</span><span class="fu"><a href="reference/DAGassist.html">DAGassist</a></span><span class="op">(</span>dag <span class="op">=</span> <span class="va">dag_model</span>,</span>
-<span>          formula <span class="op">=</span> <span class="fu">feols</span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">M</span> <span class="op">+</span> <span class="va">C</span> <span class="op">+</span> <span class="va">Z</span> <span class="op">+</span> <span class="va">A</span> <span class="op">+</span> <span class="va">B</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span>,</span>
-<span>          type <span class="op">=</span> <span class="st">"dotwhisker"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-dotwhisker-1.png" alt="" width="100%"></p>
 </div>
 </div>

@@ -1,42 +1,15 @@
-/* Default: hide header logo everywhere */
-.page-header img.logo { 
-  display: none !important;
+/* pkgdown/extra.css */
+
+/* Tighten the vertical rhythm on the home page content area */
+.template-home .contents h1 {
+  margin-bottom: 0.35rem;
 }
 
-/* Homepage only: show it and size it up */
-.container.template-home .page-header img.logo {
-  display: inline-block !important;
-  width: 310px !important;   /* adjust to taste */
-  height: auto !important;
-  margin: 0 .5rem .2rem 0;
+.template-home .contents h1 + p {
+  margin-top: 0.35rem;
 }
 
-/* (Optional) homepage typography tweaks */
-.container.template-home .page-header { 
-  margin-bottom: .9rem !important;
-  padding-bottom: .3rem !important;
-  border-bottom: 1px solid #e6e6e6;
-}
-.container.template-home .lead { 
-  font-size: 1rem !important;
-  line-height: 1.6 !important;
-}
-
-/* force citation blocks to be readable */
-pre,
-pre code {
-  background-color: #ffffff !important;
-  color: #000000 !important;
-}
-
-/* only bump the GitHub icon, not the whole navbar */
-.navbar .nav-link[aria-label="GitHub"] .fab.fa-github {
-  font-size: 1.6rem;   /* adjust to taste */
-  line-height: 1;      /* keep it tight so it doesn't stretch vertically */
-}
-
-/* optional: keep the link itself from adding extra padding/height */
-.navbar .nav-link[aria-label="GitHub"] {
-  padding-top: 0.4rem;
-  padding-bottom: 0.4rem;
+/* If your logo float creates extra perceived whitespace, tame it slightly */
+.template-home .home-logo {
+  margin-left: 1rem;
 }

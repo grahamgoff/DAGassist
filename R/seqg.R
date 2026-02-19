@@ -609,6 +609,27 @@ glance.dagassist_seqg <- function(x, ...) {
   base_fml <- .dagassist_formula_for_model_name(x, "Canonical")
   if (is.null(base_fml)) stop("Could not recover Canonical formula for SACDE.", call. = FALSE)
   
+  # Guardrail 1: do not attempt SACDE when exposure is an interaction term
+  if (.dagassist_is_interaction_exposure(exp_nm)) {
+    stop(
+      "SACDE recovery is not supported when the exposure is an interaction term (e.g., X1:X2 or X1*X2).\n\n",
+      "Precompute a single treatment variable in your data and use that as the exposure node, ",
+      "or set estimand = 'raw'/'none'.",
+      call. = FALSE
+    )
+  }
+  
+  # Guardrail 2: SACDE recovery is only supported for linear outcome models
+  base_fit <- mods[["Canonical"]]
+  if (.dagassist_is_nonlinear_fit(base_fit, engine = x$settings$engine)) {
+    stop(
+      "SACDE recovery is currently blocked for non-linear outcome models (e.g., glm with non-gaussian family, glmer).\n\n",
+      "SACDE/sequential-g in DAGassist is implemented for linear outcome models. ",
+      "Fit a linear model (e.g., lm/feols/lmer) if substantively appropriate, or use estimand = 'SATE'/'SATT'/'raw'.",
+      call. = FALSE
+    )
+  }
+  
   # cluster vars from engine args (fixest-style)
   engine_args <- x$settings$engine_args
   cluster_vars <- character(0)

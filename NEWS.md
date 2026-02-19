@@ -1,3 +1,12 @@
+# DAGassist v0.2.8
+
+### Highlights
+
+- Adds support for SATE/SACDE estimand recovery
+- Consolidates documentation
+- Supports weight diagnostics
+- Bug fixes
+
 # DAGassist v0.2.7
 
 ### Highlights

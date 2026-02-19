@@ -1,11 +1,11 @@
-#' Generate and/or export report classifying nodes and comparing models
+#' Generate and/or export report that classifies nodes, compares models, and (optionally) target causal estimands.
 #'
 #' `DAGassist()` validates a DAG + model specification, classifies node roles,
 #' builds minimal and canonical adjustment sets, fits comparable models, and
 #' renders a compact report in several formats (console, LaTeX fragment, DOCX,
-#' XLSX, plain text). It also supports recovering target estimands, such as the
-#' sample average treatment effect (SATE) or the sample average controlled direct 
-#' effect (SACDE).
+#' XLSX, plain text). It can also target sample-average estimands via weighting
+#' (e.g., SATE/SATT) and recover sample average controlled direct effects via
+#' sequential g-estimation (e.g., SACDE).
 #' 
 #' @param dag A **dagitty** object (see [dagitty::dagitty()]).
 #' @param formula Either (a) a standard model formula `Y ~ X + ...`, or
@@ -23,15 +23,15 @@
 #' @param engine_args Named list of extra arguments forwarded to `engine(...)`.
 #'   If `formula` is an engine call, arguments from the call are merged with
 #'   `engine_args` (call values take precedence).
-#' @param verbose Logical (default `TRUE`). Controls verbosity in the console
+#' @param verbose logical (default `TRUE`). Controls verbosity in the console
 #'   printer (formulas + notes).
-#' @param type Output type. One of
+#' @param type output type. One of
 #'   `"console"` (default), `"latex"`/`"docx"`/`"word"`,
 #'   `"excel"`/`"xlsx"`, `"text"`/`"txt"`,
 #'   or the plotting types `"dwplot"`/`"dotwhisker"`.
 #'   For `type = "latex"`, if no `out=` is supplied, a LaTeX fragment is printed
 #'   to the console instead of being written to disk.
-#' @param out Output file path for the non-console types:
+#' @param out output file path for the non-console types:
 #'   * `type="latex"`: a **LaTeX fragment** written to `out` (usually `.tex`);
 #'     when omitted, the fragment is printed to the console.
 #'   * `type="text"`/`"txt"`: a **plain-text** file written to `out`;
@@ -41,66 +41,55 @@
 #'   * `type="docx"`/`"word"`: a **Word (.docx)** file written to `out`.
 #'   * `type="excel"`/`"xlsx"`: an **Excel (.xlsx)** file written to `out`.
 #'   Ignored for `type="console"`.
-#' @param imply Logical; default `FALSE`. Specifies evaluation scope.
-#'   - If `FALSE` (default): restrict DAG evaluation to variables **named in the formula**
-#'     (prune the DAG to exposure, outcome, and RHS terms). Roles/sets/bad-controls are
-#'     computed on this pruned graph, and the roles table **only** shows those variables.
-#'     Essentially, it fits the DAG to the formula. 
-#'   - If `TRUE`: evaluate on the **full DAG** and allow DAG-implied controls in the
-#'     minimal/canonical sets. The roles table shows all DAG nodes, and the printout 
-#'     notes any variables added beyond your RHS. Essentially, it fits the formula to the DAG.
-#' @param labels List; optional variable labels (named character vector or data.frame).
-#' @param omit_intercept Logical; drop intercept rows from the model comparison display (default `TRUE`).
-#' @param omit_factors Logical; drop factor-level rows from the model comparison display (default `TRUE`).
-#'    This parameter only suppresses factor **output**--they are still included in the regression. 
-#' @param show Character vector or list; specify which sections to include in the output. One of `"all"` (default),
-#'    `"roles"` (only the roles grid), or `"models"` (only the model comparison table/plot).
-#'    This makes it possible to generate and export just roles or just comparisons.
-#' @param eval_all Logical; default `FALSE`. When `TRUE`, keep all original RHS terms 
-#'    that are not in the DAG (e.g., fixed effects, interactions, splines, 
-#'    convenience covariates) in the minimal and canonical formulas. 
-#'    When `FALSE` (default), RHS terms not present as DAG nodes are dropped 
-#'    from those derived formulas.
-#' @param wts_omit Character vector; terms to omit from the weighting (treatment) 
+#' @param imply logical; default `FALSE`. Controls whether roles/sets are computed on a
+#'   **pruned DAG** or the **full DAG**.
+#'   - If `FALSE` (default): restrict DAG evaluation to exposure, outcome, and terms named
+#'     in the model (prune the DAG to what appears in the specification).
+#'   - If `TRUE`: evaluate on the full DAG and allow DAG-implied controls in the
+#'     minimal/canonical sets; the roles table includes all DAG nodes.
+#' @param labels list; optional variable labels (named character vector or data.frame).
+#' @param omit_intercept logical; drop intercept rows from the model comparison display (default `TRUE`).
+#' @param omit_factors logical; drop factor-level rows from the model comparison display (default `TRUE`).
+#'    This parameter only suppresses factor **output**; factor terms still enter the regression.
+#' @param show character vector or list; specify which sections to include in the output. One of `"all"` (default),
+#'    `"roles"` (roles grid only), or `"models"` (model comparison only.
+#' @param eval_all logical; default `FALSE`. When `TRUE`, retain original RHS terms that are
+#'   not DAG nodes (e.g., fixed effects, interactions, splines) in derived minimal/canonical
+#'   formulas. When `FALSE`, non-DAG RHS terms are dropped from derived formulas.
+#' @param wts_omit character vector; terms to omit from the weighting (treatment) 
 #'   model even when `eval_all = TRUE`. Useful for keeping non-DAG fixed effects 
 #'   in the outcome model while preventing them from entering the propensity/weight model.
-#' @param bivariate Logical; if `TRUE`, include a bivariate (exposure-only) specification
-#'    in the comparison table in addition to the user's original and DAG-derived models.
-#' @param exclude Character vector or list; remove neutral controls from the canonical set.
+#' @param bivariate logical; if `TRUE`, include a bivariate (exposure-only) specification
+#'    in the comparison table in addition to the user's original and DAG-derived models (default `FALSE`).
+#' @param exclude character vector or list; remove neutral controls from the canonical set.
 #'    Recognized values are `"nct"` (drop *neutral-on-treatment* controls) and
 #'    `"nco"` (drop *neutral-on-outcome* controls). Users can supply one or both,
 #'    e.g. `exclude = c("nco", "nct")`; each requested variant is fitted and shown
 #'    as a separate "Canon. (-...)" column in the console/model exports.
-#' @param estimand Character; causal estimand for the *reported columns* in the console output.
-#'   One of `"raw"` (default), `"SATE"`, `"SATT"`, `"SACDE"` (alias `"SCDE"`), or `"none"`.
+#' @param estimand character vector; causal estimand(s) for reported columns. Any of:
+#'   `"raw"` (default), `"SATE"`, `"SATT"`, `"SACDE"` (alias `"SCDE"`), or `"none"`.
 #'
-#'   - `"raw"`: reports the naive regression fits implied by the supplied engine/formulas.
-#'   - `"SATE"` / `"SATT"`: adds inverse-probability weighted versions of each comparison model
-#'     (via \pkg{WeightIt}) to target the *sample* ATE/ATT rather than the OLS implicit estimand.
-#'   - `"SACDE"` / `"SCDE"`: for DAGs with mediator(s), adds **two** sequential g-estimation columns:
-#'       (i) **Raw (SACDE)**: the unweighted \pkg{DirectEffects} sequential-g estimator, which—because
-#'           the second stage is linear regression with controls—targets a *conditional-variance weighted*
-#'           average of unit-level controlled direct effects (not a sample-average CDE).
-#'      (ii) **Weighted (SACDE)**: re-runs sequential-g with IPW weights (estimated *without conditioning
-#'           on mediators*) so the second-stage regression recovers the **sample average controlled direct
-#'           effect (SACDE)** rather than the regression-weighted estimand.
-#' @param weights_args List; arguments forwarded to \pkg{WeightIt} when computing IPW weights for
-#'   `"SATE"`/`"SATT"` and for the **Weighted (SACDE)** refit.
-#'   For SACDE, DAGassist estimates weights on the complete-case sample using the *baseline covariates*
-#'   from the sequential-g block-1 specification (excluding mediator terms), by default via
-#'   `WeightIt::weightit(..., method = "glm", estimand = "ATE")`. If `trim_at` is supplied, weights
-#'   are winsorized at the requested quantile before refitting sequential-g.
-#' @param auto_acde Logical; if `TRUE` (default), automates handling conflicts between specifications
+#'   - `"raw"`: naive regression fits implied by the supplied engine/formulas.
+#'   - `"SATE"`/`"SATT"`: inverse-probability weighted versions of each comparison model
+#'     (via \pkg{WeightIt}) to target sample ATE/ATT.
+#'   - `"SACDE"`/`"SCDE"`: for DAGs with mediator(s), adds sequential g-estimation columns:
+#'     (i) unweighted sequential-g and (ii) IPW-weighted sequential-g (weights estimated
+#'     without conditioning on mediators) to target the **sample average controlled direct effect**.
+#' @param weights_args list; arguments forwarded to \pkg{WeightIt} when computing IPW weights for
+#'   `"SATE"`/`"SATT"` and for the weighted SACDE refit. If `trim_at` is supplied, weights are
+#'   winsorized at the requested quantile before refitting.
+#' @param auto_acde logical; if `TRUE` (default), automates handling conflicts between specifications
 #'    and estimand arguments. Fails gracefully with a helpful error when users specify ACDE estimand
 #'    for a model without mediators.
-#' @param acde List; options for the controlled direct effect workflow (estimands `"SACDE"`/`"SCDE"`).
+#' @param acde list; options for the controlled direct effect workflow (estimands `"SACDE"`/`"SCDE"`).
 #'   Users can override parts of the sequential g-estimation specification with named elements:
 #'   `m` (mediators), `x` (baseline covariates), `z` (intermediate covariates),
 #'   `fe` (fixed-effects variables), `fe_as_factor` (wrap `fe` as `factor()`), and
 #'   `include_descendants` (treat descendants of mediators as mediators). 
 #' @param directeffects_args Named list of arguments forwarded to [DirectEffects::sequential_g()]
-#'   when `estimand` includes `"ACDE"`/`"CDE"` (e.g., simulation/bootstrap controls,
+#'   when `estimand` includes `"SACDE"` (e.g., simulation/bootstrap controls,
 #'   variance estimator options).
+#'   
 #' @details
 #' **Engine-call parsing.** If `formula` is a call (e.g., `feols(Y ~ X | fe, data=df)`),
 #' DAGassist extracts the engine function, formula, data argument, and any additional
@@ -176,28 +165,10 @@
 #'     \item{settings}{List. Print/export settings, including `coef_omit` and `show`.}
 #'     \item{.__data}{`data.frame` or `NULL`. The data used to fit models (stored for downstream helpers).}
 #'   }
-#'
-#' @return For file outputs (`type = "latex"`, `"docx"`, `"xlsx"`, `"txt"`, `"dotwhisker"`),
+#'   For file outputs (`type = "latex"`, `"docx"`, `"xlsx"`, `"txt"`, `"dotwhisker"`),
 #'   the returned object includes attribute `file`, the normalized output path.
 #'
-#' @section Interpreting the output:
-#' See the vignette articles for worked examples on generating roles-only, models-only,
-#' and LaTeX/Word/Excel reports.
-#' 
-#' **Model Comparison:**
-#' \itemize{
-#'   \item **Minimal** - the smallest adjustment set that blocks all back-door paths
-#'         (confounders only).
-#'   \item **Canonical** - the largest permissible set: includes all controls that are not
-#'         `MED`, `COL`, `dOut`, `dMed`, or `dCol`. 
-#' }
-#'@section Errors and edge cases:
-#'  * If exposure/outcome cannot be inferred uniquely, the function stops with a clear message.
-#'  * Fitting errors (e.g., FE collinearity) are captured and displayed in comparisons
-#'   without aborting the whole pipeline.
-#'
-#'@seealso [print.DAGassist_report()] for the console printer, and the helper
-#'  exporters in `report_*` modules.
+#' @seealso [print.DAGassist_report()] and `vignette("DAGassist", package = "DAGassist")`.
 #'
 #' @examples
 #' \dontshow{set.seed(1)}
@@ -213,11 +184,15 @@
 #'   # 1) Core: DAG-derived specs + engine-call parsing
 #'   r <- DAGassist(g, lm(Y ~ X + Z + M, data = df))
 #'
-#'   # 2) Target sample-average estimands via weighting
-#'   r2 <- DAGassist(g, lm(Y ~ X + Z + M, data = df), estimand = "SATE")
+#'   # 2) Target sample-average estimands via weighting (requires WeightIt)
+#'   if (requireNamespace("WeightIt", quietly = TRUE)) {
+#'     r2 <- DAGassist(g, lm(Y ~ X + Z + M, data = df), estimand = "SATE")
+#'   }
 #'
-#'   # 3) Mediator case: Raw sequential-g vs Weighted SACDE
-#'   r3 <- DAGassist(g, lm(Y ~ X + Z + M, data = df), estimand = "SACDE")
+#'   # 3) Mediator case: sequential g-estimation (requires DirectEffects)
+#'   if (requireNamespace("DirectEffects", quietly = TRUE)) {
+#'     r3 <- DAGassist(g, lm(Y ~ X + Z + M, data = df), estimand = "SACDE")
+#'   }
 #'
 #'   # 4) File export (LaTeX fragment)
 #'   \donttest{

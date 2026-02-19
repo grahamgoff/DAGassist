@@ -3,7 +3,7 @@
 `DAGassist()` validates a DAG + model specification, classifies node
 roles, builds minimal and canonical adjustment sets, fits comparable
 models, and renders a compact report in several formats (console, LaTeX
-fragment, DOCX, XLSX, plain text). It also supports recovering new
+fragment, DOCX, XLSX, plain text). It also supports recovering target
 estimands, such as the sample average treatment effect (SATE) or the
 sample average controlled direct effect (SACDE).
 
@@ -77,7 +77,7 @@ DAGassist(
 
 - labels:
 
-  Optional variable labels (named character vector or data.frame).
+  List; optional variable labels (named character vector or data.frame).
 
 - verbose:
 
@@ -94,10 +94,10 @@ DAGassist(
 
 - show:
 
-  Which sections to include in the output. One of `"all"` (default),
-  `"roles"` (only the roles grid), or `"models"` (only the model
-  comparison table/plot). This makes it possible to generate and export
-  just roles or just comparisons.
+  Character vector or list; specify which sections to include in the
+  output. One of `"all"` (default), `"roles"` (only the roles grid), or
+  `"models"` (only the model comparison table/plot). This makes it
+  possible to generate and export just roles or just comparisons.
 
 - out:
 
@@ -119,7 +119,7 @@ DAGassist(
 
 - imply:
 
-  Logical; default `FALSE`. Specifies **evaluation scope.**
+  Logical; default `FALSE`. Specifies evaluation scope.
 
   - If `FALSE` (default): restrict DAG evaluation to variables **named
     in the formula** (prune the DAG to exposure, outcome, and RHS
@@ -134,7 +134,7 @@ DAGassist(
 
 - eval_all:
 
-  Logical; default `FALSE`. When `TRUE`, keep **all original RHS terms**
+  Logical; default `FALSE`. When `TRUE`, keep all original RHS terms
   that are not in the DAG (e.g., fixed effects, interactions, splines,
   convenience covariates) in the minimal and canonical formulas. When
   `FALSE` (default), RHS terms not present as DAG nodes are dropped from
@@ -142,13 +142,12 @@ DAGassist(
 
 - exclude:
 
-  Optional character vector to remove neutral controls from the
-  canonical set. Recognized values are `"nct"` (drop
-  *neutral-on-treatment* controls) and `"nco"` (drop
-  *neutral-on-outcome* controls). You can supply one or both, e.g.
-  `exclude = c("nco", "nct")`; each requested variant is fitted and
-  shown as a separate "Canon. (-...)" column in the console/model
-  exports.
+  Character vector or list; remove neutral controls from the canonical
+  set. Recognized values are `"nct"` (drop *neutral-on-treatment*
+  controls) and `"nco"` (drop *neutral-on-outcome* controls). Users can
+  supply one or both, e.g. `exclude = c("nco", "nct")`; each requested
+  variant is fitted and shown as a separate "Canon. (-...)" column in
+  the console/model exports.
 
 - omit_intercept:
 
@@ -164,7 +163,7 @@ DAGassist(
 - bivariate:
 
   Logical; if `TRUE`, include a bivariate (exposure-only) specification
-  in the comparison table **in addition** to the user's original and
+  in the comparison table in addition to the user's original and
   DAG-derived models.
 
 - estimand:
@@ -210,10 +209,10 @@ DAGassist(
 
 - wts_omit:
 
-  Character vector (or single string) of terms to omit from the
-  **weighting (treatment) model** even when `eval_all = TRUE`. Useful
-  for keeping non-DAG fixed effects in the outcome model while
-  preventing them from entering the propensity/weight model.
+  Character vector; terms to omit from the weighting (treatment) model
+  even when `eval_all = TRUE`. Useful for keeping non-DAG fixed effects
+  in the outcome model while preventing them from entering the
+  propensity/weight model.
 
 - auto_acde:
 

@@ -1,5 +1,8 @@
 # DAGassist
 
+[![DAGassist hex
+logo](reference/figures/logo.png)](https://grahamgoff.github.io/DAGassist/)
+
 **An all-in-one DAG-driven robustness check.** Generate
 publication-quality reports that classify variables by causal role,
 compare the significance of DAG-derived models, and explicitly target

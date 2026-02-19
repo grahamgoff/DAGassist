@@ -3,8 +3,6 @@ template:
   bootstrap: 5
   bslib:
     primary: "#00612E"
-  includes:
-    extra_css: pkgdown/extra.css
 
 favicon: man/figures/logo.png
       

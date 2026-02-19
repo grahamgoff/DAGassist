@@ -1,0 +1,15 @@
+/* pkgdown/extra.css */
+
+/* Tighten the vertical rhythm on the home page content area */
+.template-home .contents h1 {
+  margin-bottom: 0.35rem;
+}
+
+.template-home .contents h1 + p {
+  margin-top: 0.35rem;
+}
+
+/* If your logo float creates extra perceived whitespace, tame it slightly */
+.template-home .home-logo {
+  margin-left: 1rem;
+}

@@ -74,6 +74,7 @@ effect (SACDE).</p>
 <span>  estimand <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"raw"</span>, <span class="st">"none"</span>, <span class="st">"SATE"</span>, <span class="st">"SATT"</span>, <span class="st">"SACDE"</span>, <span class="st">"SCDE"</span><span class="op">)</span>,</span>
 <span>  engine_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  weights_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  wts_omit <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  auto_acde <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  acde <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  directeffects_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -221,6 +222,13 @@ For SACDE, DAGassist estimates weights on the complete-case sample using the <em
 from the sequential-g block-1 specification (excluding mediator terms), by default via
 <code>WeightIt::weightit(..., method = "glm", estimand = "ATE")</code>. If <code>trim_at</code> is supplied, weights
 are winsorized at the requested quantile before refitting sequential-g.</p></dd>
+
+
+<dt id="arg-wts-omit">wts_omit<a class="anchor" aria-label="anchor" href="#arg-wts-omit"></a></dt>
+<dd><p>Character vector (or single string) of terms to omit from the
+<strong>weighting (treatment) model</strong> even when <code>eval_all = TRUE</code>. Useful for
+keeping non-DAG fixed effects in the outcome model while preventing them from
+entering the propensity/weight model.</p></dd>
 
 
 <dt id="arg-auto-acde">auto_acde<a class="anchor" aria-label="anchor" href="#arg-auto-acde"></a></dt>

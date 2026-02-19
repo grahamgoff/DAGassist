@@ -32,6 +32,7 @@ DAGassist(
   estimand = c("raw", "none", "SATE", "SATT", "SACDE", "SCDE"),
   engine_args = list(),
   weights_args = list(),
+  wts_omit = NULL,
   auto_acde = TRUE,
   acde = list(),
   directeffects_args = list()
@@ -206,6 +207,13 @@ DAGassist(
   `WeightIt::weightit(..., method = "glm", estimand = "ATE")`. If
   `trim_at` is supplied, weights are winsorized at the requested
   quantile before refitting sequential-g.
+
+- wts_omit:
+
+  Character vector (or single string) of terms to omit from the
+  **weighting (treatment) model** even when `eval_all = TRUE`. Useful
+  for keeping non-DAG fixed effects in the outcome model while
+  preventing them from entering the propensity/weight model.
 
 - auto_acde:
 

@@ -13,8 +13,6 @@ status](https://www.r-pkg.org/badges/version/DAGassist)](https://cran.r-project.
 maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://lifecycle.r-lib.org/articles/stages.html)
 <!-- badges: end -->
 
-<a href='https://grahamgoff.github.io/DAGassist/'><img src='man/figures/logo.png' class='home-logo' align="right" height="200" alt='DAGassist hex logo'/></a>
-
 **An all-in-one DAG-driven robustness check.** Generate
 publication-quality reports that classify variables by causal role,
 compare the significance of DAG-derived models, and explicitly target

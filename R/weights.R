@@ -354,6 +354,17 @@
     )
   }
   
+  # Guardrail: estimand recovery is not supported when the exposure is specified as an interaction term
+  # (e.g., exposure = "A:B" or "A*B"). Precompute a single treatment variable in `data` instead.
+  if (.dagassist_is_interaction_exposure(exp_nm)) {
+    stop(
+      "Estimand recovery is not supported when the exposure is an interaction term (e.g., X1:X2 or X1*X2).\n\n",
+      "To proceed, precompute a single treatment variable in your data (e.g., treat_post) and use that as the exposure node, ",
+      "or set estimand = 'raw'/'none'.",
+      call. = FALSE
+    )
+  }
+  
   # Weight args: user-configurable, but filtered to WeightIt::weightit() formals
   wargs <- .dagassist_normalize_weights_args(x$settings$weights_args)
   trim_at <- wargs[["trim_at"]]          # DAGassist-specific (optional)

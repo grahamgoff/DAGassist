@@ -717,7 +717,52 @@
   
   tl
 }
+# ---- Guardrail helpers (estimand recovery) ----
+# Exposure specified as an *interaction term* (e.g., X1:X2 or X1*X2) is not supported
+# by the estimand-recovery workflows (SATE/SATT/SACDE). Users should precompute a single
+# treatment variable in `data` and use that as the exposure node.
+.dagassist_is_interaction_exposure <- function(exposure) {
+  if (is.null(exposure) || is.na(exposure) || !nzchar(exposure)) return(FALSE)
+  # treat ':' and '*' as interaction operators; ignore whitespace
+  ex <- gsub("\\s+", "", as.character(exposure))
+  grepl("[:*]", ex)
+}
 
+# Detect non-linear outcome models (for SACDE guardrail).
+# SACDE/sequential-g is currently only supported for linear outcome models.
+.dagassist_is_nonlinear_fit <- function(fit, engine = NULL) {
+  # GLMMs (logit/probit/etc.)
+  if (inherits(fit, c("glmerMod", "glmmTMB", "stanreg", "brmsfit"))) return(TRUE)
+  
+  # GLMs: allow gaussian(identity), block everything else
+  if (inherits(fit, "glm")) {
+    fam <- tryCatch(fit$family$family, error = function(e) NULL)
+    lnk <- tryCatch(fit$family$link,   error = function(e) NULL)
+    if (is.null(fam) || is.null(lnk)) return(TRUE)
+    return(!(identical(fam, "gaussian") && identical(lnk, "identity")))
+  }
+  
+  # fixest: feols is linear; anything else is non-linear (feglm, fepois, etc.)
+  if (inherits(fit, "fixest")) {
+    mth <- tryCatch(fit$method, error = function(e) NULL)
+    if (!is.null(mth) && nzchar(mth)) {
+      return(!identical(tolower(mth), "feols"))
+    }
+  }
+  
+  # If engine is explicitly provided, use it as a fallback signal.
+  if (!is.null(engine) && is.function(engine)) {
+    if (identical(engine, stats::glm)) return(TRUE)
+    # fixest engines (if installed) - best-effort
+    if (requireNamespace("fixest", quietly = TRUE)) {
+      if (identical(engine, fixest::feglm)) return(TRUE)
+      if (identical(engine, fixest::fepois)) return(TRUE)
+      if (identical(engine, fixest::fenegbin)) return(TRUE)
+    }
+  }
+  
+  FALSE
+}
 ###return ALL minimal adjustment sets as a list 
 ##IN
 #dag--dagitty object

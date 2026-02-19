@@ -3,7 +3,7 @@
 #' `DAGassist()` validates a DAG + model specification, classifies node roles,
 #' builds minimal and canonical adjustment sets, fits comparable models, and
 #' renders a compact report in several formats (console, LaTeX fragment, DOCX,
-#' XLSX, plain text). It also supports recovering new estimands, such as the
+#' XLSX, plain text). It also supports recovering target estimands, such as the
 #' sample average treatment effect (SATE) or the sample average controlled direct 
 #' effect (SACDE).
 #' 

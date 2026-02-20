@@ -2,6 +2,8 @@
 
 ## DAGassist v0.2.8
 
+CRAN release: 2026-02-20
+
 #### Highlights
 
 - Adds support for SATE/SACDE estimand recovery

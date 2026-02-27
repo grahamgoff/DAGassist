@@ -66,7 +66,7 @@
                         <h4 data-toc-skip class="author">Graham Goff and
 Mike Denly</h4>
             
-            <h4 data-toc-skip class="date">2026-02-20</h4>
+            <h4 data-toc-skip class="date">2026-02-27</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/grahamgoff/DAGassist/blob/dev/vignettes/DAGassist.Rmd" class="external-link"><code>vignettes/DAGassist.Rmd</code></a></small>
       <div class="d-none name"><code>DAGassist.Rmd</code></div>
@@ -341,24 +341,28 @@ total effect of X on Y.</li>
 common descendant of X and Y. Colliders already block paths, so
 adjusting for it opens a spurious association between X and Y.</li>
 <li>
-<strong>IO</strong> stands for <code>intermediate outcome</code>, a
-descendant of Y, which introduces bias if adjusted for.</li>
+<strong>dOut</strong> stands for
+<code>descendant of the outcome</code>, a descendant of Y, which
+introduces bias if adjusted for.</li>
 <li>
-<strong>dMed / Dmediator</strong> stands for
+<strong>dMed</strong> stands for
 <code>descendant of a mediator</code>, which should not be adjusted for
 when estimating total effect.</li>
 <li>
-<strong>dCol / Dcollider</strong> stands for
+<strong>dCol</strong> stands for
 <code>descendant of a collider</code>. Adjusting for a descendant of a
 collider opens a spurious association between X and Y.</li>
 <li>
-<strong>other</strong> variables, such as those that only affect the
-outcome, do not fit any of the previous definitions. They are included
-in the canonical model because they can be safely included as controls,
-but are omitted from the minimal model because their inclusion is not
-strictly necessary. Since <code>other</code> variables’ effects are
-generally neutral, it is usually best to use the minimal adjustment set
-as your baseline model.</li>
+<strong>dConfOn</strong> stands for
+<code>descendant of a confounder on a back door path</code>, a
+descendant of Z that affects Y.</li>
+<li>
+<strong>dConfOff</strong> stands for
+<code>descendant of a confounder off a backdoor path</code>, a decendant
+of Z that does not affect Y.</li>
+<li>
+<strong>other</strong> is a catch-all category that for variables
+that do not fit any of the previous definitions.</li>
 </ul>
 </li>
 </ul>
@@ -477,6 +481,84 @@ variables that are not <code>confounders</code>, <code>mediators</code>,
 </ul>
 </li>
 </ul>
+<p>The table below illustrates the varible roles permitted by each
+set.</p>
+<table class="table">
+<colgroup>
+<col width="77%">
+<col width="10%">
+<col width="12%">
+</colgroup>
+<thead><tr class="header">
+<th>Path / Node Type</th>
+<th align="center">Minimal</th>
+<th align="center">Canonical</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>Fork/Common–Cause Confounder (Z)</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+</tr>
+<tr class="even">
+<td>Chain/Mediator (M)</td>
+<td align="center">✗</td>
+<td align="center">✗</td>
+</tr>
+<tr class="odd">
+<td>Collider (C)</td>
+<td align="center">✗</td>
+<td align="center">✗</td>
+</tr>
+<tr class="even">
+<td>Descendant of Mediator (N)</td>
+<td align="center">✗</td>
+<td align="center">✗</td>
+</tr>
+<tr class="odd">
+<td>Descendant of Collider (Q)</td>
+<td align="center">✗</td>
+<td align="center">✗</td>
+</tr>
+<tr class="even">
+<td>Descendant of Outcome (I)</td>
+<td align="center">✗</td>
+<td align="center">✗</td>
+</tr>
+<tr class="odd">
+<td>M-Bias</td>
+<td align="center">✗</td>
+<td align="center">✗</td>
+</tr>
+<tr class="even">
+<td>Butterfly Bias</td>
+<td align="center">✗</td>
+<td align="center">✗</td>
+</tr>
+<tr class="odd">
+<td>Neutral Control on Treatment (E → X)</td>
+<td align="center">✗</td>
+<td align="center">✓</td>
+</tr>
+<tr class="even">
+<td>Neutral Control on Outcome (F → Y)</td>
+<td align="center">✗</td>
+<td align="center">✓</td>
+</tr>
+<tr class="odd">
+<td>Descendant of Confounder <em>off</em> Backdoor Path (W)</td>
+<td align="center">✗</td>
+<td align="center">✗</td>
+</tr>
+<tr class="even">
+<td>Descendant of Confounder <em>on</em> Backdoor Path (V)</td>
+<td align="center">Z or V</td>
+<td align="center">Z and V</td>
+</tr>
+</tbody>
+</table>
+<p><em>Note:</em> ✓ = adjust; ✗ = do not adjust. There may be multiple
+minimal sets; the canonical set is unique.</p>
 </div>
 <div class="section level2">
 <h2 id="recover-the-interpretable-estimand">5. Recover the Interpretable Estimand<a class="anchor" aria-label="anchor" href="#recover-the-interpretable-estimand"></a>
@@ -645,6 +727,33 @@ generation.</li>
 <code>knitr</code>, and <code>rmarkdown</code>
 </li>
 </ul>
+<p>Users can generate latex reports in the console (default), or to an
+output file via the <code>out =</code> parameter:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">dag_model</span>,</span>
+<span>          formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">children</span> <span class="op">~</span> <span class="va">edu_year</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">class</span> <span class="op">+</span> <span class="va">gender</span> <span class="op">+</span> </span>
+<span>                         <span class="va">immigrant</span> <span class="op">+</span> <span class="va">urban</span> <span class="op">+</span> <span class="va">birth_control</span> <span class="op">+</span> <span class="va">income</span> <span class="op">+</span> </span>
+<span>                         <span class="va">married</span> <span class="op">+</span> <span class="va">job_stability_t</span> <span class="op">+</span> <span class="va">contract</span> <span class="op">+</span> <span class="va">pref</span>, data <span class="op">=</span> <span class="va">dat</span><span class="op">)</span>,</span>
+<span>          type <span class="op">=</span> <span class="st">"latex"</span>,</span>
+<span>          out <span class="op">=</span> <span class="st">"out/path/filename.tex"</span><span class="op">)</span></span></code></pre></div>
+<p><strong>Word</strong> and <strong>Excel</strong> output requires an
+<code>out =</code> parameter:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">#word example</span></span>
+<span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">dag_model</span>,</span>
+<span>          formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">children</span> <span class="op">~</span> <span class="va">edu_year</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">class</span> <span class="op">+</span> <span class="va">gender</span> <span class="op">+</span> </span>
+<span>                         <span class="va">immigrant</span> <span class="op">+</span> <span class="va">urban</span> <span class="op">+</span> <span class="va">birth_control</span> <span class="op">+</span> <span class="va">income</span> <span class="op">+</span> </span>
+<span>                         <span class="va">married</span> <span class="op">+</span> <span class="va">job_stability_t</span> <span class="op">+</span> <span class="va">contract</span> <span class="op">+</span> <span class="va">pref</span>, data <span class="op">=</span> <span class="va">dat</span><span class="op">)</span>,</span>
+<span>          type <span class="op">=</span> <span class="st">"word"</span>, <span class="co">#or, type = "docx"</span></span>
+<span>          out <span class="op">=</span> <span class="st">"out/path/filename.docx"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">#excel example</span></span>
+<span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">dag_model</span>,</span>
+<span>          formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">children</span> <span class="op">~</span> <span class="va">edu_year</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">class</span> <span class="op">+</span> <span class="va">gender</span> <span class="op">+</span> </span>
+<span>                         <span class="va">immigrant</span> <span class="op">+</span> <span class="va">urban</span> <span class="op">+</span> <span class="va">birth_control</span> <span class="op">+</span> <span class="va">income</span> <span class="op">+</span> </span>
+<span>                         <span class="va">married</span> <span class="op">+</span> <span class="va">job_stability_t</span> <span class="op">+</span> <span class="va">contract</span> <span class="op">+</span> <span class="va">pref</span>, data <span class="op">=</span> <span class="va">dat</span><span class="op">)</span>,</span>
+<span>          type <span class="op">=</span> <span class="st">"excel"</span>, <span class="co">#or, type = "xlsx"</span></span>
+<span>          out <span class="op">=</span> <span class="st">"out/path/filename.xlsx"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2 unnumbered">
 <h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>

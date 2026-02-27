@@ -734,10 +734,12 @@ DAGassist(dag_model,
   - **conf** stands for `confounder`, a common cause of X and Y. Confounders create a spurious association between X and Y, and must be adjusted for. 
   - **med** stands for `mediator`, a variable that lies on a path from X to Y, which transmit some of the effect from X to Y. One should not adjust for mediators if one wants to estimate the total effect of X on Y. 
   - **col** stands for `collider`, a direct common descendant of X and Y. Colliders already block paths, so adjusting for it opens a spurious association between X and Y. 
-  - **IO** stands for `intermediate outcome`, a descendant of Y, which introduces bias if adjusted for.
-  - **dMed / Dmediator** stands for `descendant of a mediator`, which should not be adjusted for when estimating total effect.
-  - **dCol / Dcollider** stands for `descendant of a collider`. Adjusting for a descendant of a collider opens a spurious association between X and Y.
-  - **other** variables, such as those that only affect the outcome, do not fit any of the previous definitions. They are included in the canonical model because they can be safely included as controls, but are omitted from the minimal model because their inclusion is not strictly necessary. Since `other` variables' effects are generally neutral, it is usually best to use the minimal adjustment set as your baseline model. 
+  - **dOut** stands for `descendant of the outcome`, a descendant of Y, which introduces bias if adjusted for.
+  - **dMed** stands for `descendant of a mediator`, which should not be adjusted for when estimating total effect.
+  - **dCol** stands for `descendant of a collider`. Adjusting for a descendant of a collider opens a spurious association between X and Y.
+  - **dConfOn** stands for `descendant of a confounder on a back door path`, a descendant of Z that affects Y.
+  - **dConfOff** stands for `descendant of a confounder off a backdoor path`, a decendant of Z that does not affect Y.
+  - **other** is a catch-all category that for variables that do not fit any of the previous definitions. 
 
 ## 4. Estimate Models Using DAG-Consistent Adjustment Sets
 
@@ -753,6 +755,25 @@ DAGassist(dag_model,
 - **MODEL COMPARISON:** 
   - `Minimal` is the smallest adjustment set necessary to close all back-door paths from the independent to the dependent variable. The minimal set only includes `confounders` as controls.
   - `Canonical` is the largest permissible adjustment set. Essentially, the `canonical` set contains all control variables that are not `confounders`, `mediators`, `intermediate outcomes`, `descendants of mediatiors`, or `descendants of colliders`. 
+
+The table below illustrates the varible roles permitted by each set.
+
+| Path / Node Type                                                     | Minimal | Canonical |
+|----------------------------------------------------------------------|:-------:|:---------:|
+| Fork/Common–Cause Confounder (Z)                                     |    ✓    |     ✓     |
+| Chain/Mediator (M)                                                   |    ✗    |     ✗     |
+| Collider (C)                                                         |    ✗    |     ✗     |
+| Descendant of Mediator (N)                                           |    ✗    |     ✗     |
+| Descendant of Collider (Q)                                           |    ✗    |     ✗     |
+| Descendant of Outcome (I)                                            |    ✗    |     ✗     |
+| M-Bias                                                               |    ✗    |     ✗     |
+| Butterfly Bias                                                       |    ✗    |     ✗     |
+| Neutral Control on Treatment (E → X)                                 |    ✗    |     ✓     |
+| Neutral Control on Outcome (F → Y)                                   |    ✗    |     ✓     |
+| Descendant of Confounder *off* Backdoor Path (W)                     |    ✗    |     ✗     |
+| Descendant of Confounder *on* Backdoor Path (V)                      |  Z or V |   Z and V |
+
+*Note:* ✓ = adjust; ✗ = do not adjust. There may be multiple minimal sets; the canonical set is unique.
 
 ## 5. Recover the Interpretable Estimand
 
@@ -796,5 +817,35 @@ Essentially, to export:
 - **Excel** needs `modelsummary` and `writexl`
 - **plaintext** needs `modelsummary` and `knitr`
 - **Word** needs `modelsummary`, `knitr`, and `rmarkdown`
+
+Users can generate latex reports in the console (default), or to an output file via the `out =` parameter:
+```{r latex_report, eval=FALSE}
+DAGassist(dag_model,
+          formula = lm(children ~ edu_year + age + class + gender + 
+                         immigrant + urban + birth_control + income + 
+                         married + job_stability_t + contract + pref, data = dat),
+          type = "latex",
+          out = "out/path/filename.tex")
+```
+
+**Word** and **Excel** output requires an `out =` parameter:
+```{r word-excel_report, eval = FALSE}
+#word example
+DAGassist(dag_model,
+          formula = lm(children ~ edu_year + age + class + gender + 
+                         immigrant + urban + birth_control + income + 
+                         married + job_stability_t + contract + pref, data = dat),
+          type = "word", #or, type = "docx"
+          out = "out/path/filename.docx")
+
+#excel example
+DAGassist(dag_model,
+          formula = lm(children ~ edu_year + age + class + gender + 
+                         immigrant + urban + birth_control + income + 
+                         married + job_stability_t + contract + pref, data = dat),
+          type = "excel", #or, type = "xlsx"
+          out = "out/path/filename.xlsx")
+```
+
 
 ## References

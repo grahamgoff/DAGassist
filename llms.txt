@@ -6,6 +6,8 @@
 status](https://www.r-pkg.org/badges/version/DAGassist)](https://cran.r-project.org/package=DAGassist)
 [![Lifecycle:
 maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://lifecycle.r-lib.org/articles/stages.html)
+[![CRAN
+downloads](https://cranlogs.r-pkg.org/badges/last-month/DAGassist)](https://cran.r-project.org/package=DAGassist)
 
 **An all-in-one DAG-driven robustness check.** Generate
 publication-quality reports that classify variables by causal role,
@@ -51,7 +53,7 @@ and compare the specified regression to minimal and canonical models.
 
 ``` r
 DAGassist(dag = dag_model, 
-          formula = feols(Y ~ X + M + C + Z + A + B, data = df),
+          formula = lm(Y ~ X + M + C + Z + A + B, data = df),
           estimand = c("SATE", "SACDE")
 )
 #> DAGassist Report: 

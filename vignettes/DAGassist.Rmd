@@ -11,36 +11,16 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r dev-load, include=FALSE}
-# Prefer source build when available (works in RStudio, pkgdown, or local render)
-if (requireNamespace("devtools", quietly = TRUE) && file.exists(file.path("..","DESCRIPTION"))) {
-  # Don't error on CRAN/build machines that don't have devtools or the source path
-  try(devtools::load_all("..", quiet = TRUE), silent = TRUE)
-}
-
-# If we've already loaded from source, avoid re-attaching a different installed build later
-from_source <- try({
-  "DAGassist" %in% loadedNamespaces() &&
-    grepl(normalizePath(".."), getNamespaceInfo(asNamespace("DAGassist"), "path"), fixed = TRUE)
-}, silent = TRUE)
-from_source <- isTRUE(from_source)
-
-# Feature gates (computed *after* attempting load_all)
-has_show <- tryCatch({
-  "show" %in% names(formals(DAGassist::DAGassist))
-}, error = function(e) FALSE)
-
-# Robust check: dev build defines a private .report_dotwhisker helper
-has_dotwhisker <- tryCatch({
-  exists(".report_dotwhisker", envir = asNamespace("DAGassist"), inherits = FALSE)
-}, error = function(e) FALSE)
-```
-
 ## Introduction
 
 *DAGassist* contains tools for using directed acyclic graphs (DAGs) to align regressions with an estimand and its identifying assumptions. DAGs are causal graphs that nonparametrically encode the relationships between a model's variables. For good introductory articles on DAGs, see @Pearl1995, @Pearl2009, @HunermundEtAl2025, and @Elwert2013.
 
 The *DAGassist* workflow has five steps: (1) declare an estimand; (2) draw a DAG; (3) classify control variables by role; (4) estimate models using DAG-consistent adjustment sets; and (5) recover the interpretable estimand. This guide provides an applied introduction to the *DAGassist* workflow.  
+
+## Step 0: Load *DAGassist*
+```{r load}
+library(DAGassist)
+```
 
 ## Step 1: Declare an Estimand
 

@@ -41,6 +41,7 @@ Imports:
     dotwhisker
 Suggests: 
     fixest,
+    ggplot2,
     ggdag,
     knitr,
     modelsummary,

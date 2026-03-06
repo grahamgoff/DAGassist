@@ -604,7 +604,7 @@ knitr::kable(tabs$categorical, align = "l")
 ```{r example-dag, echo=FALSE, message=FALSE, fig.width=8, fig.height=5, warning=FALSE, fig.cap="*Example: The Causal Effects of Family Background and Life Course Events on Fertility Patterns*"}
 library(dagitty)
 library(ggdag)
-library(tidyverse)
+library(ggplot2)
 
 x_pos <- c(
   children = 10,

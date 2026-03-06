@@ -89,6 +89,12 @@ the interpretable estimand. This guide provides an applied introduction
 to the <em>DAGassist</em> workflow.</p>
 </div>
 <div class="section level2">
+<h2 id="step-0-load-dagassist">Step 0: Load <em>DAGassist</em><a class="anchor" aria-label="anchor" href="#step-0-load-dagassist"></a>
+</h2>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/grahamgoff/DAGassist" class="external-link">DAGassist</a></span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
 <h2 id="step-1-declare-an-estimand">Step 1: Declare an Estimand<a class="anchor" aria-label="anchor" href="#step-1-declare-an-estimand"></a>
 </h2>
 <p>Step 1’s focus on declaring the estimands ensures that studies
@@ -291,7 +297,7 @@ plausible, but not exhaustive, set of covariates.</p>
 <div class="section level2">
 <h2 id="step-3-classify-control-variables-by-role">Step 3: Classify Control Variables by Role<a class="anchor" aria-label="anchor" href="#step-3-classify-control-variables-by-role"></a>
 </h2>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">dag_model</span>,</span>
 <span>          show<span class="op">=</span><span class="st">"roles"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## DAGassist Report: </span></span>
@@ -370,7 +376,7 @@ that do not fit any of the previous definitions.</li>
 <div class="section level2">
 <h2 id="estimate-models-using-dag-consistent-adjustment-sets">4. Estimate Models Using DAG-Consistent Adjustment Sets<a class="anchor" aria-label="anchor" href="#estimate-models-using-dag-consistent-adjustment-sets"></a>
 </h2>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">dag_model</span>,</span>
 <span>          formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">children</span> <span class="op">~</span> <span class="va">edu_year</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">class</span> <span class="op">+</span> <span class="va">gender</span> <span class="op">+</span> </span>
 <span>                         <span class="va">immigrant</span> <span class="op">+</span> <span class="va">urban</span> <span class="op">+</span> <span class="va">birth_control</span> <span class="op">+</span> <span class="va">income</span> <span class="op">+</span> </span>
@@ -563,7 +569,7 @@ minimal sets; the canonical set is unique.</p>
 <div class="section level2">
 <h2 id="recover-the-interpretable-estimand">5. Recover the Interpretable Estimand<a class="anchor" aria-label="anchor" href="#recover-the-interpretable-estimand"></a>
 </h2>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">dag_model</span>,</span>
 <span>          formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">children</span> <span class="op">~</span> <span class="va">edu_year</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">class</span> <span class="op">+</span> <span class="va">gender</span> <span class="op">+</span> </span>
 <span>                         <span class="va">immigrant</span> <span class="op">+</span> <span class="va">urban</span> <span class="op">+</span> <span class="va">birth_control</span> <span class="op">+</span> <span class="va">income</span> <span class="op">+</span> </span>
@@ -667,7 +673,7 @@ effect using sequential g-estimation via integration with the
 <p>Using the prior example, we can use <code>DAGassist</code> to
 estimate the effect of years of education on a person’s number of
 children, except through birth control, income, and marital status.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mattblackwell.github.io/DirectEffects/" class="external-link">DirectEffects</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">dag_model</span>,</span>
@@ -729,7 +735,7 @@ generation.</li>
 </ul>
 <p>Users can generate latex reports in the console (default), or to an
 output file via the <code>out =</code> parameter:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">dag_model</span>,</span>
 <span>          formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">children</span> <span class="op">~</span> <span class="va">edu_year</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">class</span> <span class="op">+</span> <span class="va">gender</span> <span class="op">+</span> </span>
 <span>                         <span class="va">immigrant</span> <span class="op">+</span> <span class="va">urban</span> <span class="op">+</span> <span class="va">birth_control</span> <span class="op">+</span> <span class="va">income</span> <span class="op">+</span> </span>
@@ -738,7 +744,7 @@ output file via the <code>out =</code> parameter:</p>
 <span>          out <span class="op">=</span> <span class="st">"out/path/filename.tex"</span><span class="op">)</span></span></code></pre></div>
 <p><strong>Word</strong> and <strong>Excel</strong> output requires an
 <code>out =</code> parameter:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">#word example</span></span>
 <span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">dag_model</span>,</span>
 <span>          formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">children</span> <span class="op">~</span> <span class="va">edu_year</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">class</span> <span class="op">+</span> <span class="va">gender</span> <span class="op">+</span> </span>

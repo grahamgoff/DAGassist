@@ -16,6 +16,12 @@ using DAG-consistent adjustment sets; and (5) recover the interpretable
 estimand. This guide provides an applied introduction to the *DAGassist*
 workflow.
 
+## Step 0: Load *DAGassist*
+
+``` r
+library(DAGassist)
+```
+
 ## Step 1: Declare an Estimand
 
 Step 1’s focus on declaring the estimands ensures that studies maintain

@@ -41,3 +41,4 @@ vignettes/articles
 #omit cran-specific files
 /cran-comments.md
 /CRAN-SUBMISSION
+.positai

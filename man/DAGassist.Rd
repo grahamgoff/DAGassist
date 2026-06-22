@@ -29,7 +29,9 @@ DAGassist(
   wts_omit = NULL,
   auto_acde = TRUE,
   acde = list(),
-  directeffects_args = list()
+  directeffects_args = list(),
+  uncertain_edges = NULL,
+  pdag = NULL
 )
 }
 \arguments{
@@ -143,6 +145,12 @@ Users can override parts of the sequential g-estimation specification with named
 \item{directeffects_args}{Named list of arguments forwarded to \code{\link[DirectEffects:sequential_g]{DirectEffects::sequential_g()}}
 when \code{estimand} includes \code{"SACDE"} (e.g., simulation/bootstrap controls,
 variance estimator options).}
+
+\item{uncertain_edges}{Character vector of edges with unknown direction,
+e.g. \code{c("A -- B")}. Triggers a PDAG robustness summary. See \code{\link[=pdag_robustness]{pdag_robustness()}}.}
+
+\item{pdag}{Optional \code{dagitty} PDAG; its undirected (\verb{--}) edges are treated
+as uncertain, equivalent to listing them in \code{uncertain_edges}.}
 }
 \value{
 A \code{DAGassist_report} object (a named list) returned invisibly for file/plot

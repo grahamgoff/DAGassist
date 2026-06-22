@@ -13,7 +13,6 @@ knitr::opts_chunk$set(
 #devtools::load_all(quiet = TRUE)
 library(ggplot2)
 library(dotwhisker)
-library(fixest)
 ```
 
 ```{r col, include=FALSE}
@@ -25,28 +24,12 @@ options(
 Sys.setenv(NO_COLOR = "1")
 ```
 
-```{r dev-load, include=FALSE}
-# Try loading from source when rendering inside the package repo
-if (requireNamespace("devtools", quietly = TRUE) && file.exists("DESCRIPTION")) {
-  try(devtools::load_all(".", quiet = TRUE), silent = TRUE)
-}
-
-# If not loaded from source, attach installed build (CRAN/GitHub)
-if (!"DAGassist" %in% loadedNamespaces() && requireNamespace("DAGassist", quietly = TRUE)) {
-  library(DAGassist)
-}
-
-# Feature gates (after load attempt)
-has_dotwhisker <- tryCatch({
-  exists(".report_dotwhisker", envir = asNamespace("DAGassist"), inherits = FALSE)
-}, error = function(e) FALSE)
-```
-
 # DAGassist <a href='https://grahamgoff.github.io/DAGassist/'><img src='man/figures/logo.png' class='home-logo' align="right" width="270pt" alt='DAGassist hex logo'/></a>
 [![R-CMD-check](https://github.com/grahamgoff/DAGassist/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/grahamgoff/DAGassist/actions/workflows/R-CMD-check.yaml)
 [![pages-build-deployment](https://github.com/grahamgoff/DAGassist/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/grahamgoff/DAGassist/actions/workflows/pages/pages-build-deployment)
 [![CRAN status](https://www.r-pkg.org/badges/version/DAGassist)](https://cran.r-project.org/package=DAGassist)
 [![Lifecycle: maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://lifecycle.r-lib.org/articles/stages.html)
+[![CRAN downloads](https://cranlogs.r-pkg.org/badges/last-month/DAGassist)](https://cran.r-project.org/package=DAGassist)
 
 **An all-in-one DAG-driven robustness check.** Generate publication-quality reports that classify variables by causal role, compare the significance of DAG-derived models, and explicitly target estimands.
 
@@ -61,8 +44,8 @@ has_dotwhisker <- tryCatch({
 ## Installation
 
 You can install `DAGassist` with:
-```{r cran, eval = FALSE}
-install.packages("DAGassist")
+```{r cran}
+#install.packages("DAGassist")
 library(DAGassist) 
 ```
 
@@ -120,7 +103,7 @@ Simply provide a `dagitty()` object and a regression call and `DAGassist` will c
 
 ```{r run}
 DAGassist(dag = dag_model, 
-          formula = feols(Y ~ X + M + C + Z + A + B, data = df),
+          formula = lm(Y ~ X + M + C + Z + A + B, data = df),
           estimand = c("SATE", "SACDE")
 )
 
@@ -128,9 +111,9 @@ DAGassist(dag = dag_model,
 
 Optionally, users can generate visual output via dotwhisker plots:
 
-```{r dotwhisker, eval=has_dotwhisker, warning=FALSE, echo=FALSE}
+```{r dotwhisker, warning=FALSE, echo=FALSE}
 DAGassist(dag = dag_model, 
-          formula = feols(Y ~ X + M + C + Z + A + B, data = df),
+          formula = lm(Y ~ X + M + C + Z + A + B, data = df),
           estimand = c("SATE", "SACDE"),
           type = "dotwhisker"
 )

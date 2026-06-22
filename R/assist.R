@@ -89,6 +89,10 @@
 #' @param directeffects_args Named list of arguments forwarded to [DirectEffects::sequential_g()]
 #'   when `estimand` includes `"SACDE"` (e.g., simulation/bootstrap controls,
 #'   variance estimator options).
+#' @param uncertain_edges Character vector of edges with unknown direction,
+#'   e.g. `c("A -- B")`. Triggers a PDAG robustness summary. See [pdag_robustness()].
+#' @param pdag Optional `dagitty` PDAG; its undirected (`--`) edges are treated
+#'   as uncertain, equivalent to listing them in `uncertain_edges`.
 #'   
 #' @details
 #' **Engine-call parsing.** If `formula` is a call (e.g., `feols(Y ~ X | fe, data=df)`),
@@ -227,7 +231,9 @@ DAGassist <- function(dag,
                       wts_omit = NULL,
                       auto_acde = TRUE,
                       acde = list(),
-                      directeffects_args = list()) {
+                      directeffects_args = list(),
+                      uncertain_edges = NULL,
+                      pdag = NULL) {
   # set output type
   type <- match.arg(type)
   # set show type
@@ -724,6 +730,21 @@ DAGassist <- function(dag,
   
   class(report) <- c("DAGassist_report", class(report))
   
+  #support PDAG robustness (uncertain edge directions) within DAGassist main function
+  und_edges <- rbind(
+    .dagassist_parse_uncertain(uncertain_edges),
+    .dagassist_pdag_undirected(pdag)
+  )
+  if (nrow(und_edges)) {
+    report$pdag <- tryCatch(
+      .dagassist_pdag_robustness(dag, exposure, outcome, und_edges, formula = formula),
+      error = function(e) {
+        warning("PDAG robustness skipped: ", conditionMessage(e), call. = FALSE)
+        NULL
+      }
+    )
+  }
+  
   #for console output, do not build exporter objects, as they are computationally 
   #expensive and the console printer will build models later
   mods_full <- NULL
@@ -1106,4 +1127,6 @@ print.DAGassist_report <- function(x, ...) {
       }
     }
   }
+  if (!is.null(x$pdag)) print(x$pdag)
+  invisible(x)
 }

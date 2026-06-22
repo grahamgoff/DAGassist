@@ -19,6 +19,7 @@ reference:
     contents:
       - bad_controls_in
       - classify_nodes
+      - pdag_robustness
 
   - title: "Internal functions"
     desc: >
@@ -27,3 +28,4 @@ reference:
       - print.DAGassist_report
       - print.DAGassist_roles
       - print.DAGassist_validation
+      - print.DAGassist_pdag_summary

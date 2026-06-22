@@ -17,6 +17,9 @@ Helper functions that can be useful on their own.
   set
 - [`classify_nodes()`](https://grahamgoff.github.io/DAGassist/reference/classify_nodes.md)
   : Classify DAG nodes
+- [`pdag_robustness()`](https://grahamgoff.github.io/DAGassist/reference/pdag_robustness.md)
+  : Diagnose adjustment-set and role robustness to uncertain edge
+  directions
 
 ## Internal functions
 
@@ -28,3 +31,5 @@ Lower-level helpers and print methods, usually not called directly.
   : Print node classifications (aligned)
 - [`print(`*`<DAGassist_validation>`*`)`](https://grahamgoff.github.io/DAGassist/reference/print.DAGassist_validation.md)
   : Minimal, clean printout for validation results with color coding
+- [`print(`*`<DAGassist_pdag_summary>`*`)`](https://grahamgoff.github.io/DAGassist/reference/print.DAGassist_pdag_summary.md)
+  : Print a PDAG robustness summary

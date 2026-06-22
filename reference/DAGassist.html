@@ -83,7 +83,9 @@ sequential g-estimation (e.g., SACDE).</p>
 <span>  wts_omit <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  auto_acde <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  acde <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  directeffects_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  directeffects_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  uncertain_edges <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  pdag <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -242,6 +244,16 @@ Users can override parts of the sequential g-estimation specification with named
 <dd><p>Named list of arguments forwarded to <code><a href="https://mattblackwell.github.io/DirectEffects/reference/sequential_g.html" class="external-link">DirectEffects::sequential_g()</a></code>
 when <code>estimand</code> includes <code>"SACDE"</code> (e.g., simulation/bootstrap controls,
 variance estimator options).</p></dd>
+
+
+<dt id="arg-uncertain-edges">uncertain_edges<a class="anchor" aria-label="anchor" href="#arg-uncertain-edges"></a></dt>
+<dd><p>Character vector of edges with unknown direction,
+e.g. <code>c("A -- B")</code>. Triggers a PDAG robustness summary. See <code><a href="pdag_robustness.html">pdag_robustness()</a></code>.</p></dd>
+
+
+<dt id="arg-pdag">pdag<a class="anchor" aria-label="anchor" href="#arg-pdag"></a></dt>
+<dd><p>Optional <code>dagitty</code> PDAG; its undirected (<code>--</code>) edges are treated
+as uncertain, equivalent to listing them in <code>uncertain_edges</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

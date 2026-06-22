@@ -35,7 +35,9 @@ DAGassist(
   wts_omit = NULL,
   auto_acde = TRUE,
   acde = list(),
-  directeffects_args = list()
+  directeffects_args = list(),
+  uncertain_edges = NULL,
+  pdag = NULL
 )
 ```
 
@@ -222,6 +224,17 @@ DAGassist(
   [`DirectEffects::sequential_g()`](https://mattblackwell.github.io/DirectEffects/reference/sequential_g.html)
   when `estimand` includes `"SACDE"` (e.g., simulation/bootstrap
   controls, variance estimator options).
+
+- uncertain_edges:
+
+  Character vector of edges with unknown direction, e.g. `c("A -- B")`.
+  Triggers a PDAG robustness summary. See
+  [`pdag_robustness()`](https://grahamgoff.github.io/DAGassist/reference/pdag_robustness.md).
+
+- pdag:
+
+  Optional `dagitty` PDAG; its undirected (`--`) edges are treated as
+  uncertain, equivalent to listing them in `uncertain_edges`.
 
 ## Value
 

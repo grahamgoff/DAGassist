@@ -7,7 +7,7 @@ align regressions with an estimand and its identifying assumptions. DAGs
 are causal graphs that nonparametrically encode the relationships
 between a model’s variables. For good introductory articles on DAGs, see
 Pearl ([1995](#ref-Pearl1995)), Pearl ([2009](#ref-Pearl2009)),
-Hünermund, Louw, and Rönkkö ([2025](#ref-HunermundEtAl2025)), and Elwert
+Hünermund et al. ([2025](#ref-HunermundEtAl2025)), and Elwert
 ([2013](#ref-Elwert2013)).
 
 The *DAGassist* workflow has five steps: (1) declare an estimand; (2)
@@ -19,17 +19,17 @@ workflow.
 ## Step 0: Load *DAGassist*
 
 ``` r
+
 library(DAGassist)
 ```
 
 ## Step 1: Declare an Estimand
 
 Step 1’s focus on declaring the estimands ensures that studies maintain
-a consistent quantity of interest for evaluation Lundberg, Johnson, and
-Stewart ([2021](#ref-LundbergJohnsonStewart2021)); Findley, Kikuta, and
-Denly ([2021](#ref-FindleyKikutaDenly2021)). Of course, some estimands
-may be more policy-relevant than others Deaton
-([2010](#ref-Deaton2010)).
+a consistent quantity of interest for evaluation Lundberg et al.
+([2021](#ref-LundbergJohnsonStewart2021)); Findley et al.
+([2021](#ref-FindleyKikutaDenly2021)). Of course, some estimands may be
+more policy-relevant than others Deaton ([2010](#ref-Deaton2010)).
 
 For the purpose of this guide, we are interested in the sample average
 treatment effect (SATE).
@@ -44,18 +44,18 @@ strong null hypothesis.
 
 **Dataset summary statistics (click to expand)**
 
-| variable        | type    | Min     | Q1       | Median   | Mean      | Q3        | Max        |
-|:----------------|:--------|:--------|:---------|:---------|:----------|:----------|:-----------|
-| id              | integer | 1.00    | 250.75   | 500.50   | 500.50    | 750.25    | 1000.00    |
-| year            | integer | 0.00    | 1.00     | 2.00     | 2.00      | 3.00      | 4.00       |
-| age             | numeric | 0.00    | 27.60    | 37.70    | 37.76     | 47.40     | 86.20      |
-| pref            | numeric | 0.00    | 1.35     | 2.03     | 2.06      | 2.74      | 4.94       |
-| edu_year        | numeric | 0.00    | 11.80    | 13.10    | 13.07     | 15.20     | 22.00      |
-| married         | integer | 0.00    | 0.00     | 1.00     | 0.56      | 1.00      | 1.00       |
-| birth_control   | integer | 0.00    | 0.00     | 1.00     | 0.71      | 1.00      | 1.00       |
-| income          | numeric | 2344.00 | 43141.75 | 87560.50 | 125387.86 | 162098.50 | 1817478.00 |
-| children        | numeric | 0.00    | 0.00     | 0.00     | 2.03      | 3.00      | 12.00      |
-| job_stability_t | numeric | -3.00   | -0.27    | 0.55     | 0.49      | 1.29      | 3.00       |
+| variable | type | Min | Q1 | Median | Mean | Q3 | Max |
+|:---|:---|:---|:---|:---|:---|:---|:---|
+| id | integer | 1.00 | 250.75 | 500.50 | 500.50 | 750.25 | 1000.00 |
+| year | integer | 0.00 | 1.00 | 2.00 | 2.00 | 3.00 | 4.00 |
+| age | numeric | 0.00 | 27.60 | 37.70 | 37.76 | 47.40 | 86.20 |
+| pref | numeric | 0.00 | 1.35 | 2.03 | 2.06 | 2.74 | 4.94 |
+| edu_year | numeric | 0.00 | 11.80 | 13.10 | 13.07 | 15.20 | 22.00 |
+| married | integer | 0.00 | 0.00 | 1.00 | 0.56 | 1.00 | 1.00 |
+| birth_control | integer | 0.00 | 0.00 | 1.00 | 0.71 | 1.00 | 1.00 |
+| income | numeric | 2344.00 | 43141.75 | 87560.50 | 125387.86 | 162098.50 | 1817478.00 |
+| children | numeric | 0.00 | 0.00 | 0.00 | 2.03 | 3.00 | 12.00 |
+| job_stability_t | numeric | -3.00 | -0.27 | 0.55 | 0.49 | 1.29 | 3.00 |
 
 | variable   | type    | top_levels                                              |
 |:-----------|:--------|:--------------------------------------------------------|
@@ -82,6 +82,7 @@ not exhaustive, set of covariates.
 ## Step 3: Classify Control Variables by Role
 
 ``` r
+
 DAGassist(dag_model,
           show="roles")
 ```
@@ -143,6 +144,7 @@ DAGassist(dag_model,
 ## 4. Estimate Models Using DAG-Consistent Adjustment Sets
 
 ``` r
+
 DAGassist(dag_model,
           formula = lm(children ~ edu_year + age + class + gender + 
                          immigrant + urban + birth_control + income + 
@@ -270,6 +272,7 @@ sets; the canonical set is unique.
 ## 5. Recover the Interpretable Estimand
 
 ``` r
+
 DAGassist(dag_model,
           formula = lm(children ~ edu_year + age + class + gender + 
                          immigrant + urban + birth_control + income + 
@@ -379,6 +382,7 @@ of years of education on a person’s number of children, except through
 birth control, income, and marital status.
 
 ``` r
+
 library(DirectEffects)
 
 DAGassist(dag_model,
@@ -420,6 +424,7 @@ Users can generate latex reports in the console (default), or to an
 output file via the `out =` parameter:
 
 ``` r
+
 DAGassist(dag_model,
           formula = lm(children ~ edu_year + age + class + gender + 
                          immigrant + urban + birth_control + income + 
@@ -431,6 +436,7 @@ DAGassist(dag_model,
 **Word** and **Excel** output requires an `out =` parameter:
 
 ``` r
+
 #word example
 DAGassist(dag_model,
           formula = lm(children ~ edu_year + age + class + gender + 
@@ -455,7 +461,7 @@ Development.” *Journal of Economic Literature* 48: 424–55.
 <https://doi.org/10.1257/jel.48.2.424>.
 
 Elwert, Felix. 2013. “Graphical Causal Models.” In *Handbook of Causal
-Analysis for Social Research*, edited by Stephen L. Morgan, 54:237–46.
+Analysis for Social Research*, edited by Stephen L. Morgan, vol. 54.
 Springer. <https://doi.org/10.1007/978-1-4471-6699-3_13>.
 
 Findley, Michael G., Kyosuke Kikuta, and Michael Denly. 2021. “External
@@ -471,17 +477,16 @@ Evidence to Theory.” *American Sociological Review* 86: 532–65.
 <https://doi.org/10.1177/00031224211004187>.
 
 Morgan, Stephen L., and Christopher Winship. 2015. *Counterfactuals and
-Causal Inference: Methods and Principles for Social Research*. New York:
-Cambridge University Press.
+Causal Inference: Methods and Principles for Social Research*. Cambridge
+University Press.
 
 Pearl, Judea. 1995. “Causal Diagrams for Empirical Research.”
 *Biometrika* 82: 669–88. <https://doi.org/10.1093/biomet/82.4.669>.
 
-———. 2009. *Causality: Models, Reasoning, and Inference*. Cambridge
-University Press.
+Pearl, Judea. 2009. *Causality: Models, Reasoning, and Inference*.
+Cambridge University Press.
 
-Tennant, Peter W. G., Eleanor J. Murray, Kellyn F. Arnold, Laurie
-Berrie, Matthew P. Fox, Sarah C. Gadd, Wendy J. Harrison, et al. 2021.
+Tennant, Peter W. G., Eleanor J. Murray, Kellyn F. Arnold, et al. 2021.
 “Using Directed Acyclic Graphs (DAGs) to Identify Confounders in Applied
 Research: Review and Recommendatsion.” *International Journal of
 Epidemiology* 50 (2): 620–32. <https://doi.org/10.1093/ije/dyaa213>.

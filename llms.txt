@@ -34,6 +34,7 @@ estimands.
 You can install `DAGassist` with:
 
 ``` r
+
 #install.packages("DAGassist")
 library(DAGassist) 
 ```
@@ -41,6 +42,7 @@ library(DAGassist)
 Or you can install the development version from GitHub with:
 
 ``` r
+
 # install.packages("devtools")
 devtools::install_github("grahamgoff/DAGassist")
 ```
@@ -52,6 +54,7 @@ Simply provide a `dagitty()` object and a regression call and
 and compare the specified regression to minimal and canonical models.
 
 ``` r
+
 DAGassist(dag = dag_model, 
           formula = lm(Y ~ X + M + C + Z + A + B, data = df),
           estimand = c("SATE", "SACDE")

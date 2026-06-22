@@ -38,6 +38,7 @@ GitHub.](https://grahamgoff.github.io/DAGassist/)
 ### estimatr::lm_robust
 
 ``` r
+
 DAGassist(
     dag = dag_model,
     formula = estimatr::lm_robust(
@@ -58,6 +59,7 @@ DAGassist(
 ### fixest::feglm
 
 ``` r
+
 DAGassist(
     dag = dag_model2,
     formula = fixest::feglm(
@@ -76,6 +78,7 @@ DAGassist(
 
 ``` r
 
+
 DAGassist(
   dag = dag_model,
   formula = fixest::feols(
@@ -89,6 +92,7 @@ DAGassist(
 ### lfe::felm
 
 ``` r
+
 DAGassist(dag=dag_model,
           formula = lfe::felm(
               share_female ~ lag_democracy_stock_poly_95 + lag_v2xcl_rol + 
@@ -103,6 +107,7 @@ DAGassist(dag=dag_model,
 ### lme4::glmer
 
 ``` r
+
 
 DAGassist(
     dag = dag_model,
@@ -120,6 +125,7 @@ DAGassist(
 ### lmerTest::lmer
 
 ``` r
+
 
 DAGassist(
     dag = dag_model,
@@ -149,6 +155,7 @@ DAGassist(
 ### stats::lm
 
 ``` r
+
 DAGassist(
   dag = dag_model,
   formula = stats::lm(

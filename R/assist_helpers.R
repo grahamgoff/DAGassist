@@ -404,6 +404,22 @@
   unique(attr(stats::terms(rhs_fml), "term.labels"))
 }
 
+# Helper: collect any calls whose operator is '|' or '||' anywhere in the RHS.
+# This is engine-agnostic and does not import lme4.
+.collect_bar_calls <- function(expr, acc = list()) {
+  if (is.call(expr)) {
+    head <- as.character(expr[[1L]])
+    if (head %in% c("|", "||")) {
+      acc <- c(acc, list(expr))
+    }
+    # Recurse into all arguments
+    for (i in seq_along(expr)) {
+      acc <- .collect_bar_calls(expr[[i]], acc)
+    }
+  }
+  acc
+}
+
 # Return FE / grouping variable *names* from common syntaxes:
 #  (a) fixest/lfe tails: y ~ x | FE (+ optional more | blocks)
 #  (b) lme4/nlme random-effects bars on RHS: (1 | FE), (x || FE), etc.

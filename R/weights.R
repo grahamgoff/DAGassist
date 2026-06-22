@@ -493,9 +493,7 @@
     } else {
       f_treat <- stats::as.formula(paste(exp_nm, "~ 1"))
     }
-    
-    # Build complete-case analytic data for THIS spec.
-    # Use variables needed for treatment + outcome model evaluation.
+  
     # Build complete-case analytic data for THIS spec.
     # Keep vars needed for treatment + outcome + clustering.
     # fixed to include fixest tail vars so refits with FE don't fail.
@@ -649,11 +647,9 @@
       engine_args$cluster <- .subset_cluster_vec(engine_args$cluster, data_cc)
     }
     
-    # Fit weighted version of THIS model on THIS model’s CC data
+    #fit weighted version of this model on this model’s CC data
     engine_args_w <- utils::modifyList(engine_args, list(weights = w))
     
-    # Fit weighted version of THIS model on THIS model’s CC data
-    engine_args_w <- utils::modifyList(engine_args, list(weights = w))
     #specifically suppress binomial warning, which won't be caught in the prior
     #warning suppression. it may be classed as a message or something.
     fit_w <- withCallingHandlers(
@@ -767,63 +763,6 @@
     RAW       = "",
     NONE      = "",
     ""
-  )
-}
-
-# ---- Guardrail: ACDE mediator types ----
-# DirectEffects::sequential_g() is fragile when mediators are not numeric columns.
-# This guard identifies non-numeric mediators and returns an actionable message.
-.dagassist_acde_guard_mediators <- function(data, m_terms) {
-  if (is.null(m_terms) || !length(m_terms)) return(NULL)
-  
-  m_terms <- unique(as.character(m_terms))
-  m_terms <- intersect(m_terms, names(data))
-  if (!length(m_terms)) return(NULL)
-  
-  classes <- vapply(m_terms, function(nm) paste(class(data[[nm]]), collapse = "/"), character(1))
-  is_bad  <- vapply(m_terms, function(nm) {
-    v <- data[[nm]]
-    is.factor(v) || is.character(v) || is.logical(v)
-  }, logical(1))
-  
-  bad <- m_terms[is_bad]
-  if (!length(bad)) return(NULL)
-  
-  # levels (only meaningful for factor/character)
-  lvl_txt <- vapply(bad, function(nm) {
-    v <- data[[nm]]
-    if (is.character(v)) v <- factor(v)
-    if (is.factor(v)) {
-      lv <- levels(v)
-      paste0("levels=", length(lv), if (length(lv) && length(lv) <= 8) paste0(" (", paste(lv, collapse = ", "), ")") else "")
-    } else if (is.logical(v)) {
-      "logical"
-    } else {
-      ""
-    }
-  }, character(1))
-  
-  bullets <- paste0(
-    "  - ", bad, "  [class: ", classes[match(bad, m_terms)], 
-    ifelse(nzchar(lvl_txt), paste0("; ", lvl_txt), ""),
-    "]"
-  )
-  
-  paste0(
-    "SACDE fit aborted before calling DirectEffects::sequential_g().\n\n",
-    "Reason:\n",
-    "  At least one mediator is non-numeric (factor/character/logical).\n",
-    "  DirectEffects::sequential_g() can throw `subscript out of bounds` in this case, ",
-    "  because categorical mediators expand to multiple model-matrix columns which do not ",
-    "  match the mediator term labels.\n\n",
-    "Problematic mediator(s):\n",
-    paste(bullets, collapse = "\n"), "\n\n",
-    "How to fix:\n",
-    "  1) Recode mediator(s) to numeric before calling DAGassist (e.g., binary 0/1).\n",
-    "  2) One-hot encode multi-category mediators into numeric dummy columns, then pass\n",
-    "     those dummy names explicitly via `acde = list(m = c(\"M1\",\"M2\", ...))`. \n",
-    "     Either ensure your DAG nodes match those column names, or use imply = FALSE to prevent mismatch issues. \n",
-    "  3) Exclude the categorical mediator(s) from SACDE by explicitly setting `sacde$m`.\n"
   )
 }
 

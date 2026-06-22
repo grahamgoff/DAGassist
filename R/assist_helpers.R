@@ -404,30 +404,6 @@
   unique(attr(stats::terms(rhs_fml), "term.labels"))
 }
 
-# Factorize only bare symbols; leave complex terms untouched (i(), interactions, etc.)
-.dagassist_factorize_plain_terms <- function(terms) {
-  if (!length(terms)) return(character(0))
-  is_bare <- grepl("^[.A-Za-z][.A-Za-z0-9._]*$", terms)
-  terms[is_bare] <- paste0("factor(", terms[is_bare], ")")
-  terms
-}
-
-# Helper: collect any calls whose operator is '|' or '||' anywhere in the RHS.
-# This is engine-agnostic and does not import lme4.
-.collect_bar_calls <- function(expr, acc = list()) {
-  if (is.call(expr)) {
-    head <- as.character(expr[[1L]])
-    if (head %in% c("|", "||")) {
-      acc <- c(acc, list(expr))
-    }
-    # Recurse into all arguments
-    for (i in seq_along(expr)) {
-      acc <- .collect_bar_calls(expr[[i]], acc)
-    }
-  }
-  acc
-}
-
 # Return FE / grouping variable *names* from common syntaxes:
 #  (a) fixest/lfe tails: y ~ x | FE (+ optional more | blocks)
 #  (b) lme4/nlme random-effects bars on RHS: (1 | FE), (x || FE), etc.
@@ -1371,8 +1347,6 @@
         # numeric-coded categories or character: enforce a deterministic order
         lv <- sort(unique(exp_vec[!is.na(exp_vec)]))
       }
-      
-      if (length(lv) < 2) next
       
       if (length(lv) < 2) next
       

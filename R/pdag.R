@@ -246,6 +246,24 @@ print.DAGassist_pdag_summary <- function(x, ...) {
 pdag_robustness <- function(dag, exposure, outcome,
                             uncertain_edges = NULL, pdag = NULL,
                             formula = NULL, max_uncertain = 10L) {
+  # Accept a plain formula OR an engine call like lm(y ~ x, data = d), and pull
+  # out ONLY the formula -- never fit the model. Mirrors DAGassist(); avoids
+  # deparsing a fitted model object (pathologically slow via .split_top_level()).
+  spec_expr <- substitute(formula)
+  fml <- NULL
+  if (!is.null(spec_expr)) {
+    if (is.call(spec_expr) && !identical(spec_expr[[1L]], as.name("~"))) {
+      fml <- tryCatch(
+        .extract_from_engine_call(spec_expr, eval_env = parent.frame())$formula,
+        error = function(e) NULL
+      )
+    }
+    if (is.null(fml) && !is.null(formula)) {            # plain formula, or fitted model
+      fml <- if (inherits(formula, "formula")) formula
+      else tryCatch(stats::formula(formula), error = function(e) NULL)
+    }
+  }
+  
   if (missing(dag) || is.null(dag)) {
     if (is.null(pdag)) stop("Supply a `dag` (and `uncertain_edges`) or a `pdag`.", call. = FALSE)
     dag <- .dagassist_pdag_to_dag(pdag)
@@ -256,5 +274,5 @@ pdag_robustness <- function(dag, exposure, outcome,
                .dagassist_pdag_undirected(pdag))
   if (!nrow(und)) stop("Supply `uncertain_edges` or a `pdag` containing '--' edges.", call. = FALSE)
   .dagassist_pdag_robustness(dag, xy$exposure, xy$outcome, und,
-                             formula = formula, max_uncertain = max_uncertain)
+                             formula = fml, max_uncertain = max_uncertain)
 }

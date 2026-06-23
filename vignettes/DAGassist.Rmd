@@ -827,5 +827,50 @@ DAGassist(dag_model,
           out = "out/path/filename.xlsx")
 ```
 
+## Testing DGP Uncertainty with PDAGs
+
+Because DAGs encode difficult-to-verify assumptions about the data-generating process (DGP), the direction of some edges may be uncertain [@HaberEtAl2022]. In the example above, for instance, Urban/Rural is specified as a parent of income. In many cases, place of residence temporally precedes employment and therefore earnings. In others, however, income determines where an individual can afford to live. When the causal direction is genuinely ambiguous, selecting a single orientation may impose an unjustifiable assumption.
+
+DAGassist addresses this problem with partially directed acyclic graphs (PDAGs). Using DAGassist::pdag_robustness(), users can designate edges whose directions are uncertain. The function enumerates all acyclic orientations of those edges and reports whether the minimal adjustment set, canonical adjustment set, or the role of any covariate changes across admissible orientations. These diagnostics indicate whether the proposed estimand is robust to directional ambiguity in the DGP.
+
+```{r pdag-eval}
+DAGassist::pdag_robustness(dag_model,
+                           formula = children ~ edu_year + age + class + gender + 
+                             immigrant + urban + birth_control + income + married + 
+                             job_stability_t + contract + pref,
+                           uncertain_edges = c("urban -- income", 
+                                               "income -- immigrant", 
+                                               "income -- married",
+                                               "income -- edu_year"))
+```
+Users may alternatively specify uncertain edges through the main DAGassist() function:
+
+```{r pdag-main-eval}
+DAGassist(dag_model, 
+          formula = children ~ edu_year + age + class + gender + immigrant + urban +
+            birth_control + income + married + job_stability_t + contract + pref, data = dat,
+           uncertain_edges = c("urban -- income", 
+                               "income -- immigrant", 
+                               "income -- married", 
+                               "income -- edu_year"))
+```
+The two implementations differ primarily in their outputs. pdag_robustness() requires only a DAG and model formula, making it useful for evaluating identification assumptions before data are available, or if one's models are not compatable with DAGassist(). Conversely, DAGassist() requires a data frame and returns the PDAG diagnostics alongside the standard covariate-role table and re-estimated regression models.
+
+PDAG diagnostics are calculated only over acyclic orientations. This constraint can matter substantively. In the example above, reversing income -- edu_year would appear to change income from a mediator to a confounder. Yet that reversal creates a directed cycle: income → edu_year → job_stability_t → income. Because this orientation is inadmissible, it does not contribute to the robustness summary; consequently, reversing income -- edu_year alone does not alter the minimal set, canonical set, or any covariate role among the remaining acyclic DAGs.
+
+Introducing uncertainty in the job_stability_t -- income edge breaks this constraint and permits additional acyclic orientations. The resulting changes in the robustness summary illustrate how PDAG diagnostics can identify assumptions about causal direction that are consequential for empirical practice.
+
+```{r pdag-eval-bad}
+DAGassist::pdag_robustness(dag_model,
+                           formula = children ~ edu_year + age + class + gender + 
+                             immigrant + urban + birth_control + income + married + 
+                             job_stability_t + contract + pref,
+                           uncertain_edges = c("urban -- income", 
+                                               "income -- immigrant", 
+                                               "income -- married", 
+                                               "income -- edu_year",
+                                               "job_stability_t -- income"))
+```
+
 
 ## References

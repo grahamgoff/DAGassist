@@ -1,3 +1,10 @@
+# DAGassist v0.3.0
+
+### Highlights
+
+- PDAG robustness features: `pdag` and `uncertain_edges` arguments for `DAGassist()` and a standalone `pdag_robustness()` function diagnose how adjustment sets and covariate roles change when introducing uncertain edges.
+- Bug fixes
+
 # DAGassist v0.2.8
 
 ### Highlights

@@ -1,5 +1,17 @@
 # Changelog
 
+## DAGassist v0.3.0
+
+#### Highlights
+
+- PDAG robustness features: `pdag` and `uncertain_edges` arguments for
+  [`DAGassist()`](https://grahamgoff.github.io/DAGassist/reference/DAGassist.md)
+  and a standalone
+  [`pdag_robustness()`](https://grahamgoff.github.io/DAGassist/reference/pdag_robustness.md)
+  function diagnose how adjustment sets and covariate roles change when
+  introducing uncertain edges.
+- Bug fixes
+
 ## DAGassist v0.2.8
 
 CRAN release: 2026-02-20

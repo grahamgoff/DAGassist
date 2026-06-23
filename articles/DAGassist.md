@@ -454,6 +454,202 @@ DAGassist(dag_model,
           out = "out/path/filename.xlsx")
 ```
 
+## Testing DGP Uncertainty with PDAGs
+
+Because DAGs encode difficult-to-verify assumptions about the
+data-generating process (DGP), the direction of some edges may be
+uncertain ([Haber et al. 2022](#ref-HaberEtAl2022)). In the example
+above, for instance, Urban/Rural is specified as a parent of income. In
+many cases, place of residence temporally precedes employment and
+therefore earnings. In others, however, income determines where an
+individual can afford to live. When the causal direction is genuinely
+ambiguous, selecting a single orientation may impose an unjustifiable
+assumption.
+
+DAGassist addresses this problem with partially directed acyclic graphs
+(PDAGs). Using DAGassist::pdag_robustness(), users can designate edges
+whose directions are uncertain. The function enumerates all acyclic
+orientations of those edges and reports whether the minimal adjustment
+set, canonical adjustment set, or the role of any covariate changes
+across admissible orientations. These diagnostics indicate whether the
+proposed estimand is robust to directional ambiguity in the DGP.
+
+``` r
+
+DAGassist::pdag_robustness(dag_model,
+                           formula = children ~ edu_year + age + class + gender + 
+                             immigrant + urban + birth_control + income + married + 
+                             job_stability_t + contract + pref,
+                           uncertain_edges = c("urban -- income", 
+                                               "income -- immigrant", 
+                                               "income -- married",
+                                               "income -- edu_year"))
+```
+
+    ## 
+    ## PDAG robustness summary:
+    ## - uncertain edges specified: 4
+    ## - worlds evaluated (acyclic orientations): 2
+    ## - minimal adjustment set changed: no
+    ## - canonical adjustment set changed: no
+    ## - covariate role classifications changed: none
+    ## - re-estimation recommended: no
+
+Users may alternatively specify uncertain edges through the main
+DAGassist() function:
+
+``` r
+
+DAGassist(dag_model, 
+          formula = children ~ edu_year + age + class + gender + immigrant + urban +
+            birth_control + income + married + job_stability_t + contract + pref, data = dat,
+           uncertain_edges = c("urban -- income", 
+                               "income -- immigrant", 
+                               "income -- married", 
+                               "income -- edu_year"))
+```
+
+    ## DAGassist Report: 
+    ## 
+    ## Roles:
+    ## variable         role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
+    ## edu_year         exposure    x                                                                        
+    ## children         outcome           x                                                                  
+    ## age              confounder              x                                                            
+    ## class            confounder              x                                                            
+    ## contract         confounder              x                                                            
+    ## gender           confounder              x                                                            
+    ## immigrant        confounder              x                                                            
+    ## urban            confounder              x                                                            
+    ## birth_control    mediator                      x               x                                      
+    ## income           mediator                      x               x                                      
+    ## job_stability_t  mediator                      x                                                      
+    ## married          mediator                      x               x                                      
+    ## pref             nco                                                                               x  
+    ## 
+    ##  (!) Bad controls in your formula: {birth_control, income, married, job_stability_t}
+    ## Minimal controls 1: {age, class, contract, gender, immigrant, urban}
+    ## Canonical controls: {age, class, contract, gender, immigrant, pref, urban}
+    ## 
+    ## Formulas:
+    ##   original:  children ~ edu_year + age + class + gender + immigrant + urban +     birth_control + income + married + job_stability_t + contract +     pref
+    ## 
+    ## Model comparison:
+    ## 
+    ## +-------------------+-----------+-----------+-----------+
+    ## |                   | Original  | Minimal 1 | Canonical |
+    ## +===================+===========+===========+===========+
+    ## | edu_year          | -0.122*** | -0.080*** | -0.080*** |
+    ## +-------------------+-----------+-----------+-----------+
+    ## |                   | (0.015)   | (0.013)   | (0.013)   |
+    ## +-------------------+-----------+-----------+-----------+
+    ## | age               | 0.070***  | 0.095***  | 0.096***  |
+    ## +-------------------+-----------+-----------+-----------+
+    ## |                   | (0.004)   | (0.003)   | (0.003)   |
+    ## +-------------------+-----------+-----------+-----------+
+    ## | genderMale        | 0.181*    | 0.179*    | 0.190*    |
+    ## +-------------------+-----------+-----------+-----------+
+    ## |                   | (0.085)   | (0.087)   | (0.085)   |
+    ## +-------------------+-----------+-----------+-----------+
+    ## | immigrantYes      | -0.246+   | -0.172    | -0.243+   |
+    ## +-------------------+-----------+-----------+-----------+
+    ## |                   | (0.128)   | (0.131)   | (0.129)   |
+    ## +-------------------+-----------+-----------+-----------+
+    ## | urbanUrban        | 0.121     | 0.238*    | 0.175+    |
+    ## +-------------------+-----------+-----------+-----------+
+    ## |                   | (0.094)   | (0.096)   | (0.094)   |
+    ## +-------------------+-----------+-----------+-----------+
+    ## | birth_control     | 0.133     |           |           |
+    ## +-------------------+-----------+-----------+-----------+
+    ## |                   | (0.103)   |           |           |
+    ## +-------------------+-----------+-----------+-----------+
+    ## | income            | 0.000     |           |           |
+    ## +-------------------+-----------+-----------+-----------+
+    ## |                   | (0.000)   |           |           |
+    ## +-------------------+-----------+-----------+-----------+
+    ## | married           | 0.703***  |           |           |
+    ## +-------------------+-----------+-----------+-----------+
+    ## |                   | (0.122)   |           |           |
+    ## +-------------------+-----------+-----------+-----------+
+    ## | job_stability_t   | 0.285***  |           |           |
+    ## +-------------------+-----------+-----------+-----------+
+    ## |                   | (0.047)   |           |           |
+    ## +-------------------+-----------+-----------+-----------+
+    ## | contractTemporary | 0.710***  | 0.772***  | 0.804***  |
+    ## +-------------------+-----------+-----------+-----------+
+    ## |                   | (0.110)   | (0.112)   | (0.110)   |
+    ## +-------------------+-----------+-----------+-----------+
+    ## | contractPermanent | 0.893***  | 1.116***  | 1.093***  |
+    ## +-------------------+-----------+-----------+-----------+
+    ## |                   | (0.114)   | (0.113)   | (0.111)   |
+    ## +-------------------+-----------+-----------+-----------+
+    ## | pref              | 0.581***  |           | 0.578***  |
+    ## +-------------------+-----------+-----------+-----------+
+    ## |                   | (0.042)   |           | (0.042)   |
+    ## +-------------------+-----------+-----------+-----------+
+    ## | Num.Obs.          | 5000      | 5000      | 5000      |
+    ## +-------------------+-----------+-----------+-----------+
+    ## | R2                | 0.227     | 0.183     | 0.213     |
+    ## +===================+===========+===========+===========+
+    ## | + p < 0.1, * p < 0.05, ** p < 0.01, *** p < 0.001     |
+    ## +===================+===========+===========+===========+ 
+    ## 
+    ## Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome
+    ## 
+    ## PDAG robustness summary:
+    ## - uncertain edges specified: 4
+    ## - worlds evaluated (acyclic orientations): 2
+    ## - minimal adjustment set changed: no
+    ## - canonical adjustment set changed: no
+    ## - covariate role classifications changed: none
+    ## - re-estimation recommended: no
+
+The two implementations differ primarily in their outputs.
+pdag_robustness() requires only a DAG and model formula, making it
+useful for evaluating identification assumptions before data are
+available, or if one’s models are not compatable with DAGassist().
+Conversely, DAGassist() requires a data frame and returns the PDAG
+diagnostics alongside the standard covariate-role table and re-estimated
+regression models.
+
+PDAG diagnostics are calculated only over acyclic orientations. This
+constraint can matter substantively. In the example above, reversing
+income – edu_year would appear to change income from a mediator to a
+confounder. Yet that reversal creates a directed cycle: income →
+edu_year → job_stability_t → income. Because this orientation is
+inadmissible, it does not contribute to the robustness summary;
+consequently, reversing income – edu_year alone does not alter the
+minimal set, canonical set, or any covariate role among the remaining
+acyclic DAGs.
+
+Introducing uncertainty in the job_stability_t – income edge breaks this
+constraint and permits additional acyclic orientations. The resulting
+changes in the robustness summary illustrate how PDAG diagnostics can
+identify assumptions about causal direction that are consequential for
+empirical practice.
+
+``` r
+
+DAGassist::pdag_robustness(dag_model,
+                           formula = children ~ edu_year + age + class + gender + 
+                             immigrant + urban + birth_control + income + married + 
+                             job_stability_t + contract + pref,
+                           uncertain_edges = c("urban -- income", 
+                                               "income -- immigrant", 
+                                               "income -- married", 
+                                               "income -- edu_year",
+                                               "job_stability_t -- income"))
+```
+
+    ## 
+    ## PDAG robustness summary:
+    ## - uncertain edges specified: 5
+    ## - worlds evaluated (acyclic orientations): 7
+    ## - minimal adjustment set changed: yes
+    ## - canonical adjustment set changed: yes
+    ## - covariate role changed: mediator -> ambiguous (confounder / mediator) for income (good/bad control flip)
+    ## - re-estimation recommended: yes
+
 ## References
 
 Deaton, Angus. 2010. “Instruments, Randomization, and Learning about
@@ -466,6 +662,11 @@ Springer. <https://doi.org/10.1007/978-1-4471-6699-3_13>.
 
 Findley, Michael G., Kyosuke Kikuta, and Michael Denly. 2021. “External
 Validity.” *Annual Review of Political Science* 24: 365–93.
+
+Haber, Noah A., Mollie E. Wood, Sarah Wieten, and Alexander Breskin.
+2022. “DAG with Omitted Objects Displayed (DAGWOOD): A Framework for
+Revealing Causal Assumptions in DAGs.” *Annals of Epidemiology* 68
+(April): 64–71. <https://doi.org/10.1016/j.annepidem.2022.01.001>.
 
 Hünermund, Paul, Beyers Louw, and Mikko Rönkkö. 2025. “The Choice of
 Control Variables in Empirical Management Research: How Causal Diagrams

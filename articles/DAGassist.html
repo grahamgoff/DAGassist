@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">DAGassist</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.8</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,7 +66,7 @@
                         <h4 data-toc-skip class="author">Graham Goff and
 Mike Denly</h4>
             
-            <h4 data-toc-skip class="date">2026-06-22</h4>
+            <h4 data-toc-skip class="date">2026-06-23</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/grahamgoff/DAGassist/blob/dev/vignettes/DAGassist.Rmd" class="external-link"><code>vignettes/DAGassist.Rmd</code></a></small>
       <div class="d-none name"><code>DAGassist.Rmd</code></div>
@@ -762,6 +762,187 @@ output file via the <code>out =</code> parameter:</p>
 <span>          type <span class="op">=</span> <span class="st">"excel"</span>, <span class="co">#or, type = "xlsx"</span></span>
 <span>          out <span class="op">=</span> <span class="st">"out/path/filename.xlsx"</span><span class="op">)</span></span></code></pre></div>
 </div>
+<div class="section level2">
+<h2 id="testing-dgp-uncertainty-with-pdags">Testing DGP Uncertainty with PDAGs<a class="anchor" aria-label="anchor" href="#testing-dgp-uncertainty-with-pdags"></a>
+</h2>
+<p>Because DAGs encode difficult-to-verify assumptions about the
+data-generating process (DGP), the direction of some edges may be
+uncertain <span class="citation">(<a href="#ref-HaberEtAl2022">Haber et
+al. 2022</a>)</span>. In the example above, for instance, Urban/Rural is
+specified as a parent of income. In many cases, place of residence
+temporally precedes employment and therefore earnings. In others,
+however, income determines where an individual can afford to live. When
+the causal direction is genuinely ambiguous, selecting a single
+orientation may impose an unjustifiable assumption.</p>
+<p>DAGassist addresses this problem with partially directed acyclic
+graphs (PDAGs). Using DAGassist::pdag_robustness(), users can designate
+edges whose directions are uncertain. The function enumerates all
+acyclic orientations of those edges and reports whether the minimal
+adjustment set, canonical adjustment set, or the role of any covariate
+changes across admissible orientations. These diagnostics indicate
+whether the proposed estimand is robust to directional ambiguity in the
+DGP.</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">DAGassist</span><span class="fu">::</span><span class="fu"><a href="../reference/pdag_robustness.html">pdag_robustness</a></span><span class="op">(</span><span class="va">dag_model</span>,</span>
+<span>                           formula <span class="op">=</span> <span class="va">children</span> <span class="op">~</span> <span class="va">edu_year</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">class</span> <span class="op">+</span> <span class="va">gender</span> <span class="op">+</span> </span>
+<span>                             <span class="va">immigrant</span> <span class="op">+</span> <span class="va">urban</span> <span class="op">+</span> <span class="va">birth_control</span> <span class="op">+</span> <span class="va">income</span> <span class="op">+</span> <span class="va">married</span> <span class="op">+</span> </span>
+<span>                             <span class="va">job_stability_t</span> <span class="op">+</span> <span class="va">contract</span> <span class="op">+</span> <span class="va">pref</span>,</span>
+<span>                           uncertain_edges <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"urban -- income"</span>, </span>
+<span>                                               <span class="st">"income -- immigrant"</span>, </span>
+<span>                                               <span class="st">"income -- married"</span>,</span>
+<span>                                               <span class="st">"income -- edu_year"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## </span></span>
+<span><span class="co">## PDAG robustness summary:</span></span>
+<span><span class="co">## - uncertain edges specified: 4</span></span>
+<span><span class="co">## - worlds evaluated (acyclic orientations): 2</span></span>
+<span><span class="co">## - minimal adjustment set changed: no</span></span>
+<span><span class="co">## - canonical adjustment set changed: no</span></span>
+<span><span class="co">## - covariate role classifications changed: none</span></span>
+<span><span class="co">## - re-estimation recommended: no</span></span></code></pre>
+<p>Users may alternatively specify uncertain edges through the main
+DAGassist() function:</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">dag_model</span>, </span>
+<span>          formula <span class="op">=</span> <span class="va">children</span> <span class="op">~</span> <span class="va">edu_year</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">class</span> <span class="op">+</span> <span class="va">gender</span> <span class="op">+</span> <span class="va">immigrant</span> <span class="op">+</span> <span class="va">urban</span> <span class="op">+</span></span>
+<span>            <span class="va">birth_control</span> <span class="op">+</span> <span class="va">income</span> <span class="op">+</span> <span class="va">married</span> <span class="op">+</span> <span class="va">job_stability_t</span> <span class="op">+</span> <span class="va">contract</span> <span class="op">+</span> <span class="va">pref</span>, data <span class="op">=</span> <span class="va">dat</span>,</span>
+<span>           uncertain_edges <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"urban -- income"</span>, </span>
+<span>                               <span class="st">"income -- immigrant"</span>, </span>
+<span>                               <span class="st">"income -- married"</span>, </span>
+<span>                               <span class="st">"income -- edu_year"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## DAGassist Report: </span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">## Roles:</span></span>
+<span><span class="co">## variable         role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO</span></span>
+<span><span class="co">## edu_year         exposure    x                                                                        </span></span>
+<span><span class="co">## children         outcome           x                                                                  </span></span>
+<span><span class="co">## age              confounder              x                                                            </span></span>
+<span><span class="co">## class            confounder              x                                                            </span></span>
+<span><span class="co">## contract         confounder              x                                                            </span></span>
+<span><span class="co">## gender           confounder              x                                                            </span></span>
+<span><span class="co">## immigrant        confounder              x                                                            </span></span>
+<span><span class="co">## urban            confounder              x                                                            </span></span>
+<span><span class="co">## birth_control    mediator                      x               x                                      </span></span>
+<span><span class="co">## income           mediator                      x               x                                      </span></span>
+<span><span class="co">## job_stability_t  mediator                      x                                                      </span></span>
+<span><span class="co">## married          mediator                      x               x                                      </span></span>
+<span><span class="co">## pref             nco                                                                               x  </span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">##  (!) Bad controls in your formula: {birth_control, income, married, job_stability_t}</span></span>
+<span><span class="co">## Minimal controls 1: {age, class, contract, gender, immigrant, urban}</span></span>
+<span><span class="co">## Canonical controls: {age, class, contract, gender, immigrant, pref, urban}</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">## Formulas:</span></span>
+<span><span class="co">##   original:  children ~ edu_year + age + class + gender + immigrant + urban +     birth_control + income + married + job_stability_t + contract +     pref</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">## Model comparison:</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">## +-------------------+-----------+-----------+-----------+</span></span>
+<span><span class="co">## |                   | Original  | Minimal 1 | Canonical |</span></span>
+<span><span class="co">## +===================+===========+===========+===========+</span></span>
+<span><span class="co">## | edu_year          | -0.122*** | -0.080*** | -0.080*** |</span></span>
+<span><span class="co">## +-------------------+-----------+-----------+-----------+</span></span>
+<span><span class="co">## |                   | (0.015)   | (0.013)   | (0.013)   |</span></span>
+<span><span class="co">## +-------------------+-----------+-----------+-----------+</span></span>
+<span><span class="co">## | age               | 0.070***  | 0.095***  | 0.096***  |</span></span>
+<span><span class="co">## +-------------------+-----------+-----------+-----------+</span></span>
+<span><span class="co">## |                   | (0.004)   | (0.003)   | (0.003)   |</span></span>
+<span><span class="co">## +-------------------+-----------+-----------+-----------+</span></span>
+<span><span class="co">## | genderMale        | 0.181*    | 0.179*    | 0.190*    |</span></span>
+<span><span class="co">## +-------------------+-----------+-----------+-----------+</span></span>
+<span><span class="co">## |                   | (0.085)   | (0.087)   | (0.085)   |</span></span>
+<span><span class="co">## +-------------------+-----------+-----------+-----------+</span></span>
+<span><span class="co">## | immigrantYes      | -0.246+   | -0.172    | -0.243+   |</span></span>
+<span><span class="co">## +-------------------+-----------+-----------+-----------+</span></span>
+<span><span class="co">## |                   | (0.128)   | (0.131)   | (0.129)   |</span></span>
+<span><span class="co">## +-------------------+-----------+-----------+-----------+</span></span>
+<span><span class="co">## | urbanUrban        | 0.121     | 0.238*    | 0.175+    |</span></span>
+<span><span class="co">## +-------------------+-----------+-----------+-----------+</span></span>
+<span><span class="co">## |                   | (0.094)   | (0.096)   | (0.094)   |</span></span>
+<span><span class="co">## +-------------------+-----------+-----------+-----------+</span></span>
+<span><span class="co">## | birth_control     | 0.133     |           |           |</span></span>
+<span><span class="co">## +-------------------+-----------+-----------+-----------+</span></span>
+<span><span class="co">## |                   | (0.103)   |           |           |</span></span>
+<span><span class="co">## +-------------------+-----------+-----------+-----------+</span></span>
+<span><span class="co">## | income            | 0.000     |           |           |</span></span>
+<span><span class="co">## +-------------------+-----------+-----------+-----------+</span></span>
+<span><span class="co">## |                   | (0.000)   |           |           |</span></span>
+<span><span class="co">## +-------------------+-----------+-----------+-----------+</span></span>
+<span><span class="co">## | married           | 0.703***  |           |           |</span></span>
+<span><span class="co">## +-------------------+-----------+-----------+-----------+</span></span>
+<span><span class="co">## |                   | (0.122)   |           |           |</span></span>
+<span><span class="co">## +-------------------+-----------+-----------+-----------+</span></span>
+<span><span class="co">## | job_stability_t   | 0.285***  |           |           |</span></span>
+<span><span class="co">## +-------------------+-----------+-----------+-----------+</span></span>
+<span><span class="co">## |                   | (0.047)   |           |           |</span></span>
+<span><span class="co">## +-------------------+-----------+-----------+-----------+</span></span>
+<span><span class="co">## | contractTemporary | 0.710***  | 0.772***  | 0.804***  |</span></span>
+<span><span class="co">## +-------------------+-----------+-----------+-----------+</span></span>
+<span><span class="co">## |                   | (0.110)   | (0.112)   | (0.110)   |</span></span>
+<span><span class="co">## +-------------------+-----------+-----------+-----------+</span></span>
+<span><span class="co">## | contractPermanent | 0.893***  | 1.116***  | 1.093***  |</span></span>
+<span><span class="co">## +-------------------+-----------+-----------+-----------+</span></span>
+<span><span class="co">## |                   | (0.114)   | (0.113)   | (0.111)   |</span></span>
+<span><span class="co">## +-------------------+-----------+-----------+-----------+</span></span>
+<span><span class="co">## | pref              | 0.581***  |           | 0.578***  |</span></span>
+<span><span class="co">## +-------------------+-----------+-----------+-----------+</span></span>
+<span><span class="co">## |                   | (0.042)   |           | (0.042)   |</span></span>
+<span><span class="co">## +-------------------+-----------+-----------+-----------+</span></span>
+<span><span class="co">## | Num.Obs.          | 5000      | 5000      | 5000      |</span></span>
+<span><span class="co">## +-------------------+-----------+-----------+-----------+</span></span>
+<span><span class="co">## | R2                | 0.227     | 0.183     | 0.213     |</span></span>
+<span><span class="co">## +===================+===========+===========+===========+</span></span>
+<span><span class="co">## | + p &lt; 0.1, * p &lt; 0.05, ** p &lt; 0.01, *** p &lt; 0.001     |</span></span>
+<span><span class="co">## +===================+===========+===========+===========+ </span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">## Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">## PDAG robustness summary:</span></span>
+<span><span class="co">## - uncertain edges specified: 4</span></span>
+<span><span class="co">## - worlds evaluated (acyclic orientations): 2</span></span>
+<span><span class="co">## - minimal adjustment set changed: no</span></span>
+<span><span class="co">## - canonical adjustment set changed: no</span></span>
+<span><span class="co">## - covariate role classifications changed: none</span></span>
+<span><span class="co">## - re-estimation recommended: no</span></span></code></pre>
+<p>The two implementations differ primarily in their outputs.
+pdag_robustness() requires only a DAG and model formula, making it
+useful for evaluating identification assumptions before data are
+available, or if one’s models are not compatable with DAGassist().
+Conversely, DAGassist() requires a data frame and returns the PDAG
+diagnostics alongside the standard covariate-role table and re-estimated
+regression models.</p>
+<p>PDAG diagnostics are calculated only over acyclic orientations. This
+constraint can matter substantively. In the example above, reversing
+income – edu_year would appear to change income from a mediator to a
+confounder. Yet that reversal creates a directed cycle: income →
+edu_year → job_stability_t → income. Because this orientation is
+inadmissible, it does not contribute to the robustness summary;
+consequently, reversing income – edu_year alone does not alter the
+minimal set, canonical set, or any covariate role among the remaining
+acyclic DAGs.</p>
+<p>Introducing uncertainty in the job_stability_t – income edge breaks
+this constraint and permits additional acyclic orientations. The
+resulting changes in the robustness summary illustrate how PDAG
+diagnostics can identify assumptions about causal direction that are
+consequential for empirical practice.</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">DAGassist</span><span class="fu">::</span><span class="fu"><a href="../reference/pdag_robustness.html">pdag_robustness</a></span><span class="op">(</span><span class="va">dag_model</span>,</span>
+<span>                           formula <span class="op">=</span> <span class="va">children</span> <span class="op">~</span> <span class="va">edu_year</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">class</span> <span class="op">+</span> <span class="va">gender</span> <span class="op">+</span> </span>
+<span>                             <span class="va">immigrant</span> <span class="op">+</span> <span class="va">urban</span> <span class="op">+</span> <span class="va">birth_control</span> <span class="op">+</span> <span class="va">income</span> <span class="op">+</span> <span class="va">married</span> <span class="op">+</span> </span>
+<span>                             <span class="va">job_stability_t</span> <span class="op">+</span> <span class="va">contract</span> <span class="op">+</span> <span class="va">pref</span>,</span>
+<span>                           uncertain_edges <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"urban -- income"</span>, </span>
+<span>                                               <span class="st">"income -- immigrant"</span>, </span>
+<span>                                               <span class="st">"income -- married"</span>, </span>
+<span>                                               <span class="st">"income -- edu_year"</span>,</span>
+<span>                                               <span class="st">"job_stability_t -- income"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## </span></span>
+<span><span class="co">## PDAG robustness summary:</span></span>
+<span><span class="co">## - uncertain edges specified: 5</span></span>
+<span><span class="co">## - worlds evaluated (acyclic orientations): 7</span></span>
+<span><span class="co">## - minimal adjustment set changed: yes</span></span>
+<span><span class="co">## - canonical adjustment set changed: yes</span></span>
+<span><span class="co">## - covariate role changed: mediator -&gt; ambiguous (confounder / mediator) for income (good/bad control flip)</span></span>
+<span><span class="co">## - re-estimation recommended: yes</span></span></code></pre>
+</div>
 <div class="section level2 unnumbered">
 <h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
@@ -780,6 +961,12 @@ Stephen L. Morgan, vol. 54. Springer. <a href="https://doi.org/10.1007/978-1-447
 Findley, Michael G., Kyosuke Kikuta, and Michael Denly. 2021.
 <span>“External Validity.”</span> <em>Annual Review of Political
 Science</em> 24: 365–93.
+</div>
+<div id="ref-HaberEtAl2022" class="csl-entry">
+Haber, Noah A., Mollie E. Wood, Sarah Wieten, and Alexander Breskin.
+2022. <span>“DAG with Omitted Objects Displayed (DAGWOOD): A Framework
+for Revealing Causal Assumptions in DAGs.”</span> <em>Annals of
+Epidemiology</em> 68 (April): 64–71. <a href="https://doi.org/10.1016/j.annepidem.2022.01.001" class="external-link">https://doi.org/10.1016/j.annepidem.2022.01.001</a>.
 </div>
 <div id="ref-HunermundEtAl2025" class="csl-entry">
 Hünermund, Paul, Beyers Louw, and Mikko Rönkkö. 2025. <span>“The Choice

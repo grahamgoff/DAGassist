@@ -176,6 +176,14 @@ DAGassist(dag_model,
     ## Formulas:
     ##   original:  children ~ edu_year + age + class + gender + immigrant + urban +     birth_control + income + married + job_stability_t + contract +     pref
     ## 
+    ## Balance diagnostics:
+    ##   legend: (S)MD compares covariate means between the Original complete-case sample
+    ##           and each spec's sample; |(S)MD| > 0.10 flags a covariate whose sample
+    ##           composition shifts (binary vars use a raw difference in means).
+    ##   Original vs Minimal 1: n = 5000 vs 5000  balanced
+    ##   Original vs Canonical: n = 5000 vs 5000  balanced
+    ##   Minimal 1 vs Canonical: n = 5000 vs 5000  balanced
+    ## 
     ## Model comparison:
     ## 
     ## +-------------------+-----------+-----------+-----------+
@@ -304,6 +312,14 @@ DAGassist(dag_model,
     ## 
     ## Formulas:
     ##   original:  children ~ edu_year + age + class + gender + immigrant + urban +     birth_control + income + married + job_stability_t + contract +     pref
+    ## 
+    ## Balance diagnostics:
+    ##   legend: (S)MD compares covariate means between the Original complete-case sample
+    ##           and each spec's sample; |(S)MD| > 0.10 flags a covariate whose sample
+    ##           composition shifts (binary vars use a raw difference in means).
+    ##   Original vs Minimal 1: n = 5000 vs 5000  balanced
+    ##   Original vs Canonical: n = 5000 vs 5000  balanced
+    ##   Minimal 1 vs Canonical: n = 5000 vs 5000  balanced
     ## 
     ## Model comparison:
     ## 
@@ -533,6 +549,14 @@ DAGassist(dag_model,
     ## 
     ## Formulas:
     ##   original:  children ~ edu_year + age + class + gender + immigrant + urban +     birth_control + income + married + job_stability_t + contract +     pref
+    ## 
+    ## Balance diagnostics:
+    ##   legend: (S)MD compares covariate means between the Original complete-case sample
+    ##           and each spec's sample; |(S)MD| > 0.10 flags a covariate whose sample
+    ##           composition shifts (binary vars use a raw difference in means).
+    ##   Original vs Minimal 1: n = 5000 vs 5000  balanced
+    ##   Original vs Canonical: n = 5000 vs 5000  balanced
+    ##   Minimal 1 vs Canonical: n = 5000 vs 5000  balanced
     ## 
     ## Model comparison:
     ## 

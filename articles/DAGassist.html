@@ -66,7 +66,7 @@
                         <h4 data-toc-skip class="author">Graham Goff and
 Mike Denly</h4>
             
-            <h4 data-toc-skip class="date">2026-06-23</h4>
+            <h4 data-toc-skip class="date">2026-06-25</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/grahamgoff/DAGassist/blob/dev/vignettes/DAGassist.Rmd" class="external-link"><code>vignettes/DAGassist.Rmd</code></a></small>
       <div class="d-none name"><code>DAGassist.Rmd</code></div>
@@ -407,6 +407,14 @@ that do not fit any of the previous definitions.</li>
 <span><span class="co">## Formulas:</span></span>
 <span><span class="co">##   original:  children ~ edu_year + age + class + gender + immigrant + urban +     birth_control + income + married + job_stability_t + contract +     pref</span></span>
 <span><span class="co">## </span></span>
+<span><span class="co">## Balance diagnostics:</span></span>
+<span><span class="co">##   legend: (S)MD compares covariate means between the Original complete-case sample</span></span>
+<span><span class="co">##           and each spec's sample; |(S)MD| &gt; 0.10 flags a covariate whose sample</span></span>
+<span><span class="co">##           composition shifts (binary vars use a raw difference in means).</span></span>
+<span><span class="co">##   Original vs Minimal 1: n = 5000 vs 5000  balanced</span></span>
+<span><span class="co">##   Original vs Canonical: n = 5000 vs 5000  balanced</span></span>
+<span><span class="co">##   Minimal 1 vs Canonical: n = 5000 vs 5000  balanced</span></span>
+<span><span class="co">## </span></span>
 <span><span class="co">## Model comparison:</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## +-------------------+-----------+-----------+-----------+</span></span>
@@ -600,6 +608,14 @@ minimal sets; the canonical set is unique.</p>
 <span><span class="co">## </span></span>
 <span><span class="co">## Formulas:</span></span>
 <span><span class="co">##   original:  children ~ edu_year + age + class + gender + immigrant + urban +     birth_control + income + married + job_stability_t + contract +     pref</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">## Balance diagnostics:</span></span>
+<span><span class="co">##   legend: (S)MD compares covariate means between the Original complete-case sample</span></span>
+<span><span class="co">##           and each spec's sample; |(S)MD| &gt; 0.10 flags a covariate whose sample</span></span>
+<span><span class="co">##           composition shifts (binary vars use a raw difference in means).</span></span>
+<span><span class="co">##   Original vs Minimal 1: n = 5000 vs 5000  balanced</span></span>
+<span><span class="co">##   Original vs Canonical: n = 5000 vs 5000  balanced</span></span>
+<span><span class="co">##   Minimal 1 vs Canonical: n = 5000 vs 5000  balanced</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Model comparison:</span></span>
 <span><span class="co">## </span></span>
@@ -833,6 +849,14 @@ DAGassist() function:</p>
 <span><span class="co">## </span></span>
 <span><span class="co">## Formulas:</span></span>
 <span><span class="co">##   original:  children ~ edu_year + age + class + gender + immigrant + urban +     birth_control + income + married + job_stability_t + contract +     pref</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">## Balance diagnostics:</span></span>
+<span><span class="co">##   legend: (S)MD compares covariate means between the Original complete-case sample</span></span>
+<span><span class="co">##           and each spec's sample; |(S)MD| &gt; 0.10 flags a covariate whose sample</span></span>
+<span><span class="co">##           composition shifts (binary vars use a raw difference in means).</span></span>
+<span><span class="co">##   Original vs Minimal 1: n = 5000 vs 5000  balanced</span></span>
+<span><span class="co">##   Original vs Canonical: n = 5000 vs 5000  balanced</span></span>
+<span><span class="co">##   Minimal 1 vs Canonical: n = 5000 vs 5000  balanced</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Model comparison:</span></span>
 <span><span class="co">## </span></span>

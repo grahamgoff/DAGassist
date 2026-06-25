@@ -1102,6 +1102,14 @@ print.DAGassist_report <- function(x, ...) {
       .dagassist_print_acde_console_info(mods_full)
     }
     
+    #print balance diagnostics (sample-composition (S)MDs across specs)
+    if (isTRUE(verbose)) {
+      tryCatch(
+        .dagassist_print_balance_diagnostics(x),
+        error = function(e) invisible(NULL)   # never let diagnostics break printing
+      )
+    }
+    
     .print_model_comparison_list(
       mods_full,
       coef_rename = x$labels_map,

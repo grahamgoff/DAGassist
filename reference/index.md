@@ -20,6 +20,8 @@ Helper functions that can be useful on their own.
 - [`pdag_robustness()`](https://grahamgoff.github.io/DAGassist/reference/pdag_robustness.md)
   : Diagnose adjustment-set and role robustness to uncertain edge
   directions
+- [`add_edges_robustness()`](https://grahamgoff.github.io/DAGassist/reference/add_edges_robustness.md)
+  : Diagnose robustness to added ("missing") edges
 
 ## Internal functions
 
@@ -33,3 +35,5 @@ Lower-level helpers and print methods, usually not called directly.
   : Minimal, clean printout for validation results with color coding
 - [`print(`*`<DAGassist_pdag_summary>`*`)`](https://grahamgoff.github.io/DAGassist/reference/print.DAGassist_pdag_summary.md)
   : Print a PDAG robustness summary
+- [`print(`*`<DAGassist_addedge_summary>`*`)`](https://grahamgoff.github.io/DAGassist/reference/print.DAGassist_addedge_summary.md)
+  : Print an edge-addition (exclusion) robustness summary

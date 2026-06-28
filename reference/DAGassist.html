@@ -85,7 +85,8 @@ sequential g-estimation (e.g., SACDE).</p>
 <span>  acde <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  directeffects_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  uncertain_edges <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  pdag <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  pdag <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  add_edges <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -254,6 +255,14 @@ e.g. <code>c("A -- B")</code>. Triggers a PDAG robustness summary. See <code><a 
 <dt id="arg-pdag">pdag<a class="anchor" aria-label="anchor" href="#arg-pdag"></a></dt>
 <dd><p>Optional <code>dagitty</code> PDAG; its undirected (<code>--</code>) edges are treated
 as uncertain, equivalent to listing them in <code>uncertain_edges</code>.</p></dd>
+
+
+<dt id="arg-add-edges">add_edges<a class="anchor" aria-label="anchor" href="#arg-add-edges"></a></dt>
+<dd><p>Character vector of hypothesized edges absent from the DAG,
+e.g. <code>c("Z -&gt; Y", "X &lt;-&gt; Y")</code>. Each is tested as a separate exclusion-branch
+DAG: DAGassist reports whether adding it changes the adjustment set or breaks
+identification. Directed (<code>-&gt;</code>, <code>&lt;-</code>) and bidirected (<code>&lt;-&gt;</code>) edges are
+supported. See <code><a href="add_edges_robustness.html">add_edges_robustness()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

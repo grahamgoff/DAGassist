@@ -37,7 +37,8 @@ DAGassist(
   acde = list(),
   directeffects_args = list(),
   uncertain_edges = NULL,
-  pdag = NULL
+  pdag = NULL,
+  add_edges = NULL
 )
 ```
 
@@ -235,6 +236,15 @@ DAGassist(
 
   Optional `dagitty` PDAG; its undirected (`--`) edges are treated as
   uncertain, equivalent to listing them in `uncertain_edges`.
+
+- add_edges:
+
+  Character vector of hypothesized edges absent from the DAG, e.g.
+  `c("Z -> Y", "X <-> Y")`. Each is tested as a separate
+  exclusion-branch DAG: DAGassist reports whether adding it changes the
+  adjustment set or breaks identification. Directed (`->`, `<-`) and
+  bidirected (`<->`) edges are supported. See
+  [`add_edges_robustness()`](https://grahamgoff.github.io/DAGassist/reference/add_edges_robustness.md).
 
 ## Value
 

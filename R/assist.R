@@ -93,7 +93,11 @@
 #'   e.g. `c("A -- B")`. Triggers a PDAG robustness summary. See [pdag_robustness()].
 #' @param pdag Optional `dagitty` PDAG; its undirected (`--`) edges are treated
 #'   as uncertain, equivalent to listing them in `uncertain_edges`.
-#'   
+#' @param add_edges Character vector of hypothesized edges absent from the DAG,
+#'   e.g. `c("Z -> Y", "X <-> Y")`. Each is tested as a separate exclusion-branch
+#'   DAG: DAGassist reports whether adding it changes the adjustment set or breaks
+#'   identification. Directed (`->`, `<-`) and bidirected (`<->`) edges are
+#'   supported. See [add_edges_robustness()].
 #' @details
 #' **Engine-call parsing.** If `formula` is a call (e.g., `feols(Y ~ X | fe, data=df)`),
 #' DAGassist extracts the engine function, formula, data argument, and any additional
@@ -233,7 +237,8 @@ DAGassist <- function(dag,
                       acde = list(),
                       directeffects_args = list(),
                       uncertain_edges = NULL,
-                      pdag = NULL) {
+                      pdag = NULL,
+                      add_edges = NULL) {
   # set output type
   type <- match.arg(type)
   # set show type
@@ -743,6 +748,16 @@ DAGassist <- function(dag,
         NULL
       }
     )
+    #wire up add_edges function
+    if (!is.null(add_edges)) {
+      edges_df <- .dagassist_parse_add_edges(add_edges)
+      if (nrow(edges_df)) {
+        report$add_edges_summary <- tryCatch(
+          .dagassist_add_edges_robustness(dag, exposure, outcome, edges_df, formula = formula),
+          error = function(e) { warning("add_edges robustness skipped: ", conditionMessage(e), call. = FALSE); NULL }
+        )
+      }
+    }
   }
   
   #for console output, do not build exporter objects, as they are computationally 
@@ -1136,5 +1151,7 @@ print.DAGassist_report <- function(x, ...) {
     }
   }
   if (!is.null(x$pdag)) print(x$pdag)
+  #export add_edges output
+  if (!is.null(x$add_edges_summary)) print(x$add_edges_summary)
   invisible(x)
 }

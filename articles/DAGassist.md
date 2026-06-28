@@ -674,6 +674,148 @@ DAGassist::pdag_robustness(dag_model,
     ## - covariate role changed: mediator -> ambiguous (confounder / mediator) for income (good/bad control flip)
     ## - re-estimation recommended: yes
 
+## Testing Missing Arrows with `add_edges()`
+
+Whereas PDAGs address directional uncertainty in existing edges, a
+second set of assumptions concerns missing edges. A missing arrow in a
+DAG encodes a strong null ([Haber et al. 2022](#ref-HaberEtAl2022)).
+Because these exclusion assumptions are rarely testable, it is useful to
+consider whether an estimand would survive their violation.
+
+The `add_edges` argument introduces uncertainty to specific omitted
+pathways. DAGassist reports whether adding an edge changes the minimal
+or canonical adjustment set, alters a covariate’s role, or renders the
+effect unidentifiable. Edges may be directed (`"A -> B"`), representing
+an omitted causal path, or bidirected (`"A <-> B"`), representing
+unmeasured confounding.
+
+``` r
+
+DAGassist::add_edges_robustness(dag_model,
+  formula = children ~ edu_year + age + class + gender + immigrant + urban +
+    birth_control + income + married + job_stability_t + contract + pref,
+  add_edges = c("pref -> edu_year", "religion -> edu_year", "edu_year <-> children"))
+```
+
+    ## 
+    ## Edge-addition (exclusion) robustness:
+    ## - edges tested: 3
+    ##   - pref -> edu_year: minimal changed: yes; canonical changed: no
+    ##         new minimal set(s): {age, class, contract, gender, immigrant, pref, urban}
+    ##         role changes: pref: nco->confounder
+    ##   - religion -> edu_year: minimal changed: yes; canonical changed: no
+    ##         new minimal set(s): {age, class, contract, gender, immigrant, religion, urban}
+    ##         role changes: religion: nco->confounder
+    ##   - edu_year <-> children: effect NOT identifiable if this pathway exists (no adjustment set blocks it)
+    ## - re-estimation recommended: yes
+
+As with PDAGs, these diagnostics are also available through the main
+[`DAGassist()`](https://grahamgoff.github.io/DAGassist/reference/DAGassist.md)
+interface, where they are returned in the standard report:
+
+``` r
+
+DAGassist(dag_model,
+  formula = children ~ edu_year + age + class + gender + immigrant + urban +
+    birth_control + income + married + job_stability_t + contract + pref, data = dat,
+  add_edges = c("pref -> edu_year", "edu_year <-> children"))
+```
+
+    ## DAGassist Report: 
+    ## 
+    ## Roles:
+    ## variable         role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
+    ## edu_year         exposure    x                                                                        
+    ## children         outcome           x                                                                  
+    ## age              confounder              x                                                            
+    ## class            confounder              x                                                            
+    ## contract         confounder              x                                                            
+    ## gender           confounder              x                                                            
+    ## immigrant        confounder              x                                                            
+    ## urban            confounder              x                                                            
+    ## birth_control    mediator                      x               x                                      
+    ## income           mediator                      x               x                                      
+    ## job_stability_t  mediator                      x                                                      
+    ## married          mediator                      x               x                                      
+    ## pref             nco                                                                               x  
+    ## 
+    ##  (!) Bad controls in your formula: {birth_control, income, married, job_stability_t}
+    ## Minimal controls 1: {age, class, contract, gender, immigrant, urban}
+    ## Canonical controls: {age, class, contract, gender, immigrant, pref, urban}
+    ## 
+    ## Formulas:
+    ##   original:  children ~ edu_year + age + class + gender + immigrant + urban +     birth_control + income + married + job_stability_t + contract +     pref
+    ## 
+    ## Balance diagnostics:
+    ##   legend: (S)MD compares covariate means between the Original complete-case sample
+    ##           and each spec's sample; |(S)MD| > 0.10 flags a covariate whose sample
+    ##           composition shifts (binary vars use a raw difference in means).
+    ##   Original vs Minimal 1: n = 5000 vs 5000  balanced
+    ##   Original vs Canonical: n = 5000 vs 5000  balanced
+    ##   Minimal 1 vs Canonical: n = 5000 vs 5000  balanced
+    ## 
+    ## Model comparison:
+    ## 
+    ## +-------------------+-----------+-----------+-----------+
+    ## |                   | Original  | Minimal 1 | Canonical |
+    ## +===================+===========+===========+===========+
+    ## | edu_year          | -0.122*** | -0.080*** | -0.080*** |
+    ## +-------------------+-----------+-----------+-----------+
+    ## |                   | (0.015)   | (0.013)   | (0.013)   |
+    ## +-------------------+-----------+-----------+-----------+
+    ## | age               | 0.070***  | 0.095***  | 0.096***  |
+    ## +-------------------+-----------+-----------+-----------+
+    ## |                   | (0.004)   | (0.003)   | (0.003)   |
+    ## +-------------------+-----------+-----------+-----------+
+    ## | genderMale        | 0.181*    | 0.179*    | 0.190*    |
+    ## +-------------------+-----------+-----------+-----------+
+    ## |                   | (0.085)   | (0.087)   | (0.085)   |
+    ## +-------------------+-----------+-----------+-----------+
+    ## | immigrantYes      | -0.246+   | -0.172    | -0.243+   |
+    ## +-------------------+-----------+-----------+-----------+
+    ## |                   | (0.128)   | (0.131)   | (0.129)   |
+    ## +-------------------+-----------+-----------+-----------+
+    ## | urbanUrban        | 0.121     | 0.238*    | 0.175+    |
+    ## +-------------------+-----------+-----------+-----------+
+    ## |                   | (0.094)   | (0.096)   | (0.094)   |
+    ## +-------------------+-----------+-----------+-----------+
+    ## | birth_control     | 0.133     |           |           |
+    ## +-------------------+-----------+-----------+-----------+
+    ## |                   | (0.103)   |           |           |
+    ## +-------------------+-----------+-----------+-----------+
+    ## | income            | 0.000     |           |           |
+    ## +-------------------+-----------+-----------+-----------+
+    ## |                   | (0.000)   |           |           |
+    ## +-------------------+-----------+-----------+-----------+
+    ## | married           | 0.703***  |           |           |
+    ## +-------------------+-----------+-----------+-----------+
+    ## |                   | (0.122)   |           |           |
+    ## +-------------------+-----------+-----------+-----------+
+    ## | job_stability_t   | 0.285***  |           |           |
+    ## +-------------------+-----------+-----------+-----------+
+    ## |                   | (0.047)   |           |           |
+    ## +-------------------+-----------+-----------+-----------+
+    ## | contractTemporary | 0.710***  | 0.772***  | 0.804***  |
+    ## +-------------------+-----------+-----------+-----------+
+    ## |                   | (0.110)   | (0.112)   | (0.110)   |
+    ## +-------------------+-----------+-----------+-----------+
+    ## | contractPermanent | 0.893***  | 1.116***  | 1.093***  |
+    ## +-------------------+-----------+-----------+-----------+
+    ## |                   | (0.114)   | (0.113)   | (0.111)   |
+    ## +-------------------+-----------+-----------+-----------+
+    ## | pref              | 0.581***  |           | 0.578***  |
+    ## +-------------------+-----------+-----------+-----------+
+    ## |                   | (0.042)   |           | (0.042)   |
+    ## +-------------------+-----------+-----------+-----------+
+    ## | Num.Obs.          | 5000      | 5000      | 5000      |
+    ## +-------------------+-----------+-----------+-----------+
+    ## | R2                | 0.227     | 0.183     | 0.213     |
+    ## +===================+===========+===========+===========+
+    ## | + p < 0.1, * p < 0.05, ** p < 0.01, *** p < 0.001     |
+    ## +===================+===========+===========+===========+ 
+    ## 
+    ## Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome
+
 ## References
 
 Deaton, Angus. 2010. “Instruments, Randomization, and Learning about

@@ -37,7 +37,6 @@ Imports:
     utils,
     writexl,
     dplyr,
-    ggplot2,
     dotwhisker
 Suggests: 
     fixest,

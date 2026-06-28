@@ -31,7 +31,8 @@ DAGassist(
   acde = list(),
   directeffects_args = list(),
   uncertain_edges = NULL,
-  pdag = NULL
+  pdag = NULL,
+  add_edges = NULL
 )
 }
 \arguments{
@@ -151,6 +152,12 @@ e.g. \code{c("A -- B")}. Triggers a PDAG robustness summary. See \code{\link[=pd
 
 \item{pdag}{Optional \code{dagitty} PDAG; its undirected (\verb{--}) edges are treated
 as uncertain, equivalent to listing them in \code{uncertain_edges}.}
+
+\item{add_edges}{Character vector of hypothesized edges absent from the DAG,
+e.g. \code{c("Z -> Y", "X <-> Y")}. Each is tested as a separate exclusion-branch
+DAG: DAGassist reports whether adding it changes the adjustment set or breaks
+identification. Directed (\verb{->}, \verb{<-}) and bidirected (\verb{<->}) edges are
+supported. See \code{\link[=add_edges_robustness]{add_edges_robustness()}}.}
 }
 \value{
 A \code{DAGassist_report} object (a named list) returned invisibly for file/plot

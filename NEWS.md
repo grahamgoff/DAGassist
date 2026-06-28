@@ -4,6 +4,7 @@
 
 - PDAG robustness features: `pdag` and `uncertain_edges` arguments for `DAGassist()` and a standalone `pdag_robustness()` function diagnose how adjustment sets and covariate roles change when introducing uncertain edges.
 - Added automated balance diagnostics: the console report now flags variables whose |SMD| > 0.1 between the Original and DAG-derived models, addressing missingness-induced apples-to-oranges model comparisons.
+- Additional robustness feature: `add_edges_robustness` to evaluate robustness to hypothesized missing edges.
 - Bug fixes
 
 # DAGassist v0.2.8

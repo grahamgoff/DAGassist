@@ -871,6 +871,26 @@ DAGassist::pdag_robustness(dag_model,
                                                "income -- edu_year",
                                                "job_stability_t -- income"))
 ```
+## Testing Missing Arrows with `add_edges()`
 
+Whereas PDAGs address directional uncertainty in existing edges, a second set of assumptions concerns missing edges. A missing arrow in a DAG encodes a strong null [@HaberEtAl2022]. Because these exclusion assumptions are rarely testable, it is useful to consider whether an estimand would survive their violation.
+
+The `add_edges` argument introduces uncertainty to specific omitted pathways. DAGassist reports whether adding an edge changes the minimal or canonical adjustment set, alters a covariate's role, or renders the effect unidentifiable. Edges may be directed (`"A -> B"`), representing an omitted causal path, or bidirected (`"A <-> B"`), representing unmeasured confounding.
+
+```{r add-edges-eval}
+DAGassist::add_edges_robustness(dag_model,
+  formula = children ~ edu_year + age + class + gender + immigrant + urban +
+    birth_control + income + married + job_stability_t + contract + pref,
+  add_edges = c("pref -> edu_year", "religion -> edu_year", "edu_year <-> children"))
+```
+
+As with PDAGs, these diagnostics are also available through the main `DAGassist()` interface, where they are returned in the standard report:
+
+```{r add-edges-main-eval}
+DAGassist(dag_model,
+  formula = children ~ edu_year + age + class + gender + immigrant + urban +
+    birth_control + income + married + job_stability_t + contract + pref, data = dat,
+  add_edges = c("pref -> edu_year", "edu_year <-> children"))
+```
 
 ## References

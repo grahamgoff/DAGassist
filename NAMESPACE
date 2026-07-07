@@ -2,6 +2,7 @@
 
 S3method(broom::glance,dagassist_seqg)
 S3method(broom::tidy,dagassist_seqg)
+S3method(modelsummary::glance_custom,fixest)
 S3method(print,DAGassist_addedge_summary)
 S3method(print,DAGassist_balance)
 S3method(print,DAGassist_pdag_summary)

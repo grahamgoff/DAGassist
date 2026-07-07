@@ -1,11 +1,9 @@
 # R/balance_models.R
 #
-# Exported, engine-agnostic balance diagnostics over a user-supplied list of
-# fitted models. Never refits anything: it reads each model's variables, then
-# reconstructs that spec's complete-case sample on a shared `data` and compares
-# covariate composition (reference vs each other model).
+# exported engine-agnostic balance diagnostics over a user-supplied list of
+# fitted models.
 
-# ---- per-model variable extraction -----------------------------------------
+##per-model variable extraction 
 
 # variables that drive listwise deletion for a fitted model
 .dagassist_model_delete_vars <- function(m, data, extra_vars = NULL) {
@@ -30,7 +28,8 @@
   intersect(unique(vars), names(data))
 }
 
-# covariates to assess for a fitted model (RHS vars, minus the outcome/LHS)
+#covariates to assess for a fitted model 
+#RHS vars minus the outcome/LHS
 .dagassist_model_covars <- function(m, data, include_outcome = FALSE) {
   fml <- tryCatch(stats::formula(m), error = function(e) NULL)
   if (is.null(fml)) return(character(0))
@@ -43,7 +42,7 @@
   intersect(unique(v), names(data))
 }
 
-# ---- exported entry point ---------------------------------------------------
+##exported bit
 
 #' Balance diagnostics across a list of fitted models
 #'

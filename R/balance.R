@@ -9,14 +9,18 @@
 # console-only, gated on `verbose`, printed below the model-comparison table.
 #
 # (S)MD rules (per professor):
-#   - binary variables (0/1, logical, 2-level factor): raw difference in means
-#   - continuous / numeric-categorical variables:      standardized,
-#         (m_ref - m_cmp) / sqrt((var_ref + var_cmp) / 2)
+#   - binary variables (any two-valued numeric, logical, 2-level factor): raw
+#         difference in means. A two-level covariate is binary regardless of its
+#         codes, so the diagnostic is invariant to harmless recoding (0/1 vs 1/2).
+#   - continuous / numeric-categorical variables:      standardized by the
+#         Original (reference) sample SD: (m_ref - m_cmp) / sd_ref. The Original
+#         sample is the fixed benchmark for every comparison (parallels cobalt's
+#         target-sample diagnostic).
 #   - true unordered factors with >2 levels: expanded to per-level indicator
 #         dummies, each treated as binary (raw difference) -- a factor has no
 #         meaningful single numeric mean to standardize.
 
-# ---- variable type ----------------------------------------------------------
+##variable type  
 .dagassist_balance_kind <- function(v) {
   v <- v[!is.na(v)]
   if (!length(v)) return("empty")
@@ -28,13 +32,13 @@
   }
   if (is.numeric(v) || inherits(v, "integer")) {
     u <- unique(v)
-    if (length(u) <= 2L && all(u %in% c(0, 1))) return("binary")
+    if (length(u) <= 2L) return("binary")   # any two-valued numeric, not only {0,1}
     return("continuous")
   }
   "unsupported"
 }
-
-# coerce a binary-ish column to a 0/1 indicator
+#bug fix
+#coerce a binary-ish column to a 0/1 indicator
 .dagassist_to_binary <- function(col) {
   if (is.logical(col)) return(as.numeric(col))
   if (is.numeric(col) || inherits(col, "integer")) {
@@ -46,16 +50,15 @@
   as.numeric(f == levels(f)[nlevels(f)])    # indicator of the last level
 }
 
-# ---- single (standardized) mean difference ---------------------------------
+#single (standardized) mean difference  
 .dagassist_smd <- function(x_ref, x_cmp, binary = FALSE) {
   x_ref <- x_ref[is.finite(x_ref)]
   x_cmp <- x_cmp[is.finite(x_cmp)]
   if (length(x_ref) < 1L || length(x_cmp) < 1L) return(NA_real_)
   m1 <- mean(x_ref); m2 <- mean(x_cmp)
   if (isTRUE(binary)) return(m1 - m2)                     # raw diff in proportions
-  if (length(x_ref) < 2L || length(x_cmp) < 2L) return(NA_real_)
-  v1 <- stats::var(x_ref); v2 <- stats::var(x_cmp)
-  denom <- sqrt((v1 + v2) / 2)                            # pooled SD
+  if (length(x_ref) < 2L) return(NA_real_)
+  denom <- stats::sd(x_ref)                               # Original (reference) sample SD
   if (!is.finite(denom) || denom == 0) {
     if (isTRUE(all.equal(m1, m2))) return(0)
     return(Inf * sign(m1 - m2))                          # constant but mismatched
@@ -63,7 +66,7 @@
   (m1 - m2) / denom
 }
 
-# ---- variables that drive listwise deletion for a spec (incl. FE/cluster) ---
+#variables that drive listwise deletion for a spec (incl. FE/cluster)
 .dagassist_spec_vars <- function(formula, data, exp_nm = NULL, out_nm = NULL,
                                  engine_args = list()) {
   sp <- .strip_fixest_parts(formula)
@@ -95,7 +98,7 @@
   stats::complete.cases(data[, vars, drop = FALSE])
 }
 
-# ---- per-covariate balance for one comparison ------------------------------
+#per-covariate balance for one comparison
 .dagassist_balance_compare <- function(data, rows_ref, rows_cmp, covars,
                                        threshold = 0.1) {
   results <- list()
@@ -134,7 +137,7 @@
   df
 }
 
-# ---- printer (mirrors .dagassist_print_weight_diagnostics) -----------------
+#printer (mirrors .dagassist_print_weight_diagnostics) 
 .dagassist_print_balance_diagnostics <- function(x, threshold = 0.1,
                                                  include_outcome = FALSE) {
   data <- x$.__data

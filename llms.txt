@@ -150,6 +150,8 @@ Helper functions that can be useful on their own.
   directions
 - [`add_edges_robustness()`](https://grahamgoff.github.io/DAGassist/reference/add_edges_robustness.md)
   : Diagnose robustness to added ("missing") edges
+- [`balance_models()`](https://grahamgoff.github.io/DAGassist/reference/balance_models.md)
+  : Balance diagnostics across a list of fitted models
 
 ## Internal functions
 

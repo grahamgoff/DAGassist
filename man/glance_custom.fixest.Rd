@@ -9,3 +9,4 @@
 \description{
 This is a method for modelsummary::glance_custom().
 }
+\keyword{internal}

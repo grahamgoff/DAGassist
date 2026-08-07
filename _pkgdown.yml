@@ -21,6 +21,7 @@ reference:
       - classify_nodes
       - pdag_robustness
       - add_edges_robustness
+      - balance_models
 
   - title: "Internal functions"
     desc: >

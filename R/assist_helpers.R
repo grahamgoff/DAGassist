@@ -1530,7 +1530,8 @@ get_by_role <- function(roles, value) {
 #'
 #' This is a method for modelsummary::glance_custom().
 #'
-#' @noRd
+#' @keywords internal   
+#' @exportS3Method modelsummary::glance_custom
 glance_custom.fixest <- function(x, ...) {
   fml <- tryCatch(stats::formula(x), error = function(e) NULL)
   if (is.null(fml)) {

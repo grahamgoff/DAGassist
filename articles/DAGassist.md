@@ -1,4 +1,4 @@
-# Using DAGassist for Diagnosis and Re-estimation
+# Introduction to DAGassist
 
 ## Introduction
 
@@ -326,9 +326,9 @@ DAGassist(dag_model,
     ## +-------------------+-----------+-----------+------------------+-----------+------------------+
     ## |                   | Original  | Minimal 1 | Minimal 1 (SATE) | Canonical | Canonical (SATE) |
     ## +===================+===========+===========+==================+===========+==================+
-    ## | edu_year          | -0.122*** | -0.080*** | -0.077***        | -0.080*** | -0.077***        |
+    ## | edu_year          | -0.122*** | -0.080*** | -0.078***        | -0.080*** | -0.077***        |
     ## +-------------------+-----------+-----------+------------------+-----------+------------------+
-    ## |                   | (0.015)   | (0.013)   | (0.016)          | (0.013)   | (0.015)          |
+    ## |                   | (0.015)   | (0.013)   | (0.016)          | (0.013)   | (0.016)          |
     ## +-------------------+-----------+-----------+------------------+-----------+------------------+
     ## | age               | 0.070***  | 0.095***  |                  | 0.096***  |                  |
     ## +-------------------+-----------+-----------+------------------+-----------+------------------+
@@ -383,8 +383,8 @@ DAGassist(dag_model,
     ## 
     ## Weight diagnostics:
     ##   legend: w range reports the min-max weights by group; ESS is kish effective sample size.
-    ##   Minimal 1 (SATE): w range=0.04726..4.878 | ESS (weighted)=4368.24
-    ##   Canonical (SATE): w range=0.04731..4.877 | ESS (weighted)=4368.17
+    ##   Minimal 1 (SATE): w range=0.04061..4.479 | ESS (weighted)=4365.77
+    ##   Canonical (SATE): w range=0.04066..4.479 | ESS (weighted)=4365.71
     ## 
     ## Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome
 

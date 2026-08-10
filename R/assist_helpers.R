@@ -152,6 +152,10 @@
     }
   }
   
+  if (!identical(ests, "RAW")) {
+    names(model_formulas) <- .dagassist_display_names(names(model_formulas))
+  }
+  
   if ("SACDE" %in% ests) {
     alab <- .dagassist_model_name_labels("SACDE")
     for (nm in names(model_formulas)) {
@@ -1066,6 +1070,27 @@
   invisible(NULL)
 }
 
+#display-only column labels. Internal names stay structural
+# ("Minimal k", "Canonical", "... (total)", "Raw (SACDE)") because they are
+# parsed as keys elsewhere. helps patch terminology consistency
+.dagassist_display_names <- function(nms) {
+  out <- nms
+  
+  # sequential-g / direct-effect columns
+  out[out == "Raw (SACDE)"] <- "Direct (Raw)"
+  out[out == "Weighted (SACDE)"] <- "Direct (Weighted)"
+  
+  # IPW columns: "<spec> (total)" -> "Total <spec> (Weighted)"
+  wt <- grepl(" \\(total\\)$", out)
+  out[wt] <- paste0("Total ", sub(" \\(total\\)$", "", out[wt]), " (Weighted)")
+  
+  # unweighted total-effect specs -> "Total <spec> (Raw)"
+  raw <- grepl("^(Minimal [0-9]+|Canonical)$", out)
+  out[raw] <- paste0("Total ", out[raw], " (Raw)")
+  
+  out
+}
+
 # Simple ESS (no dependency): (sum w)^2 / sum(w^2)
 .dagassist_ess <- function(w) {
   w <- w[is.finite(w)]
@@ -1079,7 +1104,7 @@
   #fail fast if the model list is missing or unnamed
   if (is.null(mods_full) || !length(mods_full) || is.null(names(mods_full))) return(invisible(NULL))
   # only print diagnostics for weighted columns. identify weighted cols by col name 
-  keep <- grepl("\\((total)\\)\\s*$", names(mods_full), ignore.case = TRUE)
+  keep <- grepl("^Total .* \\(Weighted\\)$", names(mods_full))
   mods_use <- mods_full[keep]
   if (!length(mods_use)) return(invisible(NULL))
   # header for the diagnostics block
@@ -1296,7 +1321,7 @@
   # Filter to (ATE) models to reduce clutter (Denly’s pipeline focuses on weighted estimands)
   mods_use <- mods_full
   if (isTRUE(only_weighted) && length(names(mods_use))) {
-    keep <- grepl("\\(total\\)$", names(mods_use))
+    keep <- grepl("^Total .* \\(Weighted\\)$", names(mods_use))
     mods_use <- mods_use[keep]
   }
   

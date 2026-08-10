@@ -99,7 +99,7 @@ df <- data.frame(A, B, Z, X, M, Y, C)
 
 ## Example
 
-Simply provide a `dagitty()` object and a regression call and `DAGassist` will create a report classifying variables by causal role, and compare the specified regression to minimal and canonical models. 
+Simply provide a `dagitty()` object and a regression call and `DAGassist` will create a report classifying variables by causal role, and compare the specified regression to minimal and canonical models.
 
 ```{r run}
 DAGassist(dag = dag_model, 

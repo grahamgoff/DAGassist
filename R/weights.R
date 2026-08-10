@@ -303,6 +303,9 @@
   if ("TOTAL" %in% ests) out <- .dagassist_add_weighted_models(x, out, estimand = "total")
   if ("SACDE" %in% ests) out <- .dagassist_add_sacde_models(x, out)
   
+  #overwrite with total/direct terminology at print time
+  names(out) <- .dagassist_display_names(names(out))
+  
   out
 }
 
@@ -735,11 +738,11 @@
     if (!is.null(fit_w)) weighted_mods[[nm]] <- fit_w
   }
   
-  # Splice weighted columns in directly after their base column
-  est_label <- paste0(" (", est, ")")
-  mods_out <- list()
+  #new order:
+  #Original | Total Minimal 1 (Raw) | Total Canonical (Raw) | Total Minimal 1 (Weighted) | Total Canonical (Weighted) | Direct (Raw) | Direct (Weighted)
+  est_label <- paste0(" ", .dagassist_model_name_labels(est))
+  mods_out <- mods
   for (nm in names(mods)) {
-    mods_out[[nm]] <- mods[[nm]]
     if (!is.null(weighted_mods[[nm]])) {
       mods_out[[paste0(nm, est_label)]] <- weighted_mods[[nm]]
     }

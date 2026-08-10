@@ -88,6 +88,7 @@ test_that("'direct' errors on a DAG with no mediator", {
   df <- sim_data_confounder(seed = 3)
   expect_error(
     DAGassist(make_dag_confounder(), lm(Y ~ X + Z, data = df),
+              exposure = "X", outcome = "Y",
               estimand = "direct"),
     "mediator"
   )

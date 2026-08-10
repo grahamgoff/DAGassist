@@ -213,7 +213,7 @@
   ests <- unique(.dagassist_normalize_estimand(estimand))
   
   # ACDE/CDE requires at least one mediator in the DAG / formula
-  wants_acde <- any(ests %in% c("direct"))
+  wants_acde <- any(ests %in% c("DIRECT"))
   if (isTRUE(wants_acde)) {
     has_med <- FALSE
     if (!is.null(roles)) {

@@ -5,7 +5,7 @@
 #' renders a compact report in several formats (console, LaTeX fragment, DOCX,
 #' XLSX, plain text). It can also target sample-average estimands via weighting
 #' (e.g., total) and recover sample average controlled direct effects via
-#' sequential g-estimation (e.g., SACDE).
+#' sequential g-estimation.
 #' 
 #' @param dag A **dagitty** object (see [dagitty::dagitty()]).
 #' @param formula Either (a) a standard model formula `Y ~ X + ...`, or
@@ -67,27 +67,27 @@
 #'    e.g. `exclude = c("nco", "nct")`; each requested variant is fitted and shown
 #'    as a separate "Canon. (-...)" column in the console/model exports.
 #' @param estimand character vector; causal estimand(s) for reported columns. Any of:
-#'   `"raw"` (default), `"total"`, `"SACDE"` (alias `"SCDE"`), or `"none"`.
+#'   `"raw"` (default), `"total"`, `"direct"`, or `"none"`.
 #'
 #'   - `"raw"`: naive regression fits implied by the supplied engine/formulas.
 #'   - `"total"`: inverse-probability weighted versions of each comparison model
 #'     (via \pkg{WeightIt}) to target sample ATE/ATT.
-#'   - `"SACDE"`/`"SCDE"`: for DAGs with mediator(s), adds sequential g-estimation columns:
+#'   - `"direct"`: for DAGs with mediator(s), adds sequential g-estimation columns:
 #'     (i) unweighted sequential-g and (ii) IPW-weighted sequential-g (weights estimated
 #'     without conditioning on mediators) to target the **sample average controlled direct effect**.
 #' @param weights_args list; arguments forwarded to \pkg{WeightIt} when computing IPW weights for
-#'   `"total"` and for the weighted SACDE refit. If `trim_at` is supplied, weights are
+#'   `"total"` and for the weighted direct effect refit. If `trim_at` is supplied, weights are
 #'   winsorized at the requested quantile before refitting.
 #' @param auto_acde logical; if `TRUE` (default), automates handling conflicts between specifications
 #'    and estimand arguments. Fails gracefully with a helpful error when users specify ACDE estimand
 #'    for a model without mediators.
-#' @param acde list; options for the controlled direct effect workflow (estimands `"SACDE"`/`"SCDE"`).
+#' @param acde list; options for the controlled direct effect workflow (estimand `"direct"`).
 #'   Users can override parts of the sequential g-estimation specification with named elements:
 #'   `m` (mediators), `x` (baseline covariates), `z` (intermediate covariates),
 #'   `fe` (fixed-effects variables), `fe_as_factor` (wrap `fe` as `factor()`), and
 #'   `include_descendants` (treat descendants of mediators as mediators). 
 #' @param directeffects_args Named list of arguments forwarded to [DirectEffects::sequential_g()]
-#'   when `estimand` includes `"SACDE"` (e.g., simulation/bootstrap controls,
+#'   when `estimand` includes `"direct"` (e.g., simulation/bootstrap controls,
 #'   variance estimator options).
 #' @param uncertain_edges Character vector of edges with unknown direction,
 #'   e.g. `c("A -- B")`. Triggers a PDAG robustness summary. See [pdag_robustness()].
@@ -143,7 +143,7 @@
 #' (pretty tables), `{broom}` (fallback tidying), `{rmarkdown}` + **pandoc** (DOCX),
 #' `{writexl}` (XLSX), `{dotwhisker}`/`{ggplot2}` for plotting.
 #'
-#' **Raw vs Weighted SACDE.**
+#' **Raw vs Weighted Direct Effect**
 #' The unweighted sequential-g estimator in \pkg{DirectEffects} uses linear regression in its second stage.
 #' By the Frisch–Waugh–Lovell theorem, this implies an estimand that is weighted by the conditional variance
 #' of the (residualized) exposure given controls—i.e., a regression-weighted average of unit-level effects,
@@ -199,7 +199,7 @@
 #'
 #'   # 3) Mediator case: sequential g-estimation (requires DirectEffects)
 #'   if (requireNamespace("DirectEffects", quietly = TRUE)) {
-#'     r3 <- DAGassist(g, lm(Y ~ X + Z + M, data = df), estimand = "SACDE")
+#'     r3 <- DAGassist(g, lm(Y ~ X + Z + M, data = df), estimand = "direct")
 #'   }
 #'
 #'   # 4) File export (LaTeX fragment)
@@ -229,7 +229,7 @@ DAGassist <- function(dag,
                       omit_intercept = TRUE,
                       omit_factors = TRUE,
                       bivariate = FALSE,
-                      estimand = c("raw", "none", "total", "SACDE", "SCDE"),
+                      estimand = c("raw", "none", "total", "direct"),
                       engine_args = list(),
                       weights_args = list(),
                       wts_omit = NULL,
@@ -251,7 +251,7 @@ DAGassist <- function(dag,
   
   #ensure default to raw when no estimand arg is passed
   #and llow multiple estimands (e.g., c("ATE","ACDE"))
-  .allowed_estimands <- c("raw", "none", "total", "SACDE", "SCDE")
+  .allowed_estimands <- c("raw", "none", "total", "direct")
   # if estimand=NULL, default to raw. do not default to multi-estimand
   if (missing(estimand) || is.null(estimand) || length(estimand) == 0L) {
     estimand <- "raw"
@@ -336,6 +336,10 @@ DAGassist <- function(dag,
     mods_full <- .build_named_mods(report)
     models_df_full <- .build_models_df(report)
     
+    #initialize empty for later
+    balance_df <- NULL
+    weights_df <- NULL
+    
     # export to file or return to console
     file_attr <- if (!is.null(out)) normalizePath(out, mustWork = FALSE) else NULL
     
@@ -347,6 +351,8 @@ DAGassist <- function(dag,
         roles_df = report$roles_display,
         models_df = models_df_full,
         models = mods_full,
+        balance_df = balance_df,
+        weights_df = weights_df,
         min_sets = report$controls_minimal_all,
         canon = report$controls_canonical,
         unevaluated_str= report$unevaluated_str,
@@ -374,6 +380,8 @@ DAGassist <- function(dag,
         coef_omit = report$settings$coef_omit,
         coef_rename = labmap,
         models = mods_full,
+        balance_df = balance_df,
+        weights_df = weights_df,
         min_sets = report$controls_minimal_all,
         canon = report$controls_canonical,
         unevaluated_str= report$unevaluated_str,
@@ -390,6 +398,8 @@ DAGassist <- function(dag,
         coef_omit = report$settings$coef_omit,
         coef_rename = labmap,
         models = mods_full,
+        balance_df = balance_df,
+        weights_df = weights_df,
         min_sets = report$controls_minimal_all,
         canon = report$controls_canonical,
         unevaluated_str= report$unevaluated_str,
@@ -406,6 +416,8 @@ DAGassist <- function(dag,
         coef_omit = report$settings$coef_omit,
         coef_rename = labmap,
         models = mods_full,
+        balance_df = balance_df,
+        weights_df = weights_df,
         min_sets = report$controls_minimal_all,
         canon = report$controls_canonical,
         unevaluated_str= report$unevaluated_str,
@@ -764,12 +776,16 @@ DAGassist <- function(dag,
   #expensive and the console printer will build models later
   mods_full <- NULL
   models_df_full <- NULL
+  balance_df <- NULL
+  weights_df <- NULL
   
   need_export_objects <- !identical(type, "console")
   
   if (isTRUE(need_export_objects)) {
     mods_full <- .build_named_mods(report)
     models_df_full <- .build_models_df(report)
+    balance_df <- .dagassist_balance_diagnostics_df(report)
+    weights_df <- .dagassist_weight_diagnostics_df(mods_full)
     
     # cache to prevent refitting if the object is printed later.
     report$models_full <- mods_full
@@ -788,6 +804,8 @@ DAGassist <- function(dag,
       roles_df = report$roles_display,
       models_df = models_df_full,
       models = mods_full,
+      balance_df = balance_df,
+      weights_df = weights_df,
       min_sets = report$controls_minimal_all,
       canon = report$controls_canonical,
       unevaluated_str = report$unevaluated_str,
@@ -819,7 +837,9 @@ DAGassist <- function(dag,
       roles_df = report$roles_display,
       coef_omit  = report$settings$coef_omit,
       coef_rename = labmap,
-      models = mods_full,                
+      models = mods_full,   
+      balance_df = balance_df,
+      weights_df = weights_df,
       min_sets = report$controls_minimal_all,
       canon = report$controls_canonical,
       unevaluated_str = report$unevaluated_str,
@@ -835,7 +855,9 @@ DAGassist <- function(dag,
       roles_df = report$roles_display,
       coef_omit  = report$settings$coef_omit,
       coef_rename = labmap,
-      models = mods_full,         
+      models = mods_full,      
+      balance_df = balance_df,
+      weights_df = weights_df,
       min_sets = report$controls_minimal_all,
       canon = report$controls_canonical,
       unevaluated_str = report$unevaluated_str,
@@ -852,7 +874,9 @@ DAGassist <- function(dag,
       roles_df = report$roles_display,
       coef_omit  = report$settings$coef_omit,
       coef_rename = labmap,
-      models = mods_full,         
+      models = mods_full,    
+      balance_df = balance_df,
+      weights_df = weights_df,
       min_sets = report$controls_minimal_all,
       canon = report$controls_canonical,
       unevaluated_str = report$unevaluated_str,

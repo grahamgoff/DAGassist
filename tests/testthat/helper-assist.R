@@ -49,3 +49,30 @@ sim_data_confounder_binary <- function(n = 120, seed = NULL) {
   A <- rnorm(n); B <- rnorm(n); C <- rnorm(n); M <- rnorm(n)
   data.frame(Y, X, Z, A, B, C, M)
 }
+
+# DAG with a confounder (Z) and a mediator (M) — supports both `total` and `direct`
+make_dag_estimand <- function() {
+  dagitty::dagitty("
+    dag {
+      X [exposure]; Y [outcome]; Z; M
+      Z -> X; Z -> Y; X -> Y
+      X -> M; M -> Y
+    }
+  ")
+}
+
+# Binary treatment so WeightIt's glm/ATE path is well behaved
+sim_data_estimand <- function(n = 800, seed = 11) {
+  set.seed(seed)
+  Z <- rnorm(n)
+  X <- rbinom(n, 1, plogis(0.7 * Z))
+  M <- 0.8 * X + rnorm(n)
+  Y <- 1.0 * X + 0.6 * M + 0.5 * Z + rnorm(n)
+  data.frame(Y, X, Z, M)
+}
+
+skip_if_no_estimand_deps <- function() {
+  testthat::skip_if_not_installed("WeightIt")
+  testthat::skip_if_not_installed("marginaleffects")
+  testthat::skip_if_not_installed("DirectEffects")
+}

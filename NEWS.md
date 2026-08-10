@@ -1,11 +1,19 @@
-# DAGassist v0.3.0
+# DAGassist v0.2.9
 
 ### Highlights
 
 - PDAG robustness features: `pdag` and `uncertain_edges` arguments for `DAGassist()` and a standalone `pdag_robustness()` function diagnose how adjustment sets and covariate roles change when introducing uncertain edges.
 - Added automated balance diagnostics: the console report now flags variables whose |SMD| > 0.1 between the Original and DAG-derived models, addressing missingness-induced apples-to-oranges model comparisons.
 - Additional robustness feature: `add_edges_robustness` to evaluate robustness to hypothesized missing edges.
+- Extended support for balance and weight diagnostics under non-console export formats.
+- Changed estimand terminology for methodological accuracy (SATE -> total effect; SACDE -> direct effect), as DAGassist cannot recover a true SATE or SACDE from continuous treatments.
 - Bug fixes
+
+## Breaking changes
+- Changed valid estimand parameter values ("SATE" -> "total"; "SACDE" -> "direct").
+- Phased out support for "ATT" estimand due to estimand variability across binary and continuous treatments. Future updates may reintroduce the ATT estimand.
+
+This is the CRAN version.
 
 # DAGassist v0.2.8
 
@@ -21,8 +29,6 @@
 ### Highlights
 
 - Fixed broken link in vignette for CRAN resubmission
-
-This is the CRAN version.
 
 # DAGassist v0.2.6
 

@@ -24,7 +24,7 @@ options(
 Sys.setenv(NO_COLOR = "1")
 ```
 
-# DAGassist <a href='https://grahamgoff.github.io/DAGassist/'><img src='man/figures/logo.png' class='home-logo' align="right" width="270pt" alt='DAGassist hex logo'/></a>
+# DAGassist <a href='https://grahamgoff.com/DAGassist/'><img src='man/figures/logo.png' class='home-logo' align="right" width="270pt" alt='DAGassist hex logo'/></a>
 [![R-CMD-check](https://github.com/grahamgoff/DAGassist/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/grahamgoff/DAGassist/actions/workflows/R-CMD-check.yaml)
 [![pages-build-deployment](https://github.com/grahamgoff/DAGassist/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/grahamgoff/DAGassist/actions/workflows/pages/pages-build-deployment)
 [![CRAN status](https://www.r-pkg.org/badges/version/DAGassist)](https://cran.r-project.org/package=DAGassist)
@@ -99,12 +99,12 @@ df <- data.frame(A, B, Z, X, M, Y, C)
 
 ## Example
 
-Simply provide a `dagitty()` object and a regression call and `DAGassist` will create a report classifying variables by causal role, and compare the specified regression to minimal and canonical models.
+Simply provide a `dagitty()` object and a regression call and `DAGassist` will create a report classifying variables by causal role, and compare the specified regression to minimal and canonical models. 
 
 ```{r run}
 DAGassist(dag = dag_model, 
           formula = lm(Y ~ X + M + C + Z + A + B, data = df),
-          estimand = c("total", "SACDE")
+          estimand = c("total", "direct")
 )
 
 ```
@@ -114,7 +114,7 @@ Optionally, users can generate visual output via dotwhisker plots:
 ```{r dotwhisker, warning=FALSE, echo=FALSE}
 DAGassist(dag = dag_model, 
           formula = lm(Y ~ X + M + C + Z + A + B, data = df),
-          estimand = c("total", "SACDE"),
+          estimand = c("total", "direct"),
           type = "dotwhisker"
 )
 ```

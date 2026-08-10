@@ -327,3 +327,43 @@
     gof_first = if (nrow(gof)) gof$term[1] else NA_character_
   )
 }
+
+#shared display formatting for the diagnostics tables (text / docx / latex).
+#Excel deliberately keeps the raw numeric frames so cells stay sortable.
+.dagassist_fmt_num <- function(x, digits = 4) {
+  if (!is.numeric(x)) return(x)
+  ifelse(is.na(x), "", formatC(signif(x, digits), format = "g", digits = digits))
+}
+
+.dagassist_weights_display_df <- function(df) {
+  out <- data.frame(
+    Model = df$model,
+    N = df$n,
+    `w min` = df$w_min,
+    `w med` = df$w_median,
+    `w max` = df$w_max,
+    ESS = df$ess,
+    `ESS/N` = df$ess_frac,
+    Flags = ifelse(is.na(df$flags), "", gsub(",", ", ", df$flags)),
+    check.names = FALSE, stringsAsFactors = FALSE
+  )
+  for (nm in names(out)) out[[nm]] <- .dagassist_fmt_num(out[[nm]])
+  out
+}
+
+.dagassist_balance_display_df <- function(df, flagged_only = FALSE) {
+  if (isTRUE(flagged_only)) df <- df[df$flagged, , drop = FALSE]
+  out <- data.frame(
+    Reference  = df$reference,
+    Comparison = df$comparison,
+    `n ref` = df$n_ref,
+    `n cmp` = df$n_cmp,
+    Variable = df$variable,
+    Type = df$type,
+    `(S)MD` = df$smd,
+    Flagged = ifelse(df$flagged, "yes", ""),
+    check.names = FALSE, stringsAsFactors = FALSE
+  )
+  for (nm in names(out)) out[[nm]] <- .dagassist_fmt_num(out[[nm]])
+  out
+}

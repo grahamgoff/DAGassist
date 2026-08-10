@@ -69,9 +69,9 @@
 .dagassist_formula_for_model_name <- function(x, model_name) {
   #parse model name for estimand type
   is_weighted <- grepl("\\((total)\\)\\s*$", model_name, ignore.case = TRUE)
-  is_acde <- grepl("\\((SACDE|SCDE)\\)\\s*$", model_name, ignore.case = TRUE)
+  is_acde <- grepl("\\((direct)\\)\\s*$", model_name, ignore.case = TRUE)
   #strip away the estimand notation to get the baseline model name
-  base_name <- sub("\\s*\\((total|SACDE|SCDE)\\)\\s*$", "", model_name, ignore.case = TRUE)
+  base_name <- sub("\\s*\\((total|direct)\\)\\s*$", "", model_name, ignore.case = TRUE)
   
   # If ACDE model label, build sequential_g formula from the *base* model formula
   if (is_acde) {
@@ -164,24 +164,29 @@
 .dagassist_normalize_estimand <- function(estimand) {
   if (is.null(estimand)) return("RAW")
   est <- toupper(as.character(estimand))
+  bad <- setdiff(est, c("RAW", "NONE", "TOTAL", "DIRECT"))
+  if (length(bad)) {
+    stop("Unknown estimand(s): ", paste(bad, collapse = ", "),
+         ". Valid values are: raw, none, total, direct.", call. = FALSE)
+  }
   est <- match.arg(est,
-                   choices = c("RAW","NONE","TOTAL","SACDE","SCDE"),
+                   choices = c("RAW","NONE","TOTAL","DIRECT"),
                    several.ok = TRUE)
   est[est == "NONE"] <- "RAW"
-  est[est == "SCDE"]  <- "SACDE"
+  est[est == "DIRECT"] <- "DIRECT"
   unique(est)
 }
 
 # ---- Normalize ACDE spec list ----
 .dagassist_normalize_acde_spec <- function(acde) {
   if (is.null(acde)) acde <- list()
-  if (!is.list(acde)) stop("`sacde` must be a list.", call. = FALSE)
+  if (!is.list(acde)) stop("`direct` must be a list.", call. = FALSE)
   defaults <- list(
-    m = NULL,                 # mediators (character)
-    x = NULL,                 # baseline covariates override (character)
-    z = NULL,                 # intermediate covariates override (character)
-    fe = NULL,                # fixed-effects vars override (character)
-    fe_as_factor = TRUE,      # wrap FE vars as factor()
+    m = NULL, # mediators (character)
+    x = NULL, # baseline covariates override (character)
+    z = NULL, # intermediate covariates override (character)
+    fe = NULL, # fixed-effects vars override (character)
+    fe_as_factor = TRUE, # wrap FE vars as factor()
     include_descendants = FALSE  # treat Dmediator as mediators
   )
   # base R merge
@@ -208,7 +213,7 @@
   ests <- unique(.dagassist_normalize_estimand(estimand))
   
   # ACDE/CDE requires at least one mediator in the DAG / formula
-  wants_acde <- any(ests %in% c("SACDE", "SCDE"))
+  wants_acde <- any(ests %in% c("DIRECT"))
   if (isTRUE(wants_acde)) {
     has_med <- FALSE
     if (!is.null(roles)) {
@@ -222,12 +227,12 @@
     if (!isTRUE(has_med)) {
       stop(
         paste0(
-          "You requested estimand = 'SACDE' (alias: 'SCDE'), but no mediator node(s) were detected in your DAG ",
+          "You requested estimand = 'direct' but no mediator node(s) were detected in your DAG ",
           "for this exposure/outcome pair.\n",
-          "SACDE/SCDE is only defined when at least one mediator exists.\n\n",
+          "The direct effect is only defined when at least one mediator exists.\n\n",
           "Fix options:\n",
           "  1) Use estimand = 'total' for total effects (when no mediators are present), OR\n",
-          "  2) Use estimand = 'RAW' to report the naive regression output.\n"
+          "  2) Use estimand = 'raw' to report the naive regression output.\n"
         ),
         call. = FALSE
       )
@@ -301,7 +306,7 @@
   
   out <- mods
   if ("TOTAL" %in% ests) out <- .dagassist_add_weighted_models(x, out, estimand = "total")
-  if ("SACDE" %in% ests) out <- .dagassist_add_sacde_models(x, out)
+  if ("DIRECT" %in% ests) out <- .dagassist_add_sacde_models(x, out)
   
   #overwrite with total/direct terminology at print time
   names(out) <- .dagassist_display_names(names(out))
@@ -757,7 +762,7 @@
   switch(
     est,
     TOTAL = "(total)",
-    SACDE = "(SACDE)",
+    DIRECT = "(direct)",
     SEQG_RAW = "(seqg raw)",
     RAW = "",
     NONE = "",

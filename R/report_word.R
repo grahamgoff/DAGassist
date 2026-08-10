@@ -31,6 +31,20 @@
       )
     }
   }
+  
+  #wire up diagnostics tables
+  if (isTRUE(res$verbose) && show != "roles") {
+    bdf <- tryCatch(res$balance_df, error = function(e) NULL)
+    wdf <- tryCatch(res$weights_df, error = function(e) NULL)
+    if (!is.null(bdf) && nrow(bdf)) {
+      md <- c(md, "", "## Balance diagnostics", "",
+              .df_to_md_pipe(.dagassist_balance_display_df(bdf)), "")
+    }
+    if (!is.null(wdf) && nrow(wdf)) {
+      md <- c(md, "", "## Weight diagnostics", "",
+              .df_to_md_pipe(.dagassist_weights_display_df(wdf)), "")
+    }
+  }
 
   # trailing blank line to keeps spacing tidy
   md <- c(md, "")  

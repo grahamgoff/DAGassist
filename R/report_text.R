@@ -27,6 +27,19 @@
     }
   }
 
+  #diagnostics tables
+  if (isTRUE(res$verbose) && show != "roles") {
+    bdf <- tryCatch(res$balance_df, error = function(e) NULL)
+    wdf <- tryCatch(res$weights_df, error = function(e) NULL)
+    if (!is.null(bdf) && nrow(bdf)) {
+      lines <- c(lines, "### Balance diagnostics", "",
+                 .df_to_md_pipe(.dagassist_balance_display_df(bdf)), "")
+    }
+    if (!is.null(wdf) && nrow(wdf)) {
+      lines <- c(lines, "### Weight diagnostics", "",
+                 .df_to_md_pipe(.dagassist_weights_display_df(wdf)), "")
+    }
+  }
   
   #make notes
   notes <- c("p-value legend: + < 0.1, * < 0.05, ** < 0.01, *** < 0.001.")

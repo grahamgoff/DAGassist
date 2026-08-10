@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# DAGassist <a href='https://grahamgoff.github.io/DAGassist/'><img src='man/figures/logo.png' class='home-logo' align="right" width="270pt" alt='DAGassist hex logo'/></a>
+# DAGassist <a href='https://grahamgoff.com/DAGassist/'><img src='man/figures/logo.png' class='home-logo' align="right" width="270pt" alt='DAGassist hex logo'/></a>
 
 [![R-CMD-check](https://github.com/grahamgoff/DAGassist/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/grahamgoff/DAGassist/actions/workflows/R-CMD-check.yaml)
 [![pages-build-deployment](https://github.com/grahamgoff/DAGassist/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/grahamgoff/DAGassist/actions/workflows/pages/pages-build-deployment)
@@ -57,7 +57,7 @@ and compare the specified regression to minimal and canonical models.
 ``` r
 DAGassist(dag = dag_model, 
           formula = lm(Y ~ X + M + C + Z + A + B, data = df),
-          estimand = c("total", "SACDE")
+          estimand = c("total", "direct")
 )
 #> DAGassist Report: 
 #> 

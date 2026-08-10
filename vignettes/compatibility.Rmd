@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 This vignette shows **model engines** that `DAGassist` has been verified to work with and provides concrete usage examples.
 The list is illustrative, not exhaustive. `DAGassist` is model-agnostic: if an engine accepts a standard `formula + data` interface, it will usually work. 
 
-If you want support documented (or added) for an engine not shown here, please [open an issue or PR on GitHub.](https://grahamgoff.github.io/DAGassist/)
+If you want support documented (or added) for an engine not shown here, please [open an issue or PR on GitHub.](https://grahamgoff.com/DAGassist/)
 
 | Package | Function |
 |---------|----------|

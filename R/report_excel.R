@@ -16,7 +16,7 @@
   df_roles <- .roles_pretty(roles)
 
   # models sheet from shared helper
-  built     <- .build_modelsummary_pretty_df(mods, 
+  built <- .build_modelsummary_pretty_df(mods, 
                                              coef_rename=res$coef_rename,
                                              coef_omit = res$coef_omit)
   df_models <- built$df
@@ -34,8 +34,10 @@
   }
   
   sheets <- list()
-  if (!is.null(df_roles)  && nrow(df_roles))  sheets$Roles  <- df_roles
+  if (!is.null(df_roles) && nrow(df_roles)) sheets$Roles <- df_roles
   if (!is.null(df_models) && nrow(df_models)) sheets$Models <- df_models
+  if (!is.null(res$balance_df) && nrow(res$balance_df)) sheets$Balance <- res$balance_df
+  if (!is.null(res$weights_df) && nrow(res$weights_df)) sheets$Weights <- res$weights_df
   sheets$Notes <- data.frame(Notes = notes, stringsAsFactors = FALSE)
   
   if (isTRUE(res$verbose) && show != "models") {

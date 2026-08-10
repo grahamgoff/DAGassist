@@ -189,6 +189,40 @@
   lines
 }
 
+# plain longtblr for auxiliary tables: no caption, no label, no rotation
+.df_to_longtable_plain <- function(df) {
+  stopifnot(is.data.frame(df))
+  esc <- function(x) {
+    x <- as.character(x)
+    x <- ifelse(is.na(x), "", x)
+    x <- gsub("\\\\", "\\\\textbackslash{}", x, perl = TRUE)
+    x <- gsub("([\\{\\}\\$\\#\\%\\_\\&])", "\\\\\\1", x, perl = TRUE)
+    x <- gsub("~", "\\\\textasciitilde{}", x, perl = TRUE)
+    x <- gsub("\\^", "\\\\textasciicircum{}", x, perl = TRUE)
+    x
+  }
+  df2 <- df
+  for (nm in names(df2)) df2[[nm]] <- esc(.dagassist_fmt_num(df2[[nm]]))
+  
+  n       <- ncol(df2)
+  colspec <- paste0(c("X[2,l]", rep("X[1,c]", max(0L, n - 1L))), collapse = "")
+  header  <- paste(esc(colnames(df)), collapse = " & ")
+  rows    <- apply(df2, 1L, function(r) paste(r, collapse = " & "))
+  
+  c(
+    "\\begingroup\\setlength{\\emergencystretch}{3em}",
+    "\\begin{longtblr}[presep=0pt, postsep=0pt, entry=none, label=none]%",
+    sprintf("{width=\\textwidth,colsep=1.5pt,rowsep=0pt,colspec={%s}}", colspec),
+    "\\toprule",
+    paste0(header, " \\\\"),
+    "\\midrule",
+    paste0(rows, " \\\\"),
+    "\\bottomrule",
+    "\\end{longtblr}",
+    "\\endgroup"
+  )
+}
+
 ################################################################################
 # R/report_latex.R
 ## Minimal LaTeX fragment writer for DAGassist. Produces a PREAMBLE-LESS snippet.
@@ -205,6 +239,27 @@
   # Build the single Notes line with p-value legend + controls summary
   ctrl_min <- if (length(msets)) .set_brace(msets[[1]]) else "{}"
   ctrl_can <- if (length(canon)) .set_brace(canon) else "{}"
+  
+  diag_chunks <- character(0)
+  n_diag <- 0L
+  if (isTRUE(res$verbose) && !identical(show, "roles")) {
+    bdf <- tryCatch(res$balance_df, error = function(e) NULL)
+    wdf <- tryCatch(res$weights_df, error = function(e) NULL)
+    if (!is.null(bdf) && nrow(bdf)) {
+      diag_chunks <- c(diag_chunks,
+                       "\\vspace{1em}",
+                       "\\noindent\\textbf{Balance diagnostics}\\par\\nobreak",
+                       .df_to_longtable_plain(.dagassist_balance_display_df(bdf)))
+      n_diag <- n_diag + 1L
+    }
+    if (!is.null(wdf) && nrow(wdf)) {
+      diag_chunks <- c(diag_chunks,
+                       "\\vspace{1em}",
+                       "\\noindent\\textbf{Weight diagnostics}\\par\\nobreak",
+                       .df_to_longtable_plain(.dagassist_weights_display_df(wdf)))
+      n_diag <- n_diag + 1L
+    }
+  }
   
   lines <- c(
     "% --------------------- DAGassist LaTeX fragment ---------------------",
@@ -255,14 +310,15 @@
         )
       } else character(0)
     },
+    diag_chunks,
     "\\par\\endgroup",
     #adtocounter reduces the table ref number by one because there are two 
     #tabular objects in output, so the counter increments by 2 naturally.
     #only do this if printing the whole report because that is the only case
     #in which there will be two tabular objects in the report
-    if (show == "all"){
-      "\\addtocounter{table}{-1}"
-    }else character(0),
+    if (show == "all") {
+      sprintf("\\addtocounter{table}{-%d}", 1L + n_diag)
+    } else character(0),
     {
       # roles-only: we've already printed the legend right after the table,
       # so we don't need a global notes section

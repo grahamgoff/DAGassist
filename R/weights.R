@@ -164,6 +164,11 @@
 .dagassist_normalize_estimand <- function(estimand) {
   if (is.null(estimand)) return("RAW")
   est <- toupper(as.character(estimand))
+  bad <- setdiff(est, c("RAW", "NONE", "TOTAL", "DIRECT"))
+  if (length(bad)) {
+    stop("Unknown estimand(s): ", paste(bad, collapse = ", "),
+         ". Valid values are: raw, none, total, direct.", call. = FALSE)
+  }
   est <- match.arg(est,
                    choices = c("RAW","NONE","TOTAL","DIRECT"),
                    several.ok = TRUE)

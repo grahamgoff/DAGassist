@@ -228,7 +228,7 @@ DAGassist(
 
   Character vector of edges with unknown direction, e.g. `c("A -- B")`.
   Triggers a PDAG robustness summary. See
-  [`pdag_robustness()`](https://grahamgoff.github.io/DAGassist/reference/pdag_robustness.md).
+  [`pdag_robustness()`](https://grahamgoff.com/DAGassist/reference/pdag_robustness.md).
 
 - pdag:
 
@@ -242,7 +242,7 @@ DAGassist(
   exclusion-branch DAG: DAGassist reports whether adding it changes the
   adjustment set or breaks identification. Directed (`->`, `<-`) and
   bidirected (`<->`) edges are supported. See
-  [`add_edges_robustness()`](https://grahamgoff.github.io/DAGassist/reference/add_edges_robustness.md).
+  [`add_edges_robustness()`](https://grahamgoff.com/DAGassist/reference/add_edges_robustness.md).
 
 ## Value
 
@@ -259,7 +259,7 @@ The object contains:
 - roles:
 
   `data.frame`. Raw node-role flags from
-  [`classify_nodes()`](https://grahamgoff.github.io/DAGassist/reference/classify_nodes.md).
+  [`classify_nodes()`](https://grahamgoff.com/DAGassist/reference/classify_nodes.md).
 
 - roles_display:
 
@@ -409,9 +409,9 @@ both the raw sequential-g result and a weighted sequential-g refit
 
 ## See also
 
-[`print.DAGassist_report()`](https://grahamgoff.github.io/DAGassist/reference/print.DAGassist_report.md)
+[`print.DAGassist_report()`](https://grahamgoff.com/DAGassist/reference/print.DAGassist_report.md)
 and
-[`vignette("DAGassist", package = "DAGassist")`](https://grahamgoff.github.io/DAGassist/articles/DAGassist.md).
+[`vignette("DAGassist", package = "DAGassist")`](https://grahamgoff.com/DAGassist/articles/DAGassist.md).
 
 ## Examples
 

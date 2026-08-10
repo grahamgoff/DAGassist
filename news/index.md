@@ -5,9 +5,9 @@
 #### Highlights
 
 - PDAG robustness features: `pdag` and `uncertain_edges` arguments for
-  [`DAGassist()`](https://grahamgoff.github.io/DAGassist/reference/DAGassist.md)
+  [`DAGassist()`](https://grahamgoff.com/DAGassist/reference/DAGassist.md)
   and a standalone
-  [`pdag_robustness()`](https://grahamgoff.github.io/DAGassist/reference/pdag_robustness.md)
+  [`pdag_robustness()`](https://grahamgoff.com/DAGassist/reference/pdag_robustness.md)
   function diagnose how adjustment sets and covariate roles change when
   introducing uncertain edges.
 - Added automated balance diagnostics: the console report now flags
@@ -138,7 +138,7 @@ CRAN release: 2025-09-21
 ### Breaking changes
 
 - Renamed the main entry point from `dag_assist()` to
-  [`DAGassist()`](https://grahamgoff.github.io/DAGassist/reference/DAGassist.md).
+  [`DAGassist()`](https://grahamgoff.com/DAGassist/reference/DAGassist.md).
 
 ### Added
 

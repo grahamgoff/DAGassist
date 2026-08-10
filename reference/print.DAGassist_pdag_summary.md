@@ -14,7 +14,7 @@ print(x, ...)
 - x:
 
   A `DAGassist_pdag_summary` from
-  [`pdag_robustness()`](https://grahamgoff.github.io/DAGassist/reference/pdag_robustness.md).
+  [`pdag_robustness()`](https://grahamgoff.com/DAGassist/reference/pdag_robustness.md).
 
 - ...:
 

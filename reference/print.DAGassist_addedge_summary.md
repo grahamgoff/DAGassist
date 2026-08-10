@@ -14,7 +14,7 @@ print(x, ...)
 - x:
 
   A `DAGassist_addedge_summary` from
-  [`add_edges_robustness()`](https://grahamgoff.github.io/DAGassist/reference/add_edges_robustness.md).
+  [`add_edges_robustness()`](https://grahamgoff.com/DAGassist/reference/add_edges_robustness.md).
 
 - ...:
 

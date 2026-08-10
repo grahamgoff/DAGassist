@@ -18,7 +18,7 @@ print(x, ...)
 - x:
 
   A `"DAGassist_report"` object returned by
-  [`DAGassist()`](https://grahamgoff.github.io/DAGassist/reference/DAGassist.md).
+  [`DAGassist()`](https://grahamgoff.com/DAGassist/reference/DAGassist.md).
 
 - ...:
 

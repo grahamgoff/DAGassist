@@ -710,7 +710,7 @@ DAGassist::add_edges_robustness(dag_model,
     ## - re-estimation recommended: yes
 
 As with PDAGs, these diagnostics are also available through the main
-[`DAGassist()`](https://grahamgoff.github.io/DAGassist/reference/DAGassist.md)
+[`DAGassist()`](https://grahamgoff.com/DAGassist/reference/DAGassist.md)
 interface, where they are returned in the standard report:
 
 ``` r

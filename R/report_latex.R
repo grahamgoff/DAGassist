@@ -189,12 +189,6 @@
   lines
 }
 
-# compact numeric formatting for auxiliary tables
-.dagassist_fmt_num <- function(x, digits = 4) {
-  if (!is.numeric(x)) return(x)
-  ifelse(is.na(x), "", formatC(signif(x, digits), format = "g", digits = digits))
-}
-
 # plain longtblr for auxiliary tables: no caption, no label, no rotation
 .df_to_longtable_plain <- function(df) {
   stopifnot(is.data.frame(df))
@@ -226,35 +220,6 @@
     "\\bottomrule",
     "\\end{longtblr}",
     "\\endgroup"
-  )
-}
-
-# column selection for the two diagnostics tables (the full frames are too wide)
-.dagassist_weights_tex_df <- function(df) {
-  data.frame(
-    Model   = df$model,
-    N       = df$n,
-    `w min` = df$w_min,
-    `w med` = df$w_median,
-    `w max` = df$w_max,
-    ESS     = df$ess,
-    `ESS/N` = df$ess_frac,
-    Flags   = ifelse(is.na(df$flags), "", gsub(",", ", ", df$flags)),
-    check.names = FALSE, stringsAsFactors = FALSE
-  )
-}
-
-.dagassist_balance_tex_df <- function(df) {
-  data.frame(
-    Reference  = df$reference,
-    Comparison = df$comparison,
-    `n ref`    = df$n_ref,
-    `n cmp`    = df$n_cmp,
-    Variable   = df$variable,
-    Type       = df$type,
-    `(S)MD`    = df$smd,
-    Flagged    = ifelse(df$flagged, "yes", ""),
-    check.names = FALSE, stringsAsFactors = FALSE
   )
 }
 

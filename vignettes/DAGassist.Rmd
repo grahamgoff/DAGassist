@@ -26,7 +26,7 @@ library(DAGassist)
 
 Step 1's focus on declaring the estimands ensures that studies maintain a consistent quantity of interest for evaluation @LundbergJohnsonStewart2021; @FindleyKikutaDenly2021. Of course, some estimands may be more policy-relevant than others @Deaton2010. 
 
-For the purpose of this guide, we are interested in the sample average treatment effect (SATE).
+For the purpose of this guide, we are interested in the total treatment effect.
 
 ## Step 2: Draw a DAG
 
@@ -763,7 +763,7 @@ DAGassist(dag_model,
           formula = lm(children ~ edu_year + age + class + gender + 
                          immigrant + urban + birth_control + income + 
                          married + job_stability_t + contract + pref, data = dat),
-          estimand = "SATE")
+          estimand = "total")
 ```
 
 In some cases, the target estimand is the average controlled direct effect. `DAGassist` supports recovering the controlled direct effect using sequential g-estimation via integration with the `DirectEffects` R package. 
@@ -777,7 +777,7 @@ DAGassist(dag_model,
           formula = lm(children ~ edu_year + age + class + gender + 
                          immigrant + urban + birth_control + income + 
                          married + job_stability_t + contract + pref, data = dat),
-          estimand = c("SATE", "SACDE"),
+          estimand = c("total", "SACDE"),
           type = "dotwhisker")
 ```
 

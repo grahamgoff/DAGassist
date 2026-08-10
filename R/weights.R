@@ -68,10 +68,10 @@
 
 .dagassist_formula_for_model_name <- function(x, model_name) {
   #parse model name for estimand type
-  is_weighted <- grepl("\\((SATE|SATT)\\)\\s*$", model_name, ignore.case = TRUE)
+  is_weighted <- grepl("\\((total)\\)\\s*$", model_name, ignore.case = TRUE)
   is_acde <- grepl("\\((SACDE|SCDE)\\)\\s*$", model_name, ignore.case = TRUE)
   #strip away the estimand notation to get the baseline model name
-  base_name <- sub("\\s*\\((SATE|SATT|SACDE|SCDE)\\)\\s*$", "", model_name, ignore.case = TRUE)
+  base_name <- sub("\\s*\\((total|SACDE|SCDE)\\)\\s*$", "", model_name, ignore.case = TRUE)
   
   # If ACDE model label, build sequential_g formula from the *base* model formula
   if (is_acde) {
@@ -165,7 +165,7 @@
   if (is.null(estimand)) return("RAW")
   est <- toupper(as.character(estimand))
   est <- match.arg(est,
-                   choices = c("RAW","NONE","SATE","SATT","SACDE","SCDE"),
+                   choices = c("RAW","NONE","TOTAL","SACDE","SCDE"),
                    several.ok = TRUE)
   est[est == "NONE"] <- "RAW"
   est[est == "SCDE"]  <- "SACDE"
@@ -226,7 +226,7 @@
           "for this exposure/outcome pair.\n",
           "SACDE/SCDE is only defined when at least one mediator exists.\n\n",
           "Fix options:\n",
-          "  1) Use estimand = 'SATE'/'SATT' for total effects (when no mediators are present), OR\n",
+          "  1) Use estimand = 'total' for total effects (when no mediators are present), OR\n",
           "  2) Use estimand = 'RAW' to report the naive regression output.\n"
         ),
         call. = FALSE
@@ -236,7 +236,7 @@
   # allow ATE/ATT if formula includes mediators; will omit automatically
   if (!isTRUE(auto_acde)) return(estimand)
   
-  wants_total <- any(ests %in% c("SATE", "SATT"))
+  wants_total <- any(ests %in% c("TOTAL"))
   if (!isTRUE(wants_total)) return(estimand)
   
   controls_mediator <- .dagassist_formula_controls_mediator(
@@ -300,10 +300,11 @@
   if (!length(ests) || identical(ests, "RAW")) return(mods)
   
   out <- mods
-  if ("SATE" %in% ests) out <- .dagassist_add_weighted_models(x, out, estimand = "SATE")
-  if ("SATT" %in% ests) out <- .dagassist_add_weighted_models(x, out, estimand = "SATT")
-  
+  if ("TOTAL" %in% ests) out <- .dagassist_add_weighted_models(x, out, estimand = "total")
   if ("SACDE" %in% ests) out <- .dagassist_add_sacde_models(x, out)
+  
+  #overwrite with total/direct terminology at print time
+  names(out) <- .dagassist_display_names(names(out))
   
   out
 }
@@ -319,7 +320,7 @@
   )
   
   # Weighting only applies to total-effect estimands
-  ests <- intersect(ests, c("SATE", "SATT"))
+  ests <- intersect(ests, c("TOTAL"))
   if (!length(ests)) return(mods)
   est <- ests[1L]
   
@@ -570,14 +571,13 @@
       )
     }
     
-    #changed internal and display terminology from ATE->SATE; cannot pass
-    #directly to weigtit, which does not recognize an SATE estimand parameter
+    #changed internal and display terminology from ATE->total; cannot pass
+    #directly to weigtit, which does not recognize an total estimand parameter
     #will probably need to change this bandaid later when I add EV and ATE is a valid 
     #parameter. 
     est_wt <- switch(
       toupper(est),
-      SATE = "ATE",
-      SATT = "ATT",
+      TOTAL = "ATE",
       toupper(est)
     )
     
@@ -738,11 +738,11 @@
     if (!is.null(fit_w)) weighted_mods[[nm]] <- fit_w
   }
   
-  # Splice weighted columns in directly after their base column
-  est_label <- paste0(" (", est, ")")
-  mods_out <- list()
+  #new order:
+  #Original | Total Minimal 1 (Raw) | Total Canonical (Raw) | Total Minimal 1 (Weighted) | Total Canonical (Weighted) | Direct (Raw) | Direct (Weighted)
+  est_label <- paste0(" ", .dagassist_model_name_labels(est))
+  mods_out <- mods
   for (nm in names(mods)) {
-    mods_out[[nm]] <- mods[[nm]]
     if (!is.null(weighted_mods[[nm]])) {
       mods_out[[paste0(nm, est_label)]] <- weighted_mods[[nm]]
     }
@@ -756,12 +756,11 @@
   est <- toupper(as.character(estimand))
   switch(
     est,
-    SATE      = "(SATE)",
-    SATT      = "(SATT)",
-    SACDE     = "(SACDE)",
-    SEQG_RAW  = "(seqg raw)",
-    RAW       = "",
-    NONE      = "",
+    TOTAL = "(total)",
+    SACDE = "(SACDE)",
+    SEQG_RAW = "(seqg raw)",
+    RAW = "",
+    NONE = "",
     ""
   )
 }

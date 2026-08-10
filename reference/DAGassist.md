@@ -444,5 +444,4 @@ if (requireNamespace("dagitty", quietly = TRUE)) {
     DAGassist(g, lm(Y ~ X + Z + M, data = df), type = "latex", out = out)
   # }
 }
-#> Error in .dagassist_balance_tex_df(bdf): could not find function ".dagassist_balance_tex_df"
 ```

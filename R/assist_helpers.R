@@ -152,14 +152,6 @@
     }
   }
   
-  if ("SATT" %in% ests) {
-    wlab <- .dagassist_model_name_labels("SATT")
-    for (nm in names(model_formulas)) {
-      if (identical(nm, "Original")) next
-      model_formulas[[paste0(nm, " ", wlab)]] <- model_formulas[[nm]]
-    }
-  }
-  
   if ("SACDE" %in% ests) {
     alab <- .dagassist_model_name_labels("SACDE")
     for (nm in names(model_formulas)) {
@@ -711,7 +703,7 @@
 }
 # ---- Guardrail helpers (estimand recovery) ----
 # Exposure specified as an *interaction term* (e.g., X1:X2 or X1*X2) is not supported
-# by the estimand-recovery workflows (SATE/SATT/SACDE). Users should precompute a single
+# by the estimand-recovery workflows (SATE/SACDE). Users should precompute a single
 # treatment variable in `data` and use that as the exposure node.
 .dagassist_is_interaction_exposure <- function(exposure) {
   if (is.null(exposure) || is.na(exposure) || !nzchar(exposure)) return(FALSE)
@@ -1087,7 +1079,7 @@
   #fail fast if the model list is missing or unnamed
   if (is.null(mods_full) || !length(mods_full) || is.null(names(mods_full))) return(invisible(NULL))
   # only print diagnostics for weighted columns. identify weighted cols by col name 
-  keep <- grepl("\\((SATE|SATT)\\)\\s*$", names(mods_full), ignore.case = TRUE)
+  keep <- grepl("\\((SATE)\\)\\s*$", names(mods_full), ignore.case = TRUE)
   mods_use <- mods_full[keep]
   if (!length(mods_use)) return(invisible(NULL))
   # header for the diagnostics block

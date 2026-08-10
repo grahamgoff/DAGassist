@@ -4,7 +4,7 @@
 #' builds minimal and canonical adjustment sets, fits comparable models, and
 #' renders a compact report in several formats (console, LaTeX fragment, DOCX,
 #' XLSX, plain text). It can also target sample-average estimands via weighting
-#' (e.g., SATE/SATT) and recover sample average controlled direct effects via
+#' (e.g., SATE) and recover sample average controlled direct effects via
 #' sequential g-estimation (e.g., SACDE).
 #' 
 #' @param dag A **dagitty** object (see [dagitty::dagitty()]).
@@ -67,16 +67,16 @@
 #'    e.g. `exclude = c("nco", "nct")`; each requested variant is fitted and shown
 #'    as a separate "Canon. (-...)" column in the console/model exports.
 #' @param estimand character vector; causal estimand(s) for reported columns. Any of:
-#'   `"raw"` (default), `"SATE"`, `"SATT"`, `"SACDE"` (alias `"SCDE"`), or `"none"`.
+#'   `"raw"` (default), `"SATE"`, `"SACDE"` (alias `"SCDE"`), or `"none"`.
 #'
 #'   - `"raw"`: naive regression fits implied by the supplied engine/formulas.
-#'   - `"SATE"`/`"SATT"`: inverse-probability weighted versions of each comparison model
+#'   - `"SATE"`: inverse-probability weighted versions of each comparison model
 #'     (via \pkg{WeightIt}) to target sample ATE/ATT.
 #'   - `"SACDE"`/`"SCDE"`: for DAGs with mediator(s), adds sequential g-estimation columns:
 #'     (i) unweighted sequential-g and (ii) IPW-weighted sequential-g (weights estimated
 #'     without conditioning on mediators) to target the **sample average controlled direct effect**.
 #' @param weights_args list; arguments forwarded to \pkg{WeightIt} when computing IPW weights for
-#'   `"SATE"`/`"SATT"` and for the weighted SACDE refit. If `trim_at` is supplied, weights are
+#'   `"SATE"` and for the weighted SACDE refit. If `trim_at` is supplied, weights are
 #'   winsorized at the requested quantile before refitting.
 #' @param auto_acde logical; if `TRUE` (default), automates handling conflicts between specifications
 #'    and estimand arguments. Fails gracefully with a helpful error when users specify ACDE estimand
@@ -229,7 +229,7 @@ DAGassist <- function(dag,
                       omit_intercept = TRUE,
                       omit_factors = TRUE,
                       bivariate = FALSE,
-                      estimand = c("raw", "none", "SATE", "SATT", "SACDE", "SCDE"),
+                      estimand = c("raw", "none", "total", "SACDE", "SCDE"),
                       engine_args = list(),
                       weights_args = list(),
                       wts_omit = NULL,
@@ -251,7 +251,7 @@ DAGassist <- function(dag,
   
   #ensure default to raw when no estimand arg is passed
   #and llow multiple estimands (e.g., c("ATE","ACDE"))
-  .allowed_estimands <- c("raw", "none", "SATE", "SATT", "SACDE", "SCDE")
+  .allowed_estimands <- c("raw", "none", "SATE", "SACDE", "SCDE")
   # if estimand=NULL, default to raw. do not default to multi-estimand
   if (missing(estimand) || is.null(estimand) || length(estimand) == 0L) {
     estimand <- "raw"

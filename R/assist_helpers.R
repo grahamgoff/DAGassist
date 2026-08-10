@@ -152,10 +152,6 @@
     }
   }
   
-  if (!identical(ests, "RAW")) {
-    names(model_formulas) <- .dagassist_display_names(names(model_formulas))
-  }
-  
   if ("DIRECT" %in% ests) {
     alab <- .dagassist_model_name_labels("DIRECT")
     for (nm in names(model_formulas)) {
@@ -163,6 +159,10 @@
       # build sequential_g formula from base model formula
       model_formulas[[nm_acde]] <- .dagassist_formula_for_model_name(report, nm_acde)
     }
+  }
+  
+  if (!identical(ests, "RAW")) {
+    names(model_formulas) <- .dagassist_display_names(names(model_formulas))
   }
   
   models_df <- data.frame(
@@ -1076,10 +1076,6 @@
 .dagassist_display_names <- function(nms) {
   out <- nms
   
-  # sequential-g / direct-effect columns
-  out[out == "Raw (direct)"] <- "Direct (Raw)"
-  out[out == "Weighted (direct)"] <- "Direct (Weighted)"
-  
   # IPW columns: "<spec> (total)" -> "Total <spec> (Weighted)"
   wt <- grepl(" \\(total\\)$", out)
   out[wt] <- paste0("Total ", sub(" \\(total\\)$", "", out[wt]), " (Weighted)")
@@ -1098,151 +1094,150 @@
   (sum(w)^2) / sum(w^2)
 }
 
-.dagassist_print_weight_diagnostics <- function(mods_full,
-                                                ess_warn_frac = 0.50,
-                                                extreme_ratio = 20) {
-  #fail fast if the model list is missing or unnamed
-  if (is.null(mods_full) || !length(mods_full) || is.null(names(mods_full))) return(invisible(NULL))
-  # only print diagnostics for weighted columns. identify weighted cols by col name 
-  keep <- grepl("^Total .* \\(Weighted\\)$", names(mods_full))
-  mods_use <- mods_full[keep]
-  if (!length(mods_use)) return(invisible(NULL))
-  # header for the diagnostics block
-  cat("\nWeight diagnostics:\n")
-  cat("  legend: w range reports the min-max weights by group; ESS is kish effective sample size.\n")
-  
-  #helper to split a treatment vector into control vs treated indices.
-  #structured to handle logical / 0-1 numeric / factors without assuming labels
-  .split_treat <- function(tr) {
-    # return null if treatment is missing
-    if (is.null(tr) || !length(tr)) return(NULL)
-    # if treatment is logical, false = control, true = treated
-    if (is.logical(tr)) {
-      return(list(control = which(tr %in% FALSE), treated = which(tr %in% TRUE)))
-    }
-    # if treatment is numeric/integer, ONLY split when it is truly 0/1-coded
-    if (is.numeric(tr) || inherits(tr, "integer")) {
-      u <- sort(unique(tr))
-      if (length(u) >= 2 && all(u %in% c(0, 1))) {
-        return(list(control = which(tr == 0), treated = which(tr == 1)))
-      }
-      return(NULL)
-    }
-    #for factor/character treatment, coerce to factor, then pick levels
-    if (is.character(tr)) tr <- factor(tr)
-    if (is.factor(tr)) {
-      lv <- levels(tr)
-      if (length(lv) >= 2) {
-        # if levels are literally "0"/"1", use those
-        if ("0" %in% lv && "1" %in% lv) {
-          return(list(control = which(tr == "0"), treated = which(tr == "1")))
-        }
-        #otherwise, first level = control, second level = treated
-        return(list(control = which(tr == lv[1]), treated = which(tr == lv[2])))
-      }
-    }
-    NULL #cannot split into groups if nothing matched
+#helper to split a treatment vector into control vs treated indices.
+#structured to handle logical / 0-1 numeric / factors without assuming labels
+#moved from within .dagassist_print_weight_diagnostics so it can be used elsewhere.
+.dagassist_split_treat <- function(tr) {
+  # return null if treatment is missing
+  if (is.null(tr) || !length(tr)) return(NULL)
+  # if treatment is logical, false = control, true = treated
+  if (is.logical(tr)) {
+    return(list(control = which(tr %in% FALSE), treated = which(tr %in% TRUE)))
   }
+  # if treatment is numeric/integer, ONLY split when it is truly 0/1-coded
+  if (is.numeric(tr) || inherits(tr, "integer")) {
+    u <- sort(unique(tr))
+    if (length(u) >= 2 && all(u %in% c(0, 1))) {
+      return(list(control = which(tr == 0), treated = which(tr == 1)))
+    }
+    return(NULL)
+  }
+  #for factor/character treatment, coerce to factor, then pick levels
+  if (is.character(tr)) tr <- factor(tr)
+  if (is.factor(tr)) {
+    lv <- levels(tr)
+    if (length(lv) >= 2) {
+      # if levels are literally "0"/"1", use those
+      if ("0" %in% lv && "1" %in% lv) {
+        return(list(control = which(tr == "0"), treated = which(tr == "1")))
+      }
+      #otherwise, first level = control, second level = treated
+      return(list(control = which(tr == lv[1]), treated = which(tr == lv[2])))
+    }
+  }
+  NULL #cannot split into groups if nothing matched
+}
+
+.dagassist_weight_diagnostics_df <- function(mods_full,
+                                             ess_warn_frac = 0.50,
+                                             extreme_ratio = 20) {
+  if (is.null(mods_full) || !length(mods_full) || is.null(names(mods_full))) return(NULL)
+  mods_use <- mods_full[grepl("^Total .* \\(Weighted\\)$", names(mods_full))]
+  if (!length(mods_use)) return(NULL)
   
-  #helper done-resume normal processing
+  blank <- function(nm, note) data.frame(
+    model = nm, note = note, n = NA_integer_,
+    w_min = NA_real_, w_median = NA_real_, w_max = NA_real_,
+    ess = NA_real_, ess_frac = NA_real_,
+    ess_treated = NA_real_, ess_control = NA_real_,
+    n_treated = NA_integer_, n_control = NA_integer_,
+    w_min_treated = NA_real_, w_max_treated = NA_real_,
+    w_min_control = NA_real_, w_max_control = NA_real_,
+    flags = NA_character_, stringsAsFactors = FALSE)
+  
+  rows <- list()
   for (nm in names(mods_use)) {
-    # grab the object for this weighted column
     m <- mods_use[[nm]]
-    # skip placeholder error objects
     if (inherits(m, "DAGassist_fit_error")) next
-  
-    ## EXTRACT WEIGHTS
-    # prefer dagassist attributes because weighted columns may be marginaleffects objects
+    
     w <- attr(m, "dagassist_weights", exact = TRUE)
-    # if weights attribute missing, try pulling them from a saved weightit object
     if (is.null(w)) {
       wtobj <- attr(m, "dagassist_weightit", exact = TRUE)
-      if (!is.null(wtobj) && is.list(wtobj) && "weights" %in% names(wtobj)) {
-        w <- wtobj$weights
-      }
+      if (!is.null(wtobj) && is.list(wtobj) && "weights" %in% names(wtobj)) w <- wtobj$weights
     }
-    # final fallback: try stats::weights() for actual model objects
-    if (is.null(w)) {
-      w <- tryCatch(stats::weights(m), error = function(e) NULL)
-    }
-    # if still missing, helpful warning and continue
-    if (is.null(w)) {
-      cat("  ", nm, ": (could not extract weights)\n", sep = "")
-      next
-    }
-
-    ## keep only finite weights (drop na/inf)
-    w_ok <- w[is.finite(w)]
-    n <- length(w_ok)
-    # if nothing finite, print and move on
-    if (!n) {
-      cat("  ", nm, ": (no finite weights)\n", sep = "")
-      next
-    }
+    if (is.null(w)) w <- tryCatch(stats::weights(m), error = function(e) NULL)
+    if (is.null(w)) { rows[[nm]] <- blank(nm, "could not extract weights"); next }
     
-    ## overall summaries
-    # ess uses kish ess: (sum w)^2 / sum(w^2)
-    ess_all <- .dagassist_ess(w_ok)
-    # ess as a fraction of n  
+    w_ok <- w[is.finite(w)]; n <- length(w_ok)
+    if (!n) { rows[[nm]] <- blank(nm, "no finite weights"); next }
+    
+    ess_all  <- .dagassist_ess(w_ok)
     ess_frac <- if (is.finite(ess_all) && n > 0) ess_all / n else NA_real_
-    # overall weight range + median (median is used for the "extreme" flag)
     w_min <- suppressWarnings(min(w_ok, na.rm = TRUE))
     w_med <- suppressWarnings(stats::median(w_ok, na.rm = TRUE))
     w_max <- suppressWarnings(max(w_ok, na.rm = TRUE))
     
-    ## by-group summaries
-    # weightit stores the treatment vector as wtobj$treat for binary treatments
     wtobj <- attr(m, "dagassist_weightit", exact = TRUE)
-    tr <- NULL
-    if (!is.null(wtobj) && is.list(wtobj) && "treat" %in% names(wtobj)) {
-      tr <- wtobj$treat
-    }
-    # only attempt a split if data/weight col lengths align
-    grp <- NULL
-    if (!is.null(tr) && length(tr) == length(w)) {
-      grp <- .split_treat(tr)
-    }
+    tr  <- if (!is.null(wtobj) && is.list(wtobj) && "treat" %in% names(wtobj)) wtobj$treat else NULL
+    grp <- if (!is.null(tr) && length(tr) == length(w)) .dagassist_split_treat(tr) else NULL
     
-    # small inline flags with warnings suppressed to keep console clean
-    #low_ess: ess is less than ess_warn_frac * n
-    #extreme_w: max weight is huge relative to median weight
-    flags <- character(0)
-    if (is.finite(ess_frac) && ess_frac < ess_warn_frac) flags <- c(flags, "LOW_ESS")
-    if (is.finite(w_max) && is.finite(w_med) && w_med > 0 && w_max > extreme_ratio * w_med) {
-      flags <- c(flags, "EXTREME_W")
-    }
-    flag_str <- if (length(flags)) paste0(" [", paste(flags, collapse = ","), "]") else ""
+    ess_t <- ess_c <- NA_real_; n_t <- n_c <- NA_integer_
+    w_min_t <- w_max_t <- w_min_c <- w_max_c <- NA_real_
     
     if (!is.null(grp) && length(grp$control) && length(grp$treated)) {
-      # split weights into control vs treated
-      wc <- w[grp$control]; wt <- w[grp$treated]
-      # keep finite weights within each group
-      wc_ok <- wc[is.finite(wc)]; wt_ok <- wt[is.finite(wt)]
-      # group-specific ess
-      ess_c <- .dagassist_ess(wc_ok)
-      ess_t <- .dagassist_ess(wt_ok)
-      # one tight line per weighted model (ranges + ess)
+      wt_ok <- w[grp$treated]; wt_ok <- wt_ok[is.finite(wt_ok)]
+      wc_ok <- w[grp$control]; wc_ok <- wc_ok[is.finite(wc_ok)]
+      ess_t <- .dagassist_ess(wt_ok); n_t <- length(wt_ok)
+      ess_c <- .dagassist_ess(wc_ok); n_c <- length(wc_ok)
+      w_min_t <- suppressWarnings(min(wt_ok, na.rm = TRUE))
+      w_max_t <- suppressWarnings(max(wt_ok, na.rm = TRUE))
+      w_min_c <- suppressWarnings(min(wc_ok, na.rm = TRUE))
+      w_max_c <- suppressWarnings(max(wc_ok, na.rm = TRUE))
+    }
+    
+    flags <- character(0)
+    if (is.finite(ess_frac) && ess_frac < ess_warn_frac) flags <- c(flags, "LOW_ESS")
+    if (is.finite(w_max) && is.finite(w_med) && w_med > 0 && w_max > extreme_ratio * w_med)
+      flags <- c(flags, "EXTREME_W")
+    
+    rows[[nm]] <- data.frame(
+      model = nm, note = NA_character_, n = n,
+      w_min = w_min, w_median = w_med, w_max = w_max,
+      ess = ess_all, ess_frac = ess_frac,
+      ess_treated = ess_t, ess_control = ess_c,
+      n_treated = n_t, n_control = n_c,
+      w_min_treated = w_min_t, w_max_treated = w_max_t,
+      w_min_control = w_min_c, w_max_control = w_max_c,
+      flags = if (length(flags)) paste(flags, collapse = ",") else NA_character_,
+      stringsAsFactors = FALSE)
+  }
+  
+  if (!length(rows)) return(NULL)
+  do.call(rbind, c(rows, list(make.row.names = FALSE)))
+}
+
+.dagassist_print_weight_diagnostics <- function(mods_full,
+                                                ess_warn_frac = 0.50,
+                                                extreme_ratio = 20) {
+  df <- .dagassist_weight_diagnostics_df(mods_full, ess_warn_frac, extreme_ratio)
+  if (is.null(df) || !nrow(df)) return(invisible(NULL))
+  
+  cat("\nWeight diagnostics:\n")
+  cat("  legend: w range reports the min-max weights by group; ESS is kish effective sample size.\n")
+  
+  for (i in seq_len(nrow(df))) {
+    r <- df[i, ]
+    if (!is.na(r$note)) { cat("  ", r$model, ": (", r$note, ")\n", sep = ""); next }
+    
+    flag_str <- if (is.na(r$flags)) "" else paste0(" [", r$flags, "]")
+    
+    if (!is.na(r$ess_treated) && !is.na(r$ess_control)) {
       cat(sprintf(
         "  %s: w range treated=%s..%s control=%s..%s | ess treated=%s/%d control=%s/%d | ess(all)=%s/%d%s\n",
-        nm,
-        format(signif(min(wt_ok, na.rm = TRUE), 4)),
-        format(signif(max(wt_ok, na.rm = TRUE), 4)),
-        format(signif(min(wc_ok, na.rm = TRUE), 4)),
-        format(signif(max(wc_ok, na.rm = TRUE), 4)),
-        ifelse(is.finite(ess_t), format(round(ess_t, 1)), "NA"), length(wt_ok),
-        ifelse(is.finite(ess_c), format(round(ess_c, 1)), "NA"), length(wc_ok),
-        ifelse(is.finite(ess_all), format(round(ess_all, 1)), "NA"), n,
-        flag_str
-      ))
+        r$model,
+        format(signif(r$w_min_treated, 4)), format(signif(r$w_max_treated, 4)),
+        format(signif(r$w_min_control, 4)), format(signif(r$w_max_control, 4)),
+        ifelse(is.finite(r$ess_treated), format(round(r$ess_treated, 1)), "NA"), r$n_treated,
+        ifelse(is.finite(r$ess_control), format(round(r$ess_control, 1)), "NA"), r$n_control,
+        ifelse(is.finite(r$ess), format(round(r$ess, 1)), "NA"), r$n,
+        flag_str))
     } else {
       cat(sprintf(
         "  %s: w range=%s..%s | ESS (weighted)=%s%s\n",
-        nm,
-        format(signif(w_min, 4)),
-        format(signif(w_max, 4)),
-        ifelse(is.finite(ess_all), format(round(ess_all, 2)), "NA"),
-        flag_str
-      ))
+        r$model,
+        format(signif(r$w_min, 4)), format(signif(r$w_max, 4)),
+        ifelse(is.finite(r$ess), format(round(r$ess, 2)), "NA"),
+        flag_str))
     }
   }
   invisible(NULL)

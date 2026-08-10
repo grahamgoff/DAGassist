@@ -336,6 +336,10 @@ DAGassist <- function(dag,
     mods_full <- .build_named_mods(report)
     models_df_full <- .build_models_df(report)
     
+    #initialize empty for later
+    balance_df <- NULL
+    weights_df <- NULL
+    
     # export to file or return to console
     file_attr <- if (!is.null(out)) normalizePath(out, mustWork = FALSE) else NULL
     
@@ -347,6 +351,8 @@ DAGassist <- function(dag,
         roles_df = report$roles_display,
         models_df = models_df_full,
         models = mods_full,
+        balance_df = balance_df,
+        weights_df = weights_df,
         min_sets = report$controls_minimal_all,
         canon = report$controls_canonical,
         unevaluated_str= report$unevaluated_str,
@@ -374,6 +380,8 @@ DAGassist <- function(dag,
         coef_omit = report$settings$coef_omit,
         coef_rename = labmap,
         models = mods_full,
+        balance_df = balance_df,
+        weights_df = weights_df,
         min_sets = report$controls_minimal_all,
         canon = report$controls_canonical,
         unevaluated_str= report$unevaluated_str,
@@ -390,6 +398,8 @@ DAGassist <- function(dag,
         coef_omit = report$settings$coef_omit,
         coef_rename = labmap,
         models = mods_full,
+        balance_df = balance_df,
+        weights_df = weights_df,
         min_sets = report$controls_minimal_all,
         canon = report$controls_canonical,
         unevaluated_str= report$unevaluated_str,
@@ -406,6 +416,8 @@ DAGassist <- function(dag,
         coef_omit = report$settings$coef_omit,
         coef_rename = labmap,
         models = mods_full,
+        balance_df = balance_df,
+        weights_df = weights_df,
         min_sets = report$controls_minimal_all,
         canon = report$controls_canonical,
         unevaluated_str= report$unevaluated_str,
@@ -764,12 +776,16 @@ DAGassist <- function(dag,
   #expensive and the console printer will build models later
   mods_full <- NULL
   models_df_full <- NULL
+  balance_df <- NULL
+  weights_df <- NULL
   
   need_export_objects <- !identical(type, "console")
   
   if (isTRUE(need_export_objects)) {
     mods_full <- .build_named_mods(report)
     models_df_full <- .build_models_df(report)
+    balance_df <- .dagassist_balance_diagnostics_df(report)
+    weights_df <- .dagassist_weight_diagnostics_df(mods_full)
     
     # cache to prevent refitting if the object is printed later.
     report$models_full <- mods_full
@@ -788,6 +804,8 @@ DAGassist <- function(dag,
       roles_df = report$roles_display,
       models_df = models_df_full,
       models = mods_full,
+      balance_df = balance_df,
+      weights_df = weights_df,
       min_sets = report$controls_minimal_all,
       canon = report$controls_canonical,
       unevaluated_str = report$unevaluated_str,
@@ -819,7 +837,9 @@ DAGassist <- function(dag,
       roles_df = report$roles_display,
       coef_omit  = report$settings$coef_omit,
       coef_rename = labmap,
-      models = mods_full,                
+      models = mods_full,   
+      balance_df = balance_df,
+      weights_df = weights_df,
       min_sets = report$controls_minimal_all,
       canon = report$controls_canonical,
       unevaluated_str = report$unevaluated_str,
@@ -835,7 +855,9 @@ DAGassist <- function(dag,
       roles_df = report$roles_display,
       coef_omit  = report$settings$coef_omit,
       coef_rename = labmap,
-      models = mods_full,         
+      models = mods_full,      
+      balance_df = balance_df,
+      weights_df = weights_df,
       min_sets = report$controls_minimal_all,
       canon = report$controls_canonical,
       unevaluated_str = report$unevaluated_str,
@@ -852,7 +874,9 @@ DAGassist <- function(dag,
       roles_df = report$roles_display,
       coef_omit  = report$settings$coef_omit,
       coef_rename = labmap,
-      models = mods_full,         
+      models = mods_full,    
+      balance_df = balance_df,
+      weights_df = weights_df,
       min_sets = report$controls_minimal_all,
       canon = report$controls_canonical,
       unevaluated_str = report$unevaluated_str,

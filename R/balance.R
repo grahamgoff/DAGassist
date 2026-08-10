@@ -137,20 +137,19 @@
   df
 }
 
-#printer (mirrors .dagassist_print_weight_diagnostics) 
-.dagassist_print_balance_diagnostics <- function(x, threshold = 0.1,
-                                                 include_outcome = FALSE) {
+.dagassist_balance_diagnostics_df <- function(x, threshold = 0.1,
+                                              include_outcome = FALSE) {
   data <- x$.__data
-  if (is.null(data) || !is.data.frame(data) || !nrow(data)) return(invisible(NULL))
+  if (is.null(data) || !is.data.frame(data) || !nrow(data)) return(NULL)
   fmls <- x$formulas
-  if (is.null(fmls) || is.null(fmls$original)) return(invisible(NULL))
+  if (is.null(fmls) || is.null(fmls$original)) return(NULL)
   
   exp_nm <- tryCatch(get_by_role(x$roles, "exposure"), error = function(e) NA_character_)
   out_nm <- tryCatch(get_by_role(x$roles, "outcome"),  error = function(e) NA_character_)
   engine_args <- x$settings$engine_args
   if (!is.list(engine_args)) engine_args <- list()
   
-  # comparison specs (besides Original)
+  # --- specs: identical to balance.R:154-169 ---
   specs <- list()
   if (length(fmls$minimal_list)) {
     for (i in seq_along(fmls$minimal_list))
@@ -166,7 +165,7 @@
       specs[[lbl]] <- fmls$canonical_excl[[nm]]
     }
   }
-  if (!length(specs)) return(invisible(NULL))
+  if (!length(specs)) return(NULL)
   
   covars_of <- function(fml) {
     sp <- .strip_fixest_parts(fml)
@@ -174,21 +173,59 @@
     if (!include_outcome && !is.na(out_nm)) v <- setdiff(v, out_nm)
     intersect(unique(v), names(data))
   }
+  
   rows_orig <- .dagassist_complete_rows(
     data, .dagassist_spec_vars(fmls$original, data, exp_nm, out_nm, engine_args))
+  
+  one <- function(ref_label, rows_ref, fml_ref, cmp_label, rows_cmp, fml_cmp) {
+    bt <- .dagassist_balance_compare(
+      data, rows_ref, rows_cmp,
+      union(covars_of(fml_ref), covars_of(fml_cmp)), threshold)
+    if (is.null(bt) || !nrow(bt)) return(NULL)
+    data.frame(reference = ref_label, comparison = cmp_label,
+               n_ref = sum(rows_ref), n_cmp = sum(rows_cmp),
+               bt, stringsAsFactors = FALSE)
+  }
+  
+  out <- list()
+  for (nm in names(specs)) {
+    rows_cmp <- .dagassist_complete_rows(
+      data, .dagassist_spec_vars(specs[[nm]], data, exp_nm, out_nm, engine_args))
+    out[[length(out) + 1L]] <- one("Original", rows_orig, fmls$original,
+                                   nm, rows_cmp, specs[[nm]])
+  }
+  min1 <- if (length(fmls$minimal_list)) fmls$minimal_list[[1]] else fmls$minimal
+  if (!is.null(min1) && !is.null(fmls$canonical) && !.same_formula(min1, fmls$canonical)) {
+    rows_min <- .dagassist_complete_rows(
+      data, .dagassist_spec_vars(min1, data, exp_nm, out_nm, engine_args))
+    rows_can <- .dagassist_complete_rows(
+      data, .dagassist_spec_vars(fmls$canonical, data, exp_nm, out_nm, engine_args))
+    out[[length(out) + 1L]] <- one("Minimal 1", rows_min, min1,
+                                   "Canonical", rows_can, fmls$canonical)
+  }
+  
+  out <- Filter(Negate(is.null), out)
+  if (!length(out)) return(NULL)
+  do.call(rbind, c(out, list(make.row.names = FALSE)))
+}
+
+#printer (mirrors .dagassist_print_weight_diagnostics) 
+.dagassist_print_balance_diagnostics <- function(x, threshold = 0.1,
+                                                 include_outcome = FALSE) {
+  df <- .dagassist_balance_diagnostics_df(x, threshold, include_outcome)
+  if (is.null(df) || !nrow(df)) return(invisible(NULL))
   
   cat("\nBalance diagnostics:\n")
   cat("  legend: (S)MD compares covariate means between the Original complete-case sample\n")
   cat(sprintf("          and each spec's sample; |(S)MD| > %.2f flags a covariate whose sample\n", threshold))
   cat("          composition shifts (binary vars use a raw difference in means).\n")
   
-  emit_one <- function(ref_label, rows_ref, fml_ref, cmp_label, rows_cmp, fml_cmp) {
-    covars <- union(covars_of(fml_ref), covars_of(fml_cmp))
-    n_ref <- sum(rows_ref); n_cmp <- sum(rows_cmp)
-    head  <- sprintf("  %s vs %s: n = %d vs %d", ref_label, cmp_label, n_ref, n_cmp)
-    bt <- .dagassist_balance_compare(data, rows_ref, rows_cmp, covars, threshold)
-    if (is.null(bt) || !nrow(bt)) { cat(head, " (no assessable covariates)\n", sep = ""); return(invisible()) }
-    flagged <- bt[bt$flagged, , drop = FALSE]
+  key <- paste(df$reference, df$comparison, sep = " || ")
+  for (k in unique(key)) {
+    blk  <- df[key == k, , drop = FALSE]
+    head <- sprintf("  %s vs %s: n = %d vs %d",
+                    blk$reference[1], blk$comparison[1], blk$n_ref[1], blk$n_cmp[1])
+    flagged <- blk[blk$flagged, , drop = FALSE]
     if (!nrow(flagged)) {
       cat(head, clr_green("  balanced"), "\n", sep = "")
     } else {
@@ -200,23 +237,6 @@
         cat(clr_yellow(sprintf("      %-24s (S)MD = %s%s\n", flagged$variable[i], val, tag)))
       }
     }
-  }
-  
-  # (1)-(3): Original vs each spec
-  for (nm in names(specs)) {
-    rows_cmp <- .dagassist_complete_rows(
-      data, .dagassist_spec_vars(specs[[nm]], data, exp_nm, out_nm, engine_args))
-    emit_one("Original", rows_orig, fmls$original, nm, rows_cmp, specs[[nm]])
-  }
-  
-  # (4): Minimal 1 vs Canonical (only if both exist and differ)
-  min1 <- if (length(fmls$minimal_list)) fmls$minimal_list[[1]] else fmls$minimal
-  if (!is.null(min1) && !is.null(fmls$canonical) && !.same_formula(min1, fmls$canonical)) {
-    rows_min <- .dagassist_complete_rows(
-      data, .dagassist_spec_vars(min1, data, exp_nm, out_nm, engine_args))
-    rows_can <- .dagassist_complete_rows(
-      data, .dagassist_spec_vars(fmls$canonical, data, exp_nm, out_nm, engine_args))
-    emit_one("Minimal 1", rows_min, min1, "Canonical", rows_can, fmls$canonical)
   }
   invisible(NULL)
 }

@@ -405,7 +405,7 @@ DAGassist(dag_model,
           formula = lm(children ~ edu_year + age + class + gender + 
                          immigrant + urban + birth_control + income + 
                          married + job_stability_t + contract + pref, data = dat),
-          estimand = c("total", "SACDE"),
+          estimand = c("total", "direct"),
           type = "dotwhisker")
 ```
 

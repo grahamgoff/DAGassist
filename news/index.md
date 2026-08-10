@@ -1,6 +1,6 @@
 # Changelog
 
-## DAGassist v0.3.0
+## DAGassist v0.2.9
 
 #### Highlights
 
@@ -16,7 +16,22 @@
   comparisons.
 - Additional robustness feature: `add_edges_robustness` to evaluate
   robustness to hypothesized missing edges.
+- Extended support for balance and weight diagnostics under non-console
+  export formats.
+- Changed estimand terminology for methodological accuracy (SATE -\>
+  total effect; SACDE -\> direct effect), as DAGassist cannot recover a
+  true SATE or SACDE from continuous treatments.
 - Bug fixes
+
+### Breaking changes
+
+- Changed valid estimand parameter values (“SATE” -\> “total”; “SACDE”
+  -\> “direct”).
+- Phased out support for “ATT” estimand due to estimand variability
+  across binary and continuous treatments. Future updates may
+  reintroduce the ATT estimand.
+
+This is the CRAN version.
 
 ## DAGassist v0.2.8
 
@@ -36,8 +51,6 @@ CRAN release: 2025-11-11
 #### Highlights
 
 - Fixed broken link in vignette for CRAN resubmission
-
-This is the CRAN version.
 
 ## DAGassist v0.2.6
 

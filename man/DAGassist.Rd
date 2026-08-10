@@ -23,7 +23,7 @@ DAGassist(
   omit_intercept = TRUE,
   omit_factors = TRUE,
   bivariate = FALSE,
-  estimand = c("raw", "none", "total", "SACDE", "SCDE"),
+  estimand = c("raw", "none", "total", "direct"),
   engine_args = list(),
   weights_args = list(),
   wts_omit = NULL,
@@ -111,12 +111,12 @@ This parameter only suppresses factor \strong{output}; factor terms still enter 
 in the comparison table in addition to the user's original and DAG-derived models (default \code{FALSE}).}
 
 \item{estimand}{character vector; causal estimand(s) for reported columns. Any of:
-\code{"raw"} (default), \code{"total"}, \code{"SACDE"} (alias \code{"SCDE"}), or \code{"none"}.
+\code{"raw"} (default), \code{"total"}, \code{"direct"}, or \code{"none"}.
 \itemize{
 \item \code{"raw"}: naive regression fits implied by the supplied engine/formulas.
 \item \code{"total"}: inverse-probability weighted versions of each comparison model
 (via \pkg{WeightIt}) to target sample ATE/ATT.
-\item \code{"SACDE"}/\code{"SCDE"}: for DAGs with mediator(s), adds sequential g-estimation columns:
+\item \code{"direct"}: for DAGs with mediator(s), adds sequential g-estimation columns:
 (i) unweighted sequential-g and (ii) IPW-weighted sequential-g (weights estimated
 without conditioning on mediators) to target the \strong{sample average controlled direct effect}.
 }}
@@ -126,7 +126,7 @@ If \code{formula} is an engine call, arguments from the call are merged with
 \code{engine_args} (call values take precedence).}
 
 \item{weights_args}{list; arguments forwarded to \pkg{WeightIt} when computing IPW weights for
-\code{"total"} and for the weighted SACDE refit. If \code{trim_at} is supplied, weights are
+\code{"total"} and for the weighted direct effect refit. If \code{trim_at} is supplied, weights are
 winsorized at the requested quantile before refitting.}
 
 \item{wts_omit}{character vector; terms to omit from the weighting (treatment)
@@ -137,14 +137,14 @@ in the outcome model while preventing them from entering the propensity/weight m
 and estimand arguments. Fails gracefully with a helpful error when users specify ACDE estimand
 for a model without mediators.}
 
-\item{acde}{list; options for the controlled direct effect workflow (estimands \code{"SACDE"}/\code{"SCDE"}).
+\item{acde}{list; options for the controlled direct effect workflow (estimand \code{"direct"}).
 Users can override parts of the sequential g-estimation specification with named elements:
 \code{m} (mediators), \code{x} (baseline covariates), \code{z} (intermediate covariates),
 \code{fe} (fixed-effects variables), \code{fe_as_factor} (wrap \code{fe} as \code{factor()}), and
 \code{include_descendants} (treat descendants of mediators as mediators).}
 
 \item{directeffects_args}{Named list of arguments forwarded to \code{\link[DirectEffects:sequential_g]{DirectEffects::sequential_g()}}
-when \code{estimand} includes \code{"SACDE"} (e.g., simulation/bootstrap controls,
+when \code{estimand} includes \code{"direct"} (e.g., simulation/bootstrap controls,
 variance estimator options).}
 
 \item{uncertain_edges}{Character vector of edges with unknown direction,
@@ -191,7 +191,7 @@ builds minimal and canonical adjustment sets, fits comparable models, and
 renders a compact report in several formats (console, LaTeX fragment, DOCX,
 XLSX, plain text). It can also target sample-average estimands via weighting
 (e.g., total) and recover sample average controlled direct effects via
-sequential g-estimation (e.g., SACDE).
+sequential g-estimation.
 }
 \details{
 \strong{Engine-call parsing.} If \code{formula} is a call (e.g., \code{feols(Y ~ X | fe, data=df)}),
@@ -242,7 +242,7 @@ it uses \code{tabularray} long tables and will include any requested Canon. (-NC
 (pretty tables), \code{{broom}} (fallback tidying), \code{{rmarkdown}} + \strong{pandoc} (DOCX),
 \code{{writexl}} (XLSX), \code{{dotwhisker}}/\code{{ggplot2}} for plotting.
 
-\strong{Raw vs Weighted SACDE.}
+\strong{Raw vs Weighted Direct Effect}
 The unweighted sequential-g estimator in \pkg{DirectEffects} uses linear regression in its second stage.
 By the Frisch–Waugh–Lovell theorem, this implies an estimand that is weighted by the conditional variance
 of the (residualized) exposure given controls—i.e., a regression-weighted average of unit-level effects,
@@ -271,7 +271,7 @@ if (requireNamespace("dagitty", quietly = TRUE)) {
 
   # 3) Mediator case: sequential g-estimation (requires DirectEffects)
   if (requireNamespace("DirectEffects", quietly = TRUE)) {
-    r3 <- DAGassist(g, lm(Y ~ X + Z + M, data = df), estimand = "SACDE")
+    r3 <- DAGassist(g, lm(Y ~ X + Z + M, data = df), estimand = "direct")
   }
 
   # 4) File export (LaTeX fragment)

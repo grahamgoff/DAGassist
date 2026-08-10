@@ -99,12 +99,12 @@ df <- data.frame(A, B, Z, X, M, Y, C)
 
 ## Example
 
-Simply provide a `dagitty()` object and a regression call and `DAGassist` will create a report classifying variables by causal role, and compare the specified regression to minimal and canonical models.
+Simply provide a `dagitty()` object and a regression call and `DAGassist` will create a report classifying variables by causal role, and compare the specified regression to minimal and canonical models. 
 
 ```{r run}
 DAGassist(dag = dag_model, 
           formula = lm(Y ~ X + M + C + Z + A + B, data = df),
-          estimand = c("total", "SACDE")
+          estimand = c("total", "direct")
 )
 
 ```
@@ -114,7 +114,7 @@ Optionally, users can generate visual output via dotwhisker plots:
 ```{r dotwhisker, warning=FALSE, echo=FALSE}
 DAGassist(dag = dag_model, 
           formula = lm(Y ~ X + M + C + Z + A + B, data = df),
-          estimand = c("total", "SACDE"),
+          estimand = c("total", "direct"),
           type = "dotwhisker"
 )
 ```

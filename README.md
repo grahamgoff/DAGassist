@@ -57,7 +57,7 @@ and compare the specified regression to minimal and canonical models.
 ``` r
 DAGassist(dag = dag_model, 
           formula = lm(Y ~ X + M + C + Z + A + B, data = df),
-          estimand = c("total", "SACDE")
+          estimand = c("total", "direct")
 )
 #> DAGassist Report: 
 #> 

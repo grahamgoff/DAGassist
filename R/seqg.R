@@ -442,7 +442,7 @@ glance.dagassist_seqg <- function(x, ...) {
 # Build sequential_g formula (y ~ A + X | Z | M)
 .dagassist_build_acde_formula <- function(base_fml, x, acde) {
   if (is.null(x$dag)) {
-    stop("SACDE requires storing the evaluated DAG on the report as `x$dag`.", call. = FALSE)
+    stop("Direct effect estimation requires storing the evaluated DAG on the report as `x$dag`.", call. = FALSE)
   }
   dag <- x$dag
   exp_nm <- get_by_role(x$roles, "exposure")
@@ -451,7 +451,7 @@ glance.dagassist_seqg <- function(x, ...) {
   # mediators
   m_terms <- .dagassist_infer_acde_mediators(x, acde)
   if (!length(m_terms)) {
-    stop("SACDE requested, but no mediator(s) could be inferred. Provide sacde = list(m = c('M1','M2')).",
+    stop("Direct effect requested, but no mediator(s) could be inferred.",
          call. = FALSE)
   }
   
@@ -518,7 +518,7 @@ glance.dagassist_seqg <- function(x, ...) {
   # if no mediators at this point, helpful error code
   if (!length(m_terms)) {
     stop(
-      "SACDE requested, but mediator terms are empty after internal filtering. ",
+      "Direct effect requested, but mediator terms are empty after internal filtering. ",
       "This usually happens when DAGassist was called without `data=` (so `x$.__data` is NULL). ",
       "Either (i) call DAGassist(..., data = <your data.frame>), or (ii) provide `acde = list(m = ...)`.",
       call. = FALSE
@@ -584,15 +584,15 @@ glance.dagassist_seqg <- function(x, ...) {
   }
   
   if (!requireNamespace("DirectEffects", quietly = TRUE)) {
-    stop("SACDE requires the 'DirectEffects' package.", call. = FALSE)
+    stop("Estimating the direct effect requires the 'DirectEffects' package.", call. = FALSE)
   }
   if (!requireNamespace("WeightIt", quietly = TRUE)) {
-    stop("SACDE requires the 'WeightIt' package.", call. = FALSE)
+    stop("Estimating the direct effect requires the 'WeightIt' package.", call. = FALSE)
   }
   
   data0 <- x$.__data
   if (is.null(data0)) {
-    stop("SACDE requires calling DAGassist(..., data = <data.frame>).", call. = FALSE)
+    stop("Estimating the direct effect requires calling DAGassist(..., data = <data.frame>).", call. = FALSE)
   }
   
   exp_nm <- get_by_role(x$roles, "exposure")
@@ -601,30 +601,30 @@ glance.dagassist_seqg <- function(x, ...) {
   # ---- choose Canonical spec ONLY ----
   if (!("Canonical" %in% names(mods))) {
     stop(
-      "SACDE requires a Canonical model column to exist.\n",
+      "Estimating the direct effect requires a Canonical model column to exist.\n",
       "DAGassist could not find a 'Canonical' model among the fitted specs.",
       call. = FALSE
     )
   }
   base_fml <- .dagassist_formula_for_model_name(x, "Canonical")
-  if (is.null(base_fml)) stop("Could not recover Canonical formula for SACDE.", call. = FALSE)
+  if (is.null(base_fml)) stop("Could not recover Canonical formula for direct effect", call. = FALSE)
   
-  # Guardrail 1: do not attempt SACDE when exposure is an interaction term
+  #do not attempt direct when exposure is an interaction term
   if (.dagassist_is_interaction_exposure(exp_nm)) {
     stop(
-      "SACDE recovery is not supported when the exposure is an interaction term (e.g., X1:X2 or X1*X2).\n\n",
+      "Direct effect recovery is not supported when the exposure is an interaction term (e.g., X1:X2 or X1*X2).\n\n",
       "Precompute a single treatment variable in your data and use that as the exposure node, ",
       "or set estimand = 'raw'/'none'.",
       call. = FALSE
     )
   }
   
-  # Guardrail 2: SACDE recovery is only supported for linear outcome models
+  #direct recovery is only supported for linear outcome models
   base_fit <- mods[["Canonical"]]
   if (.dagassist_is_nonlinear_fit(base_fit, engine = x$settings$engine)) {
     stop(
-      "SACDE recovery is currently blocked for non-linear outcome models (e.g., glm with non-gaussian family, glmer).\n\n",
-      "SACDE/sequential-g in DAGassist is implemented for linear outcome models. ",
+      "Direct effect recovery is currently blocked for non-linear outcome models (e.g., glm with non-gaussian family, glmer).\n\n",
+      "Direct effect/sequential-g in DAGassist is implemented for linear outcome models. ",
       "Fit a linear model (e.g., lm/feols/lmer) if substantively appropriate, or use estimand = 'total'/'raw'.",
       call. = FALSE
     )
@@ -667,7 +667,7 @@ glance.dagassist_seqg <- function(x, ...) {
   # Mediator terms (original), then create centered + squared versions (like seqg_functions.R)
   m_terms <- attr(f_seqg0, "dagassist_acde_m_terms", exact = TRUE)
   if (is.null(m_terms) || !length(m_terms)) {
-    stop("SACDE requested, but no mediators were inferred for the Canonical spec.", call. = FALSE)
+    stop("Direct effect requested, but no mediators were inferred for the Canonical spec.", call. = FALSE)
   }
   
   # vars needed for complete-case sample: everything in f_seqg0 + cluster vars
@@ -675,13 +675,13 @@ glance.dagassist_seqg <- function(x, ...) {
   vars_need <- intersect(vars_need, names(data0))
   
   data_cc <- stats::na.omit(data0[, vars_need, drop = FALSE])
-  if (!nrow(data_cc)) stop("SACDE complete-case sample is empty after NA dropping.", call. = FALSE)
+  if (!nrow(data_cc)) stop("Direct effect complete-case sample is empty after NA dropping.", call. = FALSE)
   
   # Guard: mediators must be numeric for polynomial expansion
   bad_m <- m_terms[!vapply(m_terms, function(nm) is.numeric(data_cc[[nm]]), logical(1))]
   if (length(bad_m)) {
     stop(
-      "SACDE requires numeric mediator(s) for polynomial expansion. Non-numeric mediator(s): ",
+      "Direct effect requires numeric mediator(s) for polynomial expansion. Non-numeric mediator(s): ",
       paste(bad_m, collapse = ", "),
       call. = FALSE
     )
@@ -729,12 +729,12 @@ glance.dagassist_seqg <- function(x, ...) {
     stats::as.formula(paste(exp_nm, "~ 1"))
   }
   
-  # Fit raw seqg (Raw (SACDE))
+  # Fit raw seqg (Raw (direct))
   seqg_raw <- .safe_fit(DirectEffects::sequential_g, f_seqg, data_cc, de_args)
   
   if (.is_fit_error(seqg_raw)) {
     stop(
-      "SACDE raw sequential_g estimation failed.\n\n",
+      "Direct (Raw) sequential_g estimation failed.\n\n",
       "Underlying error: ", .fit_error_msg(seqg_raw), "\n\n",
       "seqg formula:\n  ", paste(deparse(f_seqg), collapse = ""),
       call. = FALSE
@@ -758,7 +758,7 @@ glance.dagassist_seqg <- function(x, ...) {
     w <- pmin(w, cap)
   }
   
-  # Fit weighted seqg (Weighted (SACDE))
+  # Fit weighted seqg (Weighted (direct))
   seqg_w <- .safe_fit(
     DirectEffects::sequential_g,
     f_seqg,
@@ -768,7 +768,7 @@ glance.dagassist_seqg <- function(x, ...) {
   
   if (.is_fit_error(seqg_w)) {
     stop(
-      "SACDE weighted sequential_g estimation failed.\n\n",
+      "Direct (Weighted) sequential_g estimation failed.\n\n",
       "Underlying error: ", .fit_error_msg(seqg_w), "\n\n",
       "seqg formula:\n  ", paste(deparse(f_seqg), collapse = ""),
       call. = FALSE
@@ -821,8 +821,8 @@ glance.dagassist_seqg <- function(x, ...) {
   for (nm in names(mods)) {
     out[[nm]] <- mods[[nm]]
     if (identical(nm, insert_after)) {
-      out[["Raw (SACDE)"]]      <- m_raw
-      out[["Weighted (SACDE)"]] <- m_w
+      out[["Direct (Raw)"]] <- m_raw
+      out[["Direct (Weighted)"]] <- m_w
     }
   }
   

@@ -156,8 +156,8 @@
     names(model_formulas) <- .dagassist_display_names(names(model_formulas))
   }
   
-  if ("SACDE" %in% ests) {
-    alab <- .dagassist_model_name_labels("SACDE")
+  if ("DIRECT" %in% ests) {
+    alab <- .dagassist_model_name_labels("DIRECT")
     for (nm in names(model_formulas)) {
       nm_acde <- paste0(nm, " ", alab)
       # build sequential_g formula from base model formula
@@ -707,7 +707,7 @@
 }
 # ---- Guardrail helpers (estimand recovery) ----
 # Exposure specified as an *interaction term* (e.g., X1:X2 or X1*X2) is not supported
-# by the estimand-recovery workflows (total/SACDE). Users should precompute a single
+# by the estimand-recovery workflows (total/direct). Users should precompute a single
 # treatment variable in `data` and use that as the exposure node.
 .dagassist_is_interaction_exposure <- function(exposure) {
   if (is.null(exposure) || is.na(exposure) || !nzchar(exposure)) return(FALSE)
@@ -716,8 +716,8 @@
   grepl("[:*]", ex)
 }
 
-# Detect non-linear outcome models (for SACDE guardrail).
-# SACDE/sequential-g is currently only supported for linear outcome models.
+# Detect non-linear outcome models (for direct effect guardrail).
+# direct effect/sequential-g is currently only supported for linear outcome models.
 .dagassist_is_nonlinear_fit <- function(fit, engine = NULL) {
   # GLMMs (logit/probit/etc.)
   if (inherits(fit, c("glmerMod", "glmmTMB", "stanreg", "brmsfit"))) return(TRUE)
@@ -1077,8 +1077,8 @@
   out <- nms
   
   # sequential-g / direct-effect columns
-  out[out == "Raw (SACDE)"] <- "Direct (Raw)"
-  out[out == "Weighted (SACDE)"] <- "Direct (Weighted)"
+  out[out == "Raw (direct)"] <- "Direct (Raw)"
+  out[out == "Weighted (direct)"] <- "Direct (Weighted)"
   
   # IPW columns: "<spec> (total)" -> "Total <spec> (Weighted)"
   wt <- grepl(" \\(total\\)$", out)

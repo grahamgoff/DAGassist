@@ -5,7 +5,7 @@ roles, builds minimal and canonical adjustment sets, fits comparable
 models, and renders a compact report in several formats (console, LaTeX
 fragment, DOCX, XLSX, plain text). It can also target sample-average
 estimands via weighting (e.g., total) and recover sample average
-controlled direct effects via sequential g-estimation (e.g., SACDE).
+controlled direct effects via sequential g-estimation.
 
 ## Usage
 
@@ -29,7 +29,7 @@ DAGassist(
   omit_intercept = TRUE,
   omit_factors = TRUE,
   bivariate = FALSE,
-  estimand = c("raw", "none", "total", "SACDE", "SCDE"),
+  estimand = c("raw", "none", "total", "direct"),
   engine_args = list(),
   weights_args = list(),
   wts_omit = NULL,
@@ -168,7 +168,7 @@ DAGassist(
 - estimand:
 
   character vector; causal estimand(s) for reported columns. Any of:
-  `"raw"` (default), `"total"`, `"SACDE"` (alias `"SCDE"`), or `"none"`.
+  `"raw"` (default), `"total"`, `"direct"`, or `"none"`.
 
   - `"raw"`: naive regression fits implied by the supplied
     engine/formulas.
@@ -176,11 +176,10 @@ DAGassist(
   - `"total"`: inverse-probability weighted versions of each comparison
     model (via WeightIt) to target sample ATE/ATT.
 
-  - `"SACDE"`/`"SCDE"`: for DAGs with mediator(s), adds sequential
-    g-estimation columns: (i) unweighted sequential-g and (ii)
-    IPW-weighted sequential-g (weights estimated without conditioning on
-    mediators) to target the **sample average controlled direct
-    effect**.
+  - `"direct"`: for DAGs with mediator(s), adds sequential g-estimation
+    columns: (i) unweighted sequential-g and (ii) IPW-weighted
+    sequential-g (weights estimated without conditioning on mediators)
+    to target the **sample average controlled direct effect**.
 
 - engine_args:
 
@@ -191,8 +190,9 @@ DAGassist(
 - weights_args:
 
   list; arguments forwarded to WeightIt when computing IPW weights for
-  `"total"` and for the weighted SACDE refit. If `trim_at` is supplied,
-  weights are winsorized at the requested quantile before refitting.
+  `"total"` and for the weighted direct effect refit. If `trim_at` is
+  supplied, weights are winsorized at the requested quantile before
+  refitting.
 
 - wts_omit:
 
@@ -209,11 +209,11 @@ DAGassist(
 
 - acde:
 
-  list; options for the controlled direct effect workflow (estimands
-  `"SACDE"`/`"SCDE"`). Users can override parts of the sequential
-  g-estimation specification with named elements: `m` (mediators), `x`
-  (baseline covariates), `z` (intermediate covariates), `fe`
-  (fixed-effects variables), `fe_as_factor` (wrap `fe` as
+  list; options for the controlled direct effect workflow (estimand
+  `"direct"`). Users can override parts of the sequential g-estimation
+  specification with named elements: `m` (mediators), `x` (baseline
+  covariates), `z` (intermediate covariates), `fe` (fixed-effects
+  variables), `fe_as_factor` (wrap `fe` as
   [`factor()`](https://rdrr.io/r/base/factor.html)), and
   `include_descendants` (treat descendants of mediators as mediators).
 
@@ -221,7 +221,7 @@ DAGassist(
 
   Named list of arguments forwarded to
   [`DirectEffects::sequential_g()`](https://mattblackwell.github.io/DirectEffects/reference/sequential_g.html)
-  when `estimand` includes `"SACDE"` (e.g., simulation/bootstrap
+  when `estimand` includes `"direct"` (e.g., simulation/bootstrap
   controls, variance estimator options).
 
 - uncertain_edges:
@@ -397,8 +397,8 @@ for minimal/canonical adjustment sets.
 `{rmarkdown}` + **pandoc** (DOCX), `{writexl}` (XLSX),
 `{dotwhisker}`/`{ggplot2}` for plotting.
 
-**Raw vs Weighted SACDE.** The unweighted sequential-g estimator in
-DirectEffects uses linear regression in its second stage. By the
+**Raw vs Weighted Direct Effect** The unweighted sequential-g estimator
+in DirectEffects uses linear regression in its second stage. By the
 Frisch–Waugh–Lovell theorem, this implies an estimand that is weighted
 by the conditional variance of the (residualized) exposure given
 controls—i.e., a regression-weighted average of unit-level effects, not
@@ -435,7 +435,7 @@ if (requireNamespace("dagitty", quietly = TRUE)) {
 
   # 3) Mediator case: sequential g-estimation (requires DirectEffects)
   if (requireNamespace("DirectEffects", quietly = TRUE)) {
-    r3 <- DAGassist(g, lm(Y ~ X + Z + M, data = df), estimand = "SACDE")
+    r3 <- DAGassist(g, lm(Y ~ X + Z + M, data = df), estimand = "direct")
   }
 
   # 4) File export (LaTeX fragment)

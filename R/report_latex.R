@@ -249,14 +249,14 @@
       diag_chunks <- c(diag_chunks,
                        "\\vspace{1em}",
                        "\\noindent\\textbf{Balance diagnostics}\\par\\nobreak",
-                       .df_to_longtable_plain(.dagassist_balance_tex_df(bdf)))
+                       .df_to_longtable_plain(.dagassist_balance_display_df(bdf)))
       n_diag <- n_diag + 1L
     }
     if (!is.null(wdf) && nrow(wdf)) {
       diag_chunks <- c(diag_chunks,
                        "\\vspace{1em}",
                        "\\noindent\\textbf{Weight diagnostics}\\par\\nobreak",
-                       .df_to_longtable_plain(.dagassist_weights_tex_df(wdf)))
+                       .df_to_longtable_plain(.dagassist_weights_display_df(wdf)))
       n_diag <- n_diag + 1L
     }
   }

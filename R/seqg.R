@@ -625,7 +625,7 @@ glance.dagassist_seqg <- function(x, ...) {
     stop(
       "SACDE recovery is currently blocked for non-linear outcome models (e.g., glm with non-gaussian family, glmer).\n\n",
       "SACDE/sequential-g in DAGassist is implemented for linear outcome models. ",
-      "Fit a linear model (e.g., lm/feols/lmer) if substantively appropriate, or use estimand = 'SATE'/'SATT'/'raw'.",
+      "Fit a linear model (e.g., lm/feols/lmer) if substantively appropriate, or use estimand = 'total'/'raw'.",
       call. = FALSE
     )
   }
@@ -814,8 +814,8 @@ glance.dagassist_seqg <- function(x, ...) {
   m_raw <- .dagassist_wrap_seqg(stats::coef(seqg_raw), V_raw, nobs = .seqg_n(seqg_raw))
   m_w   <- .dagassist_wrap_seqg(stats::coef(seqg_w),   V_w,   nobs = .seqg_n(seqg_w))
   
-  # Insert exactly two columns after Canonical (SATE) if present, else after Canonical
-  insert_after <- if ("Canonical (SATE)" %in% names(mods)) "Canonical (SATE)" else "Canonical"
+  # Insert exactly two columns after Canonical (total) if present, else after Canonical
+  insert_after <- if ("Canonical (total)" %in% names(mods)) "Canonical (total)" else "Canonical"
   
   out <- list()
   for (nm in names(mods)) {

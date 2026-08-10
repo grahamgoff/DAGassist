@@ -144,8 +144,8 @@
   # Add derived formula rows for requested estimands (ATE/ATT/ACDE)
   ests <- .dagassist_normalize_estimand(report$settings$estimand)
   
-  if ("SATE" %in% ests) {
-    wlab <- .dagassist_model_name_labels("SATE")
+  if ("TOTAL" %in% ests) {
+    wlab <- .dagassist_model_name_labels("total")
     for (nm in names(model_formulas)) {
       if (identical(nm, "Original")) next
       model_formulas[[paste0(nm, " ", wlab)]] <- model_formulas[[nm]]
@@ -703,7 +703,7 @@
 }
 # ---- Guardrail helpers (estimand recovery) ----
 # Exposure specified as an *interaction term* (e.g., X1:X2 or X1*X2) is not supported
-# by the estimand-recovery workflows (SATE/SACDE). Users should precompute a single
+# by the estimand-recovery workflows (total/SACDE). Users should precompute a single
 # treatment variable in `data` and use that as the exposure node.
 .dagassist_is_interaction_exposure <- function(exposure) {
   if (is.null(exposure) || is.na(exposure) || !nzchar(exposure)) return(FALSE)
@@ -1079,7 +1079,7 @@
   #fail fast if the model list is missing or unnamed
   if (is.null(mods_full) || !length(mods_full) || is.null(names(mods_full))) return(invisible(NULL))
   # only print diagnostics for weighted columns. identify weighted cols by col name 
-  keep <- grepl("\\((SATE)\\)\\s*$", names(mods_full), ignore.case = TRUE)
+  keep <- grepl("\\((total)\\)\\s*$", names(mods_full), ignore.case = TRUE)
   mods_use <- mods_full[keep]
   if (!length(mods_use)) return(invisible(NULL))
   # header for the diagnostics block
@@ -1281,7 +1281,7 @@
   
   if (!requireNamespace("marginaleffects", quietly = TRUE)) {
     cat("\nEffect summaries (response scale):\n")
-    cat("  {marginaleffects} not installed. Install it to enable interpretable SATE summaries.\n")
+    cat("  {marginaleffects} not installed. Install it to enable interpretable total effect summaries.\n")
     return(invisible(NULL))
   }
   
@@ -1296,7 +1296,7 @@
   # Filter to (ATE) models to reduce clutter (Denly’s pipeline focuses on weighted estimands)
   mods_use <- mods_full
   if (isTRUE(only_weighted) && length(names(mods_use))) {
-    keep <- grepl("\\(SATE\\)$", names(mods_use))
+    keep <- grepl("\\(total\\)$", names(mods_use))
     mods_use <- mods_use[keep]
   }
   
@@ -1381,7 +1381,7 @@
         # Keep a compact row
         rows_all[[length(rows_all) + 1L]] <- data.frame(
           model = nm,
-          estimand = "SATE (response)",
+          estimand = "total (response)",
           contrast = paste0(exp_nm, ": ", a, " -> ", b),
           estimate = ac$estimate[1],
           std.error = ac$std.error[1],
@@ -1413,7 +1413,7 @@
       
       rows_all[[length(rows_all) + 1L]] <- data.frame(
         model = nm,
-        estimand = "SATE (response)",
+        estimand = "total (response)",
         contrast = paste0(exp_nm, ": +IQR (", format(iqr, digits = 4), ")"),
         estimate = sl$estimate[1] * iqr,
         std.error = sl$std.error[1] * iqr,

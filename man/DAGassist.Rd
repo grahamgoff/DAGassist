@@ -23,7 +23,7 @@ DAGassist(
   omit_intercept = TRUE,
   omit_factors = TRUE,
   bivariate = FALSE,
-  estimand = c("raw", "none", "SATE", "SATT", "SACDE", "SCDE"),
+  estimand = c("raw", "none", "total", "SACDE", "SCDE"),
   engine_args = list(),
   weights_args = list(),
   wts_omit = NULL,
@@ -111,10 +111,10 @@ This parameter only suppresses factor \strong{output}; factor terms still enter 
 in the comparison table in addition to the user's original and DAG-derived models (default \code{FALSE}).}
 
 \item{estimand}{character vector; causal estimand(s) for reported columns. Any of:
-\code{"raw"} (default), \code{"SATE"}, \code{"SATT"}, \code{"SACDE"} (alias \code{"SCDE"}), or \code{"none"}.
+\code{"raw"} (default), \code{"total"}, \code{"SACDE"} (alias \code{"SCDE"}), or \code{"none"}.
 \itemize{
 \item \code{"raw"}: naive regression fits implied by the supplied engine/formulas.
-\item \code{"SATE"}/\code{"SATT"}: inverse-probability weighted versions of each comparison model
+\item \code{"total"}: inverse-probability weighted versions of each comparison model
 (via \pkg{WeightIt}) to target sample ATE/ATT.
 \item \code{"SACDE"}/\code{"SCDE"}: for DAGs with mediator(s), adds sequential g-estimation columns:
 (i) unweighted sequential-g and (ii) IPW-weighted sequential-g (weights estimated
@@ -126,7 +126,7 @@ If \code{formula} is an engine call, arguments from the call are merged with
 \code{engine_args} (call values take precedence).}
 
 \item{weights_args}{list; arguments forwarded to \pkg{WeightIt} when computing IPW weights for
-\code{"SATE"}/\code{"SATT"} and for the weighted SACDE refit. If \code{trim_at} is supplied, weights are
+\code{"total"} and for the weighted SACDE refit. If \code{trim_at} is supplied, weights are
 winsorized at the requested quantile before refitting.}
 
 \item{wts_omit}{character vector; terms to omit from the weighting (treatment)
@@ -190,7 +190,7 @@ the returned object includes attribute \code{file}, the normalized output path.
 builds minimal and canonical adjustment sets, fits comparable models, and
 renders a compact report in several formats (console, LaTeX fragment, DOCX,
 XLSX, plain text). It can also target sample-average estimands via weighting
-(e.g., SATE/SATT) and recover sample average controlled direct effects via
+(e.g., total) and recover sample average controlled direct effects via
 sequential g-estimation (e.g., SACDE).
 }
 \details{
@@ -266,7 +266,7 @@ if (requireNamespace("dagitty", quietly = TRUE)) {
 
   # 2) Target sample-average estimands via weighting (requires WeightIt)
   if (requireNamespace("WeightIt", quietly = TRUE)) {
-    r2 <- DAGassist(g, lm(Y ~ X + Z + M, data = df), estimand = "SATE")
+    r2 <- DAGassist(g, lm(Y ~ X + Z + M, data = df), estimand = "total")
   }
 
   # 3) Mediator case: sequential g-estimation (requires DirectEffects)

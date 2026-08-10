@@ -68,10 +68,10 @@
 
 .dagassist_formula_for_model_name <- function(x, model_name) {
   #parse model name for estimand type
-  is_weighted <- grepl("\\((SATE)\\)\\s*$", model_name, ignore.case = TRUE)
+  is_weighted <- grepl("\\((total)\\)\\s*$", model_name, ignore.case = TRUE)
   is_acde <- grepl("\\((SACDE|SCDE)\\)\\s*$", model_name, ignore.case = TRUE)
   #strip away the estimand notation to get the baseline model name
-  base_name <- sub("\\s*\\((SATE|SACDE|SCDE)\\)\\s*$", "", model_name, ignore.case = TRUE)
+  base_name <- sub("\\s*\\((total|SACDE|SCDE)\\)\\s*$", "", model_name, ignore.case = TRUE)
   
   # If ACDE model label, build sequential_g formula from the *base* model formula
   if (is_acde) {
@@ -165,7 +165,7 @@
   if (is.null(estimand)) return("RAW")
   est <- toupper(as.character(estimand))
   est <- match.arg(est,
-                   choices = c("RAW","NONE","SATE","SACDE","SCDE"),
+                   choices = c("RAW","NONE","TOTAL","SACDE","SCDE"),
                    several.ok = TRUE)
   est[est == "NONE"] <- "RAW"
   est[est == "SCDE"]  <- "SACDE"
@@ -226,7 +226,7 @@
           "for this exposure/outcome pair.\n",
           "SACDE/SCDE is only defined when at least one mediator exists.\n\n",
           "Fix options:\n",
-          "  1) Use estimand = 'SATE' for total effects (when no mediators are present), OR\n",
+          "  1) Use estimand = 'total' for total effects (when no mediators are present), OR\n",
           "  2) Use estimand = 'RAW' to report the naive regression output.\n"
         ),
         call. = FALSE
@@ -236,7 +236,7 @@
   # allow ATE/ATT if formula includes mediators; will omit automatically
   if (!isTRUE(auto_acde)) return(estimand)
   
-  wants_total <- any(ests %in% c("SATE"))
+  wants_total <- any(ests %in% c("TOTAL"))
   if (!isTRUE(wants_total)) return(estimand)
   
   controls_mediator <- .dagassist_formula_controls_mediator(
@@ -300,7 +300,7 @@
   if (!length(ests) || identical(ests, "RAW")) return(mods)
   
   out <- mods
-  if ("SATE" %in% ests) out <- .dagassist_add_weighted_models(x, out, estimand = "SATE")
+  if ("TOTAL" %in% ests) out <- .dagassist_add_weighted_models(x, out, estimand = "total")
   if ("SACDE" %in% ests) out <- .dagassist_add_sacde_models(x, out)
   
   out
@@ -317,7 +317,7 @@
   )
   
   # Weighting only applies to total-effect estimands
-  ests <- intersect(ests, c("SATE"))
+  ests <- intersect(ests, c("TOTAL"))
   if (!length(ests)) return(mods)
   est <- ests[1L]
   
@@ -568,13 +568,13 @@
       )
     }
     
-    #changed internal and display terminology from ATE->SATE; cannot pass
-    #directly to weigtit, which does not recognize an SATE estimand parameter
+    #changed internal and display terminology from ATE->total; cannot pass
+    #directly to weigtit, which does not recognize an total estimand parameter
     #will probably need to change this bandaid later when I add EV and ATE is a valid 
     #parameter. 
     est_wt <- switch(
       toupper(est),
-      SATE = "ATE",
+      TOTAL = "ATE",
       toupper(est)
     )
     
@@ -753,11 +753,11 @@
   est <- toupper(as.character(estimand))
   switch(
     est,
-    SATE      = "(SATE)",
-    SACDE     = "(SACDE)",
-    SEQG_RAW  = "(seqg raw)",
-    RAW       = "",
-    NONE      = "",
+    TOTAL = "(total)",
+    SACDE = "(SACDE)",
+    SEQG_RAW = "(seqg raw)",
+    RAW = "",
+    NONE = "",
     ""
   )
 }

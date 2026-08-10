@@ -4,7 +4,7 @@
 roles, builds minimal and canonical adjustment sets, fits comparable
 models, and renders a compact report in several formats (console, LaTeX
 fragment, DOCX, XLSX, plain text). It can also target sample-average
-estimands via weighting (e.g., SATE/SATT) and recover sample average
+estimands via weighting (e.g., total) and recover sample average
 controlled direct effects via sequential g-estimation (e.g., SACDE).
 
 ## Usage
@@ -29,7 +29,7 @@ DAGassist(
   omit_intercept = TRUE,
   omit_factors = TRUE,
   bivariate = FALSE,
-  estimand = c("raw", "none", "SATE", "SATT", "SACDE", "SCDE"),
+  estimand = c("raw", "none", "total", "SACDE", "SCDE"),
   engine_args = list(),
   weights_args = list(),
   wts_omit = NULL,
@@ -168,14 +168,13 @@ DAGassist(
 - estimand:
 
   character vector; causal estimand(s) for reported columns. Any of:
-  `"raw"` (default), `"SATE"`, `"SATT"`, `"SACDE"` (alias `"SCDE"`), or
-  `"none"`.
+  `"raw"` (default), `"total"`, `"SACDE"` (alias `"SCDE"`), or `"none"`.
 
   - `"raw"`: naive regression fits implied by the supplied
     engine/formulas.
 
-  - `"SATE"`/`"SATT"`: inverse-probability weighted versions of each
-    comparison model (via WeightIt) to target sample ATE/ATT.
+  - `"total"`: inverse-probability weighted versions of each comparison
+    model (via WeightIt) to target sample ATE/ATT.
 
   - `"SACDE"`/`"SCDE"`: for DAGs with mediator(s), adds sequential
     g-estimation columns: (i) unweighted sequential-g and (ii)
@@ -192,9 +191,8 @@ DAGassist(
 - weights_args:
 
   list; arguments forwarded to WeightIt when computing IPW weights for
-  `"SATE"`/`"SATT"` and for the weighted SACDE refit. If `trim_at` is
-  supplied, weights are winsorized at the requested quantile before
-  refitting.
+  `"total"` and for the weighted SACDE refit. If `trim_at` is supplied,
+  weights are winsorized at the requested quantile before refitting.
 
 - wts_omit:
 
@@ -432,7 +430,7 @@ if (requireNamespace("dagitty", quietly = TRUE)) {
 
   # 2) Target sample-average estimands via weighting (requires WeightIt)
   if (requireNamespace("WeightIt", quietly = TRUE)) {
-    r2 <- DAGassist(g, lm(Y ~ X + Z + M, data = df), estimand = "SATE")
+    r2 <- DAGassist(g, lm(Y ~ X + Z + M, data = df), estimand = "total")
   }
 
   # 3) Mediator case: sequential g-estimation (requires DirectEffects)

@@ -13,13 +13,13 @@ Source:
 [`DESCRIPTION`](https://github.com/grahamgoff/DAGassist/blob/dev/DESCRIPTION)
 
 Goff G, Denly M (2026). *DAGassist: Test Robustness with Directed
-Acyclic Graphs*. R package version 0.2.9,
+Acyclic Graphs*. R package version 0.3.0,
 <https://github.com/grahamgoff/DAGassist>.
 
     @Manual{,
       title = {DAGassist: Test Robustness with Directed Acyclic Graphs},
       author = {Graham Goff and Michael Denly},
       year = {2026},
-      note = {R package version 0.2.9},
+      note = {R package version 0.3.0},
       url = {https://github.com/grahamgoff/DAGassist},
     }

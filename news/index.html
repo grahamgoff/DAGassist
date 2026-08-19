@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">DAGassist</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,9 +37,9 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.2.9" id="dagassist-v029">DAGassist v0.2.9<a class="anchor" aria-label="anchor" href="#dagassist-v029"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.3.0" id="dagassist-v030">DAGassist v0.3.0<a class="anchor" aria-label="anchor" href="#dagassist-v030"></a></h2>
 <div class="section level4">
-<h4 id="highlights-0-2-9">Highlights<a class="anchor" aria-label="anchor" href="#highlights-0-2-9"></a></h4>
+<h4 id="highlights-0-3-0">Highlights<a class="anchor" aria-label="anchor" href="#highlights-0-3-0"></a></h4>
 <ul><li>PDAG robustness features: <code>pdag</code> and <code>uncertain_edges</code> arguments for <code><a href="../reference/DAGassist.html">DAGassist()</a></code> and a standalone <code><a href="../reference/pdag_robustness.html">pdag_robustness()</a></code> function diagnose how adjustment sets and covariate roles change when introducing uncertain edges.</li>
 <li>Added automated balance diagnostics: the console report now flags variables whose |SMD| &gt; 0.1 between the Original and DAG-derived models, addressing missingness-induced apples-to-oranges model comparisons.</li>
 <li>Additional robustness feature: <code>add_edges_robustness</code> to evaluate robustness to hypothesized missing edges.</li>
@@ -48,7 +48,7 @@
 <li>Bug fixes</li>
 </ul></div>
 <div class="section level3">
-<h3 id="breaking-changes-0-2-9">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-0-2-9"></a></h3>
+<h3 id="breaking-changes-0-3-0">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-0-3-0"></a></h3>
 <ul><li>Changed valid estimand parameter values (“SATE” -&gt; “total”; “SACDE” -&gt; “direct”).</li>
 <li>Phased out support for “ATT” estimand due to estimand variability across binary and continuous treatments. Future updates may reintroduce the ATT estimand.</li>
 </ul><p>This is the CRAN version.</p>

@@ -1,6 +1,6 @@
 # Changelog
 
-## DAGassist v0.2.9
+## DAGassist v0.3.0
 
 #### Highlights
 

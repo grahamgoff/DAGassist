@@ -21,3 +21,34 @@
 
 /* Tables used for the output gallery: no stripes, even columns */
 .template-home table.gallery td { width: 50%; vertical-align: top; border: none; }
+
+/* Brand colors from the hex logo */
+:root {
+  --da-coral: #E36A6A;
+  --da-peach: #FEE5D0;
+  --da-ink:   #2B2424;
+}
+
+/* Thin coral rule under the navbar */
+.navbar { border-bottom: 3px solid var(--da-coral); }
+
+/* Dark mode: the logo red is too dim on a dark background, so lighten links */
+[data-bs-theme="dark"] {
+  --bs-link-color: #F08C8C;
+  --bs-link-color-rgb: 240, 140, 140;
+  --bs-link-hover-color: #FEE5D0;
+  --bs-link-hover-color-rgb: 254, 229, 208;
+}
+
+/* Homepage callouts (use a > blockquote in the README, e.g. for "How it works") */
+.template-home blockquote {
+  background: var(--da-peach);
+  border-left: 4px solid var(--da-coral);
+  color: var(--da-ink);
+  padding: .75rem 1rem;
+  border-radius: .25rem;
+}
+[data-bs-theme="dark"] .template-home blockquote {
+  background: #3A2A28;
+  color: var(--da-peach);
+}

@@ -1,37 +1,79 @@
 url: https://grahamgoff.com/DAGassist/
+
 template:
   bootstrap: 5
   light-switch: true
   theme: a11y-light
   theme-dark: a11y-dark
   bslib:
-    primary: "#00612E"
+    primary: "#AC4848"
+    body-color: "#2B2424"
+    base_font: {google: "Source Sans 3"}
+    heading_font: {google: "Source Serif 4"}
+    code_font: {google: "JetBrains Mono"}
+    font-size-base: "1.05rem"
+  opengraph:
+    image:
+      src: man/figures/card.png
+      alt: "DAGassist: DAG-driven robustness checks for regression models in R"
 
-favicon: man/figures/logo.png
-      
+navbar:
+  bg: primary
+  structure:
+    left:  [intro, reference, articles, news]
+    right: [search, github, lightswitch]
+  components:
+    articles:
+      text: Articles
+      menu:
+      - text: Supported model engines
+        href: articles/compatibility.html
+
+home:
+  title: "DAGassist: DAG-driven robustness checks in R"
+  description: >
+    Classify covariates by causal role, re-estimate models with DAG-derived
+    adjustment sets, and export publication-grade robustness reports.
+  sidebar:
+    structure: [links, citation, authors, license, dev]
+  links:
+  - text: Report a bug
+    href: https://github.com/grahamgoff/DAGassist/issues
+  - text: DAGitty (draw your DAG)
+    href: https://dagitty.net/
+
+authors:
+  Graham Goff:
+    href: https://grahamgoff.com
+  Michael Denly:
+    href: https://www.mikedenly.com
+
 reference:
   - title: "Main function"
     desc: >
-      The primary pipeline function to generate reports.
+      One call validates the DAG, classifies roles, fits comparison models,
+      and renders the report.
     contents:
       - DAGassist
 
-  - title: "Useful supplements"
+  - title: "Robustness to DAG uncertainty"
     desc: >
-      Helper functions that can be useful on their own.
+      Check whether conclusions survive uncertain edge directions or
+      plausibly missing arrows.
     contents:
-      - bad_controls_in
-      - classify_nodes
       - pdag_robustness
       - add_edges_robustness
+
+  - title: "Diagnostics and building blocks"
+    desc: >
+      Standalone helpers used inside DAGassist() that are also useful on their own.
+    contents:
+      - classify_nodes
+      - bad_controls_in
       - balance_models
 
-  - title: "Internal functions"
+  - title: "Print methods"
     desc: >
-      Lower-level helpers and print methods, usually not called directly.
+      Console printers for DAGassist objects. You rarely call these directly.
     contents:
-      - print.DAGassist_report
-      - print.DAGassist_roles
-      - print.DAGassist_validation
-      - print.DAGassist_pdag_summary
-      - print.DAGassist_addedge_summary
+      - starts_with("print.")

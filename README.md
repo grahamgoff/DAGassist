@@ -12,10 +12,9 @@ maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://lif
 [![CRAN
 downloads](https://cranlogs.r-pkg.org/badges/last-month/DAGassist)](https://cran.r-project.org/package=DAGassist)
 
-**An all-in-one DAG-driven robustness check.** Generate
-publication-quality reports that classify variables by causal role,
-compare the significance of DAG-derived models, and explicitly target
-estimands.
+**Align regression with target estimands.** Generate publication-quality
+reports that classify variables by causal role, compare the significance
+of DAG-derived models, and explicitly target estimands.
 
 ------------------------------------------------------------------------
 

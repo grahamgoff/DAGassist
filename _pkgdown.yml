@@ -15,12 +15,12 @@ template:
   opengraph:
     image:
       src: man/figures/card.png
-      alt: "DAGassist: DAG-driven robustness checks for regression models in R"
+      alt: "DAGassist: Align Regression with Target Estimands"
 
 navbar:
   bg: primary
   structure:
-    left:  [intro, reference, articles, news]
+    left:  [intro, articles, reference, news]
     right: [search, github, lightswitch]
   components:
     articles:
@@ -30,7 +30,7 @@ navbar:
         href: articles/compatibility.html
 
 home:
-  title: "DAGassist: DAG-driven robustness checks in R"
+  title: "DAGassist: Align Regression with Target Estimands"
   description: >
     Classify covariates by causal role, re-estimate models with DAG-derived
     adjustment sets, and export publication-grade robustness reports.
@@ -39,8 +39,6 @@ home:
   links:
   - text: Report a bug
     href: https://github.com/grahamgoff/DAGassist/issues
-  - text: DAGitty (draw your DAG)
-    href: https://dagitty.net/
 
 authors:
   Graham Goff:

@@ -45,7 +45,7 @@ Sys.setenv(NO_COLOR = "1")
 
 You can install `DAGassist` with:
 ```{r cran, eval=FALSE}
-#install.packages("DAGassist")
+install.packages("DAGassist")
 library(DAGassist) 
 ```
 

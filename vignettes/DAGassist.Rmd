@@ -2,11 +2,11 @@
 title: "Introduction to DAGassist"
 author: "Graham Goff and Mike Denly"
 date: "`r Sys.Date()`"
-output: html_document
+output: rmarkdown::html_vignette
 bibliography: references.bib
 link-citations: true
 vignette: >
-  %\VignetteIndexEntry{Get Started}
+  %\VignetteIndexEntry{Introduction to DAGassist}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -24,13 +24,13 @@ library(DAGassist)
 
 ## Step 1: Declare an Estimand
 
-Step 1's focus on declaring the estimands ensures that studies maintain a consistent quantity of interest for evaluation @LundbergJohnsonStewart2021; @FindleyKikutaDenly2021. Of course, some estimands may be more policy-relevant than others @Deaton2010. 
+Step 1's focus on declaring the estimands ensures that studies maintain a consistent quantity of interest for evaluation [@LundbergJohnsonStewart2021; @FindleyKikutaDenly2021]. Of course, some estimands may be more policy-relevant than others [@Deaton2010]. 
 
 For the purpose of this guide, we are interested in the total treatment effect.
 
 ## Step 2: Draw a DAG
 
-DAGs have three basic building blocks: variables, arrows, and missing arrows. In DAG terminology, variables capture nodes or vertices, whereas edges or arcs refer to arrows @TennantEtAl2021. Missing arrows are equivalent to a strong null hypothesis. 
+DAGs have three basic building blocks: variables, arrows, and missing arrows. In DAG terminology, variables capture nodes or vertices, whereas edges or arcs refer to arrows [@TennantEtAl2021]. Missing arrows are equivalent to a strong null hypothesis. 
 
 
 
@@ -697,7 +697,7 @@ ggdag_status(dag_model,
 
 ```
 
-For the purpose of this guide, we visualize a common social science question: how does education affect fertility @MorganWinship2015? The DAG model encodes a plausible, but not exhaustive, set of covariates.
+For the purpose of this guide, we visualize a common social science question: how does education affect fertility [@MorganWinship2015]? The DAG model encodes a plausible, but not exhaustive, set of covariates.
 
 ## Step 3: Classify Control Variables by Role
 
@@ -721,7 +721,7 @@ DAGassist(dag_model,
   - **dConfOff** stands for `descendant of a confounder off a backdoor path`, a decendant of Z that does not affect Y.
   - **other** is a catch-all category that for variables that do not fit any of the previous definitions. 
 
-## 4. Estimate Models Using DAG-Consistent Adjustment Sets
+## Step 4: Estimate Models Using DAG-Consistent Adjustment Sets
 
 ```{r model-comparison}
 DAGassist(dag_model,
@@ -755,7 +755,7 @@ The table below illustrates the varible roles permitted by each set.
 
 *Note:* ✓ = adjust; ✗ = do not adjust. There may be multiple minimal sets; the canonical set is unique.
 
-## 5. Recover the Interpretable Estimand
+## Step 5: Recover the Interpretable Estimand
 
 
 ```{r sate}

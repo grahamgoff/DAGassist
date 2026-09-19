@@ -22,13 +22,6 @@
   line-height: 1.6 !important;
 }
 
-/* force citation blocks to be readable */
-pre,
-pre code {
-  background-color: #ffffff !important;
-  color: #000000 !important;
-}
-
 /* only bump the GitHub icon, not the whole navbar */
 .navbar .nav-link[aria-label="GitHub"] .fab.fa-github {
   font-size: 1.6rem;   /* adjust to taste */

@@ -2,6 +2,8 @@
 
 ## DAGassist v0.3.0
 
+CRAN release: 2026-08-19
+
 #### Highlights
 
 - PDAG robustness features: `pdag` and `uncertain_edges` arguments for

@@ -8,7 +8,7 @@ work.
 
 If you want support documented (or added) for an engine not shown here,
 please [open an issue or PR on
-GitHub.](https://grahamgoff.com/DAGassist/)
+GitHub.](https://github.com/grahamgoff/DAGassist/issues)
 
 | Package  | Function  |
 |----------|-----------|

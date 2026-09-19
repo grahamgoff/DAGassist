@@ -26,10 +26,10 @@ library(DAGassist)
 ## Step 1: Declare an Estimand
 
 Step 1’s focus on declaring the estimands ensures that studies maintain
-a consistent quantity of interest for evaluation Lundberg et al.
-([2021](#ref-LundbergJohnsonStewart2021)); Findley et al.
-([2021](#ref-FindleyKikutaDenly2021)). Of course, some estimands may be
-more policy-relevant than others Deaton ([2010](#ref-Deaton2010)).
+a consistent quantity of interest for evaluation ([Lundberg et al.
+2021](#ref-LundbergJohnsonStewart2021); [Findley et al.
+2021](#ref-FindleyKikutaDenly2021)). Of course, some estimands may be
+more policy-relevant than others ([Deaton 2010](#ref-Deaton2010)).
 
 For the purpose of this guide, we are interested in the total treatment
 effect.
@@ -38,9 +38,9 @@ effect.
 
 DAGs have three basic building blocks: variables, arrows, and missing
 arrows. In DAG terminology, variables capture nodes or vertices, whereas
-edges or arcs refer to arrows Tennant et al.
-([2021](#ref-TennantEtAl2021)). Missing arrows are equivalent to a
-strong null hypothesis.
+edges or arcs refer to arrows ([Tennant et al.
+2021](#ref-TennantEtAl2021)). Missing arrows are equivalent to a strong
+null hypothesis.
 
 **Dataset summary statistics (click to expand)**
 
@@ -75,8 +75,8 @@ Patterns\*](DAGassist_files/figure-html/example-dag-1.png)
 on Fertility Patterns*
 
 For the purpose of this guide, we visualize a common social science
-question: how does education affect fertility Morgan and Winship
-([2015](#ref-MorganWinship2015))? The DAG model encodes a plausible, but
+question: how does education affect fertility ([Morgan and Winship
+2015](#ref-MorganWinship2015))? The DAG model encodes a plausible, but
 not exhaustive, set of covariates.
 
 ## Step 3: Classify Control Variables by Role
@@ -141,7 +141,7 @@ DAGassist(dag_model,
   - **other** is a catch-all category that for variables that do not fit
     any of the previous definitions.
 
-## 4. Estimate Models Using DAG-Consistent Adjustment Sets
+## Step 4: Estimate Models Using DAG-Consistent Adjustment Sets
 
 ``` r
 
@@ -277,7 +277,7 @@ The table below illustrates the varible roles permitted by each set.
 *Note:* ✓ = adjust; ✗ = do not adjust. There may be multiple minimal
 sets; the canonical set is unique.
 
-## 5. Recover the Interpretable Estimand
+## Step 5: Recover the Interpretable Estimand
 
 ``` r
 

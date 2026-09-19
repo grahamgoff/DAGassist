@@ -35,7 +35,7 @@ You can install `DAGassist` with:
 
 ``` r
 
-#install.packages("DAGassist")
+install.packages("DAGassist")
 library(DAGassist) 
 ```
 

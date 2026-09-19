@@ -1,35 +1,23 @@
-/* Default: hide header logo everywhere */
-.page-header img.logo { 
-  display: none !important;
-}
-
-/* Homepage only: show it and size it up */
-.container.template-home .page-header img.logo {
+/* Logo: show only on the homepage */
+.page-header img.logo { display: none !important; }
+.template-home .page-header img.logo {
   display: inline-block !important;
-  width: 250px !important;   /* adjust to taste */
-  height: auto !important;
-  margin: 0 .5rem .2rem 0;
+  width: 200px; height: auto;
 }
 
-/* (Optional) homepage typography tweaks */
-.container.template-home .page-header { 
-  margin-bottom: .9rem !important;
-  padding-bottom: .3rem !important;
-  border-bottom: 1px solid #e6e6e6;
-}
-.container.template-home .lead { 
-  font-size: 1rem !important;
-  line-height: 1.6 !important;
+/* Homepage lead paragraph */
+.template-home .contents > p:first-of-type {
+  font-size: 1.2rem;
+  line-height: 1.6;
 }
 
-/* only bump the GitHub icon, not the whole navbar */
-.navbar .nav-link[aria-label="GitHub"] .fab.fa-github {
-  font-size: 1.6rem;   /* adjust to taste */
-  line-height: 1;      /* keep it tight so it doesn't stretch vertically */
+/* README images: rounded, subtle border, readable in dark mode */
+.template-home .contents img:not(.logo):not([src*="badge"]):not([src*="shields"]):not([src*="r-pkg"]) {
+  border: 1px solid var(--bs-border-color);
+  border-radius: .5rem;
+  padding: .25rem;
+  background: #fff;
 }
 
-/* optional: keep the link itself from adding extra padding/height */
-.navbar .nav-link[aria-label="GitHub"] {
-  padding-top: 0.4rem;
-  padding-bottom: 0.4rem;
-}
+/* Tables used for the output gallery: no stripes, even columns */
+.template-home table.gallery td { width: 50%; vertical-align: top; border: none; }

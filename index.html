@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Test Robustness with Directed Acyclic Graphs • DAGassist</title>
+<title>DAGassist: DAG-driven robustness checks in R • DAGassist</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png">
 <link rel="icon" type="”image/svg+xml”" href="favicon.svg">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
@@ -13,13 +13,19 @@
 <link rel="manifest" href="site.webmanifest">
 <script src="lightswitch.js"></script><script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
-<script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/Source_Sans_3-0.4.10/font.css" rel="stylesheet">
+<link href="deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet">
+<link href="deps/Source_Serif_4-0.4.10/font.css" rel="stylesheet">
+<link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><link href="extra.css" rel="stylesheet">
-<meta property="og:title" content="Test Robustness with Directed Acyclic Graphs">
-<meta name="description" content="Provides robustness checks to align estimands with the identification that they require. Given a dagitty object and a model specification, DAGassist classifies variables by causal roles, recovers a target estimand, and generates a report comparing the original model with DAG-derived adjustment sets. Exports publication-grade reports in LaTeX, Word, Excel, dotwhisker, or plain text/markdown. DAGassist is built on dagitty, an R package that uses the DAGitty web tool (&lt;https://dagitty.net/&gt;) for creating and analyzing DAGs. Methods draw on Pearl (2009) &lt;doi:10.1017/CBO9780511803161&gt; and Textor et al. (2016) &lt;doi:10.1093/ije/dyw341&gt;.">
-<meta property="og:description" content="Provides robustness checks to align estimands with the identification that they require. Given a dagitty object and a model specification, DAGassist classifies variables by causal roles, recovers a target estimand, and generates a report comparing the original model with DAG-derived adjustment sets. Exports publication-grade reports in LaTeX, Word, Excel, dotwhisker, or plain text/markdown. DAGassist is built on dagitty, an R package that uses the DAGitty web tool (&lt;https://dagitty.net/&gt;) for creating and analyzing DAGs. Methods draw on Pearl (2009) &lt;doi:10.1017/CBO9780511803161&gt; and Textor et al. (2016) &lt;doi:10.1093/ije/dyw341&gt;.">
-<meta property="og:image" content="https://grahamgoff.com/DAGassist/logo.png">
+<meta property="og:title" content="DAGassist: DAG-driven robustness checks in R">
+<meta name="description" content="Classify covariates by causal role, re-estimate models with DAG-derived adjustment sets, and export publication-grade robustness reports.
+">
+<meta property="og:description" content="Classify covariates by causal role, re-estimate models with DAG-derived adjustment sets, and export publication-grade robustness reports.
+">
+<meta property="og:image" content="https://grahamgoff.com/DAGassist/reference/figures/card.png">
+<meta property="og:image:alt" content="DAGassist: DAG-driven robustness checks for regression models in R">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -43,7 +49,7 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="articles/compatibility.html">Supported Models</a></li>
+<li><a class="dropdown-item" href="articles/compatibility.html">Supported model engines</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
@@ -188,6 +194,25 @@
 <li><a href="https://cloud.r-project.org/package=DAGassist" class="external-link">View on CRAN</a></li>
 <li><a href="https://github.com/grahamgoff/DAGassist/" class="external-link">Browse source code</a></li>
 <li><a href="https://github.com/grahamgoff/DAGassist/issues" class="external-link">Report a bug</a></li>
+<li><a href="https://github.com/grahamgoff/DAGassist/issues" class="external-link">Report a bug</a></li>
+<li><a href="https://dagitty.net/" class="external-link">DAGitty (draw your DAG)</a></li>
+</ul>
+</div>
+
+<div class="citation">
+<h2 data-toc-skip>Citation</h2>
+<ul class="list-unstyled">
+<li><a href="authors.html#citation">Citing DAGassist</a></li>
+</ul>
+</div>
+
+<div class="developers">
+<h2 data-toc-skip>Developers</h2>
+<ul class="list-unstyled">
+<li>
+<a href="https://grahamgoff.com" class="external-link">Graham Goff</a> <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/0000-0002-0717-6995" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
+<li>
+<a href="https://www.mikedenly.com" class="external-link">Michael Denly</a> <br><small class="roles"> Author </small> <a href="https://orcid.org/0000-0002-7074-5011" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
 </ul>
 </div>
 
@@ -200,29 +225,13 @@
 </div>
 
 
-<div class="citation">
-<h2 data-toc-skip>Citation</h2>
-<ul class="list-unstyled">
-<li><a href="authors.html#citation">Citing DAGassist</a></li>
-</ul>
-</div>
-
-<div class="developers">
-<h2 data-toc-skip>Developers</h2>
-<ul class="list-unstyled">
-<li>Graham Goff <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/0000-0002-0717-6995" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
-<li>Michael Denly <br><small class="roles"> Author </small> <a href="https://orcid.org/0000-0002-7074-5011" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
-</ul>
-</div>
-
-
 
   </aside>
 </div>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Graham Goff, Michael Denly.</p>
+  <p>Developed by <a href="https://grahamgoff.com" class="external-link">Graham Goff</a>, <a href="https://www.mikedenly.com" class="external-link">Michael Denly</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">

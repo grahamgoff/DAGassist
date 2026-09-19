@@ -2,10 +2,11 @@
 
 ## Authors
 
-- **Graham Goff**. Author, maintainer.
+- **[Graham Goff](https://grahamgoff.com)**. Author, maintainer.
   [](https://orcid.org/0000-0002-0717-6995)
 
-- **Michael Denly**. Author. [](https://orcid.org/0000-0002-7074-5011)
+- **[Michael Denly](https://www.mikedenly.com)**. Author.
+  [](https://orcid.org/0000-0002-7074-5011)
 
 ## Citation
 

@@ -36,9 +36,6 @@ home:
     adjustment sets, and export publication-grade robustness reports.
   sidebar:
     structure: [links, citation, authors, license, dev]
-  links:
-  - text: Report a bug
-    href: https://github.com/grahamgoff/DAGassist/issues
 
 authors:
   Graham Goff:

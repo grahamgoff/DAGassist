@@ -1,6 +1,9 @@
 url: https://grahamgoff.com/DAGassist/
 template:
   bootstrap: 5
+  light-switch: true
+  theme: a11y-light
+  theme-dark: a11y-dark
   bslib:
     primary: "#00612E"
 

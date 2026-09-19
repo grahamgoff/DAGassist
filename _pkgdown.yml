@@ -15,7 +15,7 @@ template:
   opengraph:
     image:
       src: man/figures/card.png
-      alt: "DAGassist: Align Regression with Target Estimands"
+      alt: "DAGassist: Align Regressions with Target Estimands"
 
 navbar:
   bg: primary
@@ -30,7 +30,7 @@ navbar:
         href: articles/compatibility.html
 
 home:
-  title: "DAGassist: Align Regression with Target Estimands"
+  title: "DAGassist: Align Regressions with Target Estimands"
   description: >
     Classify covariates by causal role, re-estimate models with DAG-derived
     adjustment sets, and export publication-grade robustness reports.

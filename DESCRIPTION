@@ -1,5 +1,5 @@
 Package: DAGassist
-Title: Align Regression with Target Estimands
+Title: Align Regressions with Target Estimands
 Version: 0.3.1
 Authors@R: c(
     person("Graham", "Goff", 
@@ -12,11 +12,11 @@ Authors@R: c(
       comment = c(ORCID = "0000-0002-7074-5011"))
   )
 Maintainer: Graham Goff <goffgrahamc@gmail.com>
-Description: Provides robustness checks to align estimands with the identification 
+Description: Provides tools to align estimands with the identification 
     that they require. Given a 'dagitty' object and a model specification, 
     'DAGassist' classifies variables by causal roles, recovers a target estimand, 
     and generates a report comparing the original model with DAG-derived
-    adjustment sets. Exports publication-grade reports in 'LaTeX', 'Word', 'Excel',
+    adjustment sets. Supports exporting publication-grade reports in 'LaTeX', 'Word', 'Excel',
     'dotwhisker', or plain text/'markdown'. 'DAGassist' is built on 'dagitty', an 
     'R' package that uses the 'DAGitty' web tool (<https://dagitty.net/>) for 
     creating and analyzing DAGs. Methods draw on Pearl (2009) <doi:10.1017/CBO9780511803161>

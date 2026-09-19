@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>DAGassist: DAG-driven robustness checks in R • DAGassist</title>
+<title>DAGassist: Align Regression with Target Estimands • DAGassist</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png">
 <link rel="icon" type="”image/svg+xml”" href="favicon.svg">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
@@ -19,13 +19,13 @@
 <link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><link href="extra.css" rel="stylesheet">
-<meta property="og:title" content="DAGassist: DAG-driven robustness checks in R">
+<meta property="og:title" content="DAGassist: Align Regression with Target Estimands">
 <meta name="description" content="Classify covariates by causal role, re-estimate models with DAG-derived adjustment sets, and export publication-grade robustness reports.
 ">
 <meta property="og:description" content="Classify covariates by causal role, re-estimate models with DAG-derived adjustment sets, and export publication-grade robustness reports.
 ">
 <meta property="og:image" content="https://grahamgoff.com/DAGassist/reference/figures/card.png">
-<meta property="og:image:alt" content="DAGassist: DAG-driven robustness checks for regression models in R">
+<meta property="og:image:alt" content="DAGassist: Align Regression with Target Estimands">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -35,7 +35,7 @@
 
     <a class="navbar-brand me-2" href="index.html">DAGassist</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,13 +45,13 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="articles/DAGassist.html">Get started</a></li>
-<li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="articles/compatibility.html">Supported model engines</a></li>
   </ul>
 </li>
+<li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -81,7 +81,7 @@
 </h1>
 </div>
 <p><a href="https://github.com/grahamgoff/DAGassist/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/grahamgoff/DAGassist/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a> <a href="https://github.com/grahamgoff/DAGassist/actions/workflows/pages/pages-build-deployment" class="external-link"><img src="https://github.com/grahamgoff/DAGassist/actions/workflows/pages/pages-build-deployment/badge.svg" alt="pages-build-deployment"></a> <a href="https://cran.r-project.org/package=DAGassist" class="external-link"><img src="https://www.r-pkg.org/badges/version/DAGassist" alt="CRAN status"></a> <a href="https://lifecycle.r-lib.org/articles/stages.html" class="external-link"><img src="https://img.shields.io/badge/lifecycle-maturing-blue.svg" alt="Lifecycle: maturing"></a> <a href="https://cran.r-project.org/package=DAGassist" class="external-link"><img src="https://cranlogs.r-pkg.org/badges/last-month/DAGassist" alt="CRAN downloads"></a></p>
-<p><strong>An all-in-one DAG-driven robustness check.</strong> Generate publication-quality reports that classify variables by causal role, compare the significance of DAG-derived models, and explicitly target estimands.</p>
+<p><strong>Align regression with target estimands.</strong> Generate publication-quality reports that classify variables by causal role, compare the significance of DAG-derived models, and explicitly target estimands.</p>
 <hr>
 <div class="section level2">
 <h2 id="what-dagassist-does">What <code>DAGassist</code> does:<a class="anchor" aria-label="anchor" href="#what-dagassist-does"></a>
@@ -195,7 +195,6 @@
 <li><a href="https://github.com/grahamgoff/DAGassist/" class="external-link">Browse source code</a></li>
 <li><a href="https://github.com/grahamgoff/DAGassist/issues" class="external-link">Report a bug</a></li>
 <li><a href="https://github.com/grahamgoff/DAGassist/issues" class="external-link">Report a bug</a></li>
-<li><a href="https://dagitty.net/" class="external-link">DAGitty (draw your DAG)</a></li>
 </ul>
 </div>
 

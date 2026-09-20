@@ -11,6 +11,17 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+```{r setup, include = FALSE}
+#fix color inverting in dark mode
+knitr::opts_chunk$set(
+  collapse = TRUE, comment = "#>",
+  dev = "png", dev.args = list(bg = "white"), dpi = 150,
+  fig.width = 7.2, fig.height = 4.5
+)
+ggplot2::theme_set(ggplot2::theme_minimal(base_size = 12))
+if (requireNamespace("thematic", quietly = TRUE)) thematic::thematic_off()
+```
+
 ## Introduction
 
 *DAGassist* contains tools for using directed acyclic graphs (DAGs) to align regressions with an estimand and its identifying assumptions. DAGs are causal graphs that nonparametrically encode the relationships between a model's variables. For good introductory articles on DAGs, see @Pearl1995, @Pearl2009, @HunermundEtAl2025, and @Elwert2013.

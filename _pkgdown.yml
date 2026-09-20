@@ -17,6 +17,13 @@ template:
       src: man/figures/card.png
       alt: "DAGassist: Align Regressions with Target Estimands"
 
+figures:
+  dev: ragg::agg_png
+  dpi: 150
+  fig.width: 7.2
+  fig.retina: 2
+  bg: "#FFFFFF"
+  
 navbar:
   bg: primary
   structure:

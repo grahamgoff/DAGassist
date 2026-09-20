@@ -1,38 +1,49 @@
-/* Logo: show only on the homepage */
-.page-header img.logo { display: none !important; }
-.template-home .page-header img.logo {
-  display: inline-block !important;
-  width: 200px; height: auto;
-}
+/* ---------------------------------------------------------------------------
+   DAGassist pkgdown styles
+   Palette is taken from the hex logo:
+     #AC4848 dark red (primary)   #E36A6A coral (accent)
+     #FEE5D0 cream (tint)         #2B2424 warm near-black (ink)
+   All text colors below clear 4.5:1 against their background.
+   --------------------------------------------------------------------------- */
 
-/* Homepage lead paragraph */
-.template-home .contents > p:first-of-type {
-  font-size: 1.2rem;
-  line-height: 1.6;
-}
-
-/* README images: rounded, subtle border, readable in dark mode */
-.template-home .contents img:not(.logo):not([src*="badge"]):not([src*="shields"]):not([src*="r-pkg"]) {
-  border: 1px solid var(--bs-border-color);
-  border-radius: .5rem;
-  padding: .25rem;
-  background: #fff;
-}
-
-/* Tables used for the output gallery: no stripes, even columns */
-.template-home table.gallery td { width: 50%; vertical-align: top; border: none; }
-
-/* Brand colors from the hex logo */
 :root {
+  --da-red:   #AC4848;
   --da-coral: #E36A6A;
   --da-peach: #FEE5D0;
   --da-ink:   #2B2424;
 }
 
-/* Thin coral rule under the navbar */
+/* --- Logo ---------------------------------------------------------------- */
+
+/* hide the header logo everywhere, then show it on the homepage only */
+.page-header img.logo { display: none !important; }
+.template-home .page-header img.logo {
+  display: inline-block !important;
+  width: 200px;
+  height: auto;
+  margin: 0 .5rem .2rem 0;
+}
+
+.template-home .page-header {
+  margin-bottom: .9rem !important;
+  padding-bottom: .3rem !important;
+  border-bottom: 1px solid var(--bs-border-color);
+}
+
+/* --- Homepage typography ------------------------------------------------- */
+
+.template-home .contents > p:first-of-type {
+  font-size: 1.2rem;
+  line-height: 1.6;
+}
+
+/* --- Navbar -------------------------------------------------------------- */
+
 .navbar { border-bottom: 3px solid var(--da-coral); }
 
-/* Dark mode: the logo red is too dim on a dark background, so lighten links */
+/* --- Links in dark mode -------------------------------------------------- */
+/* the logo red is too dim on a dark background, so lighten it */
+
 [data-bs-theme="dark"] {
   --bs-link-color: #F08C8C;
   --bs-link-color-rgb: 240, 140, 140;
@@ -40,7 +51,69 @@
   --bs-link-hover-color-rgb: 254, 229, 208;
 }
 
-/* Homepage callouts (use a > blockquote in the README, e.g. for "How it works") */
+/* --- Figures ------------------------------------------------------------- */
+
+/* pkgdown 2.2.0 auto-inverts plot images in dark mode; keep ours as drawn */
+[data-bs-theme="dark"] img.r-plt,
+[data-bs-theme="dark"] pre .r-plt.img img,
+[data-bs-theme="dark"] .cell-output-display img,
+[data-bs-theme="dark"] .html-widget {
+  filter: none;
+}
+
+/* figures read as light cards in both modes (badges and the logo excluded) */
+.contents img:not(.logo):not([src*="badge"]):not([src*="shields"]):not([src*="r-pkg"]) {
+  background: #fff;
+  border: 1px solid var(--bs-border-color);
+  border-radius: .5rem;
+  padding: .25rem;
+}
+
+/* --- Code panels --------------------------------------------------------- */
+
+pre { background-color: #FAF7F5; }
+[data-bs-theme="dark"] pre { background-color: #2A2320; }
+
+/* syntax colors (selectors match the specificity of pkgdown's themes) */
+pre code         { color: #2B2424; }
+pre code span.st,
+pre code span.ss,
+pre code span.ch,
+pre code span.vs { color: #8A4B2A; }                       /* strings   */
+pre code span.co,
+pre code span.cv,
+pre code span.do { color: #6E6664; font-style: italic; }   /* comments  */
+pre code span.fu { color: #9E3B3B; }                       /* functions */
+pre code span.kw,
+pre code span.cf,
+pre code span.ot { color: #2B2424; font-weight: 600; }     /* keywords  */
+pre code span.dv,
+pre code span.fl,
+pre code span.bn { color: #7A5C10; }                       /* numbers   */
+pre code span.va,
+pre code span.at { color: #3E5C6B; }                       /* variables */
+
+[data-bs-theme="dark"] pre code         { color: #EDE4E0; }
+[data-bs-theme="dark"] pre code span.st,
+[data-bs-theme="dark"] pre code span.ss,
+[data-bs-theme="dark"] pre code span.ch,
+[data-bs-theme="dark"] pre code span.vs { color: #E0A272; }
+[data-bs-theme="dark"] pre code span.co,
+[data-bs-theme="dark"] pre code span.cv,
+[data-bs-theme="dark"] pre code span.do { color: #A39A96; font-style: italic; }
+[data-bs-theme="dark"] pre code span.fu { color: #F08C8C; }
+[data-bs-theme="dark"] pre code span.kw,
+[data-bs-theme="dark"] pre code span.cf,
+[data-bs-theme="dark"] pre code span.ot { color: #EDE4E0; font-weight: 600; }
+[data-bs-theme="dark"] pre code span.dv,
+[data-bs-theme="dark"] pre code span.fl,
+[data-bs-theme="dark"] pre code span.bn { color: #D8B46A; }
+[data-bs-theme="dark"] pre code span.va,
+[data-bs-theme="dark"] pre code span.at { color: #8FC0D0; }
+
+/* --- Callouts ------------------------------------------------------------ */
+/* a `> blockquote` on the homepage, e.g. for "How it works" */
+
 .template-home blockquote {
   background: var(--da-peach);
   border-left: 4px solid var(--da-coral);
@@ -53,25 +126,11 @@
   color: var(--da-peach);
 }
 
-.contents img:not(.logo):not([src*="badge"]):not([src*="shields"]):not([src*="r-pkg"]) {
-  background: #fff;
-  border: 1px solid var(--bs-border-color);
-  border-radius: .5rem;
-  padding: .25rem;
+/* --- Output gallery ------------------------------------------------------ */
+/* <table class="gallery"> for side-by-side export screenshots */
+
+.template-home table.gallery td {
+  width: 50%;
+  vertical-align: top;
+  border: none;
 }
-
-/* Syntax colors tuned to the warm palette (downlit classes) */
-code span.st, code span.s  { color: #8A4B2A; }             /* strings  */
-code span.co               { color: #767070; font-style: italic; }  /* comments */
-code span.fu               { color: #AC4848; }             /* functions */
-code span.kw, code span.cf { color: #2B2424; font-weight: 600; }    /* keywords */
-code span.dv, code span.fl { color: #7A5C10; }             /* numbers  */
-
-[data-bs-theme="dark"] code span.st,
-[data-bs-theme="dark"] code span.s  { color: #E0A272; }
-[data-bs-theme="dark"] code span.co { color: #9A9290; }
-[data-bs-theme="dark"] code span.fu { color: #F08C8C; }
-[data-bs-theme="dark"] code span.kw,
-[data-bs-theme="dark"] code span.cf { color: #EDE4E0; }
-[data-bs-theme="dark"] code span.dv,
-[data-bs-theme="dark"] code span.fl { color: #D8B46A; }

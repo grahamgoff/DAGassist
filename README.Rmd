@@ -188,5 +188,5 @@ for (fmt in names(formats)) {
 <td><a href="man/figures/README-word.png"><img src="man/figures/README-word.png" width="100%" alt="DAGassist model comparison table in a Word document"></a><br><em>Word</em></td>
 </tr><tr>
 <td><a href="man/figures/README-excel.png"><img src="man/figures/README-excel.png" width="100%" alt="DAGassist report in Excel, one sheet per report section"></a><br><em>Excel</em></td>
-<td><img src="man/figures/README-dotwhisker-1.png" width="100%" alt="Dot-and-whisker plot comparing the income coefficient across specifications"><br><em>dotwhisker</em></td>
+<td><img src="man/figures/README-dotwhisker.png" width="100%" alt="Dot-and-whisker plot comparing the income coefficient across specifications"><br><em>dotwhisker</em></td>
 </tr></table>

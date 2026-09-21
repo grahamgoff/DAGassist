@@ -173,7 +173,7 @@ for (fmt in names(formats)) {
 
 <td>
 
-<img src="man/figures/README-dotwhisker-1.png" width="100%" alt="Dot-and-whisker plot comparing the income coefficient across specifications"><br><em>dotwhisker</em>
+<img src="man/figures/README-dotwhisker.png" width="100%" alt="Dot-and-whisker plot comparing the income coefficient across specifications"><br><em>dotwhisker</em>
 </td>
 
 </tr>

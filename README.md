@@ -28,7 +28,7 @@ You can install `DAGassist` with:
 
 ``` r
 install.packages("DAGassist")
-library(DAGassist)
+library(DAGassist) 
 ```
 
 You can also install the development version of `DAGassist` using
@@ -41,16 +41,33 @@ devtools::install_github("grahamgoff/DAGassist")
 
 ## Getting Started
 
+### Setup
+
+Before using `DAGassist`, collect your data and create a DAG of your
+hypothesized data generating process (DGP) using `dagitty` or `ggdag`.
+To begin, we use a canonical political science example–the effect of
+individual income on voter turnout.
+
+<img src="man/figures/README-ex-dag-1.png" alt="" width="100%" />
+
+In our hypothesized DGP, an individual’s age and state of residence
+jointly influece their income and propensity to vote. Political interest
+mediates the relationship between income and turnout; it is one of the
+mechanisms through which the independent variable effects the outcome.
+Individuals industries of employment and election competitiveness are
+neutral controls on the treatment and outcome, respectively.
+[This](https://grahamgoff.com/DAGassist/articles/DAGassist.html)
+vignette defines the different variable types (e.g., mediator, neutral
+controls, etc.) in greater detail. We simulate our DGP below.
+
+### Using `DAGassist`
+
 To use `DAGassist`, simply provide a `dagitty()` object and a regression
 call. `DAGassist` will create a report classifying variables by causal
 role, and compare the specified regression to minimal and canonical
 models.
 
 ``` r
-#load example dag and data
-data("turnout_dag")
-data("turnout_data")
-
 DAGassist(dag = turnout_dag, 
           formula = lm(turnout ~ income + state + age + polint + industry + elect_comp, data = turnout_data),
           estimand = c("total", "direct")

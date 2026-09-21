@@ -808,6 +808,46 @@ DAGassist(dag_model,
 #> Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome
 ```
 
+### Setup
+
+Before using `DAGassist`, collect your data and create a DAG of your
+hypothesized data generating process (DGP) using `dagitty` or `ggdag`.
+To begin, we use a canonical political science example–the effect of
+individual income on voter turnout.
+
+![](DAGassist_files/figure-html/ex-dag-1.png)
+
+In our hypothesized DGP, an individual’s age and state of residence
+jointly influece their income and propensity to vote. Political interest
+mediates the relationship between income and turnout; it is one of the
+mechanisms through which the independent variable effects the outcome.
+Individuals industries of employment and election competitiveness are
+neutral controls on the treatment and outcome, respectively.
+[This](https://grahamgoff.com/DAGassist/articles/DAGassist.html)
+vignette defines the different variable types (e.g., mediator, neutral
+controls, etc.) in greater detail. We simulate our DGP below.
+
+``` r
+
+set.seed(42)
+n <- 5000
+
+# exogenous
+state <- rnorm(n)                                   
+age <- rnorm(n)
+elect_comp <- rnorm(n)                                  
+
+# structural equations, following the DAG above
+industry <- 0.50 * age + rnorm(n)                        
+income <- 0.60 * state + 0.50 * age + 0.40 * industry + rnorm(n)
+polint <- 0.50 * income + rnorm(n)                   
+turnout <- 0.30 * income + 0.40 * polint +
+            0.35 * state  + 0.25 * age +
+            0.50 * elect_comp + rnorm(n)
+
+df <- data.frame(turnout, income, state, age, polint, industry, elect_comp)
+```
+
 ## References
 
 Deaton, Angus. 2010. “Instruments, Randomization, and Learning about

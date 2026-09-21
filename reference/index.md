@@ -33,6 +33,20 @@ own.
 - [`balance_models()`](https://grahamgoff.com/DAGassist/reference/balance_models.md)
   : Balance diagnostics across a list of fitted models
 
+## Data
+
+Simulated datasets and their generating DAGs, used throughout the
+documentation and examples.
+
+- [`toy_data`](https://grahamgoff.com/DAGassist/reference/toy_data.md) :
+  Toy data for demonstrating causal roles
+- [`toy_dag`](https://grahamgoff.com/DAGassist/reference/toy_dag.md) :
+  DAG behind toy_data
+- [`turnout_data`](https://grahamgoff.com/DAGassist/reference/turnout_data.md)
+  : Simulated data on income and voter turnout
+- [`turnout_dag`](https://grahamgoff.com/DAGassist/reference/turnout_dag.md)
+  : DAG behind turnout_data
+
 ## Print methods
 
 Console printers for DAGassist objects. You rarely call these directly.

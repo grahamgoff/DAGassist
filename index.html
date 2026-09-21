@@ -81,7 +81,7 @@
 </h1>
 </div>
 <p><a href="https://github.com/grahamgoff/DAGassist/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/grahamgoff/DAGassist/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a> <a href="https://github.com/grahamgoff/DAGassist/actions/workflows/pages/pages-build-deployment" class="external-link"><img src="https://github.com/grahamgoff/DAGassist/actions/workflows/pages/pages-build-deployment/badge.svg" alt="pages-build-deployment"></a> <a href="https://cran.r-project.org/package=DAGassist" class="external-link"><img src="https://www.r-pkg.org/badges/version/DAGassist" alt="CRAN status"></a> <a href="https://lifecycle.r-lib.org/articles/stages.html" class="external-link"><img src="https://img.shields.io/badge/lifecycle-maturing-blue.svg" alt="Lifecycle: maturing"></a> <a href="https://cran.r-project.org/package=DAGassist" class="external-link"><img src="https://cranlogs.r-pkg.org/badges/last-month/DAGassist" alt="CRAN downloads"></a></p>
-<p><strong>Align regressions with target estimands.</strong> Generate publication-quality reports that classify variables by causal role, compare the significance of DAG-derived models, and explicitly target estimands.- Classifies covariates by causal role (confounder, mediator, collider, descendants, neutral controls, etc.). - Automates the reestimation of models using DAG-derived adjustment sets. - Targets explicit estimands to facilitate transparent comparison between models. - Produces publication-grade reports in multiple formats (LaTeX/Word/Excel/markdown/plain text + dotwhisker). - Provides weight diagnostics to evaluate positivity and effective sample sizes.</p>
+<p>This R package enables researchers to align their regressions with their target estimands. The package provides tools for classifying DAG nodes by their causal roles, automating DAG-consistent re-estimation, and producing publication-grade diagnostic reports in LaTeX/Word/Excel/.md/.txt/dotwhisker. Uncertainty analysis functions allow researchers to check whether their conclusions survive uncertain edge directions or plausibly missing arrows.</p>
 <hr>
 <div class="section level2">
 <h2 id="installation-instructions">Installation Instructions<a class="anchor" aria-label="anchor" href="#installation-instructions"></a>
@@ -100,10 +100,6 @@
 </h2>
 <p><code>DAGassist</code> is most useful at the analysis stage of the research process when researchers already have data and have conceptualized a data generating process. Before using <code>DAGassist</code>, create a DAG using <code>dagitty</code> or <code>ggdag</code>. Let’s start with a canonical political science example: the effect of individual income on voter turnout.</p>
 <p><img src="reference/figures/README-ex-dag-1.png" alt="" width="100%"></p>
-</div>
-<div class="section level2">
-<h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
-</h2>
 <p>Simply provide a <code>dagitty()</code> object and a regression call and <code>DAGassist</code> will create a report classifying variables by causal role, and compare the specified regression to minimal and canonical models.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/DAGassist.html">DAGassist</a></span><span class="op">(</span>dag <span class="op">=</span> <span class="va">dag_model</span>, </span>
@@ -179,8 +175,37 @@
 <span><span class="co">#&gt;   Total Canonical (Weighted): w range=0.01075..74.93 | ESS (weighted)=1236.84 [LOW_ESS,EXTREME_W]</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome</span></span></code></pre></div>
-<p>Optionally, users can generate visual output via dotwhisker plots:</p>
-<p><img src="reference/figures/README-dotwhisker-1.png" alt="" width="100%"></p>
+<p>DAGassist supports diagnostics across popular file formats:</p>
+<p>The console output above is the same object rendered as text. The exports below were produced by the same call, changing only <code>type =</code> and <code>out =</code> (see <a href="dev/output_types.R"><code>dev/output_types.R</code></a>):</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">formats</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>latex <span class="op">=</span> <span class="st">"latex.tex"</span>,  word  <span class="op">=</span> <span class="st">"word.docx"</span>,</span>
+<span>             excel <span class="op">=</span> <span class="st">"excel.xlsx"</span>, dotwhisker <span class="op">=</span> <span class="st">"dw.png"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">fmt</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">formats</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="reference/DAGassist.html">DAGassist</a></span><span class="op">(</span>dag      <span class="op">=</span> <span class="va">dag_model</span>,</span>
+<span>            formula  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">state</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span>,</span>
+<span>            estimand <span class="op">=</span> <span class="st">"total"</span>,</span>
+<span>            type     <span class="op">=</span> <span class="va">fmt</span>,</span>
+<span>            out      <span class="op">=</span> <span class="va">formats</span><span class="op">[[</span><span class="va">fmt</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<table class="table gallery">
+<tr>
+<td>
+<a href="man/figures/README-latex.png"><img src="reference/figures/README-latex.png" width="100%" alt="DAGassist model comparison table typeset in LaTeX"></a><br><em>LaTeX (<code>tabularray</code>)</em>
+</td>
+<td>
+<a href="man/figures/README-word.png"><img src="reference/figures/README-word.png" width="100%" alt="DAGassist model comparison table in a Word document"></a><br><em>Word</em>
+</td>
+</tr>
+<tr>
+<td>
+<a href="man/figures/README-excel.png"><img src="reference/figures/README-excel.png" width="100%" alt="DAGassist report in Excel, one sheet per report section"></a><br><em>Excel</em>
+</td>
+<td>
+<img src="reference/figures/README-dotwhisker-1.png" width="100%" alt="Dot-and-whisker plot comparing the income coefficient across specifications"><br><em>dotwhisker</em>
+</td>
+</tr>
+</table>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">

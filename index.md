@@ -9,16 +9,13 @@ maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://lif
 [![CRAN
 downloads](https://cranlogs.r-pkg.org/badges/last-month/DAGassist)](https://cran.r-project.org/package=DAGassist)
 
-**Align regressions with target estimands.** Generate
-publication-quality reports that classify variables by causal role,
-compare the significance of DAG-derived models, and explicitly target
-estimands.- Classifies covariates by causal role (confounder, mediator,
-collider, descendants, neutral controls, etc.). - Automates the
-reestimation of models using DAG-derived adjustment sets. - Targets
-explicit estimands to facilitate transparent comparison between
-models. - Produces publication-grade reports in multiple formats
-(LaTeX/Word/Excel/markdown/plain text + dotwhisker). - Provides weight
-diagnostics to evaluate positivity and effective sample sizes.
+This R package enables researchers to align their regressions with their
+target estimands. The package provides tools for classifying DAG nodes
+by their causal roles, automating DAG-consistent re-estimation, and
+producing publication-grade diagnostic reports in
+LaTeX/Word/Excel/.md/.txt/dotwhisker. Uncertainty analysis functions
+allow researchers to check whether their conclusions survive uncertain
+edge directions or plausibly missing arrows.
 
 ------------------------------------------------------------------------
 
@@ -49,8 +46,6 @@ generating process. Before using `DAGassist`, create a DAG using
 example: the effect of individual income on voter turnout.
 
 ![](reference/figures/README-ex-dag-1.png)
-
-## Example
 
 Simply provide a `dagitty()` object and a regression call and
 `DAGassist` will create a report classifying variables by causal role,
@@ -133,6 +128,25 @@ DAGassist(dag = dag_model,
 #> Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome
 ```
 
-Optionally, users can generate visual output via dotwhisker plots:
+DAGassist supports diagnostics across popular file formats:
 
-![](reference/figures/README-dotwhisker-1.png)
+The console output above is the same object rendered as text. The
+exports below were produced by the same call, changing only `type =` and
+`out =` (see
+[`dev/output_types.R`](https://grahamgoff.com/DAGassist/dev/output_types.R)):
+
+``` r
+
+formats <- c(latex = "latex.tex",  word  = "word.docx",
+             excel = "excel.xlsx", dotwhisker = "dw.png")
+
+for (fmt in names(formats)) {
+  DAGassist(dag      = dag_model,
+            formula  = lm(turnout ~ income + state + age + polint + industry + elect_comp, data = df),
+            estimand = "total",
+            type     = fmt,
+            out      = formats[[fmt]])
+}
+```
+
+[TABLE]

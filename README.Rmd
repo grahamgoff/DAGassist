@@ -31,17 +31,15 @@ Sys.setenv(NO_COLOR = "1")
 [![Lifecycle: maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://lifecycle.r-lib.org/articles/stages.html)
 [![CRAN downloads](https://cranlogs.r-pkg.org/badges/last-month/DAGassist)](https://cran.r-project.org/package=DAGassist)
 
-**Align regressions with target estimands.** Generate publication-quality reports that classify variables by causal role, compare the significance of DAG-derived models, and explicitly target estimands.
-
----
-## What `DAGassist` does:
- - Classifies covariates by causal role (confounder, mediator, collider, descendants, neutral controls, etc.).
+**Align regressions with target estimands.** Generate publication-quality reports that classify variables by causal role, compare the significance of DAG-derived models, and explicitly target estimands.- Classifies covariates by causal role (confounder, mediator, collider, descendants, neutral controls, etc.).
  - Automates the reestimation of models using DAG-derived adjustment sets.
  - Targets explicit estimands to facilitate transparent comparison between models.
  - Produces publication-grade reports in multiple formats (LaTeX/Word/Excel/markdown/plain text + dotwhisker).
  - Provides weight diagnostics to evaluate positivity and effective sample sizes.
 
-## Installation
+---
+
+## Installation Instructions
 
 You can install `DAGassist` with:
 ```{r cran, eval=FALSE}
@@ -56,46 +54,111 @@ Or you can install the development version from GitHub with:
 devtools::install_github("grahamgoff/DAGassist")
 ```
 
-```{r ex-dag, include=FALSE}
+## Getting Started
+
+`DAGassist` is most useful at the analysis stage of the research process when researchers already have data and have conceptualized a data generating process. Before using `DAGassist`, create a DAG using `dagitty` or `ggdag`. Let's start with a canonical political science example: the effect of individual income on voter turnout. 
+
+```{r ex-dag, echo=FALSE, message=FALSE, warning=FALSE}
 library(dagitty)
 library(ggdag)
 
-dag_model <- dagify(
-  Y ~ X + M + Z + A + B,
-  X ~ Z,
-  C ~ X + Y,
-  M ~ X,
-  exposure = "X",
-  outcome  = "Y"
+x_pos <- c(
+  turnout = 10,
+  income = 0,
+  state = 5,
+  age  = 5,
+  polint = 5,
+  industry = 0,
+  elect_comp = 10
 )
 
-set.seed(42)
-n <- 2000
+y_pos <- c(
+  turnout = 0,
+  income = 0,
+  state = 1,
+  age  = -1,
+  polint = 0.5,
+  industry = -0.5,
+  elect_comp = -0.5
+)
 
-#exogenous variables
-A <- rnorm(n, 0, 1)
-B <- rnorm(n, 0, 1)
-Z <- rnorm(n, 0, 1)
 
-#structural equations
-# X ~ Z
-beta_zx <- 0.8
-X <- beta_zx * Z + rnorm(n, 0, 1)
+dag_model <- dagify(
+  
+  turnout ~ income + state + age + polint + elect_comp,
+  
+  income ~ state + age + industry,
+  
+  polint ~ income,
+  
+  industry ~ age,
+  
+  exposure = "income",
+  outcome  = "turnout",
+  
+  coords = list(x= x_pos, y = y_pos),
 
-# M ~ X
-beta_xm <- 0.9
-M <- beta_xm * X + rnorm(n, 0, 1)
+  labels = c(
+    turnout = "Turnout",
+    income = "Income",
+    state = "State",
+    age  = "Age",
+    polint = "Political Interest",
+    industry = "Industry",
+    elect_comp = "Election Competitiveness"
+  )
+)
 
-# Y ~ X + M + Z + A + B
-bX <- 0.7; bM <- 0.6; bZ <- 0.3; bA <- 0.2; bB <- -0.1
-Y <- bX*X + bM*M + bZ*Z + bA*A + bB*B + rnorm(n, 0, 1)
+#coordinates for dag labels
+label_df <- data.frame(
+  name = c("turnout", "income", "state", "age", "polint", "industry", "elect_comp"),
+  label_x = c(10, 0, 5, 5, 5, 0, 9),
+  label_y = c(0, 0, 1, -1, 0.55, -0.5, -0.5)
+)
 
-# C ~ X + Y 
-bXC <- 0.5; bYC <- 0.4
-C <- bXC*X + bYC*Y + rnorm(n, 0, 1)
+# pull labels safely from dagitty object
+labels_vec <- attr(dag_model, "labels")
 
-df <- data.frame(A, B, Z, X, M, Y, C)
+label_df$label <- unname(labels_vec[label_df$name])
+
+# ---- plot: ggdag without labels, then add manual labels
+p <- ggdag_status(dag_model, text = FALSE) +
+  theme_dag() +
+  scale_fill_manual(values = c(exposure="black", outcome="grey30", none="grey90")) +
+  scale_color_manual(values = c(exposure="black", outcome="grey30", none="grey60")) +
+  theme(legend.position = "none") +
+  geom_label(
+    data = label_df,
+    aes(x = label_x, y = label_y, label = label),
+    inherit.aes = FALSE,   
+    size = 3.4,
+    label.size = 0.25
+  )
+
+p
+
 ```
+
+```{r data, echo=FALSE}
+set.seed(42)
+n <- 5000
+
+# exogenous
+state <- rnorm(n)                                   
+age <- rnorm(n)
+elect_comp <- rnorm(n)                                  
+
+# structural equations, following the DAG above
+industry <- 0.50 * age + rnorm(n)                        
+income <- 0.60 * state + 0.50 * age + 0.40 * industry + rnorm(n)
+polint <- 0.50 * income + rnorm(n)                   
+turnout <- 0.30 * income + 0.40 * polint +
+            0.35 * state  + 0.25 * age +
+            0.50 * elect_comp + rnorm(n)
+
+df <- data.frame(turnout, income, state, age, polint, industry, elect_comp)
+```
+
 
 ## Example
 
@@ -103,7 +166,7 @@ Simply provide a `dagitty()` object and a regression call and `DAGassist` will c
 
 ```{r run}
 DAGassist(dag = dag_model, 
-          formula = lm(Y ~ X + M + C + Z + A + B, data = df),
+          formula = lm(turnout ~ income + state + age + polint + industry + elect_comp, data = df),
           estimand = c("total", "direct")
 )
 
@@ -112,8 +175,9 @@ DAGassist(dag = dag_model,
 Optionally, users can generate visual output via dotwhisker plots:
 
 ```{r dotwhisker, warning=FALSE, echo=FALSE}
+
 DAGassist(dag = dag_model, 
-          formula = lm(Y ~ X + M + C + Z + A + B, data = df),
+          formula = lm(turnout ~ income + state + age + polint + industry + elect_comp, data = df),
           estimand = c("total", "direct"),
           type = "dotwhisker"
 )

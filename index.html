@@ -89,7 +89,7 @@
 <p>You can install <code>DAGassist</code> with:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"DAGassist"</span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/grahamgoff/DAGassist" class="external-link">DAGassist</a></span><span class="op">)</span></span></code></pre></div>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/grahamgoff/DAGassist" class="external-link">DAGassist</a></span><span class="op">)</span> </span></code></pre></div>
 <p>You can also install the development version of <code>DAGassist</code> using <code>devtools</code>:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("devtools")</span></span>
@@ -98,13 +98,20 @@
 <div class="section level2">
 <h2 id="getting-started">Getting Started<a class="anchor" aria-label="anchor" href="#getting-started"></a>
 </h2>
+<div class="section level3">
+<h3 id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a>
+</h3>
+<p>Before using <code>DAGassist</code>, collect your data and create a DAG of your hypothesized data generating process (DGP) using <code>dagitty</code> or <code>ggdag</code>. To begin, we use a canonical political science example–the effect of individual income on voter turnout.</p>
+<p><img src="reference/figures/README-ex-dag-1.png" alt="" width="100%"></p>
+<p>In our hypothesized DGP, an individual’s age and state of residence jointly influece their income and propensity to vote. Political interest mediates the relationship between income and turnout; it is one of the mechanisms through which the independent variable effects the outcome. Individuals industries of employment and election competitiveness are neutral controls on the treatment and outcome, respectively. <a href="https://grahamgoff.com/DAGassist/articles/DAGassist.html">This</a> vignette defines the different variable types (e.g., mediator, neutral controls, etc.) in greater detail. We simulate our DGP below.</p>
+</div>
+<div class="section level3">
+<h3 id="using-dagassist">Using <code>DAGassist</code>
+<a class="anchor" aria-label="anchor" href="#using-dagassist"></a>
+</h3>
 <p>To use <code>DAGassist</code>, simply provide a <code>dagitty()</code> object and a regression call. <code>DAGassist</code> will create a report classifying variables by causal role, and compare the specified regression to minimal and canonical models.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co">#load example dag and data</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"turnout_dag"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"turnout_data"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="reference/DAGassist.html">DAGassist</a></span><span class="op">(</span>dag <span class="op">=</span> <span class="va">turnout_dag</span>, </span>
+<code class="sourceCode R"><span><span class="fu"><a href="reference/DAGassist.html">DAGassist</a></span><span class="op">(</span>dag <span class="op">=</span> <span class="va">turnout_dag</span>, </span>
 <span>          formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">state</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>, data <span class="op">=</span> <span class="va">turnout_data</span><span class="op">)</span>,</span>
 <span>          estimand <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"total"</span>, <span class="st">"direct"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
@@ -215,6 +222,7 @@
 </td>
 </tr>
 </table>
+</div>
 </div>
 <div class="section level2">
 <h2 id="learn-more">Learn more<a class="anchor" aria-label="anchor" href="#learn-more"></a>

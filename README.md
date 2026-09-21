@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# DAGassist <a href='https://grahamgoff.com/DAGassist/'><img src='man/figures/logo.png' class='home-logo' align="right" width="160pt" alt='DAGassist hex logo'/></a>
+# DAGassist: Align Regressions with Target Estimands <a href='https://grahamgoff.com/DAGassist/'><img src='man/figures/logo.png' class='home-logo' align="right" width="160pt" alt='DAGassist hex logo'/></a>
 
 [![R-CMD-check](https://github.com/grahamgoff/DAGassist/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/grahamgoff/DAGassist/actions/workflows/R-CMD-check.yaml)
 [![pages-build-deployment](https://github.com/grahamgoff/DAGassist/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/grahamgoff/DAGassist/actions/workflows/pages/pages-build-deployment)
@@ -28,7 +28,7 @@ You can install `DAGassist` with:
 
 ``` r
 install.packages("DAGassist")
-library(DAGassist) 
+library(DAGassist)
 ```
 
 You can also install the development version of `DAGassist` using
@@ -41,55 +41,18 @@ devtools::install_github("grahamgoff/DAGassist")
 
 ## Getting Started
 
-### Setup
-
-Before using `DAGassist`, collect your data and create a DAG of your
-hypothesized data generating process (DGP) using `dagitty` or `ggdag`.
-To begin, we use a canonical political science example–the effect of
-individual income on voter turnout.
-
-<img src="man/figures/README-ex-dag-1.png" alt="" width="100%" />
-
-In our hypothesized DGP, an individual’s age and state of residence
-jointly influece their income and propensity to vote. Political interest
-mediates the relationship between income and turnout; it is one of the
-mechanisms through which the independent variable effects the outcome.
-Individuals industries of employment and election competitiveness are
-neutral controls on the treatment and outcome, respectively.
-[This](https://grahamgoff.com/DAGassist/articles/DAGassist.html)
-vignette defines the different variable types (e.g., mediator, neutral
-controls, etc.) in greater detail. We simulate our DGP below.
-
-``` r
-set.seed(42)
-n <- 5000
-
-# exogenous
-state <- rnorm(n)                                   
-age <- rnorm(n)
-elect_comp <- rnorm(n)                                  
-
-# structural equations, following the DAG above
-industry <- 0.50 * age + rnorm(n)                        
-income <- 0.60 * state + 0.50 * age + 0.40 * industry + rnorm(n)
-polint <- 0.50 * income + rnorm(n)                   
-turnout <- 0.30 * income + 0.40 * polint +
-            0.35 * state  + 0.25 * age +
-            0.50 * elect_comp + rnorm(n)
-
-df <- data.frame(turnout, income, state, age, polint, industry, elect_comp)
-```
-
-### Using `DAGassist`
-
 To use `DAGassist`, simply provide a `dagitty()` object and a regression
 call. `DAGassist` will create a report classifying variables by causal
 role, and compare the specified regression to minimal and canonical
 models.
 
 ``` r
-DAGassist(dag = dag_model, 
-          formula = lm(turnout ~ income + state + age + polint + industry + elect_comp, data = df),
+#load example dag and data
+data("turnout_dag")
+data("turnout_data")
+
+DAGassist(dag = turnout_dag, 
+          formula = lm(turnout ~ income + state + age + polint + industry + elect_comp, data = turnout_data),
           estimand = c("total", "direct")
 )
 #> DAGassist Report: 
@@ -182,8 +145,8 @@ formats <- c(latex = "latex.tex",  word  = "word.docx",
              excel = "excel.xlsx", dotwhisker = "dw.png")
 
 for (fmt in names(formats)) {
-  DAGassist(dag      = dag_model,
-            formula  = lm(turnout ~ income + state + age + polint + industry + elect_comp, data = df),
+  DAGassist(dag      = turnout_dag,
+            formula  = lm(turnout ~ income + state + age + polint + industry + elect_comp, data = turnout_data),
             estimand = "total",
             type     = fmt,
             out      = formats[[fmt]])

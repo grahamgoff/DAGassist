@@ -11,23 +11,9 @@
 #' This is essentially the inverse of `pick_minimal_controls()`, as it returns
 #' bad controls, rather than the minimal/canonical set of good controls
 #' 
-#' @examplesIf requireNamespace("dagitty", quietly = TRUE)
-#' d <- ggdag::dagify(
-#' Y ~ X + M + Z,
-#' M ~ X + Z,
-#' C ~ X + Y,
-#' exposure = "X",
-#' outcome = "Y")
-#' # M: mediator / Z: confounder / C: collider
-#'
-#' # hypothetical candidate controls
-#' controls <- c("Z", "M", "C")
-#'
-#' # Flag controls that would bias the total effect of X on Y:
-#' bad_controls_in(d, controls = c("Z","M","C"), exposure = "X", outcome = "Y")
-#'
-#' # expected: c("M", "C")  # mediator & collider are "bad controls"; Z is OK
-
+#' @examples
+#' # Which variables in a formula are bad controls, given the DAG?
+#' bad_controls_in(toy_dag, Y ~ X + M + C + Z)
 #' @export
 bad_controls_in <- function(dag, controls, exposure, outcome) {
   roles <- classify_nodes(dag, exposure = exposure, outcome = outcome)

@@ -238,10 +238,9 @@ print.DAGassist_pdag_summary <- function(x, ...) {
 #' @param max_uncertain Integer guard on the number of uncertain edges
 #'   (default 10 -> up to 1024 worlds).
 #' @return A `DAGassist_pdag_summary` object (printed as a bullet summary).
-#' @examplesIf requireNamespace("dagitty", quietly = TRUE)
-#' g <- dagitty::dagitty("dag { Z->X; X->Y; Z->Y; A->B; B->Y }")
-#' dagitty::exposures(g) <- "X"; dagitty::outcomes(g) <- "Y"
-#' pdag_robustness(g, uncertain_edges = "A -- B")
+#' @examples
+#' # What if the DAG is missing an arrow, or has unmeasured confounding?
+#' add_edges_robustness(toy_dag, add_edges = c("A -> X", "X <-> Y"))
 #' @export
 pdag_robustness <- function(dag, exposure, outcome,
                             uncertain_edges = NULL, pdag = NULL,

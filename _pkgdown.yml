@@ -73,6 +73,16 @@ reference:
       - classify_nodes
       - bad_controls_in
       - balance_models
+      
+  - title: "Data"
+    desc: >
+      Simulated datasets and their generating DAGs, used throughout the
+      documentation and examples.
+    contents:
+      - toy_data
+      - toy_dag
+      - turnout_data
+      - turnout_dag
 
   - title: "Print methods"
     desc: >

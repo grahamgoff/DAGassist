@@ -179,34 +179,24 @@
 #' @seealso [print.DAGassist_report()] and `vignette("DAGassist", package = "DAGassist")`.
 #'
 #' @examples
-#' \dontshow{set.seed(1)}
-#' if (requireNamespace("dagitty", quietly = TRUE)) {
-#'   g <- dagitty::dagitty("dag { Z -> X; X -> M; X -> Y; M -> Y; Z -> Y }")
-#'   dagitty::exposures(g) <- "X"; dagitty::outcomes(g) <- "Y"
-#'   n <- 300
-#'   Z <- rnorm(n); X <- 0.8*Z + rnorm(n)
-#'   M <- 0.9*X + rnorm(n)
-#'   Y <- 0.7*X + 0.6*M + 0.3*Z + rnorm(n)
-#'   df <- data.frame(Z, X, M, Y)
+#' # toy_dag and toy_data ship with the package; the true total effect
+#' # of X on Y is recovered by adjusting for Z alone.
 #'
-#'   # 1) Core: DAG-derived specs + engine-call parsing
-#'   r <- DAGassist(g, lm(Y ~ X + Z + M, data = df))
+#' # 1) Core: DAG-derived specs + engine-call parsing
+#' DAGassist(toy_dag, lm(Y ~ X + Z + M, data = toy_data))
 #'
-#'   # 2) Target sample-average estimands via weighting (requires WeightIt)
-#'   if (requireNamespace("WeightIt", quietly = TRUE)) {
-#'     r2 <- DAGassist(g, lm(Y ~ X + Z + M, data = df), estimand = "total")
-#'   }
+#' # 2) Roles grid only
+#' DAGassist(toy_dag, lm(Y ~ X + Z + M, data = toy_data), show = "roles")
 #'
-#'   # 3) Mediator case: sequential g-estimation (requires DirectEffects)
-#'   if (requireNamespace("DirectEffects", quietly = TRUE)) {
-#'     r3 <- DAGassist(g, lm(Y ~ X + Z + M, data = df), estimand = "direct")
-#'   }
+#' # 3) Target sample-average estimands via weighting
+#' @examplesIf requireNamespace("WeightIt", quietly = TRUE)
+#' DAGassist(toy_dag, lm(Y ~ X + Z + M, data = toy_data), estimand = "total")
 #'
-#'   # 4) File export (LaTeX fragment)
-#'   \donttest{
-#'     out <- file.path(tempdir(), "dagassist_report.tex")
-#'     DAGassist(g, lm(Y ~ X + Z + M, data = df), type = "latex", out = out)
-#'   }
+#' # 4) File export (LaTeX fragment)
+#' \donttest{
+#'   out <- file.path(tempdir(), "dagassist_report.tex")
+#'   DAGassist(g, lm(Y ~ X + Z + M, data = df), type = "latex", out = out)
+#'  }
 #' }
 #' @export
 

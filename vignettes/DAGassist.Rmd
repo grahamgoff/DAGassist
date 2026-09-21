@@ -904,4 +904,103 @@ DAGassist(dag_model,
   add_edges = c("pref -> edu_year", "edu_year <-> children"))
 ```
 
+
+
+
+
+
+
+
+
+
+
+
+
+### Setup
+
+Before using `DAGassist`, collect your data and create a DAG of your hypothesized data generating process (DGP) using `dagitty` or `ggdag`. To begin, we use a canonical political science example--the effect of individual income on voter turnout. 
+
+```{r ex-dag, echo=FALSE, message=FALSE, warning=FALSE, fig.height=3.5, fig.width=7}
+
+library(dagitty)
+library(ggdag)
+
+x_pos <- c(
+  turnout = 10,
+  income = 0,
+  state = 5,
+  age  = 5,
+  polint = 5,
+  industry = 0,
+  elect_comp = 10
+)
+
+y_pos <- c(
+  turnout = 0,
+  income = 0,
+  state = 1,
+  age  = -1,
+  polint = 0.5,
+  industry = -0.75,
+  elect_comp = -0.75
+)
+
+#coordinates for dag labels
+label_df <- data.frame(
+  name = c("turnout", "income", "state", "age", "polint", "industry", "elect_comp"),
+  label_x = c(10, 0, 5, 5, 5, 0, 9),
+  label_y = c(0, 0, 1, -1, 0.55, -0.75, -0.75)
+)
+
+# pull labels safely from dagitty object
+labels_vec <- attr(dag_model, "labels")
+
+label_df$label <- unname(labels_vec[label_df$name])
+
+# ---- plot: ggdag without labels, then add manual labels
+p <- ggdag_status(dag_model, text = FALSE) +
+  theme_dag() +
+  scale_fill_manual(values = c(exposure="black", outcome="grey30", none="grey90")) +
+  scale_color_manual(values = c(exposure="black", outcome="grey30", none="grey60")) +
+  theme(legend.position = "none") +
+  geom_label(
+    data = label_df,
+    aes(x = label_x, y = label_y, label = label),
+    inherit.aes = FALSE,   
+    size = 3.4,
+    label.size = 0.25
+  )
+
+p
+
+```
+
+In our hypothesized DGP, an individual's age and state of residence jointly influece their income and propensity to vote. Political interest mediates the relationship between income and turnout; it is one of the mechanisms through which the independent variable effects the outcome. Individuals industries of employment and election competitiveness are neutral controls on the treatment and outcome, respectively. [This](https://grahamgoff.com/DAGassist/articles/DAGassist.html) vignette defines the different variable types (e.g., mediator, neutral controls, etc.) in greater detail. We simulate our DGP below.  
+
+```{r data, echo=TRUE}
+set.seed(42)
+n <- 5000
+
+# exogenous
+state <- rnorm(n)                                   
+age <- rnorm(n)
+elect_comp <- rnorm(n)                                  
+
+# structural equations, following the DAG above
+industry <- 0.50 * age + rnorm(n)                        
+income <- 0.60 * state + 0.50 * age + 0.40 * industry + rnorm(n)
+polint <- 0.50 * income + rnorm(n)                   
+turnout <- 0.30 * income + 0.40 * polint +
+            0.35 * state  + 0.25 * age +
+            0.50 * elect_comp + rnorm(n)
+
+df <- data.frame(turnout, income, state, age, polint, industry, elect_comp)
+```
+
+
+
+
+
+
+
 ## References

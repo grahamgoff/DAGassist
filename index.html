@@ -84,13 +84,13 @@
 <p>This R package enables researchers to align their regressions with their target estimands. The package provides tools for classifying DAG nodes by their causal roles, automating DAG-consistent re-estimation, and producing publication-grade diagnostic reports in LaTeX/Word/Excel/.md/.txt/dotwhisker. Uncertainty analysis functions allow researchers to check whether their conclusions survive uncertain edge directions or plausibly missing arrows.</p>
 <hr>
 <div class="section level2">
-<h2 id="installation-instructions">Installation Instructions<a class="anchor" aria-label="anchor" href="#installation-instructions"></a>
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <p>You can install <code>DAGassist</code> with:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"DAGassist"</span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/grahamgoff/DAGassist" class="external-link">DAGassist</a></span><span class="op">)</span> </span></code></pre></div>
-<p>Or you can install the development version from GitHub with:</p>
+<p>You can also install the development version of <code>DAGassist</code> using <code>devtools</code>:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("devtools")</span></span>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"grahamgoff/DAGassist"</span><span class="op">)</span></span></code></pre></div>
@@ -98,10 +98,37 @@
 <div class="section level2">
 <h2 id="getting-started">Getting Started<a class="anchor" aria-label="anchor" href="#getting-started"></a>
 </h2>
-<p><code>DAGassist</code> is most useful at the analysis stage of the research process when researchers already have data and have conceptualized a data generating process. Before using <code>DAGassist</code>, create a DAG using <code>dagitty</code> or <code>ggdag</code>. Let’s start with a canonical political science example: the effect of individual income on voter turnout.</p>
+<div class="section level3">
+<h3 id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a>
+</h3>
+<p>Before using <code>DAGassist</code>, collect your data and create a DAG of your hypothesized data generating process (DGP) using <code>dagitty</code> or <code>ggdag</code>. To begin, we use a canonical political science example–the effect of individual income on voter turnout.</p>
 <p><img src="reference/figures/README-ex-dag-1.png" alt="" width="100%"></p>
-<p>Simply provide a <code>dagitty()</code> object and a regression call and <code>DAGassist</code> will create a report classifying variables by causal role, and compare the specified regression to minimal and canonical models.</p>
+<p>In our hypothesized DGP, an individual’s age and state of residence jointly influece their income and propensity to vote. Political interest mediates the relationship between income and turnout; it is one of the mechanisms through which the independent variable effects the outcome. Individuals industries of employment and election competitiveness are neutral controls on the treatment and outcome, respectively. <a href="https://grahamgoff.com/DAGassist/articles/DAGassist.html">This</a> vignette defines the different variable types (e.g., mediator, neutral controls, etc.) in greater detail. We simulate our DGP below.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
+<span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">5000</span></span>
+<span></span>
+<span><span class="co"># exogenous</span></span>
+<span><span class="va">state</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span>                                   </span>
+<span><span class="va">age</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span>
+<span><span class="va">elect_comp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span>                                  </span>
+<span></span>
+<span><span class="co"># structural equations, following the DAG above</span></span>
+<span><span class="va">industry</span> <span class="op">&lt;-</span> <span class="fl">0.50</span> <span class="op">*</span> <span class="va">age</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span>                        </span>
+<span><span class="va">income</span> <span class="op">&lt;-</span> <span class="fl">0.60</span> <span class="op">*</span> <span class="va">state</span> <span class="op">+</span> <span class="fl">0.50</span> <span class="op">*</span> <span class="va">age</span> <span class="op">+</span> <span class="fl">0.40</span> <span class="op">*</span> <span class="va">industry</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span>
+<span><span class="va">polint</span> <span class="op">&lt;-</span> <span class="fl">0.50</span> <span class="op">*</span> <span class="va">income</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span>                   </span>
+<span><span class="va">turnout</span> <span class="op">&lt;-</span> <span class="fl">0.30</span> <span class="op">*</span> <span class="va">income</span> <span class="op">+</span> <span class="fl">0.40</span> <span class="op">*</span> <span class="va">polint</span> <span class="op">+</span></span>
+<span>            <span class="fl">0.35</span> <span class="op">*</span> <span class="va">state</span>  <span class="op">+</span> <span class="fl">0.25</span> <span class="op">*</span> <span class="va">age</span> <span class="op">+</span></span>
+<span>            <span class="fl">0.50</span> <span class="op">*</span> <span class="va">elect_comp</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span><span class="va">turnout</span>, <span class="va">income</span>, <span class="va">state</span>, <span class="va">age</span>, <span class="va">polint</span>, <span class="va">industry</span>, <span class="va">elect_comp</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="using-dagassist">Using <code>DAGassist</code>
+<a class="anchor" aria-label="anchor" href="#using-dagassist"></a>
+</h3>
+<p>To use <code>DAGassist</code>, simply provide a <code>dagitty()</code> object and a regression call. <code>DAGassist</code> will create a report classifying variables by causal role, and compare the specified regression to minimal and canonical models.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/DAGassist.html">DAGassist</a></span><span class="op">(</span>dag <span class="op">=</span> <span class="va">dag_model</span>, </span>
 <span>          formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">state</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>, data <span class="op">=</span> <span class="va">df</span><span class="op">)</span>,</span>
 <span>          estimand <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"total"</span>, <span class="st">"direct"</span><span class="op">)</span></span>
@@ -175,9 +202,9 @@
 <span><span class="co">#&gt;   Total Canonical (Weighted): w range=0.01075..74.93 | ESS (weighted)=1236.84 [LOW_ESS,EXTREME_W]</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome</span></span></code></pre></div>
-<p>DAGassist supports diagnostics across popular file formats:</p>
-<p>The console output above is the same object rendered as text. The exports below were produced by the same call, changing only <code>type =</code> and <code>out =</code> (see <a href="dev/output_types.R"><code>dev/output_types.R</code></a>):</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<p>By construction the total effect is 0.50 and the direct effect is 0.30. The original specification, which controls for a mediator, returns 0.281. Without <code>DAGassist</code>, the researcher might present their model as estimating the total effect of income on voter turnout. <code>DAGassist</code> detects the estimand-shifting variable, and automatically reestimates with transparent estimands.</p>
+<p>Users may want to share their results, either in response to reviewers or as a general appendix robustness check. <code>DAGassist</code> supports easily exporting diagnostics across popular file formats by setting the <code>type =</code> and <code>out =</code> parameters. Below, we generate reports across all of the file formats using a loop. We also include code for simple single-format output that coes not rely on a loop.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">formats</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>latex <span class="op">=</span> <span class="st">"latex.tex"</span>,  word  <span class="op">=</span> <span class="st">"word.docx"</span>,</span>
 <span>             excel <span class="op">=</span> <span class="st">"excel.xlsx"</span>, dotwhisker <span class="op">=</span> <span class="st">"dw.png"</span><span class="op">)</span></span>
 <span></span>
@@ -187,7 +214,14 @@
 <span>            estimand <span class="op">=</span> <span class="st">"total"</span>,</span>
 <span>            type     <span class="op">=</span> <span class="va">fmt</span>,</span>
 <span>            out      <span class="op">=</span> <span class="va">formats</span><span class="op">[[</span><span class="va">fmt</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="op">}</span></span></code></pre></div>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="co">#for single-format output</span></span>
+<span><span class="co"># DAGassist(dag = dag_model,</span></span>
+<span><span class="co">#           formula  = lm(turnout ~ income + state + age + polint + industry + elect_comp, data = df),</span></span>
+<span><span class="co">#           estimand = "total",</span></span>
+<span><span class="co">#           type = "latex",</span></span>
+<span><span class="co">#           out = "out/path/file_name.tex")</span></span></code></pre></div>
 <table class="table gallery">
 <tr>
 <td>
@@ -206,6 +240,40 @@
 </td>
 </tr>
 </table>
+</div>
+</div>
+<div class="section level2">
+<h2 id="learn-more">Learn more<a class="anchor" aria-label="anchor" href="#learn-more"></a>
+</h2>
+<ul>
+<li>
+<a href="https://grahamgoff.com/DAGassist/articles/DAGassist.html">Get started</a> — the full workflow</li>
+<li>
+<a href="https://grahamgoff.com/DAGassist/articles/compatibility.html">Supported model engines</a> — <code>DAGassist</code> supports most DV ~ IV-format estimators.</li>
+<li>
+<a href="https://grahamgoff.com/DAGassist/reference/">Reference</a> — all functions</li>
+</ul>
+</div>
+<div class="section level2">
+<h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
+</h2>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/citation.html" class="external-link">citation</a></span><span class="op">(</span><span class="st">"DAGassist"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; To cite package 'DAGassist' in publications use:</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   Goff G, Denly M (2026). _DAGassist: Test Robustness with Directed</span></span>
+<span><span class="co">#&gt;   Acyclic Graphs_. R package version 0.3.1,</span></span>
+<span><span class="co">#&gt;   &lt;https://grahamgoff.com/DAGassist/&gt;.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; A BibTeX entry for LaTeX users is</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   @Manual{,</span></span>
+<span><span class="co">#&gt;     title = {{DAGassist}: Test Robustness with Directed Acyclic Graphs},</span></span>
+<span><span class="co">#&gt;     author = {Graham Goff and Michael Denly},</span></span>
+<span><span class="co">#&gt;     year = {2026},</span></span>
+<span><span class="co">#&gt;     note = {R package version 0.3.1},</span></span>
+<span><span class="co">#&gt;     url = {https://grahamgoff.com/DAGassist/},</span></span>
+<span><span class="co">#&gt;   }</span></span></code></pre></div>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">

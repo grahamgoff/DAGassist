@@ -19,7 +19,7 @@ edge directions or plausibly missing arrows.
 
 ------------------------------------------------------------------------
 
-## Installation Instructions
+## Installation
 
 You can install `DAGassist` with:
 
@@ -29,7 +29,8 @@ install.packages("DAGassist")
 library(DAGassist) 
 ```
 
-Or you can install the development version from GitHub with:
+You can also install the development version of `DAGassist` using
+`devtools`:
 
 ``` r
 
@@ -39,17 +40,52 @@ devtools::install_github("grahamgoff/DAGassist")
 
 ## Getting Started
 
-`DAGassist` is most useful at the analysis stage of the research process
-when researchers already have data and have conceptualized a data
-generating process. Before using `DAGassist`, create a DAG using
-`dagitty` or `ggdag`. Let’s start with a canonical political science
-example: the effect of individual income on voter turnout.
+### Setup
+
+Before using `DAGassist`, collect your data and create a DAG of your
+hypothesized data generating process (DGP) using `dagitty` or `ggdag`.
+To begin, we use a canonical political science example–the effect of
+individual income on voter turnout.
 
 ![](reference/figures/README-ex-dag-1.png)
 
-Simply provide a `dagitty()` object and a regression call and
-`DAGassist` will create a report classifying variables by causal role,
-and compare the specified regression to minimal and canonical models.
+In our hypothesized DGP, an individual’s age and state of residence
+jointly influece their income and propensity to vote. Political interest
+mediates the relationship between income and turnout; it is one of the
+mechanisms through which the independent variable effects the outcome.
+Individuals industries of employment and election competitiveness are
+neutral controls on the treatment and outcome, respectively.
+[This](https://grahamgoff.com/DAGassist/articles/DAGassist.html)
+vignette defines the different variable types (e.g., mediator, neutral
+controls, etc.) in greater detail. We simulate our DGP below.
+
+``` r
+
+set.seed(42)
+n <- 5000
+
+# exogenous
+state <- rnorm(n)                                   
+age <- rnorm(n)
+elect_comp <- rnorm(n)                                  
+
+# structural equations, following the DAG above
+industry <- 0.50 * age + rnorm(n)                        
+income <- 0.60 * state + 0.50 * age + 0.40 * industry + rnorm(n)
+polint <- 0.50 * income + rnorm(n)                   
+turnout <- 0.30 * income + 0.40 * polint +
+            0.35 * state  + 0.25 * age +
+            0.50 * elect_comp + rnorm(n)
+
+df <- data.frame(turnout, income, state, age, polint, industry, elect_comp)
+```
+
+### Using `DAGassist`
+
+To use `DAGassist`, simply provide a `dagitty()` object and a regression
+call. `DAGassist` will create a report classifying variables by causal
+role, and compare the specified regression to minimal and canonical
+models.
 
 ``` r
 
@@ -128,12 +164,19 @@ DAGassist(dag = dag_model,
 #> Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome
 ```
 
-DAGassist supports diagnostics across popular file formats:
+By construction the total effect is 0.50 and the direct effect is 0.30.
+The original specification, which controls for a mediator, returns
+0.281. Without `DAGassist`, the researcher might present their model as
+estimating the total effect of income on voter turnout. `DAGassist`
+detects the estimand-shifting variable, and automatically reestimates
+with transparent estimands.
 
-The console output above is the same object rendered as text. The
-exports below were produced by the same call, changing only `type =` and
-`out =` (see
-[`dev/output_types.R`](https://grahamgoff.com/DAGassist/dev/output_types.R)):
+Users may want to share their results, either in response to reviewers
+or as a general appendix robustness check. `DAGassist` supports easily
+exporting diagnostics across popular file formats by setting the
+`type =` and `out =` parameters. Below, we generate reports across all
+of the file formats using a loop. We also include code for simple
+single-format output that coes not rely on a loop.
 
 ``` r
 
@@ -147,6 +190,46 @@ for (fmt in names(formats)) {
             type     = fmt,
             out      = formats[[fmt]])
 }
+
+#for single-format output
+# DAGassist(dag = dag_model,
+#           formula  = lm(turnout ~ income + state + age + polint + industry + elect_comp, data = df),
+#           estimand = "total",
+#           type = "latex",
+#           out = "out/path/file_name.tex")
 ```
 
 [TABLE]
+
+## Learn more
+
+- [Get
+  started](https://grahamgoff.com/DAGassist/articles/DAGassist.html) —
+  the full workflow
+- [Supported model
+  engines](https://grahamgoff.com/DAGassist/articles/compatibility.html)
+  — `DAGassist` supports most DV ~ IV-format estimators.
+- [Reference](https://grahamgoff.com/DAGassist/reference/) — all
+  functions
+
+## Citation
+
+``` r
+
+citation("DAGassist")
+#> To cite package 'DAGassist' in publications use:
+#> 
+#>   Goff G, Denly M (2026). _DAGassist: Test Robustness with Directed
+#>   Acyclic Graphs_. R package version 0.3.1,
+#>   <https://grahamgoff.com/DAGassist/>.
+#> 
+#> A BibTeX entry for LaTeX users is
+#> 
+#>   @Manual{,
+#>     title = {{DAGassist}: Test Robustness with Directed Acyclic Graphs},
+#>     author = {Graham Goff and Michael Denly},
+#>     year = {2026},
+#>     note = {R package version 0.3.1},
+#>     url = {https://grahamgoff.com/DAGassist/},
+#>   }
+```

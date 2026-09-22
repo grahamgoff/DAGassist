@@ -144,9 +144,11 @@ In our hypothesized DGP, an individual's age and state of residence jointly infl
 
 To use `DAGassist`, simply provide a `dagitty()` object and a regression call. First, let's use `DAGassist` to create a report classifying variables by causal role. This step only requires a DAG object--no data.
 
-```{r roles}
+```{r roles, results='asis'}
 DAGassist(dag = turnout_dag, 
-          show = "roles"
+          show = "roles",
+          type = "text",
+          verbose = FALSE
 )
 
 ```

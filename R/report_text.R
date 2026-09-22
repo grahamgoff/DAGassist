@@ -44,10 +44,11 @@
   }
   
   #make notes
-  notes <- c("p-value legend: + < 0.1, * < 0.05, ** < 0.01, *** < 0.001.")
+  notes <- character(0)
   if (show != "roles") {
     notes <- c(
       notes,
+      "p-value legend: + < 0.1, * < 0.05, ** < 0.01, *** < 0.001.",
       sprintf("Controls (minimal): %s.", if (length(msets)) .set_brace_plain(msets[[1]]) else "{}"),
       sprintf("Controls (canonical): %s.", .set_brace_plain(canon))
     )

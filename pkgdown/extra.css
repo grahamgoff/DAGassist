@@ -134,3 +134,11 @@ pre code span.at { color: #3E5C6B; }                       /* variables */
   vertical-align: top;
   border: none;
 }
+
+/* wide report tables scroll inside their own box, not the page */
+.contents table:not(.gallery) {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+}

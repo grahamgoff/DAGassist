@@ -23,8 +23,8 @@
 #' @param engine_args Named list of extra arguments forwarded to `engine(...)`.
 #'   If `formula` is an engine call, arguments from the call are merged with
 #'   `engine_args` (call values take precedence).
-#' @param verbose logical (default `TRUE`). Controls verbosity in the console
-#'   printer (formulas + notes).
+#' @param verbose logical (default `TRUE`). Controls verbosity in the console 
+#'   printer (formulas + notes) and in type = "text" output.
 #' @param type output type. One of
 #'   `"console"` (default), `"latex"`/`"docx"`/`"word"`,
 #'   `"excel"`/`"xlsx"`, `"text"`/`"txt"`,
@@ -196,8 +196,7 @@
 #' \donttest{
 #'   out <- file.path(tempdir(), "dagassist_report.tex")
 #'   DAGassist(g, lm(Y ~ X + Z + M, data = df), type = "latex", out = out)
-#'  }
-#' }
+#'   }
 #' @export
 
 DAGassist <- function(dag, 
@@ -957,11 +956,17 @@ print.DAGassist_report <- function(x, ...) {
     
     # if we're only showing roles (no comparison table), print legend here
     if (!identical(x$settings$show, "all") && !identical(x$settings$show, "models")) {
+      #break legend line to the width of the roles table
       if (isTRUE(verbose)) {
-        cat(
-          "\nRoles legend: Exp. = exposure/treatment; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome\n",
-          sep = ""
-        )
+        leg <- "Roles legend: Exp. = exposure/treatment; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome"
+        
+        #wrap the legend to the printed width of the roles table above it
+        w <- suppressWarnings(max(nchar(crayon::strip_style(
+          utils::capture.output(print(r))
+        ))))
+        if (!is.finite(w) || w < 40L) w <- getOption("width", 80L)
+        
+        cat("\n", paste(strwrap(leg, width = w), collapse = "\n"), "\n", sep = "")
       } else {
         cat(
           clr_yellow(

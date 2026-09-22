@@ -138,20 +138,35 @@ p
 
 ```
 
-In our hypothesized DGP, an individual's age and state of residence jointly influece their income and propensity to vote. Political interest mediates the relationship between income and turnout; it is one of the mechanisms through which the independent variable effects the outcome. Individuals industries of employment and election competitiveness are neutral controls on the treatment and outcome, respectively. [This](https://grahamgoff.com/DAGassist/articles/DAGassist.html) vignette defines the different variable types (e.g., mediator, neutral controls, etc.) in greater detail. We simulate our DGP below.  
-
+In our hypothesized DGP, an individual's age and state of residence jointly influece their income and propensity to vote. Political interest mediates the relationship between income and turnout; it is one of the mechanisms through which the independent variable effects the outcome. Individuals industries of employment and election competitiveness are neutral controls on the treatment and outcome, respectively. We simulate our DGP below.  
 
 ### Using `DAGassist`
 
-To use `DAGassist`, simply provide a `dagitty()` object and a regression call. `DAGassist` will create a report classifying variables by causal role, and compare the specified regression to minimal and canonical models. 
+To use `DAGassist`, simply provide a `dagitty()` object and a regression call. First, let's use `DAGassist` to create a report classifying variables by causal role. This step only requires a DAG object--no data.
 
-```{r run}
+```{r roles}
 DAGassist(dag = turnout_dag, 
-          formula = lm(turnout ~ income + state + age + polint + industry + elect_comp, data = turnout_data),
-          estimand = c("total", "direct")
+          show = "roles"
 )
 
 ```
+[This](https://grahamgoff.com/DAGassist/articles/DAGassist.html) vignette defines the different variable types (e.g., mediator, neutral controls, etc.) in greater detail. 
+
+The above report shows that a mediator, polint, has entered our regression and shifted our estimand. Let us rerun the models with `DAGassist`.
+
+```{r compare, results='asis'}
+#load simulated data
+data("turnout_data")
+
+DAGassist(dag = turnout_dag, 
+          formula = lm(turnout ~ income + state + age + polint + industry + elect_comp, data = turnout_data),
+          estimand = c("total", "direct"),
+          show = "models",
+          type = "text", 
+          verbose = FALSE
+)
+```
+
 By construction the total effect is 0.50 and the direct effect is 0.30. The original specification, which controls for a mediator, returns 0.281. Without `DAGassist`, the researcher might present their model as estimating the total effect of income on voter turnout. `DAGassist` detects the estimand-shifting variable, and automatically reestimates with transparent estimands. 
 
 Users may want to share their results, either in response to reviewers or as a general appendix robustness check. `DAGassist` supports easily exporting diagnostics across popular file formats by setting the `type =` and `out =` parameters. Below, we generate reports across all of the file formats using a loop. We also include code for simple single-format output that coes not rely on a loop.

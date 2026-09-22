@@ -58,7 +58,7 @@ is a single engine call (in that case the function is taken from the call).}
 \item{labels}{list; optional variable labels (named character vector or data.frame).}
 
 \item{verbose}{logical (default \code{TRUE}). Controls verbosity in the console
-printer (formulas + notes).}
+printer (formulas + notes) and in type = "text" output.}
 
 \item{type}{output type. One of
 \code{"console"} (default), \code{"latex"}/\code{"docx"}/\code{"word"},
@@ -251,35 +251,25 @@ result and a weighted sequential-g refit (using \pkg{WeightIt} IPW weights estim
 to target the \emph{sample average} controlled direct effect.
 }
 \examples{
-\dontshow{set.seed(1)}
-if (requireNamespace("dagitty", quietly = TRUE)) {
-  g <- dagitty::dagitty("dag { Z -> X; X -> M; X -> Y; M -> Y; Z -> Y }")
-  dagitty::exposures(g) <- "X"; dagitty::outcomes(g) <- "Y"
-  n <- 300
-  Z <- rnorm(n); X <- 0.8*Z + rnorm(n)
-  M <- 0.9*X + rnorm(n)
-  Y <- 0.7*X + 0.6*M + 0.3*Z + rnorm(n)
-  df <- data.frame(Z, X, M, Y)
+# toy_dag and toy_data ship with the package; the true total effect
+# of X on Y is recovered by adjusting for Z alone.
 
-  # 1) Core: DAG-derived specs + engine-call parsing
-  r <- DAGassist(g, lm(Y ~ X + Z + M, data = df))
+# 1) Core: DAG-derived specs + engine-call parsing
+DAGassist(toy_dag, lm(Y ~ X + Z + M, data = toy_data))
 
-  # 2) Target sample-average estimands via weighting (requires WeightIt)
-  if (requireNamespace("WeightIt", quietly = TRUE)) {
-    r2 <- DAGassist(g, lm(Y ~ X + Z + M, data = df), estimand = "total")
+# 2) Roles grid only
+DAGassist(toy_dag, lm(Y ~ X + Z + M, data = toy_data), show = "roles")
+
+# 3) Target sample-average estimands via weighting
+\dontshow{if (requireNamespace("WeightIt", quietly = TRUE)) withAutoprint(\{ # examplesIf}
+DAGassist(toy_dag, lm(Y ~ X + Z + M, data = toy_data), estimand = "total")
+
+# 4) File export (LaTeX fragment)
+\donttest{
+  out <- file.path(tempdir(), "dagassist_report.tex")
+  DAGassist(g, lm(Y ~ X + Z + M, data = df), type = "latex", out = out)
   }
-
-  # 3) Mediator case: sequential g-estimation (requires DirectEffects)
-  if (requireNamespace("DirectEffects", quietly = TRUE)) {
-    r3 <- DAGassist(g, lm(Y ~ X + Z + M, data = df), estimand = "direct")
-  }
-
-  # 4) File export (LaTeX fragment)
-  \donttest{
-    out <- file.path(tempdir(), "dagassist_report.tex")
-    DAGassist(g, lm(Y ~ X + Z + M, data = df), type = "latex", out = out)
-  }
-}
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=print.DAGassist_report]{print.DAGassist_report()}} and \code{vignette("DAGassist", package = "DAGassist")}.

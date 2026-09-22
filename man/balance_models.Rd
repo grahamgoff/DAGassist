@@ -43,3 +43,6 @@ shifts (\verb{|(S)MD| > threshold}). Engine-agnostic: it reads variable names fr
 each model and recomputes samples on \code{data}, so it works for \code{lm}, \code{glm},
 \code{feols}, \code{coxph}, weighted fits, etc. Models are never refit.
 }
+\examples{
+balance_models(toy_dag, lm(Y ~ X + M + C + Z, data = toy_data))  
+}

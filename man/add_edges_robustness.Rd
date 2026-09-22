@@ -26,9 +26,6 @@ assumes are absent (DAGWOOD exclusion branches). Each added edge is evaluated
 as its own branch DAG (root + that edge).
 }
 \examples{
-\dontshow{if (requireNamespace("dagitty", quietly = TRUE)) withAutoprint(\{ # examplesIf}
-g <- dagitty::dagitty("dag { Z->X; X->Y }")
-dagitty::exposures(g) <- "X"; dagitty::outcomes(g) <- "Y"
-add_edges_robustness(g, add_edges = c("Z -> Y", "X <-> Y"))
-\dontshow{\}) # examplesIf}
+# What if the DAG is missing an arrow, or has unmeasured confounding?
+add_edges_robustness(toy_dag, add_edges = c("A -> X", "X <-> Y"))
 }

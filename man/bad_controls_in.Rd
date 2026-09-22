@@ -26,21 +26,6 @@ bad controls, rather than the minimal/canonical set of good controls
 flag bad controls (mediator/collider/desc of Y) among a candidate set
 }
 \examples{
-\dontshow{if (requireNamespace("dagitty", quietly = TRUE)) withAutoprint(\{ # examplesIf}
-d <- ggdag::dagify(
-Y ~ X + M + Z,
-M ~ X + Z,
-C ~ X + Y,
-exposure = "X",
-outcome = "Y")
-# M: mediator / Z: confounder / C: collider
-
-# hypothetical candidate controls
-controls <- c("Z", "M", "C")
-
-# Flag controls that would bias the total effect of X on Y:
-bad_controls_in(d, controls = c("Z","M","C"), exposure = "X", outcome = "Y")
-
-# expected: c("M", "C")  # mediator & collider are "bad controls"; Z is OK
-\dontshow{\}) # examplesIf}
+# Which variables in a formula are bad controls, given the DAG?
+bad_controls_in(toy_dag, Y ~ X + M + C + Z)
 }

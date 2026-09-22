@@ -40,9 +40,6 @@ adjustment sets or covariate roles change -- i.e., whether your estimand is
 robust to that structural uncertainty.
 }
 \examples{
-\dontshow{if (requireNamespace("dagitty", quietly = TRUE)) withAutoprint(\{ # examplesIf}
-g <- dagitty::dagitty("dag { Z->X; X->Y; Z->Y; A->B; B->Y }")
-dagitty::exposures(g) <- "X"; dagitty::outcomes(g) <- "Y"
-pdag_robustness(g, uncertain_edges = "A -- B")
-\dontshow{\}) # examplesIf}
+# What if the DAG is missing an arrow, or has unmeasured confounding?
+add_edges_robustness(toy_dag, add_edges = c("A -> X", "X <-> Y"))
 }

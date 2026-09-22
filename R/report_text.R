@@ -9,12 +9,14 @@
   cmap  <- tryCatch(res$coef_rename, error = function(e) NULL)  
   show <- tryCatch(res$show, error = function(e) "all")
   
-  lines <- c("## DAGassist Report:", "")
+  vb <- isTRUE(res$verbose)
   
+  lines <- if (vb) c("## DAGassist Report:", "") else character(0)
+
   #use pretty roles x grid if available. else, print bool stacks
   if (show != "models" && is.data.frame(roles) && nrow(roles)) {
     rp <- if (exists(".roles_pretty", mode = "function")) .roles_pretty(roles) else roles
-    lines <- c(lines, "## Roles", "", .df_to_md_pipe(rp), "")
+    lines <- c(lines, if (vb) c("## Roles", ""),   .df_to_md_pipe(rp), "")
   }
   
   if(show!= "roles" && !is.null(mods)){
@@ -23,7 +25,7 @@
                                            coef_rename = cmap,
                                            coef_omit = res$coef_omit)
     if (!is.null(built$df) && nrow(built$df)) {
-      lines <- c(lines, "### Models", "", .df_to_md_pipe(built$df), "")
+      lines <- c(lines, if (vb) c("### Models", ""), .df_to_md_pipe(built$df), "")
     }
   }
 
@@ -61,7 +63,7 @@
     )
   }
   
-  lines <- c(lines, "#### Notes", "", paste0("- ", notes), "")
+  lines <- c(lines, if (vb) c("#### Notes", ""), paste0("- ", notes), "")
   
   if (is.null(out)) {
     cat(paste(lines, collapse = "\n"), "\n")

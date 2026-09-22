@@ -114,24 +114,19 @@
 <code class="sourceCode R"><span><span class="fu"><a href="reference/DAGassist.html">DAGassist</a></span><span class="op">(</span>dag <span class="op">=</span> <span class="va">turnout_dag</span>, </span>
 <span>          show <span class="op">=</span> <span class="st">"roles"</span>,</span>
 <span>          type <span class="op">=</span> <span class="st">"text"</span>,</span>
-<span>          verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>          verbose <span class="op">=</span> <span class="cn">FALSE</span> </span>
 <span><span class="op">)</span></span></code></pre></div>
 <table style="width:100%;" class="table">
 <colgroup>
-<col width="7%">
-<col width="7%">
-<col width="7%">
-<col width="7%">
-<col width="7%">
-<col width="7%">
-<col width="7%">
-<col width="7%">
-<col width="7%">
-<col width="7%">
-<col width="7%">
-<col width="7%">
-<col width="7%">
-<col width="7%">
+<col width="16%">
+<col width="16%">
+<col width="8%">
+<col width="8%">
+<col width="9%">
+<col width="9%">
+<col width="12%">
+<col width="9%">
+<col width="9%">
 </colgroup>
 <thead><tr>
 <th align="left">Variable</th>
@@ -140,12 +135,7 @@
 <th align="center">Out.</th>
 <th align="center"><code>CON</code></th>
 <th align="center"><code>MED</code></th>
-<th align="center"><code>COL</code></th>
-<th align="center"><code>dOut</code></th>
-<th align="center"><code>dMed</code></th>
-<th align="center"><code>dCol</code></th>
 <th align="center">dConfOn</th>
-<th align="center">dConfOff</th>
 <th align="center"><code>NCT</code></th>
 <th align="center"><code>NCO</code></th>
 </tr></thead>
@@ -160,20 +150,10 @@
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
 </tr>
 <tr>
 <td align="left">elect_comp</td>
 <td align="center">nco</td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
@@ -192,11 +172,6 @@
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
 </tr>
 <tr>
 <td align="left">industry</td>
@@ -205,12 +180,7 @@
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
 <td align="center">x</td>
-<td align="center"></td>
 <td align="center">x</td>
 <td align="center"></td>
 </tr>
@@ -224,11 +194,6 @@
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
 </tr>
 <tr>
 <td align="left">state</td>
@@ -236,11 +201,6 @@
 <td align="center"></td>
 <td align="center"></td>
 <td align="center">x</td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
@@ -256,17 +216,9 @@
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
 </tr>
 </tbody>
 </table>
-<ul>
-<li>p-value legend: + &lt; 0.1, * &lt; 0.05, ** &lt; 0.01, *** &lt; 0.001.</li>
-</ul>
 <p><a href="https://grahamgoff.com/DAGassist/articles/DAGassist.html">This</a> vignette defines the different variable types (e.g., mediator, neutral controls, etc.) in greater detail.</p>
 <p>The above report shows that a mediator, polint, has entered our regression and shifted our estimand. Let us rerun the models with <code>DAGassist</code>.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">

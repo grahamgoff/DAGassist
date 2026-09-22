@@ -68,21 +68,19 @@ variables by causal role. This step only requires a DAG object–no data.
 DAGassist(dag = turnout_dag, 
           show = "roles",
           type = "text",
-          verbose = FALSE
+          verbose = FALSE 
 )
 ```
 
-| Variable | Role | Exp. | Out. | `CON` | `MED` | `COL` | `dOut` | `dMed` | `dCol` | dConfOn | dConfOff | `NCT` | `NCO` |
-|:---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
-| age | confounder |  |  | x |  |  |  |  |  |  |  |  |  |
-| elect_comp | nco |  |  |  |  |  |  |  |  |  |  |  | x |
-| income | exposure | x |  |  |  |  |  |  |  |  |  |  |  |
-| industry | nct |  |  |  |  |  |  |  |  | x |  | x |  |
-| polint | mediator |  |  |  | x |  |  |  |  |  |  |  |  |
-| state | confounder |  |  | x |  |  |  |  |  |  |  |  |  |
-| turnout | outcome |  | x |  |  |  |  |  |  |  |  |  |  |
-
-- p-value legend: + \< 0.1, \* \< 0.05, \*\* \< 0.01, \*\*\* \< 0.001.
+| Variable   |    Role    | Exp. | Out. | `CON` | `MED` | dConfOn | `NCT` | `NCO` |
+|:-----------|:----------:|:----:|:----:|:-----:|:-----:|:-------:|:-----:|:-----:|
+| age        | confounder |      |      |   x   |       |         |       |       |
+| elect_comp |    nco     |      |      |       |       |         |       |   x   |
+| income     |  exposure  |  x   |      |       |       |         |       |       |
+| industry   |    nct     |      |      |       |       |    x    |   x   |       |
+| polint     |  mediator  |      |      |       |   x   |         |       |       |
+| state      | confounder |      |      |   x   |       |         |       |       |
+| turnout    |  outcome   |      |  x   |       |       |         |       |       |
 
 [This](https://grahamgoff.com/DAGassist/articles/DAGassist.html)
 vignette defines the different variable types (e.g., mediator, neutral

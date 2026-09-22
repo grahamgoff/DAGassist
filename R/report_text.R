@@ -64,7 +64,9 @@
     )
   }
   
-  lines <- c(lines, if (vb) c("#### Notes", ""), paste0("- ", notes), "")
+  if (length(notes)) {
+    lines <- c(lines, if (vb) c("#### Notes", ""), paste0("- ", notes), "")
+  }
   
   if (is.null(out)) {
     cat(paste(lines, collapse = "\n"), "\n")

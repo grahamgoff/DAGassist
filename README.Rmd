@@ -148,7 +148,7 @@ To use `DAGassist`, simply provide a `dagitty()` object and a regression call. F
 DAGassist(dag = turnout_dag, 
           show = "roles",
           type = "text",
-          verbose = FALSE
+          verbose = FALSE 
 )
 
 ```

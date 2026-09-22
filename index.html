@@ -112,21 +112,161 @@
 <p>To use <code>DAGassist</code>, simply provide a <code>dagitty()</code> object and a regression call. First, let’s use <code>DAGassist</code> to create a report classifying variables by causal role. This step only requires a DAG object–no data.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/DAGassist.html">DAGassist</a></span><span class="op">(</span>dag <span class="op">=</span> <span class="va">turnout_dag</span>, </span>
-<span>          show <span class="op">=</span> <span class="st">"roles"</span></span>
-<span><span class="op">)</span></span>
-<span><span class="co">#&gt; DAGassist Report: </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Roles:</span></span>
-<span><span class="co">#&gt; variable    role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO</span></span>
-<span><span class="co">#&gt; income      exposure    x                                                                        </span></span>
-<span><span class="co">#&gt; turnout     outcome           x                                                                  </span></span>
-<span><span class="co">#&gt; age         confounder              x                                                            </span></span>
-<span><span class="co">#&gt; state       confounder              x                                                            </span></span>
-<span><span class="co">#&gt; polint      mediator                      x                                                      </span></span>
-<span><span class="co">#&gt; elect_comp  nco                                                                               x  </span></span>
-<span><span class="co">#&gt; industry    nct                                                       x                  x       </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Roles legend: Exp. = exposure/treatment; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome</span></span></code></pre></div>
+<span>          show <span class="op">=</span> <span class="st">"roles"</span>,</span>
+<span>          type <span class="op">=</span> <span class="st">"text"</span>,</span>
+<span>          verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<table style="width:100%;" class="table">
+<colgroup>
+<col width="7%">
+<col width="7%">
+<col width="7%">
+<col width="7%">
+<col width="7%">
+<col width="7%">
+<col width="7%">
+<col width="7%">
+<col width="7%">
+<col width="7%">
+<col width="7%">
+<col width="7%">
+<col width="7%">
+<col width="7%">
+</colgroup>
+<thead><tr>
+<th align="left">Variable</th>
+<th align="center">Role</th>
+<th align="center">Exp.</th>
+<th align="center">Out.</th>
+<th align="center"><code>CON</code></th>
+<th align="center"><code>MED</code></th>
+<th align="center"><code>COL</code></th>
+<th align="center"><code>dOut</code></th>
+<th align="center"><code>dMed</code></th>
+<th align="center"><code>dCol</code></th>
+<th align="center">dConfOn</th>
+<th align="center">dConfOff</th>
+<th align="center"><code>NCT</code></th>
+<th align="center"><code>NCO</code></th>
+</tr></thead>
+<tbody>
+<tr>
+<td align="left">age</td>
+<td align="center">confounder</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">x</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="left">elect_comp</td>
+<td align="center">nco</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">x</td>
+</tr>
+<tr>
+<td align="left">income</td>
+<td align="center">exposure</td>
+<td align="center">x</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="left">industry</td>
+<td align="center">nct</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">x</td>
+<td align="center"></td>
+<td align="center">x</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="left">polint</td>
+<td align="center">mediator</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">x</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="left">state</td>
+<td align="center">confounder</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">x</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="left">turnout</td>
+<td align="center">outcome</td>
+<td align="center"></td>
+<td align="center">x</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>p-value legend: + &lt; 0.1, * &lt; 0.05, ** &lt; 0.01, *** &lt; 0.001.</li>
+</ul>
 <p><a href="https://grahamgoff.com/DAGassist/articles/DAGassist.html">This</a> vignette defines the different variable types (e.g., mediator, neutral controls, etc.) in greater detail.</p>
 <p>The above report shows that a mediator, polint, has entered our regression and shifted our estimand. Let us rerun the models with <code>DAGassist</code>.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
@@ -304,6 +444,11 @@
 </tr>
 </tbody>
 </table>
+<ul>
+<li>p-value legend: + &lt; 0.1, * &lt; 0.05, ** &lt; 0.01, *** &lt; 0.001.</li>
+<li>Controls (minimal): {age, state}.</li>
+<li>Controls (canonical): {age, elect_comp, industry, state}.</li>
+</ul>
 <p>By construction the total effect is 0.50 and the direct effect is 0.30. The original specification, which controls for a mediator, returns 0.281. Without <code>DAGassist</code>, the researcher might present their model as estimating the total effect of income on voter turnout. <code>DAGassist</code> detects the estimand-shifting variable, and automatically reestimates with transparent estimands.</p>
 <p>Users may want to share their results, either in response to reviewers or as a general appendix robustness check. <code>DAGassist</code> supports easily exporting diagnostics across popular file formats by setting the <code>type =</code> and <code>out =</code> parameters. Below, we generate reports across all of the file formats using a loop. We also include code for simple single-format output that coes not rely on a loop.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">

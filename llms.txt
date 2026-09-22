@@ -66,22 +66,23 @@ variables by causal role. This step only requires a DAG object–no data.
 ``` r
 
 DAGassist(dag = turnout_dag, 
-          show = "roles"
+          show = "roles",
+          type = "text",
+          verbose = FALSE
 )
-#> DAGassist Report: 
-#> 
-#> Roles:
-#> variable    role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
-#> income      exposure    x                                                                        
-#> turnout     outcome           x                                                                  
-#> age         confounder              x                                                            
-#> state       confounder              x                                                            
-#> polint      mediator                      x                                                      
-#> elect_comp  nco                                                                               x  
-#> industry    nct                                                       x                  x       
-#> 
-#> Roles legend: Exp. = exposure/treatment; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome
 ```
+
+| Variable | Role | Exp. | Out. | `CON` | `MED` | `COL` | `dOut` | `dMed` | `dCol` | dConfOn | dConfOff | `NCT` | `NCO` |
+|:---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| age | confounder |  |  | x |  |  |  |  |  |  |  |  |  |
+| elect_comp | nco |  |  |  |  |  |  |  |  |  |  |  | x |
+| income | exposure | x |  |  |  |  |  |  |  |  |  |  |  |
+| industry | nct |  |  |  |  |  |  |  |  | x |  | x |  |
+| polint | mediator |  |  |  | x |  |  |  |  |  |  |  |  |
+| state | confounder |  |  | x |  |  |  |  |  |  |  |  |  |
+| turnout | outcome |  | x |  |  |  |  |  |  |  |  |  |  |
+
+- p-value legend: + \< 0.1, \* \< 0.05, \*\* \< 0.01, \*\*\* \< 0.001.
 
 [This](https://grahamgoff.com/DAGassist/articles/DAGassist.html)
 vignette defines the different variable types (e.g., mediator, neutral
@@ -121,6 +122,10 @@ DAGassist(dag = turnout_dag,
 |   | (0.014) |  | (0.015) |  |  | (0.014) | (0.025) |
 | Num.Obs. | 5000 | 5000 | 5000 | 5000 | 5000 | 5000 | 5000 |
 | R2 | 0.596 | 0.423 | 0.525 | 0.339 | 0.442 |  |  |
+
+- p-value legend: + \< 0.1, \* \< 0.05, \*\* \< 0.01, \*\*\* \< 0.001.
+- Controls (minimal): {age, state}.
+- Controls (canonical): {age, elect_comp, industry, state}.
 
 By construction the total effect is 0.50 and the direct effect is 0.30.
 The original specification, which controls for a mediator, returns

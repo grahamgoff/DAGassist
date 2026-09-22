@@ -59,3 +59,10 @@ An object of class `DAGassist_balance`: a list with `$reference`,
 `$comparisons` (per-comparison (S)MD tables) and `$summary` (one row per
 comparison: n_ref, n_cmp, n_covariates, n_flagged, pct_flagged,
 any_flagged).
+
+## Examples
+
+``` r
+balance_models(toy_dag, lm(Y ~ X + M + C + Z, data = toy_data))  
+#> Error in balance_models(toy_dag, lm(Y ~ X + M + C + Z, data = toy_data)): is.list(models) is not TRUE
+```

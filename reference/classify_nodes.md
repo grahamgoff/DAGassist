@@ -53,11 +53,14 @@ on treatment `NCO` = neutral control on outcome
 ## Examples
 
 ``` r
-  d1 <- dagitty::dagitty("dag {X[exposure];Y[outcome] Z -> X; Z -> Y; X -> Y }") 
-  classify_nodes(d1)
+classify_nodes(toy_dag)
 #> variable  role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
 #> X         exposure    x                                                                        
 #> Y         outcome           x                                                                  
 #> Z         confounder              x                                                            
+#> M         mediator                      x                                                      
+#> C         collider                           x    x     x                                      
+#> A         nco                                                                               x  
+#> B         nco                                                                               x  
   
 ```

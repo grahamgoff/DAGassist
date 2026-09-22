@@ -87,15 +87,14 @@ whether a role-flipping covariate is in your specification.</p></dd>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">g</span> <span class="op">&lt;-</span> <span class="fu">dagitty</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/dagitty/man/dagitty.html" class="external-link">dagitty</a></span><span class="op">(</span><span class="st">"dag { Z-&gt;X; X-&gt;Y }"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">dagitty</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/dagitty/man/VariableStatus.html" class="external-link">exposures</a></span><span class="op">(</span><span class="va">g</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="st">"X"</span>; <span class="fu">dagitty</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/dagitty/man/VariableStatus.html" class="external-link">outcomes</a></span><span class="op">(</span><span class="va">g</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="st">"Y"</span></span></span>
-<span class="r-in"><span><span class="fu">add_edges_robustness</span><span class="op">(</span><span class="va">g</span>, add_edges <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Z -&gt; Y"</span>, <span class="st">"X &lt;-&gt; Y"</span><span class="op">)</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># What if the DAG is missing an arrow, or has unmeasured confounding?</span></span></span>
+<span class="r-in"><span><span class="fu">add_edges_robustness</span><span class="op">(</span><span class="va">toy_dag</span>, add_edges <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A -&gt; X"</span>, <span class="st">"X &lt;-&gt; Y"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Edge-addition (exclusion) robustness:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> - edges tested: 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   - Z -&gt; Y: minimal changed: yes; canonical changed: no</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         new minimal set(s): {Z}</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         role changes: Z: nct-&gt;confounder</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   - A -&gt; X: minimal changed: yes; canonical changed: no</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         new minimal set(s): {A, Z}</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         role changes: A: nco-&gt;confounder</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   - X &lt;-&gt; Y: effect NOT identifiable if this pathway exists (no adjustment set blocks it)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> - re-estimation recommended: yes</span>
 </code></pre></div>

@@ -85,7 +85,7 @@ DAGassist(
 - verbose:
 
   logical (default `TRUE`). Controls verbosity in the console printer
-  (formulas + notes).
+  (formulas + notes) and in type = "text" output.
 
 - type:
 
@@ -416,32 +416,140 @@ and
 ## Examples
 
 ``` r
-if (requireNamespace("dagitty", quietly = TRUE)) {
-  g <- dagitty::dagitty("dag { Z -> X; X -> M; X -> Y; M -> Y; Z -> Y }")
-  dagitty::exposures(g) <- "X"; dagitty::outcomes(g) <- "Y"
-  n <- 300
-  Z <- rnorm(n); X <- 0.8*Z + rnorm(n)
-  M <- 0.9*X + rnorm(n)
-  Y <- 0.7*X + 0.6*M + 0.3*Z + rnorm(n)
-  df <- data.frame(Z, X, M, Y)
+# toy_dag and toy_data ship with the package; the true total effect
+# of X on Y is recovered by adjusting for Z alone.
 
-  # 1) Core: DAG-derived specs + engine-call parsing
-  r <- DAGassist(g, lm(Y ~ X + Z + M, data = df))
+# 1) Core: DAG-derived specs + engine-call parsing
+DAGassist(toy_dag, lm(Y ~ X + Z + M, data = toy_data))
+#> DAGassist Report: 
+#> 
+#> Roles:
+#> variable  role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
+#> X         exposure    x                                                                        
+#> Y         outcome           x                                                                  
+#> Z         confounder              x                                                            
+#> M         mediator                      x                                                      
+#> 
+#>  (!) Bad controls in your formula: {M}
+#> Minimal controls 1: {Z}
+#> Canonical controls: {Z}
+#> 
+#> Formulas:
+#>   original:  Y ~ X + Z + M
+#> 
+#> Balance diagnostics:
+#>   legend: (S)MD compares covariate means between the Original complete-case sample
+#>           and each spec's sample; |(S)MD| > 0.10 flags a covariate whose sample
+#>           composition shifts (binary vars use a raw difference in means).
+#>   Original vs Minimal 1: n = 2000 vs 2000  balanced
+#>   Original vs Canonical: n = 2000 vs 2000  balanced
+#> 
+#> Model comparison:
+#> 
+#> +----------+----------+-----------+-----------+
+#> |          | Original | Minimal 1 | Canonical |
+#> +==========+==========+===========+===========+
+#> | X        | 0.739*** | 1.237***  | 1.237***  |
+#> +----------+----------+-----------+-----------+
+#> |          | (0.029)  | (0.025)   | (0.025)   |
+#> +----------+----------+-----------+-----------+
+#> | Z        | 0.309*** | 0.309***  | 0.309***  |
+#> +----------+----------+-----------+-----------+
+#> |          | (0.029)  | (0.033)   | (0.033)   |
+#> +----------+----------+-----------+-----------+
+#> | M        | 0.556*** |           |           |
+#> +----------+----------+-----------+-----------+
+#> |          | (0.022)  |           |           |
+#> +----------+----------+-----------+-----------+
+#> | Num.Obs. | 2000     | 2000      | 2000      |
+#> +----------+----------+-----------+-----------+
+#> | R2       | 0.786    | 0.717     | 0.717     |
+#> +==========+==========+===========+===========+
+#> | + p < 0.1, * p < 0.05, ** p < 0.01, *** p   |
+#> | < 0.001                                     |
+#> +==========+==========+===========+===========+ 
+#> 
+#> Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome
 
-  # 2) Target sample-average estimands via weighting (requires WeightIt)
-  if (requireNamespace("WeightIt", quietly = TRUE)) {
-    r2 <- DAGassist(g, lm(Y ~ X + Z + M, data = df), estimand = "total")
-  }
+# 2) Roles grid only
+DAGassist(toy_dag, lm(Y ~ X + Z + M, data = toy_data), show = "roles")
+#> DAGassist Report: 
+#> 
+#> Roles:
+#> variable  role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
+#> X         exposure    x                                                                        
+#> Y         outcome           x                                                                  
+#> Z         confounder              x                                                            
+#> M         mediator                      x                                                      
+#> 
+#>  (!) Bad controls in your formula: {M}
+#> 
+#> Roles legend: Exp. = exposure/treatment; Out. = outcome; CON = confounder; MED = mediator; COL
+#> = collider; dOut = descendant of outcome; dMed = descendant of mediator; dCol = descendant of
+#> collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a
+#> confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on
+#> outcome
 
-  # 3) Mediator case: sequential g-estimation (requires DirectEffects)
-  if (requireNamespace("DirectEffects", quietly = TRUE)) {
-    r3 <- DAGassist(g, lm(Y ~ X + Z + M, data = df), estimand = "direct")
-  }
+# 3) Target sample-average estimands via weighting
+DAGassist(toy_dag, lm(Y ~ X + Z + M, data = toy_data), estimand = "total")
+#> DAGassist Report: 
+#> 
+#> Roles:
+#> variable  role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
+#> X         exposure    x                                                                        
+#> Y         outcome           x                                                                  
+#> Z         confounder              x                                                            
+#> M         mediator                      x                                                      
+#> 
+#>  (!) Bad controls in your formula: {M}
+#> Minimal controls 1: {Z}
+#> Canonical controls: {Z}
+#> 
+#> Formulas:
+#>   original:  Y ~ X + Z + M
+#> 
+#> Balance diagnostics:
+#>   legend: (S)MD compares covariate means between the Original complete-case sample
+#>           and each spec's sample; |(S)MD| > 0.10 flags a covariate whose sample
+#>           composition shifts (binary vars use a raw difference in means).
+#>   Original vs Minimal 1: n = 2000 vs 2000  balanced
+#>   Original vs Canonical: n = 2000 vs 2000  balanced
+#> 
+#> Model comparison:
+#> 
+#> +----------+----------+-----------------------+-----------------------+----------------------------+----------------------------+
+#> |          | Original | Total Minimal 1 (Raw) | Total Canonical (Raw) | Total Minimal 1 (Weighted) | Total Canonical (Weighted) |
+#> +==========+==========+=======================+=======================+============================+============================+
+#> | X        | 0.739*** | 1.237***              | 1.237***              | 1.266***                   | 1.266***                   |
+#> +----------+----------+-----------------------+-----------------------+----------------------------+----------------------------+
+#> |          | (0.029)  | (0.025)               | (0.025)               | (0.019)                    | (0.019)                    |
+#> +----------+----------+-----------------------+-----------------------+----------------------------+----------------------------+
+#> | Z        | 0.309*** | 0.309***              | 0.309***              |                            |                            |
+#> +----------+----------+-----------------------+-----------------------+----------------------------+----------------------------+
+#> |          | (0.029)  | (0.033)               | (0.033)               |                            |                            |
+#> +----------+----------+-----------------------+-----------------------+----------------------------+----------------------------+
+#> | M        | 0.556*** |                       |                       |                            |                            |
+#> +----------+----------+-----------------------+-----------------------+----------------------------+----------------------------+
+#> |          | (0.022)  |                       |                       |                            |                            |
+#> +----------+----------+-----------------------+-----------------------+----------------------------+----------------------------+
+#> | Num.Obs. | 2000     | 2000                  | 2000                  | 2000                       | 2000                       |
+#> +----------+----------+-----------------------+-----------------------+----------------------------+----------------------------+
+#> | R2       | 0.786    | 0.717                 | 0.717                 | 0.690                      | 0.690                      |
+#> +==========+==========+=======================+=======================+============================+============================+
+#> | + p < 0.1, * p < 0.05, ** p < 0.01, *** p < 0.001                                                                             |
+#> +==========+==========+=======================+=======================+============================+============================+ 
+#> 
+#> Weight diagnostics:
+#>   legend: w range reports the min-max weights by group; ESS is kish effective sample size.
+#>   Total Minimal 1 (Weighted): w range=0.01038..89.71 | ESS (weighted)=286.83 [LOW_ESS,EXTREME_W]
+#>   Total Canonical (Weighted): w range=0.01038..89.71 | ESS (weighted)=286.83 [LOW_ESS,EXTREME_W]
+#> 
+#> Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome
 
-  # 4) File export (LaTeX fragment)
-  # \donttest{
-    out <- file.path(tempdir(), "dagassist_report.tex")
-    DAGassist(g, lm(Y ~ X + Z + M, data = df), type = "latex", out = out)
+# 4) File export (LaTeX fragment)
+# \donttest{
+  out <- file.path(tempdir(), "dagassist_report.tex")
+  DAGassist(g, lm(Y ~ X + Z + M, data = df), type = "latex", out = out)
+#> Error: Please supply `exposure=`; DAG has 0 exposures.
   # }
-}
 ```

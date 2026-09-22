@@ -55,15 +55,14 @@ A `DAGassist_pdag_summary` object (printed as a bullet summary).
 ## Examples
 
 ``` r
-g <- dagitty::dagitty("dag { Z->X; X->Y; Z->Y; A->B; B->Y }")
-dagitty::exposures(g) <- "X"; dagitty::outcomes(g) <- "Y"
-pdag_robustness(g, uncertain_edges = "A -- B")
+# What if the DAG is missing an arrow, or has unmeasured confounding?
+add_edges_robustness(toy_dag, add_edges = c("A -> X", "X <-> Y"))
 #> 
-#> PDAG robustness summary:
-#> - uncertain edges specified: 1
-#> - worlds evaluated (acyclic orientations): 2
-#> - minimal adjustment set changed: no
-#> - canonical adjustment set changed: yes
-#> - covariate role changed: nco -> ambiguous (nco / other) for A
+#> Edge-addition (exclusion) robustness:
+#> - edges tested: 2
+#>   - A -> X: minimal changed: yes; canonical changed: no
+#>         new minimal set(s): {A, Z}
+#>         role changes: A: nco->confounder
+#>   - X <-> Y: effect NOT identifiable if this pathway exists (no adjustment set blocks it)
 #> - re-estimation recommended: yes
 ```

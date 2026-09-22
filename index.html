@@ -103,17 +103,16 @@
 </h3>
 <p>Before using <code>DAGassist</code>, collect your data and create a DAG of your hypothesized data generating process (DGP) using <code>dagitty</code> or <code>ggdag</code>. To begin, we use a canonical political science example–the effect of individual income on voter turnout.</p>
 <p><img src="reference/figures/README-ex-dag-1.png" alt="" width="100%"></p>
-<p>In our hypothesized DGP, an individual’s age and state of residence jointly influece their income and propensity to vote. Political interest mediates the relationship between income and turnout; it is one of the mechanisms through which the independent variable effects the outcome. Individuals industries of employment and election competitiveness are neutral controls on the treatment and outcome, respectively. <a href="https://grahamgoff.com/DAGassist/articles/DAGassist.html">This</a> vignette defines the different variable types (e.g., mediator, neutral controls, etc.) in greater detail. We simulate our DGP below.</p>
+<p>In our hypothesized DGP, an individual’s age and state of residence jointly influece their income and propensity to vote. Political interest mediates the relationship between income and turnout; it is one of the mechanisms through which the independent variable effects the outcome. Individuals industries of employment and election competitiveness are neutral controls on the treatment and outcome, respectively. We simulate our DGP below.</p>
 </div>
 <div class="section level3">
 <h3 id="using-dagassist">Using <code>DAGassist</code>
 <a class="anchor" aria-label="anchor" href="#using-dagassist"></a>
 </h3>
-<p>To use <code>DAGassist</code>, simply provide a <code>dagitty()</code> object and a regression call. <code>DAGassist</code> will create a report classifying variables by causal role, and compare the specified regression to minimal and canonical models.</p>
+<p>To use <code>DAGassist</code>, simply provide a <code>dagitty()</code> object and a regression call. First, let’s use <code>DAGassist</code> to create a report classifying variables by causal role. This step only requires a DAG object–no data.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/DAGassist.html">DAGassist</a></span><span class="op">(</span>dag <span class="op">=</span> <span class="va">turnout_dag</span>, </span>
-<span>          formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">state</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>, data <span class="op">=</span> <span class="va">turnout_data</span><span class="op">)</span>,</span>
-<span>          estimand <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"total"</span>, <span class="st">"direct"</span><span class="op">)</span></span>
+<span>          show <span class="op">=</span> <span class="st">"roles"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; DAGassist Report: </span></span>
 <span><span class="co">#&gt; </span></span>
@@ -127,66 +126,187 @@
 <span><span class="co">#&gt; elect_comp  nco                                                                               x  </span></span>
 <span><span class="co">#&gt; industry    nct                                                       x                  x       </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  (!) Bad controls in your formula: {polint}</span></span>
-<span><span class="co">#&gt; Minimal controls 1: {age, state}</span></span>
-<span><span class="co">#&gt; Canonical controls: {age, elect_comp, industry, state}</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Formulas:</span></span>
-<span><span class="co">#&gt;   original:  turnout ~ income + state + age + polint + industry + elect_comp</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Balance diagnostics:</span></span>
-<span><span class="co">#&gt;   legend: (S)MD compares covariate means between the Original complete-case sample</span></span>
-<span><span class="co">#&gt;           and each spec's sample; |(S)MD| &gt; 0.10 flags a covariate whose sample</span></span>
-<span><span class="co">#&gt;           composition shifts (binary vars use a raw difference in means).</span></span>
-<span><span class="co">#&gt;   Original vs Minimal 1: n = 5000 vs 5000  balanced</span></span>
-<span><span class="co">#&gt;   Original vs Canonical: n = 5000 vs 5000  balanced</span></span>
-<span><span class="co">#&gt;   Minimal 1 vs Canonical: n = 5000 vs 5000  balanced</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Model comparison:</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; +------------+----------+-----------------------+-----------------------+----------------------------+----------------------------+--------------+-------------------+</span></span>
-<span><span class="co">#&gt; |            | Original | Total Minimal 1 (Raw) | Total Canonical (Raw) | Total Minimal 1 (Weighted) | Total Canonical (Weighted) | Direct (Raw) | Direct (Weighted) |</span></span>
-<span><span class="co">#&gt; +============+==========+=======================+=======================+============================+============================+==============+===================+</span></span>
-<span><span class="co">#&gt; | income     | 0.281*** | 0.493***              | 0.492***              | 0.495***                   | 0.493***                   | 0.281***     | 0.280***          |</span></span>
-<span><span class="co">#&gt; +------------+----------+-----------------------+-----------------------+----------------------------+----------------------------+--------------+-------------------+</span></span>
-<span><span class="co">#&gt; |            | (0.016)  | (0.016)               | (0.015)               | (0.012)                    | (0.011)                    | (0.014)      | (0.027)           |</span></span>
-<span><span class="co">#&gt; +------------+----------+-----------------------+-----------------------+----------------------------+----------------------------+--------------+-------------------+</span></span>
-<span><span class="co">#&gt; | state      | 0.331*** | 0.324***              | 0.332***              |                            |                            | 0.331***     | 0.343***          |</span></span>
-<span><span class="co">#&gt; +------------+----------+-----------------------+-----------------------+----------------------------+----------------------------+--------------+-------------------+</span></span>
-<span><span class="co">#&gt; |            | (0.017)  | (0.019)               | (0.018)               |                            |                            | (0.017)      | (0.031)           |</span></span>
-<span><span class="co">#&gt; +------------+----------+-----------------------+-----------------------+----------------------------+----------------------------+--------------+-------------------+</span></span>
-<span><span class="co">#&gt; | age        | 0.275*** | 0.273***              | 0.267***              |                            |                            | 0.275***     | 0.272***          |</span></span>
-<span><span class="co">#&gt; +------------+----------+-----------------------+-----------------------+----------------------------+----------------------------+--------------+-------------------+</span></span>
-<span><span class="co">#&gt; |            | (0.017)  | (0.020)               | (0.019)               |                            |                            | (0.017)      | (0.028)           |</span></span>
-<span><span class="co">#&gt; +------------+----------+-----------------------+-----------------------+----------------------------+----------------------------+--------------+-------------------+</span></span>
-<span><span class="co">#&gt; | polint     | 0.420*** |                       |                       |                            |                            |              |                   |</span></span>
-<span><span class="co">#&gt; +------------+----------+-----------------------+-----------------------+----------------------------+----------------------------+--------------+-------------------+</span></span>
-<span><span class="co">#&gt; |            | (0.014)  |                       |                       |                            |                            |              |                   |</span></span>
-<span><span class="co">#&gt; +------------+----------+-----------------------+-----------------------+----------------------------+----------------------------+--------------+-------------------+</span></span>
-<span><span class="co">#&gt; | industry   | -0.017   |                       | -0.010                |                            |                            | -0.017       | -0.014            |</span></span>
-<span><span class="co">#&gt; +------------+----------+-----------------------+-----------------------+----------------------------+----------------------------+--------------+-------------------+</span></span>
-<span><span class="co">#&gt; |            | (0.015)  |                       | (0.016)               |                            |                            | (0.015)      | (0.024)           |</span></span>
-<span><span class="co">#&gt; +------------+----------+-----------------------+-----------------------+----------------------------+----------------------------+--------------+-------------------+</span></span>
-<span><span class="co">#&gt; | elect_comp | 0.500*** |                       | 0.506***              |                            |                            | 0.500***     | 0.476***          |</span></span>
-<span><span class="co">#&gt; +------------+----------+-----------------------+-----------------------+----------------------------+----------------------------+--------------+-------------------+</span></span>
-<span><span class="co">#&gt; |            | (0.014)  |                       | (0.015)               |                            |                            | (0.014)      | (0.025)           |</span></span>
-<span><span class="co">#&gt; +------------+----------+-----------------------+-----------------------+----------------------------+----------------------------+--------------+-------------------+</span></span>
-<span><span class="co">#&gt; | Num.Obs.   | 5000     | 5000                  | 5000                  | 5000                       | 5000                       | 5000         | 5000              |</span></span>
-<span><span class="co">#&gt; +------------+----------+-----------------------+-----------------------+----------------------------+----------------------------+--------------+-------------------+</span></span>
-<span><span class="co">#&gt; | R2         | 0.596    | 0.423                 | 0.525                 | 0.339                      | 0.442                      |              |                   |</span></span>
-<span><span class="co">#&gt; +============+==========+=======================+=======================+============================+============================+==============+===================+</span></span>
-<span><span class="co">#&gt; | + p &lt; 0.1, * p &lt; 0.05, ** p &lt; 0.01, *** p &lt; 0.001                                                                                                                  |</span></span>
-<span><span class="co">#&gt; +============+==========+=======================+=======================+============================+============================+==============+===================+ </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Weight diagnostics:</span></span>
-<span><span class="co">#&gt;   legend: w range reports the min-max weights by group; ESS is kish effective sample size.</span></span>
-<span><span class="co">#&gt;   Total Minimal 1 (Weighted): w range=0.01318..67.41 | ESS (weighted)=1429.07 [LOW_ESS,EXTREME_W]</span></span>
-<span><span class="co">#&gt;   Total Canonical (Weighted): w range=0.01075..74.93 | ESS (weighted)=1236.84 [LOW_ESS,EXTREME_W]</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome</span></span></code></pre></div>
+<span><span class="co">#&gt; Roles legend: Exp. = exposure/treatment; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome</span></span></code></pre></div>
+<p><a href="https://grahamgoff.com/DAGassist/articles/DAGassist.html">This</a> vignette defines the different variable types (e.g., mediator, neutral controls, etc.) in greater detail.</p>
+<p>The above report shows that a mediator, polint, has entered our regression and shifted our estimand. Let us rerun the models with <code>DAGassist</code>.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">#load simulated data</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"turnout_data"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="reference/DAGassist.html">DAGassist</a></span><span class="op">(</span>dag <span class="op">=</span> <span class="va">turnout_dag</span>, </span>
+<span>          formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">state</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>, data <span class="op">=</span> <span class="va">turnout_data</span><span class="op">)</span>,</span>
+<span>          estimand <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"total"</span>, <span class="st">"direct"</span><span class="op">)</span>,</span>
+<span>          show <span class="op">=</span> <span class="st">"models"</span>,</span>
+<span>          type <span class="op">=</span> <span class="st">"text"</span>, </span>
+<span>          verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<colgroup>
+<col width="12%">
+<col width="12%">
+<col width="12%">
+<col width="12%">
+<col width="12%">
+<col width="12%">
+<col width="12%">
+<col width="12%">
+</colgroup>
+<thead><tr>
+<th align="left">Term</th>
+<th align="center">Original</th>
+<th align="center">Total Minimal 1 (Raw)</th>
+<th align="center">Total Canonical (Raw)</th>
+<th align="center">Total Minimal 1 (Weighted)</th>
+<th align="center">Total Canonical (Weighted)</th>
+<th align="center">Direct (Raw)</th>
+<th align="center">Direct (Weighted)</th>
+</tr></thead>
+<tbody>
+<tr>
+<td align="left">income</td>
+<td align="center">0.281***</td>
+<td align="center">0.493***</td>
+<td align="center">0.492***</td>
+<td align="center">0.495***</td>
+<td align="center">0.493***</td>
+<td align="center">0.281***</td>
+<td align="center">0.280***</td>
+</tr>
+<tr>
+<td align="left"> </td>
+<td align="center">(0.016)</td>
+<td align="center">(0.016)</td>
+<td align="center">(0.015)</td>
+<td align="center">(0.012)</td>
+<td align="center">(0.011)</td>
+<td align="center">(0.014)</td>
+<td align="center">(0.027)</td>
+</tr>
+<tr>
+<td align="left">state</td>
+<td align="center">0.331***</td>
+<td align="center">0.324***</td>
+<td align="center">0.332***</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">0.331***</td>
+<td align="center">0.343***</td>
+</tr>
+<tr>
+<td align="left"> </td>
+<td align="center">(0.017)</td>
+<td align="center">(0.019)</td>
+<td align="center">(0.018)</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">(0.017)</td>
+<td align="center">(0.031)</td>
+</tr>
+<tr>
+<td align="left">age</td>
+<td align="center">0.275***</td>
+<td align="center">0.273***</td>
+<td align="center">0.267***</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">0.275***</td>
+<td align="center">0.272***</td>
+</tr>
+<tr>
+<td align="left"> </td>
+<td align="center">(0.017)</td>
+<td align="center">(0.020)</td>
+<td align="center">(0.019)</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">(0.017)</td>
+<td align="center">(0.028)</td>
+</tr>
+<tr>
+<td align="left">polint</td>
+<td align="center">0.420***</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="left"> </td>
+<td align="center">(0.014)</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="left">industry</td>
+<td align="center">-0.017</td>
+<td align="center"></td>
+<td align="center">-0.010</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">-0.017</td>
+<td align="center">-0.014</td>
+</tr>
+<tr>
+<td align="left"> </td>
+<td align="center">(0.015)</td>
+<td align="center"></td>
+<td align="center">(0.016)</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">(0.015)</td>
+<td align="center">(0.024)</td>
+</tr>
+<tr>
+<td align="left">elect_comp</td>
+<td align="center">0.500***</td>
+<td align="center"></td>
+<td align="center">0.506***</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">0.500***</td>
+<td align="center">0.476***</td>
+</tr>
+<tr>
+<td align="left"> </td>
+<td align="center">(0.014)</td>
+<td align="center"></td>
+<td align="center">(0.015)</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">(0.014)</td>
+<td align="center">(0.025)</td>
+</tr>
+<tr>
+<td align="left">Num.Obs.</td>
+<td align="center">5000</td>
+<td align="center">5000</td>
+<td align="center">5000</td>
+<td align="center">5000</td>
+<td align="center">5000</td>
+<td align="center">5000</td>
+<td align="center">5000</td>
+</tr>
+<tr>
+<td align="left">R2</td>
+<td align="center">0.596</td>
+<td align="center">0.423</td>
+<td align="center">0.525</td>
+<td align="center">0.339</td>
+<td align="center">0.442</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+</tbody>
+</table>
 <p>By construction the total effect is 0.50 and the direct effect is 0.30. The original specification, which controls for a mediator, returns 0.281. Without <code>DAGassist</code>, the researcher might present their model as estimating the total effect of income on voter turnout. <code>DAGassist</code> detects the estimand-shifting variable, and automatically reestimates with transparent estimands.</p>
 <p>Users may want to share their results, either in response to reviewers or as a general appendix robustness check. <code>DAGassist</code> supports easily exporting diagnostics across popular file formats by setting the <code>type =</code> and <code>out =</code> parameters. Below, we generate reports across all of the file formats using a loop. We also include code for simple single-format output that coes not rely on a loop.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">formats</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>latex <span class="op">=</span> <span class="st">"latex.tex"</span>,  word  <span class="op">=</span> <span class="st">"word.docx"</span>,</span>
 <span>             excel <span class="op">=</span> <span class="st">"excel.xlsx"</span>, dotwhisker <span class="op">=</span> <span class="st">"dw.png"</span><span class="op">)</span></span>
 <span></span>
@@ -239,7 +359,7 @@
 <div class="section level2">
 <h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
 </h2>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/citation.html" class="external-link">citation</a></span><span class="op">(</span><span class="st">"DAGassist"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; To cite package 'DAGassist' in publications use:</span></span>
 <span><span class="co">#&gt; </span></span>

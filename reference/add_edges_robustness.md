@@ -37,15 +37,14 @@ A `DAGassist_addedge_summary` object.
 ## Examples
 
 ``` r
-g <- dagitty::dagitty("dag { Z->X; X->Y }")
-dagitty::exposures(g) <- "X"; dagitty::outcomes(g) <- "Y"
-add_edges_robustness(g, add_edges = c("Z -> Y", "X <-> Y"))
+# What if the DAG is missing an arrow, or has unmeasured confounding?
+add_edges_robustness(toy_dag, add_edges = c("A -> X", "X <-> Y"))
 #> 
 #> Edge-addition (exclusion) robustness:
 #> - edges tested: 2
-#>   - Z -> Y: minimal changed: yes; canonical changed: no
-#>         new minimal set(s): {Z}
-#>         role changes: Z: nct->confounder
+#>   - A -> X: minimal changed: yes; canonical changed: no
+#>         new minimal set(s): {A, Z}
+#>         role changes: A: nco->confounder
 #>   - X <-> Y: effect NOT identifiable if this pathway exists (no adjustment set blocks it)
 #> - re-estimation recommended: yes
 ```

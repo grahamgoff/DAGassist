@@ -82,22 +82,9 @@ bad controls, rather than the minimal/canonical set of good controls</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">ggdag</span><span class="fu">::</span><span class="fu"><a href="https://r-causal.github.io/ggdag/reference/dagify.html" class="external-link">dagify</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span><span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">M</span> <span class="op">+</span> <span class="va">Z</span>,</span></span>
-<span class="r-in"><span><span class="va">M</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">Z</span>,</span></span>
-<span class="r-in"><span><span class="va">C</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">Y</span>,</span></span>
-<span class="r-in"><span>exposure <span class="op">=</span> <span class="st">"X"</span>,</span></span>
-<span class="r-in"><span>outcome <span class="op">=</span> <span class="st">"Y"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="co"># M: mediator / Z: confounder / C: collider</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># hypothetical candidate controls</span></span></span>
-<span class="r-in"><span><span class="va">controls</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Z"</span>, <span class="st">"M"</span>, <span class="st">"C"</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Flag controls that would bias the total effect of X on Y:</span></span></span>
-<span class="r-in"><span><span class="fu">bad_controls_in</span><span class="op">(</span><span class="va">d</span>, controls <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Z"</span>,<span class="st">"M"</span>,<span class="st">"C"</span><span class="op">)</span>, exposure <span class="op">=</span> <span class="st">"X"</span>, outcome <span class="op">=</span> <span class="st">"Y"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "M" "C"</span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># expected: c("M", "C")  # mediator &amp; collider are "bad controls"; Z is OK</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Which variables in a formula are bad controls, given the DAG?</span></span></span>
+<span class="r-in"><span><span class="fu">bad_controls_in</span><span class="op">(</span><span class="va">toy_dag</span>, <span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">M</span> <span class="op">+</span> <span class="va">C</span> <span class="op">+</span> <span class="va">Z</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in unique.default(x):</span> unique() applies only to vectors</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

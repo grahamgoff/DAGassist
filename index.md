@@ -54,23 +54,19 @@ jointly influece their income and propensity to vote. Political interest
 mediates the relationship between income and turnout; it is one of the
 mechanisms through which the independent variable effects the outcome.
 Individuals industries of employment and election competitiveness are
-neutral controls on the treatment and outcome, respectively.
-[This](https://grahamgoff.com/DAGassist/articles/DAGassist.html)
-vignette defines the different variable types (e.g., mediator, neutral
-controls, etc.) in greater detail. We simulate our DGP below.
+neutral controls on the treatment and outcome, respectively. We simulate
+our DGP below.
 
 ### Using `DAGassist`
 
 To use `DAGassist`, simply provide a `dagitty()` object and a regression
-call. `DAGassist` will create a report classifying variables by causal
-role, and compare the specified regression to minimal and canonical
-models.
+call. First, let’s use `DAGassist` to create a report classifying
+variables by causal role. This step only requires a DAG object–no data.
 
 ``` r
 
 DAGassist(dag = turnout_dag, 
-          formula = lm(turnout ~ income + state + age + polint + industry + elect_comp, data = turnout_data),
-          estimand = c("total", "direct")
+          show = "roles"
 )
 #> DAGassist Report: 
 #> 
@@ -84,64 +80,47 @@ DAGassist(dag = turnout_dag,
 #> elect_comp  nco                                                                               x  
 #> industry    nct                                                       x                  x       
 #> 
-#>  (!) Bad controls in your formula: {polint}
-#> Minimal controls 1: {age, state}
-#> Canonical controls: {age, elect_comp, industry, state}
-#> 
-#> Formulas:
-#>   original:  turnout ~ income + state + age + polint + industry + elect_comp
-#> 
-#> Balance diagnostics:
-#>   legend: (S)MD compares covariate means between the Original complete-case sample
-#>           and each spec's sample; |(S)MD| > 0.10 flags a covariate whose sample
-#>           composition shifts (binary vars use a raw difference in means).
-#>   Original vs Minimal 1: n = 5000 vs 5000  balanced
-#>   Original vs Canonical: n = 5000 vs 5000  balanced
-#>   Minimal 1 vs Canonical: n = 5000 vs 5000  balanced
-#> 
-#> Model comparison:
-#> 
-#> +------------+----------+-----------------------+-----------------------+----------------------------+----------------------------+--------------+-------------------+
-#> |            | Original | Total Minimal 1 (Raw) | Total Canonical (Raw) | Total Minimal 1 (Weighted) | Total Canonical (Weighted) | Direct (Raw) | Direct (Weighted) |
-#> +============+==========+=======================+=======================+============================+============================+==============+===================+
-#> | income     | 0.281*** | 0.493***              | 0.492***              | 0.495***                   | 0.493***                   | 0.281***     | 0.280***          |
-#> +------------+----------+-----------------------+-----------------------+----------------------------+----------------------------+--------------+-------------------+
-#> |            | (0.016)  | (0.016)               | (0.015)               | (0.012)                    | (0.011)                    | (0.014)      | (0.027)           |
-#> +------------+----------+-----------------------+-----------------------+----------------------------+----------------------------+--------------+-------------------+
-#> | state      | 0.331*** | 0.324***              | 0.332***              |                            |                            | 0.331***     | 0.343***          |
-#> +------------+----------+-----------------------+-----------------------+----------------------------+----------------------------+--------------+-------------------+
-#> |            | (0.017)  | (0.019)               | (0.018)               |                            |                            | (0.017)      | (0.031)           |
-#> +------------+----------+-----------------------+-----------------------+----------------------------+----------------------------+--------------+-------------------+
-#> | age        | 0.275*** | 0.273***              | 0.267***              |                            |                            | 0.275***     | 0.272***          |
-#> +------------+----------+-----------------------+-----------------------+----------------------------+----------------------------+--------------+-------------------+
-#> |            | (0.017)  | (0.020)               | (0.019)               |                            |                            | (0.017)      | (0.028)           |
-#> +------------+----------+-----------------------+-----------------------+----------------------------+----------------------------+--------------+-------------------+
-#> | polint     | 0.420*** |                       |                       |                            |                            |              |                   |
-#> +------------+----------+-----------------------+-----------------------+----------------------------+----------------------------+--------------+-------------------+
-#> |            | (0.014)  |                       |                       |                            |                            |              |                   |
-#> +------------+----------+-----------------------+-----------------------+----------------------------+----------------------------+--------------+-------------------+
-#> | industry   | -0.017   |                       | -0.010                |                            |                            | -0.017       | -0.014            |
-#> +------------+----------+-----------------------+-----------------------+----------------------------+----------------------------+--------------+-------------------+
-#> |            | (0.015)  |                       | (0.016)               |                            |                            | (0.015)      | (0.024)           |
-#> +------------+----------+-----------------------+-----------------------+----------------------------+----------------------------+--------------+-------------------+
-#> | elect_comp | 0.500*** |                       | 0.506***              |                            |                            | 0.500***     | 0.476***          |
-#> +------------+----------+-----------------------+-----------------------+----------------------------+----------------------------+--------------+-------------------+
-#> |            | (0.014)  |                       | (0.015)               |                            |                            | (0.014)      | (0.025)           |
-#> +------------+----------+-----------------------+-----------------------+----------------------------+----------------------------+--------------+-------------------+
-#> | Num.Obs.   | 5000     | 5000                  | 5000                  | 5000                       | 5000                       | 5000         | 5000              |
-#> +------------+----------+-----------------------+-----------------------+----------------------------+----------------------------+--------------+-------------------+
-#> | R2         | 0.596    | 0.423                 | 0.525                 | 0.339                      | 0.442                      |              |                   |
-#> +============+==========+=======================+=======================+============================+============================+==============+===================+
-#> | + p < 0.1, * p < 0.05, ** p < 0.01, *** p < 0.001                                                                                                                  |
-#> +============+==========+=======================+=======================+============================+============================+==============+===================+ 
-#> 
-#> Weight diagnostics:
-#>   legend: w range reports the min-max weights by group; ESS is kish effective sample size.
-#>   Total Minimal 1 (Weighted): w range=0.01318..67.41 | ESS (weighted)=1429.07 [LOW_ESS,EXTREME_W]
-#>   Total Canonical (Weighted): w range=0.01075..74.93 | ESS (weighted)=1236.84 [LOW_ESS,EXTREME_W]
-#> 
-#> Roles legend: Exp. = exposure; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome
+#> Roles legend: Exp. = exposure/treatment; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome
 ```
+
+[This](https://grahamgoff.com/DAGassist/articles/DAGassist.html)
+vignette defines the different variable types (e.g., mediator, neutral
+controls, etc.) in greater detail.
+
+The above report shows that a mediator, polint, has entered our
+regression and shifted our estimand. Let us rerun the models with
+`DAGassist`.
+
+``` r
+
+#load simulated data
+data("turnout_data")
+
+DAGassist(dag = turnout_dag, 
+          formula = lm(turnout ~ income + state + age + polint + industry + elect_comp, data = turnout_data),
+          estimand = c("total", "direct"),
+          show = "models",
+          type = "text", 
+          verbose = FALSE
+)
+```
+
+| Term | Original | Total Minimal 1 (Raw) | Total Canonical (Raw) | Total Minimal 1 (Weighted) | Total Canonical (Weighted) | Direct (Raw) | Direct (Weighted) |
+|:---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| income | 0.281\*\*\* | 0.493\*\*\* | 0.492\*\*\* | 0.495\*\*\* | 0.493\*\*\* | 0.281\*\*\* | 0.280\*\*\* |
+|   | (0.016) | (0.016) | (0.015) | (0.012) | (0.011) | (0.014) | (0.027) |
+| state | 0.331\*\*\* | 0.324\*\*\* | 0.332\*\*\* |  |  | 0.331\*\*\* | 0.343\*\*\* |
+|   | (0.017) | (0.019) | (0.018) |  |  | (0.017) | (0.031) |
+| age | 0.275\*\*\* | 0.273\*\*\* | 0.267\*\*\* |  |  | 0.275\*\*\* | 0.272\*\*\* |
+|   | (0.017) | (0.020) | (0.019) |  |  | (0.017) | (0.028) |
+| polint | 0.420\*\*\* |  |  |  |  |  |  |
+|   | (0.014) |  |  |  |  |  |  |
+| industry | -0.017 |  | -0.010 |  |  | -0.017 | -0.014 |
+|   | (0.015) |  | (0.016) |  |  | (0.015) | (0.024) |
+| elect_comp | 0.500\*\*\* |  | 0.506\*\*\* |  |  | 0.500\*\*\* | 0.476\*\*\* |
+|   | (0.014) |  | (0.015) |  |  | (0.014) | (0.025) |
+| Num.Obs. | 5000 | 5000 | 5000 | 5000 | 5000 | 5000 | 5000 |
+| R2 | 0.596 | 0.423 | 0.525 | 0.339 | 0.442 |  |  |
 
 By construction the total effect is 0.50 and the direct effect is 0.30.
 The original specification, which controls for a mediator, returns

@@ -13,7 +13,7 @@
 #' 
 #' @examples
 #' # Which variables in a formula are bad controls, given the DAG?
-#' bad_controls_in(toy_dag, Y ~ X + M + C + Z)
+#' bad_controls_in(toy_dag, controls = c("M", "C", "Z"))
 #' @export
 bad_controls_in <- function(dag, controls, exposure, outcome) {
   roles <- classify_nodes(dag, exposure = exposure, outcome = outcome)

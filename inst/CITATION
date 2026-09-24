@@ -1,6 +1,6 @@
 bibentry(
   bibtype = "Manual",
-  title   = "{DAGassist}: Test Robustness with Directed Acyclic Graphs",
+  title   = "{DAGassist}: Align Regressions with Target Estimands",
   author  = c(person("Graham", "Goff"), person("Michael", "Denly")),
   year    = "2026",
   note    = paste("R package version", meta$Version),

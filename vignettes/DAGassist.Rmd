@@ -1,6 +1,6 @@
 ---
 title: "Introduction to DAGassist"
-author: "Graham Goff and Mike Denly"
+author: "Graham Goff and Michael Denly"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 bibliography: references.bib

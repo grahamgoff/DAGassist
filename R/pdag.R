@@ -239,8 +239,8 @@ print.DAGassist_pdag_summary <- function(x, ...) {
 #'   (default 10 -> up to 1024 worlds).
 #' @return A `DAGassist_pdag_summary` object (printed as a bullet summary).
 #' @examples
-#' # What if the DAG is missing an arrow, or has unmeasured confounding?
-#' add_edges_robustness(toy_dag, add_edges = c("A -> X", "X <-> Y"))
+#' # What if we're unsure which way two arrows point?
+#' pdag_robustness(toy_dag, uncertain_edges = c("Z -- X", "M -- Y"))
 #' @export
 pdag_robustness <- function(dag, exposure, outcome,
                             uncertain_edges = NULL, pdag = NULL,

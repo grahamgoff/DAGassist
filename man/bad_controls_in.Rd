@@ -27,5 +27,5 @@ flag bad controls (mediator/collider/desc of Y) among a candidate set
 }
 \examples{
 # Which variables in a formula are bad controls, given the DAG?
-bad_controls_in(toy_dag, Y ~ X + M + C + Z)
+bad_controls_in(toy_dag, controls = c("M", "C", "Z"))
 }

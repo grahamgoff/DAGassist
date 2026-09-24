@@ -40,6 +40,6 @@ adjustment sets or covariate roles change -- i.e., whether your estimand is
 robust to that structural uncertainty.
 }
 \examples{
-# What if the DAG is missing an arrow, or has unmeasured confounding?
-add_edges_robustness(toy_dag, add_edges = c("A -> X", "X <-> Y"))
+# What if we're unsure which way two arrows point?
+pdag_robustness(toy_dag, uncertain_edges = c("Z -- X", "M -- Y"))
 }

@@ -267,7 +267,7 @@ DAGassist(toy_dag, lm(Y ~ X + Z + M, data = toy_data), estimand = "total")
 # 4) File export (LaTeX fragment)
 \donttest{
   out <- file.path(tempdir(), "dagassist_report.tex")
-  DAGassist(g, lm(Y ~ X + Z + M, data = df), type = "latex", out = out)
+  DAGassist(toy_dag, lm(Y ~ X + Z + M, data = toy_data), type = "latex", out = out)
   }
 \dontshow{\}) # examplesIf}
 }

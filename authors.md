@@ -13,12 +13,12 @@
 Source:
 [`inst/CITATION`](https://github.com/grahamgoff/DAGassist/blob/dev/inst/CITATION)
 
-Goff G, Denly M (2026). *DAGassist: Test Robustness with Directed
-Acyclic Graphs*. R package version 0.3.1,
+Goff G, Denly M (2026). *DAGassist: Align Regressions with Target
+Estimands*. R package version 0.3.1,
 <https://grahamgoff.com/DAGassist/>.
 
     @Manual{,
-      title = {{DAGassist}: Test Robustness with Directed Acyclic Graphs},
+      title = {{DAGassist}: Align Regressions with Target Estimands},
       author = {Graham Goff and Michael Denly},
       year = {2026},
       note = {R package version 0.3.1},

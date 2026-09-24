@@ -55,14 +55,15 @@ A `DAGassist_pdag_summary` object (printed as a bullet summary).
 ## Examples
 
 ``` r
-# What if the DAG is missing an arrow, or has unmeasured confounding?
-add_edges_robustness(toy_dag, add_edges = c("A -> X", "X <-> Y"))
+# What if we're unsure which way two arrows point?
+pdag_robustness(toy_dag, uncertain_edges = c("Z -- X", "M -- Y"))
 #> 
-#> Edge-addition (exclusion) robustness:
-#> - edges tested: 2
-#>   - A -> X: minimal changed: yes; canonical changed: no
-#>         new minimal set(s): {A, Z}
-#>         role changes: A: nco->confounder
-#>   - X <-> Y: effect NOT identifiable if this pathway exists (no adjustment set blocks it)
+#> PDAG robustness summary:
+#> - uncertain edges specified: 2
+#> - worlds evaluated (acyclic orientations): 4
+#> - minimal adjustment set changed: yes
+#> - canonical adjustment set changed: yes
+#> - covariate role changed: mediator -> ambiguous (collider / mediator) for M
+#> - covariate role changed: confounder -> ambiguous (confounder / mediator) for Z (good/bad control flip)
 #> - re-estimation recommended: yes
 ```

@@ -39,6 +39,6 @@ controls
 
 ``` r
 # Which variables in a formula are bad controls, given the DAG?
-bad_controls_in(toy_dag, Y ~ X + M + C + Z)
-#> Error in unique.default(x): unique() applies only to vectors
+bad_controls_in(toy_dag, controls = c("M", "C", "Z"))
+#> [1] "M" "C"
 ```

@@ -115,8 +115,20 @@ comparison: n_ref, n_cmp, n_covariates, n_flagged, pct_flagged, any_flagged).</p
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">balance_models</span><span class="op">(</span><span class="va">toy_dag</span>, <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">M</span> <span class="op">+</span> <span class="va">C</span> <span class="op">+</span> <span class="va">Z</span>, data <span class="op">=</span> <span class="va">toy_data</span><span class="op">)</span><span class="op">)</span>  </span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in balance_models(toy_dag, lm(Y ~ X + M + C + Z, data = toy_data)):</span> is.list(models) is not TRUE</span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Rows with missing C drop out of the Original model only</span></span></span>
+<span class="r-in"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="va">toy_data</span></span></span>
+<span class="r-in"><span><span class="va">d</span><span class="op">$</span><span class="va">C</span><span class="op">[</span><span class="va">d</span><span class="op">$</span><span class="va">Z</span> <span class="op">&gt;</span> <span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span></span></span>
+<span class="r-in"><span><span class="fu">balance_models</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>Original <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">M</span> <span class="op">+</span> <span class="va">C</span> <span class="op">+</span> <span class="va">Z</span>, data <span class="op">=</span> <span class="va">d</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>       Minimal  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">X</span> <span class="op">+</span> <span class="va">Z</span>, data <span class="op">=</span> <span class="va">d</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  data <span class="op">=</span> <span class="va">d</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Balance diagnostics (reference: Original)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   |(S)MD| &gt; 0.10 flags a covariate whose sample shifts vs the reference (binary vars use a raw difference).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Original vs Minimal: n = 1698 vs 2000  [!] 3 covariate(s) imbalanced</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       Z                        (S)MD = -0.348</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       X                        (S)MD = -0.187</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       M                        (S)MD = -0.143</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

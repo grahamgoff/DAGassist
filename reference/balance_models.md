@@ -63,6 +63,18 @@ any_flagged).
 ## Examples
 
 ``` r
-balance_models(toy_dag, lm(Y ~ X + M + C + Z, data = toy_data))  
-#> Error in balance_models(toy_dag, lm(Y ~ X + M + C + Z, data = toy_data)): is.list(models) is not TRUE
+# Rows with missing C drop out of the Original model only
+d <- toy_data
+d$C[d$Z > 1] <- NA
+balance_models(
+  list(Original = lm(Y ~ X + M + C + Z, data = d),
+       Minimal  = lm(Y ~ X + Z, data = d)),
+  data = d
+)
+#> Balance diagnostics (reference: Original)
+#>   |(S)MD| > 0.10 flags a covariate whose sample shifts vs the reference (binary vars use a raw difference).
+#>   Original vs Minimal: n = 1698 vs 2000  [!] 3 covariate(s) imbalanced
+#>       Z                        (S)MD = -0.348
+#>       X                        (S)MD = -0.187
+#>       M                        (S)MD = -0.143
 ```

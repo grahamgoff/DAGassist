@@ -107,15 +107,16 @@ covariate is actually in your specification (affects re-estimation advice).</p><
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># What if the DAG is missing an arrow, or has unmeasured confounding?</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="add_edges_robustness.html">add_edges_robustness</a></span><span class="op">(</span><span class="va">toy_dag</span>, add_edges <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A -&gt; X"</span>, <span class="st">"X &lt;-&gt; Y"</span><span class="op">)</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># What if we're unsure which way two arrows point?</span></span></span>
+<span class="r-in"><span><span class="fu">pdag_robustness</span><span class="op">(</span><span class="va">toy_dag</span>, uncertain_edges <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Z -- X"</span>, <span class="st">"M -- Y"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Edge-addition (exclusion) robustness:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> - edges tested: 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   - A -&gt; X: minimal changed: yes; canonical changed: no</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         new minimal set(s): {A, Z}</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         role changes: A: nco-&gt;confounder</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   - X &lt;-&gt; Y: effect NOT identifiable if this pathway exists (no adjustment set blocks it)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> PDAG robustness summary:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> - uncertain edges specified: 2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> - worlds evaluated (acyclic orientations): 4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> - minimal adjustment set changed: yes</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> - canonical adjustment set changed: yes</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> - covariate role changed: mediator -&gt; ambiguous (collider / mediator) for M</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> - covariate role changed: confounder -&gt; ambiguous (confounder / mediator) for Z (good/bad control flip)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> - re-estimation recommended: yes</span>
 </code></pre></div>
     </div>

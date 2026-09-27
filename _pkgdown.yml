@@ -33,6 +33,8 @@ navbar:
     articles:
       text: Articles
       menu:
+      - text: Causal roles and adjustment sets
+        href: articles/roles-and-sets.html
       - text: Supported model engines
         href: articles/compatibility.html
 

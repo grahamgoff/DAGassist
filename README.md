@@ -45,8 +45,8 @@ devtools::install_github("grahamgoff/DAGassist")
 ## Example
 
 Does higher income increase voter turnout? `turnout_data` is simulated
-from the DAG below, so the right answers are known: income’s **total
-effect is 0.50**, of which **0.30 is direct** and 0.20 runs through
+from the DAG below, so the right answers are known. Income’s **total**
+effect is 0.50, of which 0.30 is **direct** and 0.20 runs through
 political interest.
 
 <img src="man/figures/README-ex-dag-1.png" alt="" width="100%" />

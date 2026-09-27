@@ -1,21 +1,15 @@
 # DAGassist: Align Regressions with Target Estimands
 
-[![R-CMD-check](https://github.com/grahamgoff/DAGassist/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/grahamgoff/DAGassist/actions/workflows/R-CMD-check.yaml)
-[![pages-build-deployment](https://github.com/grahamgoff/DAGassist/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/grahamgoff/DAGassist/actions/workflows/pages/pages-build-deployment)
-[![CRAN
-status](https://www.r-pkg.org/badges/version/DAGassist)](https://cran.r-project.org/package=DAGassist)
-[![Lifecycle:
-maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://lifecycle.r-lib.org/articles/stages.html)
-[![CRAN
-downloads](https://cranlogs.r-pkg.org/badges/last-month/DAGassist)](https://cran.r-project.org/package=DAGassist)
+Adding a control variable can change what a regression estimates, not
+just how precisely it estimates it. Conditioning on mediators,
+colliders, or their descendants can shift the target estimand or
+introduce bias. However, researchers cannot infer these consequences
+from conventional regression output alone.
 
-This R package enables researchers to align their regressions with their
-target estimands. The package provides tools for classifying DAG nodes
-by their causal roles, automating DAG-consistent re-estimation, and
-producing publication-grade diagnostic reports in
-LaTeX/Word/Excel/.md/.txt/dotwhisker. Uncertainty analysis functions
-allow researchers to check whether their conclusions survive uncertain
-edge directions or plausibly missing arrows.
+**DAGassist** reads your causal diagram (DAG) and your regression, flags
+the controls that shift the estimand, and re-fits the model with
+DAG-derived adjustment sets, so the number you report answers the
+question you asked.
 
 ------------------------------------------------------------------------
 
@@ -26,11 +20,9 @@ You can install `DAGassist` with:
 ``` r
 
 install.packages("DAGassist")
-library(DAGassist) 
 ```
 
-You can also install the development version of `DAGassist` using
-`devtools`:
+You can also install the development version using `devtools`:
 
 ``` r
 
@@ -38,38 +30,25 @@ You can also install the development version of `DAGassist` using
 devtools::install_github("grahamgoff/DAGassist")
 ```
 
-## Getting Started
+## Example
 
-### Setup
-
-Before using `DAGassist`, collect your data and create a DAG of your
-hypothesized data generating process (DGP) using `dagitty` or `ggdag`.
-To begin, we use a canonical political science example–the effect of
-individual income on voter turnout.
+Does higher income increase voter turnout? `turnout_data` is simulated
+from the DAG below, so the right answers are known: income’s **total
+effect is 0.50**, of which **0.30 is direct** and 0.20 runs through
+political interest.
 
 ![](reference/figures/README-ex-dag-1.png)
 
-In our hypothesized DGP, an individual’s age and state of residence
-jointly influece their income and propensity to vote. Political interest
-mediates the relationship between income and turnout; it is one of the
-mechanisms through which the independent variable effects the outcome.
-Individuals industries of employment and election competitiveness are
-neutral controls on the treatment and outcome, respectively. We simulate
-our DGP below.
-
-### Using `DAGassist`
-
-To use `DAGassist`, simply provide a `dagitty()` object and a regression
-call. First, let’s use `DAGassist` to create a report classifying
-variables by causal role. This step only requires a DAG object–no data.
+A common approach is to control for everything available. Pass the DAG
+and that regression to
+[`DAGassist()`](https://grahamgoff.com/DAGassist/reference/DAGassist.md):
 
 ``` r
 
-DAGassist(dag = turnout_dag, 
-          show = "roles",
-          type = "text",
-          verbose = FALSE 
-)
+DAGassist(turnout_dag,
+          lm(turnout ~ income + state + age + polint + industry + elect_comp,
+             data = turnout_data),
+          show = "roles", type = "text", verbose = FALSE)
 ```
 
 | Variable   |    Role    | Exp. | Out. | `CON` | `MED` | dConfOn | `NCT` | `NCO` |
@@ -82,96 +61,73 @@ DAGassist(dag = turnout_dag,
 | state      | confounder |      |      |   x   |       |         |       |       |
 | turnout    |  outcome   |      |  x   |       |       |         |       |       |
 
-[This](https://grahamgoff.com/DAGassist/articles/DAGassist.html)
-vignette defines the different variable types (e.g., mediator, neutral
-controls, etc.) in greater detail.
-
-The above report shows that a mediator, polint, has entered our
-regression and shifted our estimand. Let us rerun the models with
-`DAGassist`.
+`polint` is a mediator; it is one of the mechanisms through which income
+affects turnout. Thus, controlling for it makes the regression return
+the direct effect of income on turnout rather than the total effect. The
+[Get started](https://grahamgoff.com/DAGassist/articles/DAGassist.html)
+article defines each causal role in detail. Without `show = "roles"`,
+[`DAGassist()`](https://grahamgoff.com/DAGassist/reference/DAGassist.md)
+also re-fits the model with the adjustment sets the DAG implies:
 
 ``` r
 
-#load simulated data
-data("turnout_data")
-
-DAGassist(dag = turnout_dag, 
-          formula = lm(turnout ~ income + state + age + polint + industry + elect_comp, data = turnout_data),
-          estimand = c("total", "direct"),
-          show = "models",
-          type = "text", 
-          verbose = FALSE
-)
+DAGassist(turnout_dag,
+          lm(turnout ~ income + state + age + polint + industry + elect_comp,
+             data = turnout_data),
+          show = "models", type = "text", verbose = FALSE)
 ```
 
-| Term | Original | Total Minimal 1 (Raw) | Total Canonical (Raw) | Total Minimal 1 (Weighted) | Total Canonical (Weighted) | Direct (Raw) | Direct (Weighted) |
-|:---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
-| income | 0.281\*\*\* | 0.493\*\*\* | 0.492\*\*\* | 0.495\*\*\* | 0.493\*\*\* | 0.281\*\*\* | 0.280\*\*\* |
-|   | (0.016) | (0.016) | (0.015) | (0.012) | (0.011) | (0.014) | (0.027) |
-| state | 0.331\*\*\* | 0.324\*\*\* | 0.332\*\*\* |  |  | 0.331\*\*\* | 0.343\*\*\* |
-|   | (0.017) | (0.019) | (0.018) |  |  | (0.017) | (0.031) |
-| age | 0.275\*\*\* | 0.273\*\*\* | 0.267\*\*\* |  |  | 0.275\*\*\* | 0.272\*\*\* |
-|   | (0.017) | (0.020) | (0.019) |  |  | (0.017) | (0.028) |
-| polint | 0.420\*\*\* |  |  |  |  |  |  |
-|   | (0.014) |  |  |  |  |  |  |
-| industry | -0.017 |  | -0.010 |  |  | -0.017 | -0.014 |
-|   | (0.015) |  | (0.016) |  |  | (0.015) | (0.024) |
-| elect_comp | 0.500\*\*\* |  | 0.506\*\*\* |  |  | 0.500\*\*\* | 0.476\*\*\* |
-|   | (0.014) |  | (0.015) |  |  | (0.014) | (0.025) |
-| Num.Obs. | 5000 | 5000 | 5000 | 5000 | 5000 | 5000 | 5000 |
-| R2 | 0.596 | 0.423 | 0.525 | 0.339 | 0.442 |  |  |
+| Term       |  Original   |  Minimal 1  |  Canonical  |
+|:-----------|:-----------:|:-----------:|:-----------:|
+| income     | 0.281\*\*\* | 0.493\*\*\* | 0.492\*\*\* |
+|            |   (0.016)   |   (0.016)   |   (0.015)   |
+| state      | 0.331\*\*\* | 0.324\*\*\* | 0.332\*\*\* |
+|            |   (0.017)   |   (0.019)   |   (0.018)   |
+| age        | 0.275\*\*\* | 0.273\*\*\* | 0.267\*\*\* |
+|            |   (0.017)   |   (0.020)   |   (0.019)   |
+| polint     | 0.420\*\*\* |             |             |
+|            |   (0.014)   |             |             |
+| industry   |   -0.017    |             |   -0.010    |
+|            |   (0.015)   |             |   (0.016)   |
+| elect_comp | 0.500\*\*\* |             | 0.506\*\*\* |
+|            |   (0.014)   |             |   (0.015)   |
+| Num.Obs.   |    5000     |    5000     |    5000     |
+| R2         |    0.596    |    0.423    |    0.525    |
 
 - p-value legend: + \< 0.1, \* \< 0.05, \*\* \< 0.01, \*\*\* \< 0.001.
 - Controls (minimal): {age, state}.
 - Controls (canonical): {age, elect_comp, industry, state}.
 
-By construction the total effect is 0.50 and the direct effect is 0.30.
-The original specification, which controls for a mediator, returns
-0.281. Without `DAGassist`, the researcher might present their model as
-estimating the total effect of income on voter turnout. `DAGassist`
-detects the estimand-shifting variable, and automatically reestimates
-with transparent estimands.
+The original regression’s 0.28 is close to the *direct* effect (0.30).
+Both DAG-derived models recover the total effect. Without `DAGassist`,
+the researcher might present their model as estimating the total effect
+of income on voter turnout. `DAGassist` detects the estimand-shifting
+variable, and automatically reestimates with transparent estimands.
 
-Users may want to share their results, either in response to reviewers
-or as a general appendix robustness check. `DAGassist` supports easily
-exporting diagnostics across popular file formats by setting the
-`type =` and `out =` parameters. Below, we generate reports across all
-of the file formats using a loop. We also include code for simple
-single-format output that coes not rely on a loop.
+![Estimated effect of income on turnout with 95% confidence intervals.
+The original regression gives 0.28, close to the true direct effect of
+0.30. The DAG-derived minimal and canonical specifications give 0.49,
+matching the true total effect of
+0.50.](reference/figures/README-estimates-1.png)
 
-``` r
+## What else DAGassist does
 
-formats <- c(latex = "latex.tex",  word  = "word.docx",
-             excel = "excel.xlsx", dotwhisker = "dw.png")
-
-for (fmt in names(formats)) {
-  DAGassist(dag      = turnout_dag,
-            formula  = lm(turnout ~ income + state + age + polint + industry + elect_comp, data = turnout_data),
-            estimand = "total",
-            type     = fmt,
-            out      = formats[[fmt]])
-}
-
-#for single-format output
-# DAGassist(dag = dag_model,
-#           formula  = lm(turnout ~ income + state + age + polint + industry + elect_comp, data = df),
-#           estimand = "total",
-#           type = "latex",
-#           out = "out/path/file_name.tex")
-```
+- **Target an estimand explicitly.** `estimand = "total"` or `"direct"`
+  re-estimates with weighting or sequential g-estimation.
+- **Stress-test the DAG.**
+  [`pdag_robustness()`](https://grahamgoff.com/DAGassist/reference/pdag_robustness.md)
+  checks arrows whose direction you’re unsure of;
+  [`add_edges_robustness()`](https://grahamgoff.com/DAGassist/reference/add_edges_robustness.md)
+  checks arrows you may have left out.
+- **Check that models are comparable.** Balance diagnostics flag when
+  listwise deletion changes who is in each model’s sample.
+- **Work with your estimator.** `lm`, `glm`, `fixest`, `lme4`,
+  `estimatr`, and most other `y ~ x` engines ([supported
+  engines](https://grahamgoff.com/DAGassist/articles/compatibility.html)).
+- **Export for papers and reviewers.** Set `type =` to write LaTeX,
+  Word, Excel, plain-text, or dot-and-whisker output:
 
 [TABLE]
-
-## Learn more
-
-- [Get
-  started](https://grahamgoff.com/DAGassist/articles/DAGassist.html) —
-  the full workflow
-- [Supported model
-  engines](https://grahamgoff.com/DAGassist/articles/compatibility.html)
-  — `DAGassist` supports most DV ~ IV-format estimators.
-- [Reference](https://grahamgoff.com/DAGassist/reference/) — all
-  functions
 
 ## Citation
 
@@ -180,14 +136,14 @@ for (fmt in names(formats)) {
 citation("DAGassist")
 #> To cite package 'DAGassist' in publications use:
 #> 
-#>   Goff G, Denly M (2026). _DAGassist: Test Robustness with Directed
-#>   Acyclic Graphs_. R package version 0.3.1,
+#>   Goff G, Denly M (2026). _DAGassist: Align Regressions with Target
+#>   Estimands_. R package version 0.3.1,
 #>   <https://grahamgoff.com/DAGassist/>.
 #> 
 #> A BibTeX entry for LaTeX users is
 #> 
 #>   @Manual{,
-#>     title = {{DAGassist}: Test Robustness with Directed Acyclic Graphs},
+#>     title = {{DAGassist}: Align Regressions with Target Estimands},
 #>     author = {Graham Goff and Michael Denly},
 #>     year = {2026},
 #>     note = {R package version 0.3.1},

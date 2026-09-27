@@ -13,14 +13,9 @@ knitr::opts_chunk$set(
 options(DAGassist.color = FALSE, crayon.enabled = FALSE)
 ```
 
-```{r,echo=FALSE}
-devtools::load_all(quiet = TRUE)
-```
-
-
 Whether a control variable belongs in a regression depends on its relationships with other variables. `DAGassist` labels each variable with a causal role, then builds the adjustment sets those roles imply. This article explains every role, which ones to adjust for, and how `DAGassist` builds the minimal and canonical adjustment sets. Our causal role classification framework follows @CinelliForneyPearl2022's taxonomy of good, bad, and neutral controls.
 
-```{r setup, eval=FALSE}
+```{r setup}
 library(DAGassist)
 ```
 

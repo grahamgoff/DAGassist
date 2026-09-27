@@ -35,6 +35,8 @@ navbar:
       menu:
       - text: Causal roles and adjustment sets
         href: articles/roles-and-sets.html
+      - text: Robustness to DAG uncertainty
+        href: articles/robustness.html
       - text: Supported model engines
         href: articles/compatibility.html
 

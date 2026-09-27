@@ -4,7 +4,7 @@
 
 - [Supported
   Models](https://grahamgoff.com/DAGassist/articles/compatibility.md):
-- [Introduction to
+- [Get started with
   DAGassist](https://grahamgoff.com/DAGassist/articles/DAGassist.md):
 - [Total and direct
   effects](https://grahamgoff.com/DAGassist/articles/estimands.md):

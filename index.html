@@ -48,7 +48,8 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="articles/compatibility.html">Supported model engines</a></li>
+<li><a class="dropdown-item" href="articles/roles-and-sets.html">Causal roles and adjustment sets</a></li>
+    <li><a class="dropdown-item" href="articles/compatibility.html">Supported model engines</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
@@ -99,7 +100,7 @@
 <div class="section level2">
 <h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
 </h2>
-<p>Does higher income increase voter turnout? <code>turnout_data</code> is simulated from the DAG below, so the right answers are known: income’s <strong>total effect is 0.50</strong>, of which <strong>0.30 is direct</strong> and 0.20 runs through political interest.</p>
+<p>Does higher income increase voter turnout? <code>turnout_data</code> is simulated from the DAG below, so the right answers are known. Income’s <strong>total</strong> effect is 0.50, of which 0.30 is <strong>direct</strong> and 0.20 runs through political interest.</p>
 <p><img src="reference/figures/README-ex-dag-1.png" alt="" width="100%"></p>
 <p>A common approach is to control for everything available. Pass the DAG and that regression to <code><a href="reference/DAGassist.html">DAGassist()</a></code>:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">

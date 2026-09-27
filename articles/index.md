@@ -6,5 +6,7 @@
   Models](https://grahamgoff.com/DAGassist/articles/compatibility.md):
 - [Introduction to
   DAGassist](https://grahamgoff.com/DAGassist/articles/DAGassist.md):
+- [Robustness to DAG
+  uncertainty](https://grahamgoff.com/DAGassist/articles/robustness.md):
 - [Causal roles and adjustment
   sets](https://grahamgoff.com/DAGassist/articles/roles-and-sets.md):

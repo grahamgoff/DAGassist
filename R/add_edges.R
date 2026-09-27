@@ -170,10 +170,9 @@ print.DAGassist_addedge_summary <- function(x, ...) {
 #' @param formula Optional model formula or engine call; used only to decide
 #'   whether a role-flipping covariate is in your specification.
 #' @return A `DAGassist_addedge_summary` object.
-#' @examplesIf requireNamespace("dagitty", quietly = TRUE)
-#' g <- dagitty::dagitty("dag { Z->X; X->Y }")
-#' dagitty::exposures(g) <- "X"; dagitty::outcomes(g) <- "Y"
-#' add_edges_robustness(g, add_edges = c("Z -> Y", "X <-> Y"))
+#' @examples
+#' # What if the DAG is missing an arrow, or has unmeasured confounding?
+#' add_edges_robustness(toy_dag, add_edges = c("A -> X", "X <-> Y"))
 #' @export
 add_edges_robustness <- function(dag, exposure, outcome, add_edges, formula = NULL) {
   spec_expr <- substitute(formula)

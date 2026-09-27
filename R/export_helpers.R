@@ -223,6 +223,13 @@
   for (nm in names(r)) {
     if (is.logical(r[[nm]])) r[[nm]] <- ifelse(r[[nm]], "x", "")
   }
+  
+  #drop indicator columns that are empty for every variable so the table
+  #stays narrow; variable and role are always kept
+  ind  <- setdiff(names(r), c("variable", "role"))
+  drop <- ind[vapply(r[ind], function(col) all(col == "" | is.na(col)), logical(1))]
+  if (length(drop)) r <- r[, setdiff(names(r), drop), drop = FALSE]
+  
   #apply the display names that exist
   names(r) <- ifelse(names(r) %in% names(map), unname(map[names(r)]), names(r))
 

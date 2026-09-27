@@ -1,0 +1,236 @@
+---
+title: "Causal roles and adjustment sets"
+bibliography: ../references.bib
+link-citations: true
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  dpi = 150
+)
+options(DAGassist.color = FALSE, crayon.enabled = FALSE)
+```
+
+Whether a control variable belongs in a regression depends on its relationships with other variables. `DAGassist` labels each variable with a causal role, then builds the adjustment sets those roles imply. This article explains every role, which ones to adjust for, and how `DAGassist` builds the minimal and canonical adjustment sets. Our causal role classification framework follows @CinelliForneyPearl2022's taxonomy of good, bad, and neutral controls.
+
+```{r setup}
+library(DAGassist)
+```
+
+## A DAG with every role
+
+To see every role at once, we write a small DAG in `dagitty` syntax. Each letter stands for one role: `X` is the exposure and `Y` the outcome.
+
+```{r roles-dag}
+roles_dag <- dagitty::dagitty("dag {
+  X [exposure]
+  Y [outcome]
+  X -> Y
+  Z -> X
+  Z -> Y
+  Z -> V -> Y
+  Z -> W
+  X -> M -> Y
+  M -> N
+  X -> C <- Y
+  C -> Q
+  Y -> D
+  E -> X
+  F -> Y
+}")
+```
+
+```{r roles-dag-plot, echo = FALSE, message = FALSE, warning = FALSE, fig.width = 7, fig.height = 4, fig.alt = "DAG with exposure X and outcome Y. Z (confounder) causes X and Y, and causes V, which causes Y, and W. X causes M (mediator), which causes Y and N. X and Y both cause C (collider), which causes Q. Y causes D. E causes X only; F causes Y only."}
+
+library(dagitty)
+library(ggdag)
+library(ggplot2)
+
+x_pos <- c(
+  X = 0,
+  Y = 10,
+  Z = 5,
+  V = 8,
+  W = 2,
+  E = 0,
+  F = 10,
+  M = 3.5,
+  N = 3.5,
+  C = 6.5,
+  Q = 6.5,
+  D = 10
+)
+
+y_pos <- c(
+  X = 0,
+  Y = 0,
+  Z = 2,
+  V = 1.5,
+  W = 2.6,
+  E = 1.5,
+  F = 1.5,
+  M = -1.2,
+  N = -2.2,
+  C = -1.2,
+  Q = -2.2,
+  D = -1.5
+)
+
+
+roles_dag <- dagify(
+  
+  Y ~ X + Z + V + M + F,
+  
+  X ~ Z + E,
+  
+  V ~ Z,
+  
+  W ~ Z,
+  
+  M ~ X,
+  
+  N ~ M,
+  
+  C ~ X + Y,
+  
+  Q ~ C,
+  
+  D ~ Y,
+  
+  exposure = "X",
+  outcome  = "Y",
+  
+  coords = list(x = x_pos, y = y_pos),
+
+  labels = c(
+    X = "X (exposure)",
+    Y = "Y (outcome)",
+    Z = "Z (conf)",
+    V = "V (dConfOn)",
+    W = "W (dConfOff)",
+    E = "E (NCT)",
+    F = "F (NCO)",
+    M = "M (med)",
+    N = "N (dMed)",
+    C = "C (col)",
+    Q = "Q (dCol)",
+    D = "D (dOut)"
+  )
+)
+
+
+#coordinates for dag labels
+label_df <- data.frame(
+  name = c("X", "Y", "Z", "V", "W", "E", "F", "M", "N", "C", "Q", "D"),
+  label_x = c(-1.4, 11.4, 5, 8, 2, 0, 10, 3.5, 3.5, 6.5, 6.5, 10),
+  label_y = c(0, 0, 2, 1.95, 2.6, 1.5, 1.5, -1.2, -2.2, -1.2, -2.2, -1.5)
+)
+
+# pull labels safely from dagitty object
+labels_vec <- attr(roles_dag, "labels")
+
+label_df$label <- unname(labels_vec[label_df$name])
+
+# ---- plot: ggdag without labels, then add manual labels
+p <- ggdag_status(roles_dag, text = FALSE) +
+  theme_dag() +
+  scale_fill_manual(values = c(exposure="black", outcome="grey30", none="grey90")) +
+  scale_color_manual(values = c(exposure="black", outcome="grey30", none="grey60")) +
+  theme(legend.position = "none") +
+  geom_label(
+    data = label_df,
+    aes(x = label_x, y = label_y, label = label),
+    inherit.aes = FALSE,   
+    size = 3.4,
+    label.size = 0.25
+  )
+
+p
+```
+
+
+## Reading the roles table
+
+Roles depend only on the DAG, so this step needs no data:
+
+```{r roles-table}
+DAGassist(roles_dag, show = "roles", verbose = FALSE)
+```
+
+Each column is a role, and an `x` marks the roles a variable plays. The table below defines each role and the causal inference implications of adjusting for each when the target is the total effect of `X` on `Y`. Note that a variable can play more than one role, but the `role` column reports the most identification-relevant one. For example, if a variable were a descendant of a mediator and also a neutral control on the outcome, its primary role would be mediator because mediators shift estimands and neutral controls do not.
+
+| Column | Role | Example | What it is | Adjust for it? |
+|:--|:--|:-:|:--|:--|
+| `conf` | Confounder | `Z` | A common cause of `X` and `Y` | **Yes.** It opens a back-door path (`X <- Z -> Y`) that must be blocked. |
+| `dConfOn` | Descendant of a confounder, on a back-door path | `V` | Caused by a confounder, and causes `Y` | **Safe.** It blocks the part of the back-door path that runs through it. |
+| `NCO` | Neutral control on the outcome | `F` | Causes `Y` but not `X` | **Safe**, and usually improves precision. |
+| `NCT` | Neutral control on the treatment | `E` | Causes `X` but not `Y` | **Safe for bias**, but usually widens standard errors. |
+| `dConfOff` | Descendant of a confounder, off the back-door path | `W` | Caused by a confounder, but doesn't affect `Y` | **Irrelevant.** It neither removes nor adds bias. |
+| `med` | Mediator | `M` | On a causal path, `X -> M -> Y` | **No.** It removes part of the effect, turning the total effect into a direct effect. |
+| `dMed` | Descendant of a mediator | `N` | Caused by a mediator | **No.** It partly controls for the mediator. |
+| `col` | Collider | `C` | Caused by both `X` and `Y` | **No.** It opens a non-causal path between `X` and `Y`. |
+| `dCol` | Descendant of a collider | `Q` | Caused by a collider | **No.** It partly opens the same path. |
+| `dOut` | Descendant of the outcome | `D` | Caused by `Y` | **No.** It biases the estimate. |
+
+
+## Minimal and canonical adjustment sets
+
+An adjustment set is a set of controls that blocks every back-door path from `X` to `Y` without including anything `X` affects. `DAGassist` finds these sets with `dagitty` [@TextorEtAl2016] and fits one model for each:
+
+- A **minimal** set contains no redundant variables: remove any one, and some back-door path reopens. A DAG can have several minimal sets, and `DAGassist` fits a model for each ("Minimal 1", "Minimal 2", and so on).
+- The **canonical** set contains every variable that causes `X` or `Y`, except those the exposure affects [@vanderZanderEtAl2014]. It is unique, and it is a valid adjustment set whenever any valid set exists.
+
+For `roles_dag`:
+
+```{r roles-sets}
+dagitty::adjustmentSets(roles_dag, type = "minimal")
+dagitty::adjustmentSets(roles_dag, type = "canonical")
+```
+
+The minimal set is just the confounder. The canonical set adds `V` and the two
+neutral controls, and leaves out everything marked "do not adjust" as well as
+the irrelevant `W`.
+
+| Role | Example | Minimal | Canonical |
+|:--|:-:|:-:|:-:|
+| Confounder | `Z` | ✓ | ✓ |
+| Descendant of a confounder, on a back-door path | `V` | \* | ✓ |
+| Neutral control on the outcome | `F` | | ✓ |
+| Neutral control on the treatment | `E` | | ✓ |
+| Descendant of a confounder, off the back-door path | `W` | | |
+| Mediator, descendant of a mediator | `M`, `N` | ✗ | ✗ |
+| Collider, descendant of a collider | `C`, `Q` | ✗ | ✗ |
+| Descendant of the outcome | `D` | ✗ | ✗ |
+
+✓ = included. Blank = left out, but harmless to add. ✗ = left out because
+adjusting for it biases the total effect.
+
+\* `V` could replace `Z` in a minimal set only if every back-door path through
+`Z` also ran through `V`. In `roles_dag`, `Z` also affects `Y` directly, so it
+can't.
+
+## Why the two sets can give different answers
+
+Both sets remove confounding, so both should recover the same effect. They
+differ in precision. The turnout example on the [homepage](../index.html)
+shows this: its canonical set adds a neutral control on the outcome
+(`elect_comp`) and a neutral control on the treatment (`industry`) to the
+minimal set `{age, state}`.
+
+```{r turnout-models, results = "asis"}
+DAGassist(turnout_dag,
+          lm(turnout ~ income + state + age + polint + industry + elect_comp,
+             data = turnout_data),
+          show = "models", type = "text", verbose = FALSE)
+```
+
+The minimal and canonical estimates agree (0.49), and both differ sharply from
+the original model, which controls for the mediator `polint`. Here the
+canonical standard error is slightly smaller (0.015 vs. 0.016). If the DAG is
+right, the minimal and canonical estimates should differ only by sampling
+noise, so a large gap between them suggests the DAG is wrong somewhere. The
+[robustness article](robustness.html) shows how to probe that.
+
+## References

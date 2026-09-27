@@ -43,3 +43,13 @@ shifts (\verb{|(S)MD| > threshold}). Engine-agnostic: it reads variable names fr
 each model and recomputes samples on \code{data}, so it works for \code{lm}, \code{glm},
 \code{feols}, \code{coxph}, weighted fits, etc. Models are never refit.
 }
+\examples{
+# Rows with missing C drop out of the Original model only
+d <- toy_data
+d$C[d$Z > 1] <- NA
+balance_models(
+  list(Original = lm(Y ~ X + M + C + Z, data = d),
+       Minimal  = lm(Y ~ X + Z, data = d)),
+  data = d
+)
+}

@@ -23,8 +23,8 @@
 #' @param engine_args Named list of extra arguments forwarded to `engine(...)`.
 #'   If `formula` is an engine call, arguments from the call are merged with
 #'   `engine_args` (call values take precedence).
-#' @param verbose logical (default `TRUE`). Controls verbosity in the console
-#'   printer (formulas + notes).
+#' @param verbose logical (default `TRUE`). Controls verbosity in the console 
+#'   printer (formulas + notes) and in type = "text" output.
 #' @param type output type. One of
 #'   `"console"` (default), `"latex"`/`"docx"`/`"word"`,
 #'   `"excel"`/`"xlsx"`, `"text"`/`"txt"`,
@@ -179,35 +179,24 @@
 #' @seealso [print.DAGassist_report()] and `vignette("DAGassist", package = "DAGassist")`.
 #'
 #' @examples
-#' \dontshow{set.seed(1)}
-#' if (requireNamespace("dagitty", quietly = TRUE)) {
-#'   g <- dagitty::dagitty("dag { Z -> X; X -> M; X -> Y; M -> Y; Z -> Y }")
-#'   dagitty::exposures(g) <- "X"; dagitty::outcomes(g) <- "Y"
-#'   n <- 300
-#'   Z <- rnorm(n); X <- 0.8*Z + rnorm(n)
-#'   M <- 0.9*X + rnorm(n)
-#'   Y <- 0.7*X + 0.6*M + 0.3*Z + rnorm(n)
-#'   df <- data.frame(Z, X, M, Y)
+#' # toy_dag and toy_data ship with the package; the true total effect
+#' # of X on Y is recovered by adjusting for Z alone.
 #'
-#'   # 1) Core: DAG-derived specs + engine-call parsing
-#'   r <- DAGassist(g, lm(Y ~ X + Z + M, data = df))
+#' # 1) Core: DAG-derived specs + engine-call parsing
+#' DAGassist(toy_dag, lm(Y ~ X + Z + M, data = toy_data))
 #'
-#'   # 2) Target sample-average estimands via weighting (requires WeightIt)
-#'   if (requireNamespace("WeightIt", quietly = TRUE)) {
-#'     r2 <- DAGassist(g, lm(Y ~ X + Z + M, data = df), estimand = "total")
+#' # 2) Roles grid only
+#' DAGassist(toy_dag, lm(Y ~ X + Z + M, data = toy_data), show = "roles")
+#'
+#' # 3) Target sample-average estimands via weighting
+#' @examplesIf requireNamespace("WeightIt", quietly = TRUE)
+#' DAGassist(toy_dag, lm(Y ~ X + Z + M, data = toy_data), estimand = "total")
+#'
+#' # 4) File export (LaTeX fragment)
+#' \donttest{
+#'   out <- file.path(tempdir(), "dagassist_report.tex")
+#'   DAGassist(toy_dag, lm(Y ~ X + Z + M, data = toy_data), type = "latex", out = out)
 #'   }
-#'
-#'   # 3) Mediator case: sequential g-estimation (requires DirectEffects)
-#'   if (requireNamespace("DirectEffects", quietly = TRUE)) {
-#'     r3 <- DAGassist(g, lm(Y ~ X + Z + M, data = df), estimand = "direct")
-#'   }
-#'
-#'   # 4) File export (LaTeX fragment)
-#'   \donttest{
-#'     out <- file.path(tempdir(), "dagassist_report.tex")
-#'     DAGassist(g, lm(Y ~ X + Z + M, data = df), type = "latex", out = out)
-#'   }
-#' }
 #' @export
 
 DAGassist <- function(dag, 
@@ -967,11 +956,17 @@ print.DAGassist_report <- function(x, ...) {
     
     # if we're only showing roles (no comparison table), print legend here
     if (!identical(x$settings$show, "all") && !identical(x$settings$show, "models")) {
+      #break legend line to the width of the roles table
       if (isTRUE(verbose)) {
-        cat(
-          "\nRoles legend: Exp. = exposure/treatment; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome\n",
-          sep = ""
-        )
+        leg <- "Roles legend: Exp. = exposure/treatment; Out. = outcome; CON = confounder; MED = mediator; COL = collider; dOut = descendant of outcome; dMed  = descendant of mediator; dCol = descendant of collider; dConfOn = descendant of a confounder on a back-door path; dConfOff = descendant of a confounder off a back-door path; NCT = neutral control on treatment; NCO = neutral control on outcome"
+        
+        #wrap the legend to the printed width of the roles table above it
+        w <- suppressWarnings(max(nchar(crayon::strip_style(
+          utils::capture.output(print(r))
+        ))))
+        if (!is.finite(w) || w < 40L) w <- getOption("width", 80L)
+        
+        cat("\n", paste(strwrap(leg, width = w), collapse = "\n"), "\n", sep = "")
       } else {
         cat(
           clr_yellow(

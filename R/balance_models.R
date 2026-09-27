@@ -65,6 +65,15 @@
 #' @return An object of class `DAGassist_balance`: a list with `$reference`,
 #'   `$comparisons` (per-comparison (S)MD tables) and `$summary` (one row per
 #'   comparison: n_ref, n_cmp, n_covariates, n_flagged, pct_flagged, any_flagged).
+#' @examples
+#' # Rows with missing C drop out of the Original model only
+#' d <- toy_data
+#' d$C[d$Z > 1] <- NA
+#' balance_models(
+#'   list(Original = lm(Y ~ X + M + C + Z, data = d),
+#'        Minimal  = lm(Y ~ X + Z, data = d)),
+#'   data = d
+#' )
 #' @export
 balance_models <- function(models, data, reference = 1, covariates = NULL,
                            threshold = 0.1, extra_vars = NULL,

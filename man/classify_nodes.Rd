@@ -47,7 +47,6 @@ Roles legend:
 \code{NCO} = neutral control on outcome
 }
 \examples{
-  d1 <- dagitty::dagitty("dag {X[exposure];Y[outcome] Z -> X; Z -> Y; X -> Y }") 
-  classify_nodes(d1)
+classify_nodes(toy_dag)
   
 }

@@ -36,9 +36,13 @@ inst/doc
 revdep/
 
 #omit extended documentation
-vignettes/articles
+vignettes/articles/*
+!vignettes/articles/roles-and-sets.Rmd
 
 #omit cran-specific files
 /cran-comments.md
 /CRAN-SUBMISSION
 .positai
+
+#omit microsoft save copies
+~$*

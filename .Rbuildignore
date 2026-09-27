@@ -30,3 +30,4 @@
 ^vignettes/articles$
 ^\.positai$
 ^\.claude$
+^man/figures/card\.png$

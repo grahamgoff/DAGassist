@@ -39,6 +39,7 @@ revdep/
 vignettes/articles/*
 !vignettes/articles/roles-and-sets.Rmd
 !vignettes/articles/robustness.Rmd
+!vignettes/articles/estimands.Rmd
 
 #omit cran-specific files
 /cran-comments.md

@@ -37,6 +37,8 @@ navbar:
         href: articles/roles-and-sets.html
       - text: Robustness to DAG uncertainty
         href: articles/robustness.html
+      - text: Total and direct effects
+        href: articles/estimands.html
       - text: Supported model engines
         href: articles/compatibility.html
 

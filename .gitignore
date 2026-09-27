@@ -40,6 +40,8 @@ vignettes/articles/*
 !vignettes/articles/roles-and-sets.Rmd
 !vignettes/articles/robustness.Rmd
 !vignettes/articles/estimands.Rmd
+!vignettes/articles/exporting.Rmd
+
 
 #omit cran-specific files
 /cran-comments.md

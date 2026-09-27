@@ -39,6 +39,8 @@ navbar:
         href: articles/robustness.html
       - text: Total and direct effects
         href: articles/estimands.html
+      - text: Exporting reports
+        href: articles/exporting.html
       - text: Supported model engines
         href: articles/compatibility.html
 

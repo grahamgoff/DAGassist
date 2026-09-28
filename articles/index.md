@@ -14,3 +14,5 @@
   uncertainty](https://grahamgoff.com/DAGassist/articles/robustness.md):
 - [Causal roles and adjustment
   sets](https://grahamgoff.com/DAGassist/articles/roles-and-sets.md):
+- [Why
+  DAGassist?](https://grahamgoff.com/DAGassist/articles/why-DAGassist.md):

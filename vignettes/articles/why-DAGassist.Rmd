@@ -1,0 +1,99 @@
+---
+title: "Why DAGassist?"
+bibliography: ../references.bib
+link-citations: true
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+options(DAGassist.color = FALSE, crayon.enabled = FALSE)
+```
+
+Choosing control variables is one of the most consequential decisions in observational research, and one of the least scrutinized. The common practice of controlling for any plausible common cause of the treatment and outcome may introduce bias [@Achen2005; @CinelliForneyPearl2022]. `DAGassist` provides a way to systematize adjustment decisions and report the results.
+
+## Regression output can't tell you which controls are wrong
+
+The consequences of controlling for a variable depend on its causal role:
+
+- Controlling for a **confounder** removes bias.
+- Controlling for a **mediator** changes the estimand, from a total effect to something closer to a direct effect.
+- Controlling for a **collider** or a **descendant of the outcome** introduces bias [@MontgomeryNyhanTorres2018].
+
+These distinctions are not visible in regression output. Consider two regressions of voter turnout on income using the simulated `turnout_data` included with the package. The first controls for every available variable; the second controls only for the confounders, age and state.
+
+```{r two-models}
+library(DAGassist)
+library(modelsummary)
+
+all_controls <- lm(turnout ~ income + state + age + polint + industry + elect_comp,
+                   data = turnout_data)
+confounders  <- lm(turnout ~ income + state + age, data = turnout_data)
+
+models <- list(all_controls, confounders)
+
+modelsummary(
+  models,
+  coef_map = c("income" = "Income"),
+  stars = TRUE,
+  gof_omit = ".*"
+)
+```
+
+Both estimates are precise and highly significant, but they do not estimate the same quantity. Distinguishing between them requires assumptions about how the variables are causally related.
+
+## The gap between DAGs and regressions
+
+Directed acyclic graphs (DAGs) provide a systematic framework for choosing control variables [@Pearl2009; @Elwert2013; @HunermundEtAl2025]. Several tools already make it easy to work with DAGs in R. `dagitty` provides a syntax for specifying DAGs and deriving adjustment sets [@TextorEtAl2016], while `ggdag` provides tools for plotting them.
+
+What is less straightforward is checking whether an estimated regression actually follows from the DAG used to justify it. Reviews of applied research find that researchers’ adjustment decisions do not always correspond to the DAGs they report [@TennantEtAl2021]. That discrepancy can also be difficult for readers or reviewers to detect from the information typically reported.
+
+`DAGassist` is designed to close the gap between representation and estimation. Given a DAG and a fitted regression, it identifies the causal role of each control, flags controls that alter the estimand or induce bias according to the DAG, and re-fits the model using DAG-implied adjustment sets. It can target a specified estimand and examine whether the conclusions depend on uncertain assumptions within the DAG. For the turnout example, a single call identifies the roles of the included controls:
+
+```{r flag}
+DAGassist(turnout_dag,
+          lm(turnout ~ income + state + age + polint + industry + elect_comp,
+             data = turnout_data),
+          show = "roles", verbose = FALSE)
+```
+
+## Design principles
+
+**Start from the researcher's model.** Pass a regression formula through `lm()`, `fixest::feols()`, `lme4::lmer()`, or another estimator with a formula interface ([supported engines](compatibility.html)). `DAGassist` re-fits the model using the same estimator and options while only changing the adjustment set.
+
+**Keep the original specification visible.** The original model appears alongside the DAG-derived specifications. The purpose is to show how estimates change under different adjustment decisions, not to replace the researcher's preferred model.
+
+**Make the estimand explicit.** Because adjustment decisions can change the quantity being estimated, `DAGassist` distinguishes between the average total effect and average controlled direct effect [@LundbergJohnsonStewart2021; @AcharyaBlackwellSen2016].
+
+**Allow uncertainty about the DAG.** Everything follows from the DAG, so `DAGassist` checks how the adjustment sets change if arrows are reversed or missing [@HaberEtAl2022].
+
+**Make the results easy to report.** Results can be exported as LaTeX, Word, Excel, plain text, and dotwhisker plots, making it possible to include the analysis in an appendix or response to reviewers.
+
+**Use existing tools where possible.** `DAGassist` relies on dagitty for graph analysis, `WeightIt` and `marginaleffects` for weighting, `DirectEffects` for sequential g-estimation, and `modelsummary` for tables. Its role is to connect these tools to the regression specification being evaluated.
+
+## Where DAGassist fits
+
+| Task | Established tools | What `DAGassist` adds |
+|:--|:--|:--|
+| Draw and analyze a DAG | `dagitty`, `ggdag`, the DAGitty web tool | Accepts `dagitty` and `ggdag` DAGs as input |
+| Find adjustment sets | `dagitty::adjustmentSets()` | Compares the model's controls with DAG-implied adjustment sets |
+| Fit models | `lm()`, `fixest`, `lme4`, and others | Re-fits the original specification using DAG-derived adjustment sets |
+| Target an estimand | `WeightIt`, `marginaleffects`, `DirectEffects` | Builds the weighting and sequential g-estimation specifications from the DAG |
+| Question the DAG | `dagitty::localTests()` | Examines how adjustment sets and variable roles change under uncertain or missing edges |
+| Unmeasured confounding | `sensemakr` [@CinelliHazlett2020] | Identifies when a hypothesized unmeasured confounder prevents identification by adjustment |
+| Report | `modelsummary` | Exports the whole diagnostic, including variable roles and model comparisons, in one call |
+
+## What DAGassist does not do
+
+- **It doesn't tell you whether your DAG is right.** DAGassist does not learn causal structure from the data. Its conclusions are conditional on the DAG supplied by the researcher. The robustness functions [robustness functions](robustness.html) can be used to examine whether conclusions depend on uncertain or missing edges.
+- **It identifies effects by adjustment only.** Designs that rely on other sources of identification, such as instrumental variables, the front-door criterion, difference-in-differences, or regression discontinuity, are outside its scope.
+
+## Who it's for
+
+DAGassist is intended for researchers using regression with observational data who want to check and document their adjustment decisions. It can also help reviewers and readers evaluate how a paper's causal assumptions inform its empirical specification. For instructors, the package includes known-answer datasets (`turnout_data` and `toy_data`) that illustrate the consequences of good and bad controls concretely.
+
+To try it, see [Get started](DAGassist.html).
+
+## References

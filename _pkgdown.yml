@@ -33,6 +33,8 @@ navbar:
     articles:
       text: Articles
       menu:
+      - text: Why DAGassist?
+        href: articles/why-DAGassist.html
       - text: Causal roles and adjustment sets
         href: articles/roles-and-sets.html
       - text: Robustness to DAG uncertainty

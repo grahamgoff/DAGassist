@@ -41,7 +41,7 @@ vignettes/articles/*
 !vignettes/articles/robustness.Rmd
 !vignettes/articles/estimands.Rmd
 !vignettes/articles/exporting.Rmd
-
+!vignettes/articles/why-DAGassist.Rmd
 
 #omit cran-specific files
 /cran-comments.md

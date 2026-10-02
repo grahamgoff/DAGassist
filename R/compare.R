@@ -17,7 +17,13 @@
 #' @export
 bad_controls_in <- function(dag, controls, exposure, outcome) {
   roles <- classify_nodes(dag, exposure = exposure, outcome = outcome)
-  bad  <- roles$variable[roles$is_mediator | roles$is_collider | roles$is_descendant_of_outcome]
+  bad <- roles$variable[
+    roles$is_mediator |
+      roles$is_collider |
+      roles$is_descendant_of_outcome |
+      roles$is_descendant_of_mediator |
+      roles$is_descendant_of_collider
+  ]
   intersect(controls, bad)
 }
 

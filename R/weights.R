@@ -376,9 +376,6 @@
   trim_at <- wargs[["trim_at"]]          # DAGassist-specific (optional)
   wargs[["trim_at"]] <- NULL
   
-  #stabilize by default
-  if (is.null(wargs[["stabilize"]])) wargs[["stabilize"]] <- TRUE
-  
   ##dependency checks for the ATE dependencies
   if (!requireNamespace("WeightIt", quietly = TRUE)) {
     stop(
@@ -566,8 +563,13 @@
       data_wt[[exp_nm]] <- factor(data_wt[[exp_nm]], ordered = TRUE)
     }
     
-    # Filter args -> only those accepted by WeightIt::weightit()
-    fa <- .dagassist_filter_args(wargs, WeightIt::weightit)
+    # stabilize by default, except for continuous exposures (WeightIt ignores it there)
+    wargs_m <- wargs
+    if (is.null(wargs_m[["stabilize"]]) && !identical(kind, "continuous")) {
+      wargs_m[["stabilize"]] <- TRUE
+    }
+    fa <- .dagassist_filter_args(wargs_m, WeightIt::weightit)
+    
     if (length(fa$drop)) {
       warning(
         "Ignoring these weights_args for WeightIt::weightit(): ",
@@ -591,7 +593,7 @@
     wtobj <- suppressWarnings(
       do.call(
         WeightIt::weightit,
-        c(
+        utils::modifyList(
           list(
             formula = f_treat,
             data = data_wt,
@@ -611,7 +613,7 @@
         stop("weights_args$trim_at must be a single number in (0, 1).", call. = FALSE)
       }
       if ("trim" %in% getNamespaceExports("WeightIt")) {
-        w <- WeightIt::trim(w, at = trim_at)
+        w <- suppressMessages(WeightIt::trim(w, at = trim_at))
       } else {
         cap <- as.numeric(stats::quantile(w, probs = trim_at, na.rm = TRUE, names = FALSE))
         w <- pmin(w, cap)
@@ -674,13 +676,15 @@
           marginaleffects::avg_slopes(
             fit_w,
             variables = exp_nm,
-            type = "response"
+            type = "response",
+            vcov = "HC0"
           )
         } else {
           marginaleffects::avg_comparisons(
             fit_w,
             variables = exp_nm,
-            type = "response"
+            type = "response",
+            vcov = "HC0"
           )
         }
       },

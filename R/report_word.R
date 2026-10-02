@@ -1,6 +1,8 @@
 # R/report_word.R
 
 .report_docx <- function(res, out) {
+  #quick fail when out is missing
+  if (is.null(out) || !nzchar(out)) stop("type='word' requires `out=`.", call. = FALSE)
   roles <- tryCatch(res$roles_df, error = function(e) NULL)
   mods  <- tryCatch(res$models, error = function(e) NULL)
   msets <- tryCatch(res$min_sets, error = function(e) list())

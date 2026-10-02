@@ -427,6 +427,23 @@ DAGassist <- function(dag,
   spec_expr <- substitute(formula)  # capture unevaluated argument
   parsed <- NULL
   
+  # `fit <- lm(...)` typed inline: use the right-hand side
+  if (is.call(spec_expr) && identical(spec_expr[[1]], as.name("<-"))) {
+    spec_expr <- spec_expr[[3]]
+  }
+  # a fitted model object (e.g. `fit`): recover the call that produced it
+  if (is.name(spec_expr)) {
+    obj <- tryCatch(eval(spec_expr, parent.frame()), error = function(e) NULL)
+    if (!is.null(obj) && !inherits(obj, "formula")) {
+      cl <- tryCatch(stats::getCall(obj), error = function(e) NULL)
+      if (is.null(cl)) {
+        stop("`formula` must be a formula or a model call, e.g. lm(y ~ x, data = d).",
+             call. = FALSE)
+      }
+      spec_expr <- cl
+    }
+  }
+  
   if (is.call(spec_expr) && !identical(spec_expr[[1]], as.name("~"))) {
     # User passed an engine call like feols(y ~ x | fe, data = df, ...)
     parsed <- .extract_from_engine_call(spec_expr, eval_env = parent.frame())
@@ -835,7 +852,9 @@ DAGassist <- function(dag,
       show = show,
       verbose=verbose
     )
-    return(.report_docx(res_min, out))
+    #return the report with its file path; same as excel branch 
+    .report_docx(res_min, out)
+    return(invisible(structure(report, file = normalizePath(out, mustWork = FALSE))))
   }
   
   #### EXCEL OUT BRANCH ####

@@ -71,7 +71,7 @@
 #'
 #'   - `"raw"`: naive regression fits implied by the supplied engine/formulas.
 #'   - `"total"`: inverse-probability weighted versions of each comparison model
-#'     (via \pkg{WeightIt}) to target sample ATE/ATT.
+#'     (via \pkg{WeightIt}) to target sample total effect.
 #'   - `"direct"`: for DAGs with mediator(s), adds sequential g-estimation columns:
 #'     (i) unweighted sequential-g and (ii) IPW-weighted sequential-g (weights estimated
 #'     without conditioning on mediators) to target the **sample average controlled direct effect**.

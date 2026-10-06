@@ -44,7 +44,7 @@ formats <- c(latex      = "report.tex",
 
 for (fmt in names(formats)) {
   DAGassist(turnout_dag,
-            lm(turnout ~ income + state + age + polint + industry + elect_comp,
+            lm(turnout ~ income + parental_ses + age + polint + industry + elect_comp,
                data = turnout_data),
             type = fmt,
             out  = file.path(out_dir, formats[[fmt]]))
@@ -57,7 +57,7 @@ To write a single file, drop the loop:
 
 ```{r one-format, eval = FALSE}
 DAGassist(turnout_dag,
-          lm(turnout ~ income + state + age + polint + industry + elect_comp,
+          lm(turnout ~ income + parental_ses + age + polint + industry + elect_comp,
              data = turnout_data),
           type = "latex",
           out  = "tables/dagassist.tex")
@@ -77,16 +77,16 @@ For a publication table, set `labels` and `show = "models"`:
 
 ```{r labels, results = "asis"}
 turnout_labels <- c(
-  income     = "Income",
-  state      = "State",
-  age        = "Age",
-  polint     = "Political interest",
-  industry   = "Industry",
-  elect_comp = "Election competitiveness"
+  income       = "Income",
+  parental_ses = "Parental SES",
+  age          = "Age",
+  polint       = "Political interest",
+  industry     = "Industry",
+  elect_comp   = "Election competitiveness"
 )
 
 DAGassist(turnout_dag,
-          lm(turnout ~ income + state + age + polint + industry + elect_comp,
+          lm(turnout ~ income + parental_ses + age + polint + industry + elect_comp,
              data = turnout_data),
           labels = turnout_labels,
           show = "models", type = "text", verbose = FALSE)
@@ -108,7 +108,7 @@ Without `out`, the fragment is printed to the console, ready to paste into Overl
 
 ```{r latex-console, eval = FALSE}
 DAGassist(turnout_dag,
-          lm(turnout ~ income + state + age + polint + industry + elect_comp,
+          lm(turnout ~ income + parental_ses + age + polint + industry + elect_comp,
              data = turnout_data),
           labels = turnout_labels,
           show = "models", type = "latex")
@@ -148,7 +148,7 @@ A `Weights` sheet is added when the report includes weighted estimates (`estiman
 
 ```{r dotwhisker, warning = FALSE, fig.width = 7, fig.height = 4.5, fig.alt = "Dot-and-whisker plot of the income coefficient in the original, minimal, and canonical models. The original estimate is about 0.28; the minimal and canonical estimates are about 0.49."}
 DAGassist(turnout_dag,
-          lm(turnout ~ income + state + age + polint + industry + elect_comp,
+          lm(turnout ~ income + parental_ses + age + polint + industry + elect_comp,
              data = turnout_data),
           type = "dotwhisker")
 ```

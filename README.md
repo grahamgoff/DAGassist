@@ -56,20 +56,20 @@ and that regression to `DAGassist()`:
 
 ``` r
 DAGassist(turnout_dag,
-          lm(turnout ~ income + state + age + polint + industry + elect_comp,
+          lm(turnout ~ income + parental_ses + age + polint + industry + elect_comp,
              data = turnout_data),
           show = "roles", type = "text", verbose = FALSE)
 ```
 
-| Variable   |    Role    | Exp. | Out. | `CON` | `MED` | dConfOn | `NCT` | `NCO` |
-|:-----------|:----------:|:----:|:----:|:-----:|:-----:|:-------:|:-----:|:-----:|
-| age        | confounder |      |      |   x   |       |         |       |       |
-| elect_comp |    nco     |      |      |       |       |         |       |   x   |
-| income     |  exposure  |  x   |      |       |       |         |       |       |
-| industry   |    nct     |      |      |       |       |    x    |   x   |       |
-| polint     |  mediator  |      |      |       |   x   |         |       |       |
-| state      | confounder |      |      |   x   |       |         |       |       |
-| turnout    |  outcome   |      |  x   |       |       |         |       |       |
+| Variable     |    Role    | Exp. | Out. | `CON` | `MED` | dConfOn | `NCT` | `NCO` |
+|:-------------|:----------:|:----:|:----:|:-----:|:-----:|:-------:|:-----:|:-----:|
+| age          | confounder |      |      |   x   |       |         |       |       |
+| elect_comp   |    nco     |      |      |       |       |         |       |   x   |
+| income       |  exposure  |  x   |      |       |       |         |       |       |
+| industry     |    nct     |      |      |       |       |    x    |   x   |       |
+| parental_ses | confounder |      |      |   x   |       |         |       |       |
+| polint       |  mediator  |      |      |       |   x   |         |       |       |
+| turnout      |  outcome   |      |  x   |       |       |         |       |       |
 
 `polint` is a mediator; it is one of the mechanisms through which income
 affects turnout. Thus, controlling for it makes the regression return
@@ -81,31 +81,31 @@ implies:
 
 ``` r
 DAGassist(turnout_dag,
-          lm(turnout ~ income + state + age + polint + industry + elect_comp,
+          lm(turnout ~ income + parental_ses + age + polint + industry + elect_comp,
              data = turnout_data),
           show = "models", type = "text", verbose = FALSE)
 ```
 
-| Term       |  Original   |  Minimal 1  |  Canonical  |
-|:-----------|:-----------:|:-----------:|:-----------:|
-| income     | 0.281\*\*\* | 0.493\*\*\* | 0.492\*\*\* |
-|            |   (0.016)   |   (0.016)   |   (0.015)   |
-| state      | 0.331\*\*\* | 0.324\*\*\* | 0.332\*\*\* |
-|            |   (0.017)   |   (0.019)   |   (0.018)   |
-| age        | 0.275\*\*\* | 0.273\*\*\* | 0.267\*\*\* |
-|            |   (0.017)   |   (0.020)   |   (0.019)   |
-| polint     | 0.420\*\*\* |             |             |
-|            |   (0.014)   |             |             |
-| industry   |   -0.017    |             |   -0.010    |
-|            |   (0.015)   |             |   (0.016)   |
-| elect_comp | 0.500\*\*\* |             | 0.506\*\*\* |
-|            |   (0.014)   |             |   (0.015)   |
-| Num.Obs.   |    5000     |    5000     |    5000     |
-| R2         |    0.596    |    0.423    |    0.525    |
+| Term         |  Original   |  Minimal 1  |  Canonical  |
+|:-------------|:-----------:|:-----------:|:-----------:|
+| income       | 0.281\*\*\* | 0.493\*\*\* | 0.492\*\*\* |
+|              |   (0.016)   |   (0.016)   |   (0.015)   |
+| parental_ses | 0.331\*\*\* | 0.324\*\*\* | 0.332\*\*\* |
+|              |   (0.017)   |   (0.019)   |   (0.018)   |
+| age          | 0.275\*\*\* | 0.273\*\*\* | 0.267\*\*\* |
+|              |   (0.017)   |   (0.020)   |   (0.019)   |
+| polint       | 0.420\*\*\* |             |             |
+|              |   (0.014)   |             |             |
+| industry     |   -0.017    |             |   -0.010    |
+|              |   (0.015)   |             |   (0.016)   |
+| elect_comp   | 0.500\*\*\* |             | 0.506\*\*\* |
+|              |   (0.014)   |             |   (0.015)   |
+| Num.Obs.     |    5000     |    5000     |    5000     |
+| R2           |    0.596    |    0.423    |    0.525    |
 
 - p-value legend: + \< 0.1, \* \< 0.05, \*\* \< 0.01, \*\*\* \< 0.001.
-- Controls (minimal): {age, state}.
-- Controls (canonical): {age, elect_comp, industry, state}.
+- Controls (minimal): {age, parental_ses}.
+- Controls (canonical): {age, elect_comp, industry, parental_ses}.
 
 The original regression’s 0.28 is close to the *direct* effect (0.30).
 Both DAG-derived models recover the total effect. Without `DAGassist`,

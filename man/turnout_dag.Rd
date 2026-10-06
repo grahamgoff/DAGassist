@@ -24,9 +24,9 @@ adjustment sets.
 Minimal sufficient adjustment sets, as returned by
 \code{dagitty::adjustmentSets()}:
 \itemize{
-\item Total effect: \verb{\{age, state\}}
-\item Direct effect: \verb{\{age, polint, state\}}
-\item Canonical (total): \verb{\{age, elect_comp, industry, state\}}
+\item Total effect: \verb{\{age, parental_ses\}}
+\item Direct effect: \verb{\{age, polint, parental_ses\}}
+\item Canonical (total): \verb{\{age, elect_comp, industry, parental_ses\}}
 }
 }
 \seealso{

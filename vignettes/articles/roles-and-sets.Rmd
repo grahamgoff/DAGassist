@@ -217,11 +217,11 @@ Both sets remove confounding, so both should recover the same effect. They
 differ in precision. The turnout example on the [homepage](../index.html)
 shows this: its canonical set adds a neutral control on the outcome
 (`elect_comp`) and a neutral control on the treatment (`industry`) to the
-minimal set `{age, state}`.
+minimal set `{age, parental_ses}`.
 
 ```{r turnout-models, results = "asis"}
 DAGassist(turnout_dag,
-          lm(turnout ~ income + state + age + polint + industry + elect_comp,
+          lm(turnout ~ income + parental_ses + age + polint + industry + elect_comp,
              data = turnout_data),
           show = "models", type = "text", verbose = FALSE)
 ```

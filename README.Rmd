@@ -64,7 +64,7 @@ library(ggdag)
 x_pos <- c(
   turnout = 10,
   income = 0,
-  state = 5,
+  parental_ses = 5,
   age  = 5,
   polint = 5,
   industry = 0,
@@ -74,7 +74,7 @@ x_pos <- c(
 y_pos <- c(
   turnout = 0,
   income = 0,
-  state = 1,
+  parental_ses = 1,
   age  = -1,
   polint = 0.5,
   industry = -0.75,
@@ -84,9 +84,9 @@ y_pos <- c(
 
 dag_model <- dagify(
   
-  turnout ~ income + state + age + polint + elect_comp,
+  turnout ~ income + parental_ses + age + polint + elect_comp,
   
-  income ~ state + age + industry,
+  income ~ parental_ses + age + industry,
   
   polint ~ income,
   
@@ -100,7 +100,7 @@ dag_model <- dagify(
   labels = c(
     turnout = "Turnout",
     income = "Income",
-    state = "State",
+    parental_ses = "Parental SES",
     age  = "Age",
     polint = "Political Interest",
     industry = "Industry",
@@ -110,7 +110,7 @@ dag_model <- dagify(
 
 #coordinates for dag labels
 label_df <- data.frame(
-  name = c("turnout", "income", "state", "age", "polint", "industry", "elect_comp"),
+  name = c("turnout", "income", "parental_ses", "age", "polint", "industry", "elect_comp"),
   label_x = c(10, 0, 5, 5, 5, 0, 9),
   label_y = c(0, 0, 1, -1, 0.55, -0.75, -0.75)
 )
@@ -142,7 +142,7 @@ A common approach is to control for everything available. Pass the DAG and that 
 
 ```{r roles, results='asis'}
 DAGassist(turnout_dag,
-          lm(turnout ~ income + state + age + polint + industry + elect_comp,
+          lm(turnout ~ income + parental_ses + age + polint + industry + elect_comp,
              data = turnout_data),
           show = "roles", type = "text", verbose = FALSE)
 ```
@@ -150,7 +150,7 @@ DAGassist(turnout_dag,
 
 ```{r compare, results='asis'}
 DAGassist(turnout_dag,
-          lm(turnout ~ income + state + age + polint + industry + elect_comp,
+          lm(turnout ~ income + parental_ses + age + polint + industry + elect_comp,
              data = turnout_data),
           show = "models", type = "text", verbose = FALSE)
 ```
@@ -160,14 +160,14 @@ The original regression's 0.28 is close to the *direct* effect (0.30). Both DAG-
 ```{r estimates, echo = FALSE, fig.width = 7, fig.height = 2.6, fig.alt = "Estimated effect of income on turnout with 95% confidence intervals. The original regression gives 0.28, close to the true direct effect of 0.30. The DAG-derived minimal and canonical specifications give 0.49, matching the true total effect of 0.50."}
 report <- DAGassist(
   turnout_dag,
-  lm(turnout ~ income + state + age + polint + industry + elect_comp,
+  lm(turnout ~ income + parental_ses + age + polint + industry + elect_comp,
      data = turnout_data)
 )
 
 specs <- c(
   "Original: all controls"                        = "original",
-  "Minimal: {age, state}"                         = "minimal",
-  "Canonical: {age, state, industry, elect_comp}" = "canonical"
+  "Minimal: {age, parental_ses}"                         = "minimal",
+  "Canonical: {age, parental_ses, industry, elect_comp}" = "canonical"
 )
 est <- do.call(rbind, lapply(names(specs), function(lab) {
   m  <- report$models[[specs[[lab]]]]

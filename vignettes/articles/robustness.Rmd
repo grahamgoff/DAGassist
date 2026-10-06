@@ -23,7 +23,7 @@ library(DAGassist)
 
 The turnout DAG assumes that income raises political interest (`income -> polint`), which makes political interest a mediator. However, it is also plausible that politically engaged people may seek out better-paid work. The dashed line marks the arrow whose direction is in doubt.
 
-```{r uncertain-dag, echo = FALSE, message = FALSE, warning = FALSE, fig.width = 7, fig.height = 3.5, fig.alt = "The turnout DAG. Age and state affect income and turnout; industry affects income; election competitiveness affects turnout; political interest affects turnout. The link between income and political interest is drawn as a dashed line with no arrowhead because its direction is uncertain."}
+```{r uncertain-dag, echo = FALSE, message = FALSE, warning = FALSE, fig.width = 7, fig.height = 3.5, fig.alt = "The turnout DAG. Age and parental_ses affect income and turnout; industry affects income; election competitiveness affects turnout; political interest affects turnout. The link between income and political interest is drawn as a dashed line with no arrowhead because its direction is uncertain."}
 library(ggdag)
 library(ggplot2)
 
@@ -33,7 +33,7 @@ plot_dag <- dagitty::dagitty(sub("income -> polint\n", "",
 
 #coordinates for dag labels
 label_df <- data.frame(
-  name = c("turnout", "income", "state", "age", "polint", "industry", "elect_comp"),
+  name = c("turnout", "income", "parental_ses", "age", "polint", "industry", "elect_comp"),
   label_x = c(10, 0, 5, 5, 5, 0, 9),
   label_y = c(0, 0, 1, -1, 0.55, -0.75, -0.75)
 )
@@ -60,7 +60,7 @@ ggdag_status(plot_dag, text = FALSE) +
 `pdag_robustness()` takes the DAG and the edges whose direction you're unsure of, written `A -- B`. It considers every acyclic orientation of those edges and then reports whether the adjustment sets, or any variable's role, change across orientations.
 
 ```{r pdag-one}
-f <- turnout ~ income + state + age + polint + industry + elect_comp
+f <- turnout ~ income + parental_ses + age + polint + industry + elect_comp
 
 pdag_robustness(turnout_dag, formula = f, uncertain_edges = "income -- polint")
 ```
@@ -71,7 +71,7 @@ You can list several uncertain edges at once:
 
 ```{r pdag-two}
 pdag_robustness(turnout_dag, formula = f,
-                uncertain_edges = c("income -- polint", "state -- income"))
+                uncertain_edges = c("income -- polint"))
 ```
 
 Each uncertain edge doubles the number of possible orientations, so `max_uncertain` caps the list at 10 edges (1,024 worlds) by default. Cyclical orientations are skipped because they are not valid DAGs.
@@ -85,12 +85,12 @@ alt_dag <- dagitty::dagitty(sub("income -> polint", "polint -> income",
                                 as.character(turnout_dag), fixed = TRUE))
 
 DAGassist(alt_dag,
-          lm(turnout ~ income + state + age + polint + industry + elect_comp,
+          lm(turnout ~ income + parental_ses + age + polint + industry + elect_comp,
              data = turnout_data),
           show = "models", type = "text", verbose = FALSE)
 ```
 
-If political interest causes income, `polint` is a confounder, the minimal set becomes `{age, polint, state}`, which yields an estimate of about 0.28. Under the original DAG, `polint` is a mediator and the model returns an estimate of 0.49. The data are identical in both cases; the answer depends entirely on the direction of the edge between `income` and `polint`.
+If political interest causes income, `polint` is a confounder, the minimal set becomes `{age, polint, parental_ses}`, which yields an estimate of about 0.28. Under the original DAG, `polint` is a mediator and the model returns an estimate of 0.49. The data are identical in both cases; the answer depends entirely on the direction of the edge between `income` and `polint`.
 
 ## Missing arrows
 
@@ -113,7 +113,7 @@ Edge orientation and missing edge diagnostics are available as arguments to `DAG
 
 ```{r in-report}
 DAGassist(turnout_dag,
-          lm(turnout ~ income + state + age + polint + industry + elect_comp,
+          lm(turnout ~ income + parental_ses + age + polint + industry + elect_comp,
              data = turnout_data),
           show = "roles",
           uncertain_edges = "income -- polint",

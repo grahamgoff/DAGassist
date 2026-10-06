@@ -22,15 +22,15 @@ The consequences of controlling for a variable depend on its causal role:
 - Controlling for a **mediator** changes the estimand, from a total effect to something closer to a direct effect.
 - Controlling for a **collider** or a **descendant of the outcome** introduces bias [@MontgomeryNyhanTorres2018].
 
-These distinctions are not visible in regression output. Consider two regressions of voter turnout on income using the simulated `turnout_data` included with the package. The first controls for every available variable; the second controls only for the confounders, age and state.
+These distinctions are not visible in regression output. Consider two regressions of voter turnout on income using the simulated `turnout_data` included with the package. The first controls for every available variable; the second controls only for the confounders, age and parental_ses.
 
 ```{r two-models}
 library(DAGassist)
 library(modelsummary)
 
-all_controls <- lm(turnout ~ income + state + age + polint + industry + elect_comp,
+all_controls <- lm(turnout ~ income + parental_ses + age + polint + industry + elect_comp,
                    data = turnout_data)
-confounders  <- lm(turnout ~ income + state + age, data = turnout_data)
+confounders  <- lm(turnout ~ income + parental_ses + age, data = turnout_data)
 
 models <- list(all_controls, confounders)
 
@@ -54,7 +54,7 @@ What is less straightforward is checking whether an estimated regression actuall
 
 ```{r flag}
 DAGassist(turnout_dag,
-          lm(turnout ~ income + state + age + polint + industry + elect_comp,
+          lm(turnout ~ income + parental_ses + age + polint + industry + elect_comp,
              data = turnout_data),
           show = "roles", verbose = FALSE)
 ```

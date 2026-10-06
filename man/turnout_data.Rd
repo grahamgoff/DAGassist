@@ -8,8 +8,8 @@
 A data frame with 5,000 rows and 7 columns:
 \describe{
 \item{turnout}{Outcome. Voter turnout propensity.}
-\item{income}{Exposure. Caused by \code{state}, \code{age}, and \code{industry}.}
-\item{state}{Confounder: a common cause of \code{income} and \code{turnout}.}
+\item{income}{Exposure. Caused by \code{parental_ses}, \code{age}, and \code{industry}.}
+\item{parental_ses}{Confounder: a common cause of \code{income} and \code{turnout}.}
 \item{age}{Confounder: affects \code{income}, \code{turnout}, and \code{industry}.}
 \item{polint}{Political interest. A mediator on the path
 \code{income -> polint -> turnout}. Adjusting for it removes the indirect
@@ -40,8 +40,8 @@ directly (\code{0.30}) and indirectly by raising political interest
 (\code{0.50 * 0.40 = 0.20}), so the \strong{true total effect is \code{0.50}} and the
 \strong{true direct effect is \code{0.30}}.
 
-Adjusting for \verb{\{age, state\}} recovers the total effect; adjusting for
-\verb{\{age, polint, state\}} recovers the direct effect. Regressing \code{turnout} on
+Adjusting for \verb{\{age, parental_ses\}} recovers the total effect; adjusting for
+\verb{\{age, polint, parental_ses\}} recovers the direct effect. Regressing \code{turnout} on
 every available covariate returns roughly \code{0.28} — close to the direct
 effect, because conditioning on the mediator \code{polint} silently changes the
 estimand rather than producing an obviously wrong number.

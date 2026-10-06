@@ -115,7 +115,7 @@ in the comparison table in addition to the user's original and DAG-derived model
 \itemize{
 \item \code{"raw"}: naive regression fits implied by the supplied engine/formulas.
 \item \code{"total"}: inverse-probability weighted versions of each comparison model
-(via \pkg{WeightIt}) to target sample ATE/ATT.
+(via \pkg{WeightIt}) to target sample total effect.
 \item \code{"direct"}: for DAGs with mediator(s), adds sequential g-estimation columns:
 (i) unweighted sequential-g and (ii) IPW-weighted sequential-g (weights estimated
 without conditioning on mediators) to target the \strong{sample average controlled direct effect}.

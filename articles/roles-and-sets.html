@@ -88,11 +88,12 @@
     
     
 <p>Whether a control variable belongs in a regression depends on its
-relationships with other variables. <code>DAGassist</code> labels each
-variable with a causal role, then builds the adjustment sets those roles
-imply. This article explains every role, which ones to adjust for, and
-how <code>DAGassist</code> builds the minimal and canonical adjustment
-sets. Our causal role classification framework follows <span class="citation">Cinelli et al. (<a href="#ref-CinelliForneyPearl2022">2022</a>)</span>’s taxonomy of good,
+relationships with other variables <span class="citation">(<a href="#ref-WestreichGreenland2013">Westreich and Greenland
+2013</a>)</span>. <code>DAGassist</code> labels each variable with a
+causal role, then builds the adjustment sets those roles imply. This
+article explains every role, which ones to adjust for, and how
+<code>DAGassist</code> builds the minimal and canonical adjustment sets.
+Our causal role classification framework follows <span class="citation">Cinelli et al. (<a href="#ref-CinelliForneyPearl2022">2024</a>)</span>’s taxonomy of good,
 bad, and neutral controls.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/grahamgoff/DAGassist" class="external-link">DAGassist</a></span><span class="op">)</span></span></code></pre></div>
@@ -496,9 +497,9 @@ that.</p>
 </h2>
 <div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-CinelliForneyPearl2022" class="csl-entry">
-Cinelli, Carlos, Andrew Forney, and Judea Pearl. 2022. <span>“A Crash
+Cinelli, Carlos, Andrew Forney, and Judea Pearl. 2024. <span>“A Crash
 Course in Good and Bad Controls.”</span> <em>Sociological Methods &amp;
-Research</em>, ahead of print. <a href="https://doi.org/10.1177/00491241221099552" class="external-link">https://doi.org/10.1177/00491241221099552</a>.
+Research</em> 53 (3): 1071–104. <a href="https://doi.org/10.1177/00491241221099552" class="external-link">https://doi.org/10.1177/00491241221099552</a>.
 </div>
 <div id="ref-TextorEtAl2016" class="csl-entry">
 Textor, Johannes, Benito van der Zander, Mark S. Gilthorpe, Maciej
@@ -506,6 +507,12 @@ Liśkiewicz, and George T. H. Ellison. 2016. <span>“Robust Causal
 Inference Using Directed Acyclic Graphs: The <span>R</span> Package
 <span>‘Dagitty’</span>.”</span> <em>International Journal of
 Epidemiology</em> 45 (6): 1887–94. <a href="https://doi.org/10.1093/ije/dyw341" class="external-link">https://doi.org/10.1093/ije/dyw341</a>.
+</div>
+<div id="ref-WestreichGreenland2013" class="csl-entry">
+Westreich, Daniel, and Sander Greenland. 2013. <span>“The Table 2
+Fallacy: Presenting and Interpreting Confounder and Modifier
+Coefficients.”</span> <em>American Journal of Epidemiology</em> 177 (4):
+292–98. <a href="https://doi.org/10.1093/aje/kws412" class="external-link">https://doi.org/10.1093/aje/kws412</a>.
 </div>
 <div id="ref-vanderZanderEtAl2014" class="csl-entry">
 Zander, Benito van der, Maciej Liśkiewicz, and Johannes Textor. 2014.

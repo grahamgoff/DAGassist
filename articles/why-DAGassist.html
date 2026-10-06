@@ -90,7 +90,7 @@
 <p>Choosing control variables is one of the most consequential decisions
 in observational research, and one of the least scrutinized. The common
 practice of controlling for any plausible common cause of the treatment
-and outcome may introduce bias <span class="citation">(<a href="#ref-Achen2005">Achen 2005</a>; <a href="#ref-CinelliForneyPearl2022">Cinelli et al. 2022</a>)</span>.
+and outcome may introduce bias <span class="citation">(<a href="#ref-Achen2005">Achen 2005</a>; <a href="#ref-CinelliForneyPearl2022">Cinelli et al. 2024</a>)</span>.
 <code>DAGassist</code> provides a way to systematize adjustment
 decisions and report the results.</p>
 <div class="section level2">
@@ -103,8 +103,7 @@ role:</p>
 <li>Controlling for a <strong>mediator</strong> changes the estimand,
 from a total effect to something closer to a direct effect.</li>
 <li>Controlling for a <strong>collider</strong> or a <strong>descendant
-of the outcome</strong> introduces bias <span class="citation">(<a href="#ref-MontgomeryNyhanTorres2018">Montgomery et al.
-2018</a>)</span>.</li>
+of the outcome</strong> introduces bias.</li>
 </ul>
 <p>These distinctions are not visible in regression output. Consider two
 regressions of voter turnout on income using the simulated
@@ -130,38 +129,38 @@ confounders, age and parental_ses.</p>
 
     <script src="https://cdn.jsdelivr.net/gh/vincentarelbundock/tinytable@main/inst/tinytable.js"></script><script>
       // Create table-specific functions using external factory
-      const tableFns_kwb9wlcpdy0suas4faf6 = TinyTable.createTableFunctions("tinytable_kwb9wlcpdy0suas4faf6");
+      const tableFns_f7ul8l9h1p2t10amr47o = TinyTable.createTableFunctions("tinytable_f7ul8l9h1p2t10amr47o");
       // tinytable span after
       window.addEventListener('load', function () {
           var cellsToStyle = [
             // tinytable style arrays after
-          { positions: [ { i: '2', j: 2 }, { i: '2', j: 3 } ], css_id: 'tinytable_css_rbhphdzymaq1v4c7a783',}, 
-          { positions: [ { i: '1', j: 2 }, { i: '1', j: 3 } ], css_id: 'tinytable_css_4gmaof28pyb7mvd0w0i3',}, 
-          { positions: [ { i: '0', j: 2 }, { i: '0', j: 3 } ], css_id: 'tinytable_css_0xeichi9potazf2evg47',}, 
-          { positions: [ { i: '2', j: 1 } ], css_id: 'tinytable_css_yygule66ydtbh4tmcbnr',}, 
-          { positions: [ { i: '1', j: 1 } ], css_id: 'tinytable_css_pjdz9i88ghdv5to6b3oe',}, 
-          { positions: [ { i: '0', j: 1 } ], css_id: 'tinytable_css_00mmmcbq34uslo2j3kpm',}, 
+          { positions: [ { i: '2', j: 2 }, { i: '2', j: 3 } ], css_id: 'tinytable_css_zsksn4to1crw8yzajfdk',}, 
+          { positions: [ { i: '1', j: 2 }, { i: '1', j: 3 } ], css_id: 'tinytable_css_rqusp5ifshzfvo97b7zq',}, 
+          { positions: [ { i: '0', j: 2 }, { i: '0', j: 3 } ], css_id: 'tinytable_css_nbge3yzvhzc40n2kgdb4',}, 
+          { positions: [ { i: '2', j: 1 } ], css_id: 'tinytable_css_quzx0d5ukoyiwaiy0j9r',}, 
+          { positions: [ { i: '1', j: 1 } ], css_id: 'tinytable_css_qbmx058t0kvxrc5cctlg',}, 
+          { positions: [ { i: '0', j: 1 } ], css_id: 'tinytable_css_f58oznzgckjorxh4x499',}, 
           ];
 
           // Loop over the arrays to style the cells
           cellsToStyle.forEach(function (group) {
               group.positions.forEach(function (cell) {
-                  tableFns_kwb9wlcpdy0suas4faf6.styleCell(cell.i, cell.j, group.css_id);
+                  tableFns_f7ul8l9h1p2t10amr47o.styleCell(cell.i, cell.j, group.css_id);
               });
           });
       });
     </script><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/vincentarelbundock/tinytable@main/inst/tinytable.css">
 <style>
     /* tinytable css entries after */
-    #tinytable_kwb9wlcpdy0suas4faf6 td.tinytable_css_rbhphdzymaq1v4c7a783, #tinytable_kwb9wlcpdy0suas4faf6 th.tinytable_css_rbhphdzymaq1v4c7a783 {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.08em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --line-type-bottom: solid; --line-type-left: solid; --line-type-right: solid; --line-type-top: solid; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
-    #tinytable_kwb9wlcpdy0suas4faf6 td.tinytable_css_4gmaof28pyb7mvd0w0i3, #tinytable_kwb9wlcpdy0suas4faf6 th.tinytable_css_4gmaof28pyb7mvd0w0i3 { text-align: center }
-    #tinytable_kwb9wlcpdy0suas4faf6 td.tinytable_css_0xeichi9potazf2evg47, #tinytable_kwb9wlcpdy0suas4faf6 th.tinytable_css_0xeichi9potazf2evg47 {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.08em; --line-type-bottom: solid; --line-type-left: solid; --line-type-right: solid; --line-type-top: solid; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
-    #tinytable_kwb9wlcpdy0suas4faf6 td.tinytable_css_yygule66ydtbh4tmcbnr, #tinytable_kwb9wlcpdy0suas4faf6 th.tinytable_css_yygule66ydtbh4tmcbnr {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.08em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --line-type-bottom: solid; --line-type-left: solid; --line-type-right: solid; --line-type-top: solid; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
-    #tinytable_kwb9wlcpdy0suas4faf6 td.tinytable_css_pjdz9i88ghdv5to6b3oe, #tinytable_kwb9wlcpdy0suas4faf6 th.tinytable_css_pjdz9i88ghdv5to6b3oe { text-align: left }
-    #tinytable_kwb9wlcpdy0suas4faf6 td.tinytable_css_00mmmcbq34uslo2j3kpm, #tinytable_kwb9wlcpdy0suas4faf6 th.tinytable_css_00mmmcbq34uslo2j3kpm {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.08em; --line-type-bottom: solid; --line-type-left: solid; --line-type-right: solid; --line-type-top: solid; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
+    #tinytable_f7ul8l9h1p2t10amr47o td.tinytable_css_zsksn4to1crw8yzajfdk, #tinytable_f7ul8l9h1p2t10amr47o th.tinytable_css_zsksn4to1crw8yzajfdk {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.08em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --line-type-bottom: solid; --line-type-left: solid; --line-type-right: solid; --line-type-top: solid; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
+    #tinytable_f7ul8l9h1p2t10amr47o td.tinytable_css_rqusp5ifshzfvo97b7zq, #tinytable_f7ul8l9h1p2t10amr47o th.tinytable_css_rqusp5ifshzfvo97b7zq { text-align: center }
+    #tinytable_f7ul8l9h1p2t10amr47o td.tinytable_css_nbge3yzvhzc40n2kgdb4, #tinytable_f7ul8l9h1p2t10amr47o th.tinytable_css_nbge3yzvhzc40n2kgdb4 {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.08em; --line-type-bottom: solid; --line-type-left: solid; --line-type-right: solid; --line-type-top: solid; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
+    #tinytable_f7ul8l9h1p2t10amr47o td.tinytable_css_quzx0d5ukoyiwaiy0j9r, #tinytable_f7ul8l9h1p2t10amr47o th.tinytable_css_quzx0d5ukoyiwaiy0j9r {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.08em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --line-type-bottom: solid; --line-type-left: solid; --line-type-right: solid; --line-type-top: solid; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
+    #tinytable_f7ul8l9h1p2t10amr47o td.tinytable_css_qbmx058t0kvxrc5cctlg, #tinytable_f7ul8l9h1p2t10amr47o th.tinytable_css_qbmx058t0kvxrc5cctlg { text-align: left }
+    #tinytable_f7ul8l9h1p2t10amr47o td.tinytable_css_f58oznzgckjorxh4x499, #tinytable_f7ul8l9h1p2t10amr47o th.tinytable_css_f58oznzgckjorxh4x499 {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.08em; --line-type-bottom: solid; --line-type-left: solid; --line-type-right: solid; --line-type-top: solid; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
     </style>
 <div class="container">
-      <table class="table tinytable" id="tinytable_kwb9wlcpdy0suas4faf6" style="width: auto; margin-left: auto; margin-right: auto;" data-quarto-disable-processing="true">
+      <table class="table tinytable" id="tinytable_f7ul8l9h1p2t10amr47o" style="width: auto; margin-left: auto; margin-right: auto;" data-quarto-disable-processing="true">
 <thead><tr>
 <th scope="col" data-row="0" data-col="1"> </th>
                 <th scope="col" data-row="0" data-col="2">(1)</th>
@@ -378,9 +377,9 @@ Garbage-Can Probits Where They Belong.”</span> <em>Conflict Management
 and Peace Science</em> 22 (4): 327–39. <a href="https://doi.org/10.1080/07388940500339167" class="external-link">https://doi.org/10.1080/07388940500339167</a>.
 </div>
 <div id="ref-CinelliForneyPearl2022" class="csl-entry">
-Cinelli, Carlos, Andrew Forney, and Judea Pearl. 2022. <span>“A Crash
+Cinelli, Carlos, Andrew Forney, and Judea Pearl. 2024. <span>“A Crash
 Course in Good and Bad Controls.”</span> <em>Sociological Methods &amp;
-Research</em>, ahead of print. <a href="https://doi.org/10.1177/00491241221099552" class="external-link">https://doi.org/10.1177/00491241221099552</a>.
+Research</em> 53 (3): 1071–104. <a href="https://doi.org/10.1177/00491241221099552" class="external-link">https://doi.org/10.1177/00491241221099552</a>.
 </div>
 <div id="ref-CinelliHazlett2020" class="csl-entry">
 Cinelli, Carlos, and Chad Hazlett. 2020. <span>“Making Sense of
@@ -410,12 +409,6 @@ Lundberg, Ian, Rebecca Johnson, and Brandon M. Stewart. 2021.
 <span>“What Is Your Estimand? Defining the Target Quantity Connects
 Statistical Evidence to Theory.”</span> <em>American Sociological
 Review</em> 86: 532–65. <a href="https://doi.org/10.1177/00031224211004187" class="external-link">https://doi.org/10.1177/00031224211004187</a>.
-</div>
-<div id="ref-MontgomeryNyhanTorres2018" class="csl-entry">
-Montgomery, Jacob M., Brendan Nyhan, and Michelle Torres. 2018.
-<span>“How Conditioning on Posttreatment Variables Can Ruin Your
-Experiment and What to Do about It.”</span> <em>American Journal of
-Political Science</em> 62 (3): 760–75. <a href="https://doi.org/10.1111/ajps.12357" class="external-link">https://doi.org/10.1111/ajps.12357</a>.
 </div>
 <div id="ref-Pearl2009" class="csl-entry">
 Pearl, Judea. 2009. <em>Causality: Models, Reasoning, and

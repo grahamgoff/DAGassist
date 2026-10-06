@@ -21,10 +21,10 @@ library(DAGassist)
 
 ## Step 1: Declare your estimand
 
-Before choosing controls, decide which effect you want ([Lundberg et al.
-2021](#ref-LundbergJohnsonStewart2021)). Income could affect turnout in
-two ways: directly, and by raising political interest, which in turn
-raises turnout. That gives two different questions:
+Before choosing controls, decide which effect you want ([Findley et al.
+2021](#ref-FindleyKikutaDenly2021)). Income could affect turnout in two
+ways: directly, and by raising political interest, which in turn raises
+turnout. That gives two different questions:
 
 - **The total effect.** How much does turnout change when income rises,
   through every path? In `turnout_data`, the answer is **0.50**.
@@ -285,14 +285,12 @@ Elwert, Felix. 2013. “Graphical Causal Models.” In *Handbook of Causal
 Analysis for Social Research*, edited by Stephen L. Morgan, vol. 54.
 Springer. <https://doi.org/10.1007/978-1-4471-6699-3_13>.
 
+Findley, Michael G., Kyosuke Kikuta, and Michael Denly. 2021. “External
+Validity.” *Annual Review of Political Science* 24: 365–93.
+
 Hünermund, Paul, Beyers Louw, and Mikko Rönkkö. 2025. “The Choice of
 Control Variables in Empirical Management Research: How Causal Diagrams
 Can Inform the Decision.” *Leadership Quarterly* 36: 1–15.
-
-Lundberg, Ian, Rebecca Johnson, and Brandon M. Stewart. 2021. “What Is
-Your Estimand? Defining the Target Quantity Connects Statistical
-Evidence to Theory.” *American Sociological Review* 86: 532–65.
-<https://doi.org/10.1177/00031224211004187>.
 
 Pearl, Judea. 2009. *Causality: Models, Reasoning, and Inference*.
 Cambridge University Press.

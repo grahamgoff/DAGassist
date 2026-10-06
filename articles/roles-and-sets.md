@@ -1,12 +1,13 @@
 # Causal roles and adjustment sets
 
 Whether a control variable belongs in a regression depends on its
-relationships with other variables. `DAGassist` labels each variable
+relationships with other variables ([Westreich and Greenland
+2013](#ref-WestreichGreenland2013)). `DAGassist` labels each variable
 with a causal role, then builds the adjustment sets those roles imply.
 This article explains every role, which ones to adjust for, and how
 `DAGassist` builds the minimal and canonical adjustment sets. Our causal
 role classification framework follows Cinelli et al.
-([2022](#ref-CinelliForneyPearl2022))’s taxonomy of good, bad, and
+([2024](#ref-CinelliForneyPearl2022))’s taxonomy of good, bad, and
 neutral controls.
 
 ``` r
@@ -192,15 +193,20 @@ how to probe that.
 
 ## References
 
-Cinelli, Carlos, Andrew Forney, and Judea Pearl. 2022. “A Crash Course
-in Good and Bad Controls.” *Sociological Methods & Research*, ahead of
-print. <https://doi.org/10.1177/00491241221099552>.
+Cinelli, Carlos, Andrew Forney, and Judea Pearl. 2024. “A Crash Course
+in Good and Bad Controls.” *Sociological Methods & Research* 53 (3):
+1071–104. <https://doi.org/10.1177/00491241221099552>.
 
 Textor, Johannes, Benito van der Zander, Mark S. Gilthorpe, Maciej
 Liśkiewicz, and George T. H. Ellison. 2016. “Robust Causal Inference
 Using Directed Acyclic Graphs: The R Package ‘Dagitty’.” *International
 Journal of Epidemiology* 45 (6): 1887–94.
 <https://doi.org/10.1093/ije/dyw341>.
+
+Westreich, Daniel, and Sander Greenland. 2013. “The Table 2 Fallacy:
+Presenting and Interpreting Confounder and Modifier Coefficients.”
+*American Journal of Epidemiology* 177 (4): 292–98.
+<https://doi.org/10.1093/aje/kws412>.
 
 Zander, Benito van der, Maciej Liśkiewicz, and Johannes Textor. 2014.
 “Constructing Separators and Adjustment Sets in Ancestral Graphs.”

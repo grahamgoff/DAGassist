@@ -4,7 +4,7 @@ Choosing control variables is one of the most consequential decisions in
 observational research, and one of the least scrutinized. The common
 practice of controlling for any plausible common cause of the treatment
 and outcome may introduce bias ([Achen 2005](#ref-Achen2005); [Cinelli
-et al. 2022](#ref-CinelliForneyPearl2022)). `DAGassist` provides a way
+et al. 2024](#ref-CinelliForneyPearl2022)). `DAGassist` provides a way
 to systematize adjustment decisions and report the results.
 
 ## Regression output can’t tell you which controls are wrong
@@ -16,8 +16,7 @@ role:
 - Controlling for a **mediator** changes the estimand, from a total
   effect to something closer to a direct effect.
 - Controlling for a **collider** or a **descendant of the outcome**
-  introduces bias ([Montgomery et al.
-  2018](#ref-MontgomeryNyhanTorres2018)).
+  introduces bias.
 
 These distinctions are not visible in regression output. Consider two
 regressions of voter turnout on income using the simulated
@@ -189,9 +188,9 @@ Achen, Christopher H. 2005. “Let’s Put Garbage-Can Regressions and
 Garbage-Can Probits Where They Belong.” *Conflict Management and Peace
 Science* 22 (4): 327–39. <https://doi.org/10.1080/07388940500339167>.
 
-Cinelli, Carlos, Andrew Forney, and Judea Pearl. 2022. “A Crash Course
-in Good and Bad Controls.” *Sociological Methods & Research*, ahead of
-print. <https://doi.org/10.1177/00491241221099552>.
+Cinelli, Carlos, Andrew Forney, and Judea Pearl. 2024. “A Crash Course
+in Good and Bad Controls.” *Sociological Methods & Research* 53 (3):
+1071–104. <https://doi.org/10.1177/00491241221099552>.
 
 Cinelli, Carlos, and Chad Hazlett. 2020. “Making Sense of Sensitivity:
 Extending Omitted Variable Bias.” *Journal of the Royal Statistical
@@ -215,11 +214,6 @@ Lundberg, Ian, Rebecca Johnson, and Brandon M. Stewart. 2021. “What Is
 Your Estimand? Defining the Target Quantity Connects Statistical
 Evidence to Theory.” *American Sociological Review* 86: 532–65.
 <https://doi.org/10.1177/00031224211004187>.
-
-Montgomery, Jacob M., Brendan Nyhan, and Michelle Torres. 2018. “How
-Conditioning on Posttreatment Variables Can Ruin Your Experiment and
-What to Do about It.” *American Journal of Political Science* 62 (3):
-760–75. <https://doi.org/10.1111/ajps.12357>.
 
 Pearl, Judea. 2009. *Causality: Models, Reasoning, and Inference*.
 Cambridge University Press.

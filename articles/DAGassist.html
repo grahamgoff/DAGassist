@@ -140,8 +140,8 @@ causes. Note that <code>DAGassist</code> requires that node names must
 match the column names in your data.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">dag</span> <span class="op">&lt;-</span> <span class="fu">ggdag</span><span class="fu">::</span><span class="fu"><a href="https://r-causal.github.io/ggdag/reference/dagify.html" class="external-link">dagify</a></span><span class="op">(</span></span>
-<span>  <span class="va">turnout</span>  <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">state</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
-<span>  <span class="va">income</span>   <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">state</span> <span class="op">+</span> <span class="va">industry</span>,</span>
+<span>  <span class="va">turnout</span>  <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">parental_ses</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
+<span>  <span class="va">income</span>   <span class="op">~</span> <span class="va">age</span> <span class="op">+</span> <span class="va">parental_ses</span> <span class="op">+</span> <span class="va">industry</span>,</span>
 <span>  <span class="va">polint</span>   <span class="op">~</span> <span class="va">income</span>,</span>
 <span>  <span class="va">industry</span> <span class="op">~</span> <span class="va">age</span>,</span>
 <span>  exposure <span class="op">=</span> <span class="st">"income"</span>,</span>
@@ -149,8 +149,8 @@ match the column names in your data.</p>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Alternatively, you can also draw the DAG in the <a href="https://dagitty.net/" class="external-link">DAGitty</a> web tool and paste its code into
 <code><a href="https://rdrr.io/pkg/dagitty/man/dagitty.html" class="external-link">dagitty::dagitty()</a></code>.</p>
-<p><img src="DAGassist_files/figure-html/dag-plot-1.png" class="r-plt" alt="The turnout DAG. Age and state affect income and turnout; age affects industry, which affects income; income affects political interest, which affects turnout; election competitiveness affects turnout." width="1050"></p>
-<p>In our example, age and state affect both income and turnout.
+<p><img src="DAGassist_files/figure-html/dag-plot-1.png" class="r-plt" alt="The turnout DAG. Age and parental_ses affect income and turnout; age affects industry, which affects income; income affects political interest, which affects turnout; election competitiveness affects turnout." width="1050"></p>
+<p>In our example, age and parental_ses affect both income and turnout.
 Political interest carries part of income’s effect to turnout. Industry
 affects income only, and election competitiveness affects turnout
 only.</p>
@@ -164,20 +164,20 @@ control for everything available. Pass the DAG and that regression to
 call, so <code><a href="../reference/DAGassist.html">DAGassist()</a></code> can re-fit it with other controls.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">dag</span>,</span>
-<span>          <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">state</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
+<span>          <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">parental_ses</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
 <span>             data <span class="op">=</span> <span class="va">turnout_data</span><span class="op">)</span>,</span>
 <span>          show <span class="op">=</span> <span class="st">"roles"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; DAGassist Report: </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Roles:</span></span>
-<span><span class="co">#&gt; variable    role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO</span></span>
-<span><span class="co">#&gt; income      exposure    x                                                                        </span></span>
-<span><span class="co">#&gt; turnout     outcome           x                                                                  </span></span>
-<span><span class="co">#&gt; age         confounder              x                                                            </span></span>
-<span><span class="co">#&gt; state       confounder              x                                                            </span></span>
-<span><span class="co">#&gt; polint      mediator                      x                                                      </span></span>
-<span><span class="co">#&gt; elect_comp  nco                                                                               x  </span></span>
-<span><span class="co">#&gt; industry    nct                                                       x                  x       </span></span>
+<span><span class="co">#&gt; variable      role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO</span></span>
+<span><span class="co">#&gt; income        exposure    x                                                                        </span></span>
+<span><span class="co">#&gt; turnout       outcome           x                                                                  </span></span>
+<span><span class="co">#&gt; age           confounder              x                                                            </span></span>
+<span><span class="co">#&gt; parental_ses  confounder              x                                                            </span></span>
+<span><span class="co">#&gt; polint        mediator                      x                                                      </span></span>
+<span><span class="co">#&gt; elect_comp    nco                                                                               x  </span></span>
+<span><span class="co">#&gt; industry      nct                                                       x                  x       </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  (!) Bad controls in your formula: {polint}</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -190,7 +190,7 @@ call, so <code><a href="../reference/DAGassist.html">DAGassist()</a></code> can 
 For the total effect:</p>
 <ul>
 <li>
-<code>age</code> and <code>state</code> are
+<code>age</code> and <code>parental_ses</code> are
 <strong>confounders</strong>. They must be controlled for.</li>
 <li>
 <code>polint</code> is a <strong>mediator</strong> and a bad
@@ -215,7 +215,7 @@ every back-door path. The <strong>canonical</strong> set also adds every
 safe control.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">dag</span>,</span>
-<span>          <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">state</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
+<span>          <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">parental_ses</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
 <span>             data <span class="op">=</span> <span class="va">turnout_data</span><span class="op">)</span>,</span>
 <span>          show <span class="op">=</span> <span class="st">"models"</span>, type <span class="op">=</span> <span class="st">"text"</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
@@ -239,7 +239,7 @@ safe control.</p>
 <td align="center">(0.015)</td>
 </tr>
 <tr class="odd">
-<td align="left">state</td>
+<td align="left">parental_ses</td>
 <td align="center">0.331***</td>
 <td align="center">0.324***</td>
 <td align="center">0.332***</td>
@@ -315,8 +315,9 @@ safe control.</p>
 <ul>
 <li>p-value legend: + &lt; 0.1, * &lt; 0.05, ** &lt; 0.01, *** &lt;
 0.001.</li>
-<li>Controls (minimal): {age, state}.</li>
-<li>Controls (canonical): {age, elect_comp, industry, state}.</li>
+<li>Controls (minimal): {age, parental_ses}.</li>
+<li>Controls (canonical): {age, elect_comp, industry,
+parental_ses}.</li>
 </ul>
 <p>Both DAG-derived models estimate income’s effect at 0.49, close to
 the true total effect of 0.50. The original regression returns 0.28; by
@@ -328,7 +329,7 @@ leave the models with different samples.</p>
 <code>type = "dotwhisker"</code>:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">dag</span>,</span>
-<span>          <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">state</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
+<span>          <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">parental_ses</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
 <span>             data <span class="op">=</span> <span class="va">turnout_data</span><span class="op">)</span>,</span>
 <span>          type <span class="op">=</span> <span class="st">"dotwhisker"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="DAGassist_files/figure-html/dotwhisker-1.png" class="r-plt" alt="Dot-and-whisker plot of the income coefficient: about 0.28 in the original model and about 0.49 in the minimal and canonical models." width="1050"></p>
@@ -349,13 +350,13 @@ average controlled direct effect.</li>
 </ul>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">dag</span>,</span>
-<span>          <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">state</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
+<span>          <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">parental_ses</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
 <span>             data <span class="op">=</span> <span class="va">turnout_data</span><span class="op">)</span>,</span>
 <span>          estimand <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"total"</span>, <span class="st">"direct"</span><span class="op">)</span>,</span>
 <span>          show <span class="op">=</span> <span class="st">"models"</span>, type <span class="op">=</span> <span class="st">"text"</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <colgroup>
-<col width="7%">
+<col width="8%">
 <col width="6%">
 <col width="14%">
 <col width="14%">
@@ -396,7 +397,7 @@ average controlled direct effect.</li>
 <td align="center">(0.027)</td>
 </tr>
 <tr class="odd">
-<td align="left">state</td>
+<td align="left">parental_ses</td>
 <td align="center">0.331***</td>
 <td align="center">0.324***</td>
 <td align="center">0.332***</td>
@@ -520,8 +521,9 @@ average controlled direct effect.</li>
 <ul>
 <li>p-value legend: + &lt; 0.1, * &lt; 0.05, ** &lt; 0.01, *** &lt;
 0.001.</li>
-<li>Controls (minimal): {age, state}.</li>
-<li>Controls (canonical): {age, elect_comp, industry, state}.</li>
+<li>Controls (minimal): {age, parental_ses}.</li>
+<li>Controls (canonical): {age, elect_comp, industry,
+parental_ses}.</li>
 </ul>
 <p>The weighted total-effect estimates (0.49–0.50) agree with the
 regression estimates, and the direct-effect estimates (0.28) are close
@@ -539,7 +541,7 @@ if model results are sensitive to uncertainty in the DAG. For example,
 what if political interest raises income, rather than the reverse?</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/pdag_robustness.html">pdag_robustness</a></span><span class="op">(</span><span class="va">dag</span>,</span>
-<span>                formula <span class="op">=</span> <span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">state</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
+<span>                formula <span class="op">=</span> <span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">parental_ses</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
 <span>                uncertain_edges <span class="op">=</span> <span class="st">"income -- polint"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; PDAG robustness summary:</span></span>

@@ -104,13 +104,13 @@ continues the voter-turnout example from the <a href="../index.html">homepage</a
 mediator. However, it is also plausible that politically engaged people
 may seek out better-paid work. The dashed line marks the arrow whose
 direction is in doubt.</p>
-<p><img src="robustness_files/figure-html/uncertain-dag-1.png" class="r-plt" alt="The turnout DAG. Age and state affect income and turnout; industry affects income; election competitiveness affects turnout; political interest affects turnout. The link between income and political interest is drawn as a dashed line with no arrowhead because its direction is uncertain." width="1050"></p>
+<p><img src="robustness_files/figure-html/uncertain-dag-1.png" class="r-plt" alt="The turnout DAG. Age and parental_ses affect income and turnout; industry affects income; election competitiveness affects turnout; political interest affects turnout. The link between income and political interest is drawn as a dashed line with no arrowhead because its direction is uncertain." width="1050"></p>
 <p><code><a href="../reference/pdag_robustness.html">pdag_robustness()</a></code> takes the DAG and the edges whose
 direction you’re unsure of, written <code>A -- B</code>. It considers
 every acyclic orientation of those edges and then reports whether the
 adjustment sets, or any variable’s role, change across orientations.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">state</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span></span>
+<code class="sourceCode R"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">parental_ses</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/pdag_robustness.html">pdag_robustness</a></span><span class="op">(</span><span class="va">turnout_dag</span>, formula <span class="op">=</span> <span class="va">f</span>, uncertain_edges <span class="op">=</span> <span class="st">"income -- polint"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -129,15 +129,14 @@ determines whether it recommends re-estimating.</p>
 <p>You can list several uncertain edges at once:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/pdag_robustness.html">pdag_robustness</a></span><span class="op">(</span><span class="va">turnout_dag</span>, formula <span class="op">=</span> <span class="va">f</span>,</span>
-<span>                uncertain_edges <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"income -- polint"</span>, <span class="st">"state -- income"</span><span class="op">)</span><span class="op">)</span></span>
+<span>                uncertain_edges <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"income -- polint"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; PDAG robustness summary:</span></span>
-<span><span class="co">#&gt; - uncertain edges specified: 2</span></span>
-<span><span class="co">#&gt; - worlds evaluated (acyclic orientations): 4</span></span>
+<span><span class="co">#&gt; - uncertain edges specified: 1</span></span>
+<span><span class="co">#&gt; - worlds evaluated (acyclic orientations): 2</span></span>
 <span><span class="co">#&gt; - minimal adjustment set changed: yes</span></span>
 <span><span class="co">#&gt; - canonical adjustment set changed: yes</span></span>
 <span><span class="co">#&gt; - covariate role changed: mediator -&gt; ambiguous (confounder / mediator) for polint (good/bad control flip)</span></span>
-<span><span class="co">#&gt; - covariate role changed: confounder -&gt; ambiguous (confounder / mediator) for state (good/bad control flip)</span></span>
 <span><span class="co">#&gt; - re-estimation recommended: yes</span></span></code></pre></div>
 <p>Each uncertain edge doubles the number of possible orientations, so
 <code>max_uncertain</code> caps the list at 10 edges (1,024 worlds) by
@@ -156,7 +155,7 @@ alternative orientation, reverse the arrow and rerun
 <span>                                <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">turnout_dag</span><span class="op">)</span>, fixed <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">alt_dag</span>,</span>
-<span>          <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">state</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
+<span>          <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">parental_ses</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
 <span>             data <span class="op">=</span> <span class="va">turnout_data</span><span class="op">)</span>,</span>
 <span>          show <span class="op">=</span> <span class="st">"models"</span>, type <span class="op">=</span> <span class="st">"text"</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
@@ -180,7 +179,7 @@ alternative orientation, reverse the arrow and rerun
 <td align="center">(0.016)</td>
 </tr>
 <tr class="odd">
-<td align="left">state</td>
+<td align="left">parental_ses</td>
 <td align="center">0.331***</td>
 <td align="center">0.324***</td>
 <td align="center">0.331***</td>
@@ -256,17 +255,17 @@ alternative orientation, reverse the arrow and rerun
 <ul>
 <li>p-value legend: + &lt; 0.1, * &lt; 0.05, ** &lt; 0.01, *** &lt;
 0.001.</li>
-<li>Controls (minimal): {age, polint, state}.</li>
-<li>Controls (canonical): {age, elect_comp, industry, polint,
-state}.</li>
+<li>Controls (minimal): {age, parental_ses, polint}.</li>
+<li>Controls (canonical): {age, elect_comp, industry, parental_ses,
+polint}.</li>
 </ul>
 <p>If political interest causes income, <code>polint</code> is a
-confounder, the minimal set becomes <code>{age, polint, state}</code>,
-which yields an estimate of about 0.28. Under the original DAG,
-<code>polint</code> is a mediator and the model returns an estimate of
-0.49. The data are identical in both cases; the answer depends entirely
-on the direction of the edge between <code>income</code> and
-<code>polint</code>.</p>
+confounder, the minimal set becomes
+<code>{age, polint, parental_ses}</code>, which yields an estimate of
+about 0.28. Under the original DAG, <code>polint</code> is a mediator
+and the model returns an estimate of 0.49. The data are identical in
+both cases; the answer depends entirely on the direction of the edge
+between <code>income</code> and <code>polint</code>.</p>
 </div>
 <div class="section level2">
 <h2 id="missing-arrows">Missing arrows<a class="anchor" aria-label="anchor" href="#missing-arrows"></a>
@@ -287,7 +286,7 @@ and reports how the adjustment sets and roles change. A directed edge
 <span><span class="co">#&gt; Edge-addition (exclusion) robustness:</span></span>
 <span><span class="co">#&gt; - edges tested: 3</span></span>
 <span><span class="co">#&gt;   - industry -&gt; turnout: minimal changed: yes; canonical changed: no</span></span>
-<span><span class="co">#&gt;         new minimal set(s): {age, industry, state}</span></span>
+<span><span class="co">#&gt;         new minimal set(s): {age, industry, parental_ses}</span></span>
 <span><span class="co">#&gt;         role changes: industry: nct-&gt;confounder</span></span>
 <span><span class="co">#&gt;   - polint &lt;-&gt; turnout: minimal changed: no; canonical changed: no</span></span>
 <span><span class="co">#&gt;   - income &lt;-&gt; turnout: effect NOT identifiable if this pathway exists (no adjustment set blocks it)</span></span>
@@ -320,7 +319,7 @@ work as above, and <code>pdag</code> accepts a <code>dagitty</code> PDAG
 whose undirected (<code>--</code>) edges are treated as uncertain.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">turnout_dag</span>,</span>
-<span>          <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">state</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
+<span>          <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">parental_ses</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
 <span>             data <span class="op">=</span> <span class="va">turnout_data</span><span class="op">)</span>,</span>
 <span>          show <span class="op">=</span> <span class="st">"roles"</span>,</span>
 <span>          uncertain_edges <span class="op">=</span> <span class="st">"income -- polint"</span>,</span>
@@ -329,14 +328,14 @@ whose undirected (<code>--</code>) edges are treated as uncertain.</p>
 <span><span class="co">#&gt; DAGassist Report: </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Roles:</span></span>
-<span><span class="co">#&gt; variable    role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO</span></span>
-<span><span class="co">#&gt; income      exposure    x                                                                        </span></span>
-<span><span class="co">#&gt; turnout     outcome           x                                                                  </span></span>
-<span><span class="co">#&gt; age         confounder              x                                                            </span></span>
-<span><span class="co">#&gt; state       confounder              x                                                            </span></span>
-<span><span class="co">#&gt; polint      mediator                      x                                                      </span></span>
-<span><span class="co">#&gt; elect_comp  nco                                                                               x  </span></span>
-<span><span class="co">#&gt; industry    nct                                                       x                  x       </span></span>
+<span><span class="co">#&gt; variable      role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO</span></span>
+<span><span class="co">#&gt; income        exposure    x                                                                        </span></span>
+<span><span class="co">#&gt; turnout       outcome           x                                                                  </span></span>
+<span><span class="co">#&gt; age           confounder              x                                                            </span></span>
+<span><span class="co">#&gt; parental_ses  confounder              x                                                            </span></span>
+<span><span class="co">#&gt; polint        mediator                      x                                                      </span></span>
+<span><span class="co">#&gt; elect_comp    nco                                                                               x  </span></span>
+<span><span class="co">#&gt; industry      nct                                                       x                  x       </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  (!) Bad controls in your formula: {polint}</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -353,7 +352,7 @@ whose undirected (<code>--</code>) edges are treated as uncertain.</p>
 <span><span class="co">#&gt; Edge-addition (exclusion) robustness:</span></span>
 <span><span class="co">#&gt; - edges tested: 1</span></span>
 <span><span class="co">#&gt;   - industry -&gt; turnout: minimal changed: yes; canonical changed: no</span></span>
-<span><span class="co">#&gt;         new minimal set(s): {age, industry, state}</span></span>
+<span><span class="co">#&gt;         new minimal set(s): {age, industry, parental_ses}</span></span>
 <span><span class="co">#&gt;         role changes: industry: nct-&gt;confounder</span></span>
 <span><span class="co">#&gt; - re-estimation recommended: yes</span></span></code></pre></div>
 <p>The standalone functions only require a DAG and a formula, so you can

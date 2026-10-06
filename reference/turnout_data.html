@@ -72,9 +72,9 @@ cost of a misspecified control set can be read directly off the output.</p>
 <dd><p>Outcome. Voter turnout propensity.</p></dd>
 
 <dt>income</dt>
-<dd><p>Exposure. Caused by <code>state</code>, <code>age</code>, and <code>industry</code>.</p></dd>
+<dd><p>Exposure. Caused by <code>parental_ses</code>, <code>age</code>, and <code>industry</code>.</p></dd>
 
-<dt>state</dt>
+<dt>parental_ses</dt>
 <dd><p>Confounder: a common cause of <code>income</code> and <code>turnout</code>.</p></dd>
 
 <dt>age</dt>
@@ -107,8 +107,8 @@ estimate unbiased and improves precision.</p></dd>
 directly (<code>0.30</code>) and indirectly by raising political interest
 (<code>0.50 * 0.40 = 0.20</code>), so the <strong>true total effect is <code>0.50</code></strong> and the
 <strong>true direct effect is <code>0.30</code></strong>.</p>
-<p>Adjusting for <code>{age, state}</code> recovers the total effect; adjusting for
-<code>{age, polint, state}</code> recovers the direct effect. Regressing <code>turnout</code> on
+<p>Adjusting for <code>{age, parental_ses}</code> recovers the total effect; adjusting for
+<code>{age, polint, parental_ses}</code> recovers the direct effect. Regressing <code>turnout</code> on
 every available covariate returns roughly <code>0.28</code> — close to the direct
 effect, because conditioning on the mediator <code>polint</code> silently changes the
 estimand rather than producing an obviously wrong number.</p>

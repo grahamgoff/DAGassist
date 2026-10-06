@@ -23,16 +23,16 @@ These distinctions are not visible in regression output. Consider two
 regressions of voter turnout on income using the simulated
 `turnout_data` included with the package. The first controls for every
 available variable; the second controls only for the confounders, age
-and state.
+and parental_ses.
 
 ``` r
 
 library(DAGassist)
 library(modelsummary)
 
-all_controls <- lm(turnout ~ income + state + age + polint + industry + elect_comp,
+all_controls <- lm(turnout ~ income + parental_ses + age + polint + industry + elect_comp,
                    data = turnout_data)
-confounders  <- lm(turnout ~ income + state + age, data = turnout_data)
+confounders  <- lm(turnout ~ income + parental_ses + age, data = turnout_data)
 
 models <- list(all_controls, confounders)
 
@@ -83,20 +83,20 @@ the included controls:
 ``` r
 
 DAGassist(turnout_dag,
-          lm(turnout ~ income + state + age + polint + industry + elect_comp,
+          lm(turnout ~ income + parental_ses + age + polint + industry + elect_comp,
              data = turnout_data),
           show = "roles", verbose = FALSE)
 #> DAGassist Report: 
 #> 
 #> Roles:
-#> variable    role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
-#> income      exposure    x                                                                        
-#> turnout     outcome           x                                                                  
-#> age         confounder              x                                                            
-#> state       confounder              x                                                            
-#> polint      mediator                      x                                                      
-#> elect_comp  nco                                                                               x  
-#> industry    nct                                                       x                  x       
+#> variable      role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
+#> income        exposure    x                                                                        
+#> turnout       outcome           x                                                                  
+#> age           confounder              x                                                            
+#> parental_ses  confounder              x                                                            
+#> polint        mediator                      x                                                      
+#> elect_comp    nco                                                                               x  
+#> industry      nct                                                       x                  x       
 #> 
 #>  (!) Bad controls in your formula: {polint}
 #> 

@@ -109,18 +109,18 @@
 <p>A common approach is to control for everything available. Pass the DAG and that regression to <code><a href="reference/DAGassist.html">DAGassist()</a></code>:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">turnout_dag</span>,</span>
-<span>          <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">state</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
+<span>          <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">parental_ses</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
 <span>             data <span class="op">=</span> <span class="va">turnout_data</span><span class="op">)</span>,</span>
 <span>          show <span class="op">=</span> <span class="st">"roles"</span>, type <span class="op">=</span> <span class="st">"text"</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <table style="width:100%;" class="table">
 <colgroup>
-<col width="16%">
-<col width="16%">
-<col width="8%">
-<col width="8%">
+<col width="18%">
+<col width="15%">
+<col width="7%">
+<col width="7%">
 <col width="9%">
 <col width="9%">
-<col width="12%">
+<col width="11%">
 <col width="9%">
 <col width="9%">
 </colgroup>
@@ -181,23 +181,23 @@
 <td align="center"></td>
 </tr>
 <tr>
+<td align="left">parental_ses</td>
+<td align="center">confounder</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">x</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
 <td align="left">polint</td>
 <td align="center">mediator</td>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center">x</td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-</tr>
-<tr>
-<td align="left">state</td>
-<td align="center">confounder</td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center">x</td>
-<td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
 <td align="center"></td>
@@ -218,7 +218,7 @@
 <p><code>polint</code> is a mediator; it is one of the mechanisms through which income affects turnout. Thus, controlling for it makes the regression return the direct effect of income on turnout rather than the total effect. The <a href="https://grahamgoff.com/DAGassist/articles/DAGassist.html">Get started</a> article defines each causal role in detail. Without <code>show = "roles"</code>, <code><a href="reference/DAGassist.html">DAGassist()</a></code> also re-fits the model with the adjustment sets the DAG implies:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">turnout_dag</span>,</span>
-<span>          <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">state</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
+<span>          <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">parental_ses</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
 <span>             data <span class="op">=</span> <span class="va">turnout_data</span><span class="op">)</span>,</span>
 <span>          show <span class="op">=</span> <span class="st">"models"</span>, type <span class="op">=</span> <span class="st">"text"</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
@@ -242,7 +242,7 @@
 <td align="center">(0.015)</td>
 </tr>
 <tr>
-<td align="left">state</td>
+<td align="left">parental_ses</td>
 <td align="center">0.331***</td>
 <td align="center">0.324***</td>
 <td align="center">0.332***</td>
@@ -317,8 +317,8 @@
 </table>
 <ul>
 <li>p-value legend: + &lt; 0.1, * &lt; 0.05, ** &lt; 0.01, *** &lt; 0.001.</li>
-<li>Controls (minimal): {age, state}.</li>
-<li>Controls (canonical): {age, elect_comp, industry, state}.</li>
+<li>Controls (minimal): {age, parental_ses}.</li>
+<li>Controls (canonical): {age, elect_comp, industry, parental_ses}.</li>
 </ul>
 <p>The original regression’s 0.28 is close to the <em>direct</em> effect (0.30). Both DAG-derived models recover the total effect. Without <code>DAGassist</code>, the researcher might present their model as estimating the total effect of income on voter turnout. <code>DAGassist</code> detects the estimand-shifting variable, and automatically reestimates with transparent estimands.</p>
 <p><img src="reference/figures/README-estimates-1.png" alt="Estimated effect of income on turnout with 95% confidence intervals. The original regression gives 0.28, close to the true direct effect of 0.30. The DAG-derived minimal and canonical specifications give 0.49, matching the true total effect of 0.50." width="100%"></p>

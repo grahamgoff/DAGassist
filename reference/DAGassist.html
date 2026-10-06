@@ -213,7 +213,7 @@ in the comparison table in addition to the user's original and DAG-derived model
 <dd><p>character vector; causal estimand(s) for reported columns. Any of:
 <code>"raw"</code> (default), <code>"total"</code>, <code>"direct"</code>, or <code>"none"</code>.</p><ul><li><p><code>"raw"</code>: naive regression fits implied by the supplied engine/formulas.</p></li>
 <li><p><code>"total"</code>: inverse-probability weighted versions of each comparison model
-(via <span class="pkg">WeightIt</span>) to target sample ATE/ATT.</p></li>
+(via <span class="pkg">WeightIt</span>) to target sample total effect.</p></li>
 <li><p><code>"direct"</code>: for DAGs with mediator(s), adds sequential g-estimation columns:
 (i) unweighted sequential-g and (ii) IPW-weighted sequential-g (weights estimated
 without conditioning on mediators) to target the <strong>sample average controlled direct effect</strong>.</p></li>

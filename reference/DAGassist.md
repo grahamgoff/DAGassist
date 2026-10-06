@@ -174,7 +174,7 @@ DAGassist(
     engine/formulas.
 
   - `"total"`: inverse-probability weighted versions of each comparison
-    model (via WeightIt) to target sample ATE/ATT.
+    model (via WeightIt) to target sample total effect.
 
   - `"direct"`: for DAGs with mediator(s), adds sequential g-estimation
     columns: (i) unweighted sequential-g and (ii) IPW-weighted

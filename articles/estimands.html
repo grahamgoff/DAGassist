@@ -94,9 +94,9 @@ mediator transforms a total effect into something close to a direct
 effect. The <code>estimand</code> argument allows users to explicitly
 target an estimand of interest <span class="citation">(<a href="#ref-LundbergJohnsonStewart2021">Lundberg et al. 2021</a>)</span>:
 <code>"total"</code> targets the average total effect, and
-<code>"direct"</code> targets the average controlled direct effect. This
-article explains each column <code>DAGassist</code> adds, how it is
-estimated, and what it assumes.</p>
+<code>"direct"</code> targets the average direct effect. This article
+explains each column <code>DAGassist</code> adds, how it is estimated,
+and what it assumes.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/grahamgoff/DAGassist" class="external-link">DAGassist</a></span><span class="op">)</span></span></code></pre></div>
 <p>The turnout example supports two different questions:</p>
@@ -107,21 +107,21 @@ income rose by one unit, through every path, including by raising
 political interest? In <code>turnout_data</code>, the answer is
 0.50.</li>
 <li>
-<strong>Controlled direct effect.</strong> How much would turnout
-change if income rose by one unit <em>while political interest were held
+<strong>Direct effect.</strong> How much would turnout change if
+income rose by one unit <em>while political interest were held
 fixed</em>? The answer is 0.30.</li>
 </ul>
 <p>Requesting both estimands adds a set of columns (minimal and
 canonical) for each:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">turnout_dag</span>,</span>
-<span>          <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">state</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
+<span>          <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">parental_ses</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
 <span>             data <span class="op">=</span> <span class="va">turnout_data</span><span class="op">)</span>,</span>
 <span>          estimand <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"total"</span>, <span class="st">"direct"</span><span class="op">)</span>,</span>
 <span>          show <span class="op">=</span> <span class="st">"models"</span>, type <span class="op">=</span> <span class="st">"text"</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <colgroup>
-<col width="7%">
+<col width="8%">
 <col width="6%">
 <col width="14%">
 <col width="14%">
@@ -162,7 +162,7 @@ canonical) for each:</p>
 <td align="center">(0.027)</td>
 </tr>
 <tr class="odd">
-<td align="left">state</td>
+<td align="left">parental_ses</td>
 <td align="center">0.331***</td>
 <td align="center">0.324***</td>
 <td align="center">0.332***</td>
@@ -286,8 +286,9 @@ canonical) for each:</p>
 <ul>
 <li>p-value legend: + &lt; 0.1, * &lt; 0.05, ** &lt; 0.01, *** &lt;
 0.001.</li>
-<li>Controls (minimal): {age, state}.</li>
-<li>Controls (canonical): {age, elect_comp, industry, state}.</li>
+<li>Controls (minimal): {age, parental_ses}.</li>
+<li>Controls (canonical): {age, elect_comp, industry,
+parental_ses}.</li>
 </ul>
 <table class="table">
 <colgroup>
@@ -323,8 +324,7 @@ canonical) for each:</p>
 </tr>
 <tr class="even">
 <td align="left">Direct (Raw)</td>
-<td align="left">Controlled direct effect, by sequential
-g-estimation</td>
+<td align="left">Direct effect, by sequential g-estimation</td>
 <td align="center">0.28</td>
 <td align="center">0.30</td>
 </tr>
@@ -400,9 +400,8 @@ weight to the raw columns.</p>
 <div class="section level2">
 <h2 id="how-the-direct-effect-columns-are-estimated">How the direct-effect columns are estimated<a class="anchor" aria-label="anchor" href="#how-the-direct-effect-columns-are-estimated"></a>
 </h2>
-<p>The <strong>controlled direct effect</strong> is the effect of the
-exposure on the outcome if every unit’s mediators were set to the same
-value.</p>
+<p>The <strong>direct effect</strong> is the effect of the exposure on
+the outcome if every unit’s mediators were set to the same value.</p>
 <p>In the turnout example, you could estimate it by simply controlling
 for the mediator. That works because nothing income affects also
 confounds political interest and turnout. When such a variable exists,
@@ -455,7 +454,7 @@ if you supply a cluster variable.</li>
 <p><img src="estimands_files/figure-html/sim-dag-plot-1.png" class="r-plt" alt="DAG: C causes A, L, and Y. A causes L, M, and Y. L causes M and Y. M causes Y." width="1050"></p>
 <p>Holding <code>M</code> fixed, <code>A</code> still affects
 <code>Y</code> directly (0.3) and through <code>L</code> (0.6 × 0.5 =
-0.3), so the controlled direct effect with respect to <code>M</code> is
+0.3), so the direct effect with respect to <code>M</code> is
 <strong>0.60</strong>. No ordinary regression recovers it:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">A</span> <span class="op">+</span> <span class="va">M</span> <span class="op">+</span> <span class="va">C</span>, data <span class="op">=</span> <span class="va">sim</span><span class="op">)</span><span class="op">)</span><span class="op">[[</span><span class="st">"A"</span><span class="op">]</span><span class="op">]</span>      <span class="co"># leaves out L</span></span>
@@ -693,10 +692,10 @@ the <code>acde</code> argument:</p>
 <li>Controls (minimal): {C}.</li>
 <li>Controls (canonical): {C}.</li>
 </ul>
-<p>Sequential g-estimation now recovers the controlled direct effect of
-0.60. <code>acde</code> also accepts <code>x</code> (baseline
-covariates) and <code>fe</code> (fixed effects) for full control over
-the specification.</p>
+<p>Sequential g-estimation now recovers the direct effect of 0.60.
+<code>acde</code> also accepts <code>x</code> (baseline covariates) and
+<code>fe</code> (fixed effects) for full control over the
+specification.</p>
 </div>
 </div>
 <div class="section level2">

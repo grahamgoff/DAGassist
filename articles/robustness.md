@@ -24,10 +24,11 @@ However, it is also plausible that politically engaged people may seek
 out better-paid work. The dashed line marks the arrow whose direction is
 in doubt.
 
-![The turnout DAG. Age and state affect income and turnout; industry
-affects income; election competitiveness affects turnout; political
-interest affects turnout. The link between income and political interest
-is drawn as a dashed line with no arrowhead because its direction is
+![The turnout DAG. Age and parental_ses affect income and turnout;
+industry affects income; election competitiveness affects turnout;
+political interest affects turnout. The link between income and
+political interest is drawn as a dashed line with no arrowhead because
+its direction is
 uncertain.](robustness_files/figure-html/uncertain-dag-1.png)
 
 [`pdag_robustness()`](https://grahamgoff.com/DAGassist/reference/pdag_robustness.md)
@@ -38,7 +39,7 @@ across orientations.
 
 ``` r
 
-f <- turnout ~ income + state + age + polint + industry + elect_comp
+f <- turnout ~ income + parental_ses + age + polint + industry + elect_comp
 
 pdag_robustness(turnout_dag, formula = f, uncertain_edges = "income -- polint")
 #> 
@@ -62,15 +63,14 @@ You can list several uncertain edges at once:
 ``` r
 
 pdag_robustness(turnout_dag, formula = f,
-                uncertain_edges = c("income -- polint", "state -- income"))
+                uncertain_edges = c("income -- polint"))
 #> 
 #> PDAG robustness summary:
-#> - uncertain edges specified: 2
-#> - worlds evaluated (acyclic orientations): 4
+#> - uncertain edges specified: 1
+#> - worlds evaluated (acyclic orientations): 2
 #> - minimal adjustment set changed: yes
 #> - canonical adjustment set changed: yes
 #> - covariate role changed: mediator -> ambiguous (confounder / mediator) for polint (good/bad control flip)
-#> - covariate role changed: confounder -> ambiguous (confounder / mediator) for state (good/bad control flip)
 #> - re-estimation recommended: yes
 ```
 
@@ -91,38 +91,39 @@ alt_dag <- dagitty::dagitty(sub("income -> polint", "polint -> income",
                                 as.character(turnout_dag), fixed = TRUE))
 
 DAGassist(alt_dag,
-          lm(turnout ~ income + state + age + polint + industry + elect_comp,
+          lm(turnout ~ income + parental_ses + age + polint + industry + elect_comp,
              data = turnout_data),
           show = "models", type = "text", verbose = FALSE)
 ```
 
-| Term       |  Original   |  Minimal 1  |  Canonical  |
-|:-----------|:-----------:|:-----------:|:-----------:|
-| income     | 0.281\*\*\* | 0.276\*\*\* | 0.281\*\*\* |
-|            |   (0.016)   |   (0.017)   |   (0.016)   |
-| state      | 0.331\*\*\* | 0.324\*\*\* | 0.331\*\*\* |
-|            |   (0.017)   |   (0.018)   |   (0.017)   |
-| age        | 0.275\*\*\* | 0.278\*\*\* | 0.275\*\*\* |
-|            |   (0.017)   |   (0.019)   |   (0.017)   |
-| polint     | 0.420\*\*\* | 0.426\*\*\* | 0.420\*\*\* |
-|            |   (0.014)   |   (0.016)   |   (0.014)   |
-| industry   |   -0.017    |             |   -0.017    |
-|            |   (0.015)   |             |   (0.015)   |
-| elect_comp | 0.500\*\*\* |             | 0.500\*\*\* |
-|            |   (0.014)   |             |   (0.014)   |
-| Num.Obs.   |    5000     |    5000     |    5000     |
-| R2         |    0.596    |    0.497    |    0.596    |
+| Term         |  Original   |  Minimal 1  |  Canonical  |
+|:-------------|:-----------:|:-----------:|:-----------:|
+| income       | 0.281\*\*\* | 0.276\*\*\* | 0.281\*\*\* |
+|              |   (0.016)   |   (0.017)   |   (0.016)   |
+| parental_ses | 0.331\*\*\* | 0.324\*\*\* | 0.331\*\*\* |
+|              |   (0.017)   |   (0.018)   |   (0.017)   |
+| age          | 0.275\*\*\* | 0.278\*\*\* | 0.275\*\*\* |
+|              |   (0.017)   |   (0.019)   |   (0.017)   |
+| polint       | 0.420\*\*\* | 0.426\*\*\* | 0.420\*\*\* |
+|              |   (0.014)   |   (0.016)   |   (0.014)   |
+| industry     |   -0.017    |             |   -0.017    |
+|              |   (0.015)   |             |   (0.015)   |
+| elect_comp   | 0.500\*\*\* |             | 0.500\*\*\* |
+|              |   (0.014)   |             |   (0.014)   |
+| Num.Obs.     |    5000     |    5000     |    5000     |
+| R2           |    0.596    |    0.497    |    0.596    |
 
 - p-value legend: + \< 0.1, \* \< 0.05, \*\* \< 0.01, \*\*\* \< 0.001.
-- Controls (minimal): {age, polint, state}.
-- Controls (canonical): {age, elect_comp, industry, polint, state}.
+- Controls (minimal): {age, parental_ses, polint}.
+- Controls (canonical): {age, elect_comp, industry, parental_ses,
+  polint}.
 
 If political interest causes income, `polint` is a confounder, the
-minimal set becomes `{age, polint, state}`, which yields an estimate of
-about 0.28. Under the original DAG, `polint` is a mediator and the model
-returns an estimate of 0.49. The data are identical in both cases; the
-answer depends entirely on the direction of the edge between `income`
-and `polint`.
+minimal set becomes `{age, polint, parental_ses}`, which yields an
+estimate of about 0.28. Under the original DAG, `polint` is a mediator
+and the model returns an estimate of 0.49. The data are identical in
+both cases; the answer depends entirely on the direction of the edge
+between `income` and `polint`.
 
 ## Missing arrows
 
@@ -144,7 +145,7 @@ add_edges_robustness(turnout_dag, formula = f,
 #> Edge-addition (exclusion) robustness:
 #> - edges tested: 3
 #>   - industry -> turnout: minimal changed: yes; canonical changed: no
-#>         new minimal set(s): {age, industry, state}
+#>         new minimal set(s): {age, industry, parental_ses}
 #>         role changes: industry: nct->confounder
 #>   - polint <-> turnout: minimal changed: no; canonical changed: no
 #>   - income <-> turnout: effect NOT identifiable if this pathway exists (no adjustment set blocks it)
@@ -175,7 +176,7 @@ undirected (`--`) edges are treated as uncertain.
 ``` r
 
 DAGassist(turnout_dag,
-          lm(turnout ~ income + state + age + polint + industry + elect_comp,
+          lm(turnout ~ income + parental_ses + age + polint + industry + elect_comp,
              data = turnout_data),
           show = "roles",
           uncertain_edges = "income -- polint",
@@ -184,14 +185,14 @@ DAGassist(turnout_dag,
 #> DAGassist Report: 
 #> 
 #> Roles:
-#> variable    role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
-#> income      exposure    x                                                                        
-#> turnout     outcome           x                                                                  
-#> age         confounder              x                                                            
-#> state       confounder              x                                                            
-#> polint      mediator                      x                                                      
-#> elect_comp  nco                                                                               x  
-#> industry    nct                                                       x                  x       
+#> variable      role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
+#> income        exposure    x                                                                        
+#> turnout       outcome           x                                                                  
+#> age           confounder              x                                                            
+#> parental_ses  confounder              x                                                            
+#> polint        mediator                      x                                                      
+#> elect_comp    nco                                                                               x  
+#> industry      nct                                                       x                  x       
 #> 
 #>  (!) Bad controls in your formula: {polint}
 #> 
@@ -208,7 +209,7 @@ DAGassist(turnout_dag,
 #> Edge-addition (exclusion) robustness:
 #> - edges tested: 1
 #>   - industry -> turnout: minimal changed: yes; canonical changed: no
-#>         new minimal set(s): {age, industry, state}
+#>         new minimal set(s): {age, industry, parental_ses}
 #>         role changes: industry: nct->confounder
 #> - re-estimation recommended: yes
 ```

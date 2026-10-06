@@ -110,14 +110,14 @@ of the outcome</strong> introduces bias <span class="citation">(<a href="#ref-Mo
 regressions of voter turnout on income using the simulated
 <code>turnout_data</code> included with the package. The first controls
 for every available variable; the second controls only for the
-confounders, age and state.</p>
+confounders, age and parental_ses.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/grahamgoff/DAGassist" class="external-link">DAGassist</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://modelsummary.com" class="external-link">modelsummary</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">all_controls</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">state</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
+<span><span class="va">all_controls</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">parental_ses</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
 <span>                   data <span class="op">=</span> <span class="va">turnout_data</span><span class="op">)</span></span>
-<span><span class="va">confounders</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">state</span> <span class="op">+</span> <span class="va">age</span>, data <span class="op">=</span> <span class="va">turnout_data</span><span class="op">)</span></span>
+<span><span class="va">confounders</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">parental_ses</span> <span class="op">+</span> <span class="va">age</span>, data <span class="op">=</span> <span class="va">turnout_data</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">models</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">all_controls</span>, <span class="va">confounders</span><span class="op">)</span></span>
 <span></span>
@@ -130,38 +130,38 @@ confounders, age and state.</p>
 
     <script src="https://cdn.jsdelivr.net/gh/vincentarelbundock/tinytable@main/inst/tinytable.js"></script><script>
       // Create table-specific functions using external factory
-      const tableFns_naae62xfgti35nj46ntc = TinyTable.createTableFunctions("tinytable_naae62xfgti35nj46ntc");
+      const tableFns_kwb9wlcpdy0suas4faf6 = TinyTable.createTableFunctions("tinytable_kwb9wlcpdy0suas4faf6");
       // tinytable span after
       window.addEventListener('load', function () {
           var cellsToStyle = [
             // tinytable style arrays after
-          { positions: [ { i: '2', j: 2 }, { i: '2', j: 3 } ], css_id: 'tinytable_css_icixscrrw4pr8umgsvbp',}, 
-          { positions: [ { i: '1', j: 2 }, { i: '1', j: 3 } ], css_id: 'tinytable_css_i37s18x6muozc45lxjhz',}, 
-          { positions: [ { i: '0', j: 2 }, { i: '0', j: 3 } ], css_id: 'tinytable_css_jz4vi43s91bpxn6it5p7',}, 
-          { positions: [ { i: '2', j: 1 } ], css_id: 'tinytable_css_6fb275xp64s8vw6bc06n',}, 
-          { positions: [ { i: '1', j: 1 } ], css_id: 'tinytable_css_4b9hbtzr1kjwxenhgkzk',}, 
-          { positions: [ { i: '0', j: 1 } ], css_id: 'tinytable_css_2kiqbonwog7is1fuczgn',}, 
+          { positions: [ { i: '2', j: 2 }, { i: '2', j: 3 } ], css_id: 'tinytable_css_rbhphdzymaq1v4c7a783',}, 
+          { positions: [ { i: '1', j: 2 }, { i: '1', j: 3 } ], css_id: 'tinytable_css_4gmaof28pyb7mvd0w0i3',}, 
+          { positions: [ { i: '0', j: 2 }, { i: '0', j: 3 } ], css_id: 'tinytable_css_0xeichi9potazf2evg47',}, 
+          { positions: [ { i: '2', j: 1 } ], css_id: 'tinytable_css_yygule66ydtbh4tmcbnr',}, 
+          { positions: [ { i: '1', j: 1 } ], css_id: 'tinytable_css_pjdz9i88ghdv5to6b3oe',}, 
+          { positions: [ { i: '0', j: 1 } ], css_id: 'tinytable_css_00mmmcbq34uslo2j3kpm',}, 
           ];
 
           // Loop over the arrays to style the cells
           cellsToStyle.forEach(function (group) {
               group.positions.forEach(function (cell) {
-                  tableFns_naae62xfgti35nj46ntc.styleCell(cell.i, cell.j, group.css_id);
+                  tableFns_kwb9wlcpdy0suas4faf6.styleCell(cell.i, cell.j, group.css_id);
               });
           });
       });
     </script><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/vincentarelbundock/tinytable@main/inst/tinytable.css">
 <style>
     /* tinytable css entries after */
-    #tinytable_naae62xfgti35nj46ntc td.tinytable_css_icixscrrw4pr8umgsvbp, #tinytable_naae62xfgti35nj46ntc th.tinytable_css_icixscrrw4pr8umgsvbp {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.08em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --line-type-bottom: solid; --line-type-left: solid; --line-type-right: solid; --line-type-top: solid; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
-    #tinytable_naae62xfgti35nj46ntc td.tinytable_css_i37s18x6muozc45lxjhz, #tinytable_naae62xfgti35nj46ntc th.tinytable_css_i37s18x6muozc45lxjhz { text-align: center }
-    #tinytable_naae62xfgti35nj46ntc td.tinytable_css_jz4vi43s91bpxn6it5p7, #tinytable_naae62xfgti35nj46ntc th.tinytable_css_jz4vi43s91bpxn6it5p7 {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.08em; --line-type-bottom: solid; --line-type-left: solid; --line-type-right: solid; --line-type-top: solid; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
-    #tinytable_naae62xfgti35nj46ntc td.tinytable_css_6fb275xp64s8vw6bc06n, #tinytable_naae62xfgti35nj46ntc th.tinytable_css_6fb275xp64s8vw6bc06n {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.08em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --line-type-bottom: solid; --line-type-left: solid; --line-type-right: solid; --line-type-top: solid; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
-    #tinytable_naae62xfgti35nj46ntc td.tinytable_css_4b9hbtzr1kjwxenhgkzk, #tinytable_naae62xfgti35nj46ntc th.tinytable_css_4b9hbtzr1kjwxenhgkzk { text-align: left }
-    #tinytable_naae62xfgti35nj46ntc td.tinytable_css_2kiqbonwog7is1fuczgn, #tinytable_naae62xfgti35nj46ntc th.tinytable_css_2kiqbonwog7is1fuczgn {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.08em; --line-type-bottom: solid; --line-type-left: solid; --line-type-right: solid; --line-type-top: solid; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
+    #tinytable_kwb9wlcpdy0suas4faf6 td.tinytable_css_rbhphdzymaq1v4c7a783, #tinytable_kwb9wlcpdy0suas4faf6 th.tinytable_css_rbhphdzymaq1v4c7a783 {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.08em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --line-type-bottom: solid; --line-type-left: solid; --line-type-right: solid; --line-type-top: solid; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
+    #tinytable_kwb9wlcpdy0suas4faf6 td.tinytable_css_4gmaof28pyb7mvd0w0i3, #tinytable_kwb9wlcpdy0suas4faf6 th.tinytable_css_4gmaof28pyb7mvd0w0i3 { text-align: center }
+    #tinytable_kwb9wlcpdy0suas4faf6 td.tinytable_css_0xeichi9potazf2evg47, #tinytable_kwb9wlcpdy0suas4faf6 th.tinytable_css_0xeichi9potazf2evg47 {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.08em; --line-type-bottom: solid; --line-type-left: solid; --line-type-right: solid; --line-type-top: solid; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
+    #tinytable_kwb9wlcpdy0suas4faf6 td.tinytable_css_yygule66ydtbh4tmcbnr, #tinytable_kwb9wlcpdy0suas4faf6 th.tinytable_css_yygule66ydtbh4tmcbnr {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.08em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --line-type-bottom: solid; --line-type-left: solid; --line-type-right: solid; --line-type-top: solid; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
+    #tinytable_kwb9wlcpdy0suas4faf6 td.tinytable_css_pjdz9i88ghdv5to6b3oe, #tinytable_kwb9wlcpdy0suas4faf6 th.tinytable_css_pjdz9i88ghdv5to6b3oe { text-align: left }
+    #tinytable_kwb9wlcpdy0suas4faf6 td.tinytable_css_00mmmcbq34uslo2j3kpm, #tinytable_kwb9wlcpdy0suas4faf6 th.tinytable_css_00mmmcbq34uslo2j3kpm {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.08em; --line-type-bottom: solid; --line-type-left: solid; --line-type-right: solid; --line-type-top: solid; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
     </style>
 <div class="container">
-      <table class="table tinytable" id="tinytable_naae62xfgti35nj46ntc" style="width: auto; margin-left: auto; margin-right: auto;" data-quarto-disable-processing="true">
+      <table class="table tinytable" id="tinytable_kwb9wlcpdy0suas4faf6" style="width: auto; margin-left: auto; margin-right: auto;" data-quarto-disable-processing="true">
 <thead><tr>
 <th scope="col" data-row="0" data-col="1"> </th>
                 <th scope="col" data-row="0" data-col="2">(1)</th>
@@ -213,20 +213,20 @@ within the DAG. For the turnout example, a single call identifies the
 roles of the included controls:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">turnout_dag</span>,</span>
-<span>          <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">state</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
+<span>          <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">parental_ses</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
 <span>             data <span class="op">=</span> <span class="va">turnout_data</span><span class="op">)</span>,</span>
 <span>          show <span class="op">=</span> <span class="st">"roles"</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; DAGassist Report: </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Roles:</span></span>
-<span><span class="co">#&gt; variable    role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO</span></span>
-<span><span class="co">#&gt; income      exposure    x                                                                        </span></span>
-<span><span class="co">#&gt; turnout     outcome           x                                                                  </span></span>
-<span><span class="co">#&gt; age         confounder              x                                                            </span></span>
-<span><span class="co">#&gt; state       confounder              x                                                            </span></span>
-<span><span class="co">#&gt; polint      mediator                      x                                                      </span></span>
-<span><span class="co">#&gt; elect_comp  nco                                                                               x  </span></span>
-<span><span class="co">#&gt; industry    nct                                                       x                  x       </span></span>
+<span><span class="co">#&gt; variable      role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO</span></span>
+<span><span class="co">#&gt; income        exposure    x                                                                        </span></span>
+<span><span class="co">#&gt; turnout       outcome           x                                                                  </span></span>
+<span><span class="co">#&gt; age           confounder              x                                                            </span></span>
+<span><span class="co">#&gt; parental_ses  confounder              x                                                            </span></span>
+<span><span class="co">#&gt; polint        mediator                      x                                                      </span></span>
+<span><span class="co">#&gt; elect_comp    nco                                                                               x  </span></span>
+<span><span class="co">#&gt; industry      nct                                                       x                  x       </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  (!) Bad controls in your formula: {polint}</span></span>
 <span><span class="co">#&gt; </span></span>

@@ -23,9 +23,9 @@ A data frame with 5,000 rows and 7 columns:
 
 - income:
 
-  Exposure. Caused by `state`, `age`, and `industry`.
+  Exposure. Caused by `parental_ses`, `age`, and `industry`.
 
-- state:
+- parental_ses:
 
   Confounder: a common cause of `income` and `turnout`.
 
@@ -64,11 +64,12 @@ indirectly by raising political interest (`0.50 * 0.40 = 0.20`), so the
 **true total effect is `0.50`** and the **true direct effect is
 `0.30`**.
 
-Adjusting for `{age, state}` recovers the total effect; adjusting for
-`{age, polint, state}` recovers the direct effect. Regressing `turnout`
-on every available covariate returns roughly `0.28` — close to the
-direct effect, because conditioning on the mediator `polint` silently
-changes the estimand rather than producing an obviously wrong number.
+Adjusting for `{age, parental_ses}` recovers the total effect; adjusting
+for `{age, polint, parental_ses}` recovers the direct effect. Regressing
+`turnout` on every available covariate returns roughly `0.28` — close to
+the direct effect, because conditioning on the mediator `polint`
+silently changes the estimand rather than producing an obviously wrong
+number.
 
 ## See also
 

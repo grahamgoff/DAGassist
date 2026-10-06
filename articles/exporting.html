@@ -185,7 +185,7 @@ the same <code><a href="../reference/DAGassist.html">DAGassist()</a></code> call
 <span></span>
 <span><span class="kw">for</span> <span class="op">(</span><span class="va">fmt</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">formats</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">turnout_dag</span>,</span>
-<span>            <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">state</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
+<span>            <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">parental_ses</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
 <span>               data <span class="op">=</span> <span class="va">turnout_data</span><span class="op">)</span>,</span>
 <span>            type <span class="op">=</span> <span class="va">fmt</span>,</span>
 <span>            out  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">out_dir</span>, <span class="va">formats</span><span class="op">[[</span><span class="va">fmt</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
@@ -196,7 +196,7 @@ the same <code><a href="../reference/DAGassist.html">DAGassist()</a></code> call
 <p>To write a single file, drop the loop:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">turnout_dag</span>,</span>
-<span>          <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">state</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
+<span>          <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">parental_ses</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
 <span>             data <span class="op">=</span> <span class="va">turnout_data</span><span class="op">)</span>,</span>
 <span>          type <span class="op">=</span> <span class="st">"latex"</span>,</span>
 <span>          out  <span class="op">=</span> <span class="st">"tables/dagassist.tex"</span><span class="op">)</span></span></code></pre></div>
@@ -234,16 +234,16 @@ terms still enter the regression.</li>
 <code>show = "models"</code>:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">turnout_labels</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  income     <span class="op">=</span> <span class="st">"Income"</span>,</span>
-<span>  state      <span class="op">=</span> <span class="st">"State"</span>,</span>
-<span>  age        <span class="op">=</span> <span class="st">"Age"</span>,</span>
-<span>  polint     <span class="op">=</span> <span class="st">"Political interest"</span>,</span>
-<span>  industry   <span class="op">=</span> <span class="st">"Industry"</span>,</span>
-<span>  elect_comp <span class="op">=</span> <span class="st">"Election competitiveness"</span></span>
+<span>  income       <span class="op">=</span> <span class="st">"Income"</span>,</span>
+<span>  parental_ses <span class="op">=</span> <span class="st">"Parental SES"</span>,</span>
+<span>  age          <span class="op">=</span> <span class="st">"Age"</span>,</span>
+<span>  polint       <span class="op">=</span> <span class="st">"Political interest"</span>,</span>
+<span>  industry     <span class="op">=</span> <span class="st">"Industry"</span>,</span>
+<span>  elect_comp   <span class="op">=</span> <span class="st">"Election competitiveness"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">turnout_dag</span>,</span>
-<span>          <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">state</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
+<span>          <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">parental_ses</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
 <span>             data <span class="op">=</span> <span class="va">turnout_data</span><span class="op">)</span>,</span>
 <span>          labels <span class="op">=</span> <span class="va">turnout_labels</span>,</span>
 <span>          show <span class="op">=</span> <span class="st">"models"</span>, type <span class="op">=</span> <span class="st">"text"</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
@@ -268,7 +268,7 @@ terms still enter the regression.</li>
 <td align="center">(0.015)</td>
 </tr>
 <tr class="odd">
-<td align="left">State</td>
+<td align="left">Parental SES</td>
 <td align="center">0.331***</td>
 <td align="center">0.324***</td>
 <td align="center">0.332***</td>
@@ -344,8 +344,9 @@ terms still enter the regression.</li>
 <ul>
 <li>p-value legend: + &lt; 0.1, * &lt; 0.05, ** &lt; 0.01, *** &lt;
 0.001.</li>
-<li>Controls (minimal): {age, state}.</li>
-<li>Controls (canonical): {age, elect_comp, industry, state}.</li>
+<li>Controls (minimal): {age, parental_ses}.</li>
+<li>Controls (canonical): {age, elect_comp, industry,
+parental_ses}.</li>
 </ul>
 </div>
 <div class="section level2">
@@ -367,7 +368,7 @@ models-only table (<code>show = "models"</code>) is labelled
 ready to paste into Overleaf:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">turnout_dag</span>,</span>
-<span>          <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">state</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
+<span>          <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">parental_ses</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
 <span>             data <span class="op">=</span> <span class="va">turnout_data</span><span class="op">)</span>,</span>
 <span>          labels <span class="op">=</span> <span class="va">turnout_labels</span>,</span>
 <span>          show <span class="op">=</span> <span class="st">"models"</span>, type <span class="op">=</span> <span class="st">"latex"</span><span class="op">)</span></span></code></pre></div>
@@ -425,7 +426,7 @@ plot is displayed; with <code>out</code>, it is saved as an 8 × 6 inch
 PNG at 300 dpi.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/DAGassist.html">DAGassist</a></span><span class="op">(</span><span class="va">turnout_dag</span>,</span>
-<span>          <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">state</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
+<span>          <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">turnout</span> <span class="op">~</span> <span class="va">income</span> <span class="op">+</span> <span class="va">parental_ses</span> <span class="op">+</span> <span class="va">age</span> <span class="op">+</span> <span class="va">polint</span> <span class="op">+</span> <span class="va">industry</span> <span class="op">+</span> <span class="va">elect_comp</span>,</span>
 <span>             data <span class="op">=</span> <span class="va">turnout_data</span><span class="op">)</span>,</span>
 <span>          type <span class="op">=</span> <span class="st">"dotwhisker"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="exporting_files/figure-html/dotwhisker-1.png" class="r-plt" alt="Dot-and-whisker plot of the income coefficient in the original, minimal, and canonical models. The original estimate is about 0.28; the minimal and canonical estimates are about 0.49." width="1050"></p>

@@ -29,11 +29,11 @@ Defined in `data-raw/make_data.R`.
 Minimal sufficient adjustment sets, as returned by
 [`dagitty::adjustmentSets()`](https://rdrr.io/pkg/dagitty/man/adjustmentSets.html):
 
-- Total effect: `{age, state}`
+- Total effect: `{age, parental_ses}`
 
-- Direct effect: `{age, polint, state}`
+- Direct effect: `{age, polint, parental_ses}`
 
-- Canonical (total): `{age, elect_comp, industry, state}`
+- Canonical (total): `{age, elect_comp, industry, parental_ses}`
 
 ## See also
 

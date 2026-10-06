@@ -53,8 +53,8 @@ column names in your data.
 ``` r
 
 dag <- ggdag::dagify(
-  turnout  ~ income + age + state + polint + elect_comp,
-  income   ~ age + state + industry,
+  turnout  ~ income + age + parental_ses + polint + elect_comp,
+  income   ~ age + parental_ses + industry,
   polint   ~ income,
   industry ~ age,
   exposure = "income",
@@ -66,14 +66,14 @@ Alternatively, you can also draw the DAG in the
 [DAGitty](https://dagitty.net/) web tool and paste its code into
 [`dagitty::dagitty()`](https://rdrr.io/pkg/dagitty/man/dagitty.html).
 
-![The turnout DAG. Age and state affect income and turnout; age affects
-industry, which affects income; income affects political interest, which
-affects turnout; election competitiveness affects
+![The turnout DAG. Age and parental_ses affect income and turnout; age
+affects industry, which affects income; income affects political
+interest, which affects turnout; election competitiveness affects
 turnout.](DAGassist_files/figure-html/dag-plot-1.png)
 
-In our example, age and state affect both income and turnout. Political
-interest carries part of income’s effect to turnout. Industry affects
-income only, and election competitiveness affects turnout only.
+In our example, age and parental_ses affect both income and turnout.
+Political interest carries part of income’s effect to turnout. Industry
+affects income only, and election competitiveness affects turnout only.
 
 ## Step 3: Classify your controls
 
@@ -87,20 +87,20 @@ can re-fit it with other controls.
 ``` r
 
 DAGassist(dag,
-          lm(turnout ~ income + state + age + polint + industry + elect_comp,
+          lm(turnout ~ income + parental_ses + age + polint + industry + elect_comp,
              data = turnout_data),
           show = "roles")
 #> DAGassist Report: 
 #> 
 #> Roles:
-#> variable    role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
-#> income      exposure    x                                                                        
-#> turnout     outcome           x                                                                  
-#> age         confounder              x                                                            
-#> state       confounder              x                                                            
-#> polint      mediator                      x                                                      
-#> elect_comp  nco                                                                               x  
-#> industry    nct                                                       x                  x       
+#> variable      role        Exp.  Out.  conf  med  col  dOut  dMed  dCol  dConfOn  dConfOff  NCT  NCO
+#> income        exposure    x                                                                        
+#> turnout       outcome           x                                                                  
+#> age           confounder              x                                                            
+#> parental_ses  confounder              x                                                            
+#> polint        mediator                      x                                                      
+#> elect_comp    nco                                                                               x  
+#> industry      nct                                                       x                  x       
 #> 
 #>  (!) Bad controls in your formula: {polint}
 #> 
@@ -114,7 +114,8 @@ DAGassist(dag,
 Classifying roles needs only the DAG and the formula, not the data. For
 the total effect:
 
-- `age` and `state` are **confounders**. They must be controlled for.
+- `age` and `parental_ses` are **confounders**. They must be controlled
+  for.
 - `polint` is a **mediator** and a bad control. Controlling for it
   removes the part of income’s effect that runs through political
   interest.
@@ -136,31 +137,31 @@ back-door path. The **canonical** set also adds every safe control.
 ``` r
 
 DAGassist(dag,
-          lm(turnout ~ income + state + age + polint + industry + elect_comp,
+          lm(turnout ~ income + parental_ses + age + polint + industry + elect_comp,
              data = turnout_data),
           show = "models", type = "text", verbose = FALSE)
 ```
 
-| Term       |  Original   |  Minimal 1  |  Canonical  |
-|:-----------|:-----------:|:-----------:|:-----------:|
-| income     | 0.281\*\*\* | 0.493\*\*\* | 0.492\*\*\* |
-|            |   (0.016)   |   (0.016)   |   (0.015)   |
-| state      | 0.331\*\*\* | 0.324\*\*\* | 0.332\*\*\* |
-|            |   (0.017)   |   (0.019)   |   (0.018)   |
-| age        | 0.275\*\*\* | 0.273\*\*\* | 0.267\*\*\* |
-|            |   (0.017)   |   (0.020)   |   (0.019)   |
-| polint     | 0.420\*\*\* |             |             |
-|            |   (0.014)   |             |             |
-| industry   |   -0.017    |             |   -0.010    |
-|            |   (0.015)   |             |   (0.016)   |
-| elect_comp | 0.500\*\*\* |             | 0.506\*\*\* |
-|            |   (0.014)   |             |   (0.015)   |
-| Num.Obs.   |    5000     |    5000     |    5000     |
-| R2         |    0.596    |    0.423    |    0.525    |
+| Term         |  Original   |  Minimal 1  |  Canonical  |
+|:-------------|:-----------:|:-----------:|:-----------:|
+| income       | 0.281\*\*\* | 0.493\*\*\* | 0.492\*\*\* |
+|              |   (0.016)   |   (0.016)   |   (0.015)   |
+| parental_ses | 0.331\*\*\* | 0.324\*\*\* | 0.332\*\*\* |
+|              |   (0.017)   |   (0.019)   |   (0.018)   |
+| age          | 0.275\*\*\* | 0.273\*\*\* | 0.267\*\*\* |
+|              |   (0.017)   |   (0.020)   |   (0.019)   |
+| polint       | 0.420\*\*\* |             |             |
+|              |   (0.014)   |             |             |
+| industry     |   -0.017    |             |   -0.010    |
+|              |   (0.015)   |             |   (0.016)   |
+| elect_comp   | 0.500\*\*\* |             | 0.506\*\*\* |
+|              |   (0.014)   |             |   (0.015)   |
+| Num.Obs.     |    5000     |    5000     |    5000     |
+| R2           |    0.596    |    0.423    |    0.525    |
 
 - p-value legend: + \< 0.1, \* \< 0.05, \*\* \< 0.01, \*\*\* \< 0.001.
-- Controls (minimal): {age, state}.
-- Controls (canonical): {age, elect_comp, industry, state}.
+- Controls (minimal): {age, parental_ses}.
+- Controls (canonical): {age, elect_comp, industry, parental_ses}.
 
 Both DAG-derived models estimate income’s effect at 0.49, close to the
 true total effect of 0.50. The original regression returns 0.28; by
@@ -174,7 +175,7 @@ To see the comparison as a plot, set `type = "dotwhisker"`:
 ``` r
 
 DAGassist(dag,
-          lm(turnout ~ income + state + age + polint + industry + elect_comp,
+          lm(turnout ~ income + parental_ses + age + polint + industry + elect_comp,
              data = turnout_data),
           type = "dotwhisker")
 ```
@@ -197,7 +198,7 @@ an effect directly, whatever the model:
 ``` r
 
 DAGassist(dag,
-          lm(turnout ~ income + state + age + polint + industry + elect_comp,
+          lm(turnout ~ income + parental_ses + age + polint + industry + elect_comp,
              data = turnout_data),
           estimand = c("total", "direct"),
           show = "models", type = "text", verbose = FALSE)
@@ -207,7 +208,7 @@ DAGassist(dag,
 |:---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
 | income | 0.281\*\*\* | 0.493\*\*\* | 0.492\*\*\* | 0.495\*\*\* | 0.493\*\*\* | 0.281\*\*\* | 0.280\*\*\* |
 |   | (0.016) | (0.016) | (0.015) | (0.025) | (0.029) | (0.014) | (0.027) |
-| state | 0.331\*\*\* | 0.324\*\*\* | 0.332\*\*\* |  |  | 0.331\*\*\* | 0.343\*\*\* |
+| parental_ses | 0.331\*\*\* | 0.324\*\*\* | 0.332\*\*\* |  |  | 0.331\*\*\* | 0.343\*\*\* |
 |   | (0.017) | (0.019) | (0.018) |  |  | (0.017) | (0.031) |
 | age | 0.275\*\*\* | 0.273\*\*\* | 0.267\*\*\* |  |  | 0.275\*\*\* | 0.272\*\*\* |
 |   | (0.017) | (0.020) | (0.019) |  |  | (0.017) | (0.028) |
@@ -221,8 +222,8 @@ DAGassist(dag,
 | R2 | 0.596 | 0.423 | 0.525 | 0.339 | 0.441 |  |  |
 
 - p-value legend: + \< 0.1, \* \< 0.05, \*\* \< 0.01, \*\*\* \< 0.001.
-- Controls (minimal): {age, state}.
-- Controls (canonical): {age, elect_comp, industry, state}.
+- Controls (minimal): {age, parental_ses}.
+- Controls (canonical): {age, elect_comp, industry, parental_ses}.
 
 The weighted total-effect estimates (0.49–0.50) agree with the
 regression estimates, and the direct-effect estimates (0.28) are close
@@ -242,7 +243,7 @@ interest raises income, rather than the reverse?
 ``` r
 
 pdag_robustness(dag,
-                formula = turnout ~ income + state + age + polint + industry + elect_comp,
+                formula = turnout ~ income + parental_ses + age + polint + industry + elect_comp,
                 uncertain_edges = "income -- polint")
 #> 
 #> PDAG robustness summary:

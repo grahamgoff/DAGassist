@@ -7,9 +7,9 @@ for a mediator transforms a total effect into something close to a
 direct effect. The `estimand` argument allows users to explicitly target
 an estimand of interest ([Lundberg et al.
 2021](#ref-LundbergJohnsonStewart2021)): `"total"` targets the average
-total effect, and `"direct"` targets the average controlled direct
-effect. This article explains each column `DAGassist` adds, how it is
-estimated, and what it assumes.
+total effect, and `"direct"` targets the average direct effect. This
+article explains each column `DAGassist` adds, how it is estimated, and
+what it assumes.
 
 ``` r
 
@@ -21,9 +21,8 @@ The turnout example supports two different questions:
 - **Total effect.** How much would turnout change if income rose by one
   unit, through every path, including by raising political interest? In
   `turnout_data`, the answer is 0.50.
-- **Controlled direct effect.** How much would turnout change if income
-  rose by one unit *while political interest were held fixed*? The
-  answer is 0.30.
+- **Direct effect.** How much would turnout change if income rose by one
+  unit *while political interest were held fixed*? The answer is 0.30.
 
 Requesting both estimands adds a set of columns (minimal and canonical)
 for each:
@@ -31,7 +30,7 @@ for each:
 ``` r
 
 DAGassist(turnout_dag,
-          lm(turnout ~ income + state + age + polint + industry + elect_comp,
+          lm(turnout ~ income + parental_ses + age + polint + industry + elect_comp,
              data = turnout_data),
           estimand = c("total", "direct"),
           show = "models", type = "text", verbose = FALSE)
@@ -41,7 +40,7 @@ DAGassist(turnout_dag,
 |:---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
 | income | 0.281\*\*\* | 0.493\*\*\* | 0.492\*\*\* | 0.495\*\*\* | 0.493\*\*\* | 0.281\*\*\* | 0.280\*\*\* |
 |   | (0.016) | (0.016) | (0.015) | (0.025) | (0.029) | (0.014) | (0.027) |
-| state | 0.331\*\*\* | 0.324\*\*\* | 0.332\*\*\* |  |  | 0.331\*\*\* | 0.343\*\*\* |
+| parental_ses | 0.331\*\*\* | 0.324\*\*\* | 0.332\*\*\* |  |  | 0.331\*\*\* | 0.343\*\*\* |
 |   | (0.017) | (0.019) | (0.018) |  |  | (0.017) | (0.031) |
 | age | 0.275\*\*\* | 0.273\*\*\* | 0.267\*\*\* |  |  | 0.275\*\*\* | 0.272\*\*\* |
 |   | (0.017) | (0.020) | (0.019) |  |  | (0.017) | (0.028) |
@@ -55,15 +54,15 @@ DAGassist(turnout_dag,
 | R2 | 0.596 | 0.423 | 0.525 | 0.339 | 0.441 |  |  |
 
 - p-value legend: + \< 0.1, \* \< 0.05, \*\* \< 0.01, \*\*\* \< 0.001.
-- Controls (minimal): {age, state}.
-- Controls (canonical): {age, elect_comp, industry, state}.
+- Controls (minimal): {age, parental_ses}.
+- Controls (canonical): {age, elect_comp, industry, parental_ses}.
 
 | Column | Question it answers | Estimate | Truth |
 |:---|:---|:--:|:--:|
 | Original | Whatever your controls imply | 0.28 |  |
 | Total … (Raw) | Total effect, by regression adjustment | 0.49 | 0.50 |
 | Total … (Weighted) | Total effect, by inverse-probability weighting | 0.49–0.50 | 0.50 |
-| Direct (Raw) | Controlled direct effect, by sequential g-estimation | 0.28 | 0.30 |
+| Direct (Raw) | Direct effect, by sequential g-estimation | 0.28 | 0.30 |
 | Direct (Weighted) | The same, with inverse-probability weights | 0.28 | 0.30 |
 
 The original regression’s 0.28 is close to the direct effect, because it
@@ -129,8 +128,8 @@ the raw columns.
 
 ## How the direct-effect columns are estimated
 
-The **controlled direct effect** is the effect of the exposure on the
-outcome if every unit’s mediators were set to the same value.
+The **direct effect** is the effect of the exposure on the outcome if
+every unit’s mediators were set to the same value.
 
 In the turnout example, you could estimate it by simply controlling for
 the mediator. That works because nothing income affects also confounds
@@ -187,8 +186,8 @@ sim_dag <- ggdag::dagify(
 causes Y.](estimands_files/figure-html/sim-dag-plot-1.png)
 
 Holding `M` fixed, `A` still affects `Y` directly (0.3) and through `L`
-(0.6 × 0.5 = 0.3), so the controlled direct effect with respect to `M`
-is **0.60**. No ordinary regression recovers it:
+(0.6 × 0.5 = 0.3), so the direct effect with respect to `M` is **0.60**.
+No ordinary regression recovers it:
 
 ``` r
 
@@ -256,9 +255,9 @@ DAGassist(sim_dag, lm(Y ~ A + M + L + C, data = sim),
 - Controls (minimal): {C}.
 - Controls (canonical): {C}.
 
-Sequential g-estimation now recovers the controlled direct effect of
-0.60. `acde` also accepts `x` (baseline covariates) and `fe` (fixed
-effects) for full control over the specification.
+Sequential g-estimation now recovers the direct effect of 0.60. `acde`
+also accepts `x` (baseline covariates) and `fe` (fixed effects) for full
+control over the specification.
 
 ## Assumptions
 

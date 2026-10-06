@@ -45,7 +45,7 @@ formats <- c(latex      = "report.tex",
 
 for (fmt in names(formats)) {
   DAGassist(turnout_dag,
-            lm(turnout ~ income + state + age + polint + industry + elect_comp,
+            lm(turnout ~ income + parental_ses + age + polint + industry + elect_comp,
                data = turnout_data),
             type = fmt,
             out  = file.path(out_dir, formats[[fmt]]))
@@ -60,7 +60,7 @@ To write a single file, drop the loop:
 ``` r
 
 DAGassist(turnout_dag,
-          lm(turnout ~ income + state + age + polint + industry + elect_comp,
+          lm(turnout ~ income + parental_ses + age + polint + industry + elect_comp,
              data = turnout_data),
           type = "latex",
           out  = "tables/dagassist.tex")
@@ -90,16 +90,16 @@ For a publication table, set `labels` and `show = "models"`:
 ``` r
 
 turnout_labels <- c(
-  income     = "Income",
-  state      = "State",
-  age        = "Age",
-  polint     = "Political interest",
-  industry   = "Industry",
-  elect_comp = "Election competitiveness"
+  income       = "Income",
+  parental_ses = "Parental SES",
+  age          = "Age",
+  polint       = "Political interest",
+  industry     = "Industry",
+  elect_comp   = "Election competitiveness"
 )
 
 DAGassist(turnout_dag,
-          lm(turnout ~ income + state + age + polint + industry + elect_comp,
+          lm(turnout ~ income + parental_ses + age + polint + industry + elect_comp,
              data = turnout_data),
           labels = turnout_labels,
           show = "models", type = "text", verbose = FALSE)
@@ -109,7 +109,7 @@ DAGassist(turnout_dag,
 |:-------------------------|:-----------:|:-----------:|:-----------:|
 | Income                   | 0.281\*\*\* | 0.493\*\*\* | 0.492\*\*\* |
 |                          |   (0.016)   |   (0.016)   |   (0.015)   |
-| State                    | 0.331\*\*\* | 0.324\*\*\* | 0.332\*\*\* |
+| Parental SES             | 0.331\*\*\* | 0.324\*\*\* | 0.332\*\*\* |
 |                          |   (0.017)   |   (0.019)   |   (0.018)   |
 | Age                      | 0.275\*\*\* | 0.273\*\*\* | 0.267\*\*\* |
 |                          |   (0.017)   |   (0.020)   |   (0.019)   |
@@ -123,8 +123,8 @@ DAGassist(turnout_dag,
 | R2                       |    0.596    |    0.423    |    0.525    |
 
 - p-value legend: + \< 0.1, \* \< 0.05, \*\* \< 0.01, \*\*\* \< 0.001.
-- Controls (minimal): {age, state}.
-- Controls (canonical): {age, elect_comp, industry, state}.
+- Controls (minimal): {age, parental_ses}.
+- Controls (canonical): {age, elect_comp, industry, parental_ses}.
 
 ## LaTeX
 
@@ -149,7 +149,7 @@ into Overleaf:
 ``` r
 
 DAGassist(turnout_dag,
-          lm(turnout ~ income + state + age + polint + industry + elect_comp,
+          lm(turnout ~ income + parental_ses + age + polint + industry + elect_comp,
              data = turnout_data),
           labels = turnout_labels,
           show = "models", type = "latex")
@@ -211,7 +211,7 @@ interval in each model. Without `out`, the plot is displayed; with
 ``` r
 
 DAGassist(turnout_dag,
-          lm(turnout ~ income + state + age + polint + industry + elect_comp,
+          lm(turnout ~ income + parental_ses + age + polint + industry + elect_comp,
              data = turnout_data),
           type = "dotwhisker")
 ```

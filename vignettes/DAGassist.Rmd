@@ -45,7 +45,7 @@ library(DAGassist)
 
 ## Step 1: Declare your estimand
 
-Before choosing controls, decide which effect you want [@LundbergJohnsonStewart2021]. Income could affect turnout in two ways: directly, and by raising political interest, which in turn raises turnout. That gives two different questions:
+Before choosing controls, decide which effect you want [@FindleyKikutaDenly2021]. Income could affect turnout in two ways: directly, and by raising political interest, which in turn raises turnout. That gives two different questions:
 
 - **The total effect.** How much does turnout change when income rises, through every path? In `turnout_data`, the answer is **0.50**.
 - **The direct effect.** How much does turnout change when income rises *but political interest is held fixed*? The answer is **0.30**.

@@ -20,7 +20,7 @@ The consequences of controlling for a variable depend on its causal role:
 
 - Controlling for a **confounder** removes bias.
 - Controlling for a **mediator** changes the estimand, from a total effect to something closer to a direct effect.
-- Controlling for a **collider** or a **descendant of the outcome** introduces bias [@MontgomeryNyhanTorres2018].
+- Controlling for a **collider** or a **descendant of the outcome** introduces bias.
 
 These distinctions are not visible in regression output. Consider two regressions of voter turnout on income using the simulated `turnout_data` included with the package. The first controls for every available variable; the second controls only for the confounders, age and parental_ses.
 

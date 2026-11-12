@@ -97,8 +97,9 @@ classify_nodes <- function(dag, exposure, outcome) {
   collider_set <- nodes_vec[is_collider]
   
   ## vector compatible definition sets
-  #affects X and directly affects Y
-  conf_set <- setdiff(intersect(ancX, paY), c(descX, exposure, outcome))
+  #common causes: a directed path to X and a separate directed path to Y
+  conf_set <- setdiff(.dagassist_common_causes(dag, exposure, outcome),
+                      c(descX, exposure, outcome))
   
   med_set <- setdiff(intersect(descX, ancY), c(exposure, outcome))
   doY_set <- descY
@@ -283,5 +284,42 @@ print.DAGassist_roles <- function(x, n = Inf, ...) {
   }
   
   invisible(x)
+}
+
+# Common causes of the exposure and the outcome.
+# A node qualifies when it has a directed path to the exposure and a directed
+# path to the outcome that share no node other than itself (and the path to the
+# outcome does not run through the exposure). This includes causes of Y that act
+# through another variable (Z -> V -> Y), but not nodes that sit upstream of a
+# single confounder (Z -> W, W -> X, W -> Y), where W is the common cause.
+.dagassist_common_causes <- function(dag, exposure, outcome) {
+  ed <- dagitty::edges(dag)
+  ed <- ed[ed$e == "->", , drop = FALSE]
+  from <- as.character(ed$v); to <- as.character(ed$w)
+  # paths may end at, but not pass through, the exposure or the outcome
+  keep <- !from %in% c(exposure, outcome)
+  kids <- split(to[keep], from[keep])
+  
+  reaches <- function(start, targets, avoid = character(0)) {
+    seen <- character(0); todo <- start
+    while (length(todo)) {
+      node <- todo[1]; todo <- todo[-1]
+      for (k in setdiff(kids[[node]], c(seen, avoid))) {
+        if (k %in% targets) return(TRUE)
+        seen <- c(seen, k); todo <- c(todo, k)
+      }
+    }
+    FALSE
+  }
+  
+  nodes <- setdiff(names(dag), c(exposure, outcome))
+  is_common_cause <- vapply(nodes, function(z) {
+    if (!reaches(z, exposure) || !reaches(z, outcome)) return(FALSE)
+    # no single other node may sit on every path to X and every path to Y
+    all(vapply(setdiff(nodes, z), function(w) {
+      reaches(z, exposure, avoid = w) || reaches(z, outcome, avoid = w)
+    }, logical(1)))
+  }, logical(1))
+  nodes[is_common_cause]
 }
 

@@ -746,8 +746,10 @@ glance.dagassist_seqg <- function(x, ...) {
     do.call(
       WeightIt::weightit,
       c(
-        list(formula = f_treat, data = data_cc, method = "glm", estimand = "ATE"),
-        fa$keep
+        utils::modifyList(
+          list(formula = f_treat, data = data_cc, method = "glm", estimand = "ATE"),
+          fa$keep
+        )
       )
     )
   )

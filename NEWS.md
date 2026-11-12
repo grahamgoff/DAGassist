@@ -1,3 +1,11 @@
+# DAGassist v0.3.1
+
+- Added demo datasets for new online documentation.
+- Robust standard errors for weighted total-effect estimation by default.
+- Revised confounder flagging algorithm.
+
+Minor bug fixes: fitted-model input, LaTeX escaping, the method override, the Word out check and the "0 exposures" message.
+
 # DAGassist v0.3.0
 
 ### Highlights

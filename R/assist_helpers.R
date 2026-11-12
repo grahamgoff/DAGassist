@@ -185,6 +185,11 @@
 #if one exposure/outcome is found, use it
 #if multiple, tell user to pick one
 .infer_xy <- function(dag, exposure, outcome) {
+  #check DAG before trycatch()
+  if (!inherits(dag, "dagitty")) {
+    stop("`dag` must be a dagitty object. Create it with dagitty::dagitty() or ggdag::dagify().",
+         call. = FALSE)
+  }
   # If either exposure or outcome is missing/empty, infer from dagitty
   # exposure: accept vector
   if (missing(exposure) || is.null(exposure) ||
@@ -339,42 +344,30 @@
 # this helps with RE | 
 .split_top_level <- function(s, sep = "|") {
   chars <- strsplit(s, "", fixed = TRUE)[[1]]
-  out <- character(); buf <- character()
+  n <- length(chars)
+  if (!n) return(trimws(s))
   depth <- 0L
   in_quote <- FALSE; qchar <- ""
-  n <- length(chars)
+  cuts <- integer(0)  # positions of top-level separators
   
-  i <- 1L
-  while (i <= n) {
+  for (i in seq_len(n)) {
     ch <- chars[i]
-    
-    # track quotes (skip escaped quotes)
-    if (!in_quote && (ch == "'" || ch == '"')) {
+    if (in_quote) {
+      # track quotes
+      if (ch == qchar) { in_quote <- FALSE; qchar <- "" }
+    } else if (ch == "'" || ch == '"') {
       in_quote <- TRUE; qchar <- ch
-      buf <- c(buf, ch); i <- i + 1L; next
-    } else if (in_quote && ch == qchar) {
-      buf <- c(buf, ch); in_quote <- FALSE; qchar <- ""
-      i <- i + 1L; next
-    }
-    
-    if (!in_quote) {
-      if (ch == "(") { depth <- depth + 1L; buf <- c(buf, ch); i <- i + 1L; next }
-      if (ch == ")") { depth <- max(0L, depth - 1L); buf <- c(buf, ch); i <- i + 1L; next }
-      
+    } else if (ch == "(") {
+      depth <- depth + 1L
+    } else if (ch == ")") {
+      depth <- max(0L, depth - 1L)
+    } else if (ch == sep && depth == 0L) {
       # split only on top-level sep
-      if (ch == sep && depth == 0L) {
-        out <- c(out, trimws(paste(buf, collapse = "")))
-        buf <- character()
-        i <- i + 1L
-        next
-      }
+      cuts <- c(cuts, i)
     }
-    
-    buf <- c(buf, ch)
-    i <- i + 1L
   }
   
-  c(out, trimws(paste(buf, collapse = "")))
+  trimws(substring(s, c(1L, cuts + 1L), c(cuts - 1L, n)))
 }
 
 # Extract term labels from the k-th top-level '|' block of a formula.

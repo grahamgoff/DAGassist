@@ -71,7 +71,7 @@
 #'
 #'   - `"raw"`: naive regression fits implied by the supplied engine/formulas.
 #'   - `"total"`: inverse-probability weighted versions of each comparison model
-#'     (via \pkg{WeightIt}) to target sample ATE/ATT.
+#'     (via \pkg{WeightIt}) to target sample total effect.
 #'   - `"direct"`: for DAGs with mediator(s), adds sequential g-estimation columns:
 #'     (i) unweighted sequential-g and (ii) IPW-weighted sequential-g (weights estimated
 #'     without conditioning on mediators) to target the **sample average controlled direct effect**.
@@ -426,6 +426,23 @@ DAGassist <- function(dag,
   ## allow formula to be either a formula or a single engine call
   spec_expr <- substitute(formula)  # capture unevaluated argument
   parsed <- NULL
+  
+  # `fit <- lm(...)` typed inline: use the right-hand side
+  if (is.call(spec_expr) && identical(spec_expr[[1]], as.name("<-"))) {
+    spec_expr <- spec_expr[[3]]
+  }
+  # a fitted model object (e.g. `fit`): recover the call that produced it
+  if (is.name(spec_expr)) {
+    obj <- tryCatch(eval(spec_expr, parent.frame()), error = function(e) NULL)
+    if (!is.null(obj) && !inherits(obj, "formula")) {
+      cl <- tryCatch(stats::getCall(obj), error = function(e) NULL)
+      if (is.null(cl)) {
+        stop("`formula` must be a formula or a model call, e.g. lm(y ~ x, data = d).",
+             call. = FALSE)
+      }
+      spec_expr <- cl
+    }
+  }
   
   if (is.call(spec_expr) && !identical(spec_expr[[1]], as.name("~"))) {
     # User passed an engine call like feols(y ~ x | fe, data = df, ...)
@@ -835,7 +852,9 @@ DAGassist <- function(dag,
       show = show,
       verbose=verbose
     )
-    return(.report_docx(res_min, out))
+    #return the report with its file path; same as excel branch 
+    .report_docx(res_min, out)
+    return(invisible(structure(report, file = normalizePath(out, mustWork = FALSE))))
   }
   
   #### EXCEL OUT BRANCH ####

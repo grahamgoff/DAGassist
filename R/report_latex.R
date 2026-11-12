@@ -141,10 +141,9 @@
     return(c("% modelsummary not installed; skipping model comparison"))
   }
   
-  # build rename map
-  cm <- NULL
+  esc <- function(s) gsub("([%_&#{}~^$\\\\])", "\\\\\\1", s, perl = TRUE)
+  cm <- function(x) esc(x)
   if (length(coef_rename)) {
-    esc <- function(s) gsub("([%_&#{}~^$\\\\])", "\\\\\\1", s, perl = TRUE)
     nowrap <- function(s) paste0("\\mbox{", esc(s), "}")
     vals <- vapply(unname(coef_rename), nowrap, character(1))
     names(vals) <- names(coef_rename)
@@ -263,7 +262,7 @@
   
   lines <- c(
     "% --------------------- DAGassist LaTeX fragment ---------------------",
-    "% Requires: \\usepackage{tabularray} \\UseTblrLibrary{booktabs,siunitx,talltblr}",
+    "% Requires: \\usepackage{graphicx,tabularray} \\UseTblrLibrary{booktabs,siunitx}",
     "\\begingroup\\footnotesize",
     {
       if (show != "models" && is.data.frame(roles) && nrow(roles)) {

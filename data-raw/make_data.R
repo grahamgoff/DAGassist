@@ -4,11 +4,15 @@ library(dagitty)
 
 set.seed(42)
 
+x_pos <- c(turnout = 10, income = 0, parental_ses = 5, age = 5,
+           polint = 5, industry = 0, elect_comp = 10)
+y_pos <- c(turnout = 0, income = 0, parental_ses = 1, age = -1,
+           polint = 0.5, industry = -0.75, elect_comp = -0.75)
 ################################### TURNOUT ####################################
 ##make DAG
 turnout_dag <- dagify(
-  turnout ~ income + state + age + polint + elect_comp,
-  income ~ state + age + industry,
+  turnout ~ income + parental_ses + age + polint + elect_comp,
+  income ~ parental_ses + age + industry,
   polint ~ income,
   industry ~ age,
   
@@ -20,7 +24,7 @@ turnout_dag <- dagify(
   labels = c(
     turnout = "Turnout",
     income = "Income",
-    state = "State",
+    parental_ses = "Parental SES",
     age  = "Age",
     polint = "Political Interest",
     industry = "Industry",
@@ -32,19 +36,19 @@ turnout_dag <- dagify(
 n <- 5000
 
 # exogenous
-state <- rnorm(n)                                   
+parental_ses <- rnorm(n)                                   
 age <- rnorm(n)
 elect_comp <- rnorm(n)                                  
 
 # structural equations, following the DAG above
 industry <- 0.50 * age + rnorm(n)                        
-income <- 0.60 * state + 0.50 * age + 0.40 * industry + rnorm(n)
+income <- 0.60 * parental_ses + 0.50 * age + 0.40 * industry + rnorm(n)
 polint <- 0.50 * income + rnorm(n)                   
 turnout <- 0.30 * income + 0.40 * polint +
-  0.35 * state  + 0.25 * age +
+  0.35 * parental_ses  + 0.25 * age +
   0.50 * elect_comp + rnorm(n)
 
-turnout_data <- data.frame(turnout, income, state, age, polint, industry, elect_comp)
+turnout_data <- data.frame(turnout, income, parental_ses, age, polint, industry, elect_comp)
 
 #################################### TOY #######################################
 ##make DAG
